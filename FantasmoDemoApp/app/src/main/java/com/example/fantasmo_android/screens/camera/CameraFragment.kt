@@ -10,8 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.fantasmo_android.R
-import com.google.ar.core.Pose
-import com.google.ar.core.TrackingState
+import com.example.fantasmo_android.utils.DemoAppUtils.AppUtils.createStringDisplay
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.ux.ArFragment
 
@@ -38,7 +37,6 @@ class CameraFragment: Fragment() {
         super.onResume()
 
         try{
-            // Child Fragment Manager!!!
             arFragment = childFragmentManager.findFragmentById(R.id.ar_fragment) as ArFragment
             arFragment.planeDiscoveryController.hide()
             arFragment.planeDiscoveryController.setInstructionView(null)
@@ -52,7 +50,6 @@ class CameraFragment: Fragment() {
             }
             currentView.findViewById<Button>(R.id.checkParkingButton)?.setOnClickListener{
                 Log.d("CheckPark Pressed", "CheckPark")
-                Toast.makeText(this.activity, "CheckParking", Toast.LENGTH_SHORT)
             }
 
         }catch (e: Exception){
@@ -69,14 +66,16 @@ class CameraFragment: Fragment() {
         val arFrame = arSceneView.arFrame
 
         val cameraTranslation = arFrame?.androidSensorPose?.translation
-        currentView.findViewById<TextView>(R.id.cameraTranslation)?.text = createStringDisplay("Camera Translation: ", cameraTranslation)
-
+        currentView.findViewById<TextView>(R.id.cameraTranslation)?.text =
+            createStringDisplay("Camera Translation: ", cameraTranslation)
         Log.d("Camera Translation", "CameraTranslation ${cameraTranslation.toString()}")
 
         val cameraRotation = arFrame?.androidSensorPose?.rotationQuaternion
-        currentView.findViewById<TextView>(R.id.cameraAnglesText)?.text = createStringDisplay("Camera Rotation: ", cameraRotation)
+        currentView.findViewById<TextView>(R.id.cameraAnglesText)?.text =
+            createStringDisplay("Camera Rotation: ", cameraRotation)
+        Log.d("Camera Rotation", "CameraRotation ${cameraRotation.toString()}")
 
-        /*
+    /*
         val arCamera = arFrame?.camera
         if (arCamera?.trackingState === TrackingState.TRACKING) {
             val cameraPose: Pose = arCamera.displayOrientedPose
@@ -85,10 +84,6 @@ class CameraFragment: Fragment() {
         }*/
     }
 
-    private fun createStringDisplay(s: String, cameraAttr: FloatArray?): CharSequence {
-        return s + String.format("%.2f", cameraAttr?.get(0)) + ", " +
-                String.format("%.2f", cameraAttr?.get(1)) + ", " + String.format("%.2f", cameraAttr?.get(2))
-    }
 
 
 }
