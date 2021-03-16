@@ -2,19 +2,22 @@ package com.example.fantasmo_android.screens.camera
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -92,12 +95,22 @@ class CameraFragment: Fragment(), LocationListener {
         val cameraTranslation = arFrame?.androidSensorPose?.translation
         cameraTranslationTv.text =
             createStringDisplay("Camera Translation: ", cameraTranslation)
-        Log.d("CameraFragment-> Camera Translation", createStringDisplay("Camera Translation: ", cameraTranslation))
+        Log.d(
+            "CameraFragment-> Camera Translation", createStringDisplay(
+                "Camera Translation: ",
+                cameraTranslation
+            )
+        )
 
         val cameraRotation = arFrame?.androidSensorPose?.rotationQuaternion
         cameraAnglesTv.text =
             createStringDisplay("Camera Angles: ", cameraRotation)
-        Log.d("CameraFragment-> Camera Angles", createStringDisplay("Camera Angles: ", cameraRotation))
+        Log.d(
+            "CameraFragment-> Camera Angles", createStringDisplay(
+                "Camera Angles: ",
+                cameraRotation
+            )
+        )
     }
 
     /**
@@ -109,23 +122,39 @@ class CameraFragment: Fragment(), LocationListener {
         if (context?.let {
                 ContextCompat.checkSelfPermission(
                     it,
-                    Manifest.permission.ACCESS_FINE_LOCATION)
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                )
             } != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(
                     requireActivity(),
-                    Manifest.permission.ACCESS_FINE_LOCATION)) {
-                ActivityCompat.requestPermissions(requireActivity(), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                )) {
+                ActivityCompat.requestPermissions(
+                    requireActivity(),
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                    1
+                )
             } else {
-                ActivityCompat.requestPermissions(requireActivity(), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+                ActivityCompat.requestPermissions(
+                    requireActivity(),
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                    1
+                )
             }
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5f, this)
+        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            buildAlertMessageNoGps()
+        }
     }
 
     @SuppressLint("SetTextI18n")
     override fun onLocationChanged(location: Location) {
         deviceCoorTv.text = "Device Latitude: ${location.latitude} , Longitude: ${location.longitude}"
-        Log.d("CameraFragment-> LocationChanged: ", "New Latitude: ${location.latitude} and New Longitude: ${location.longitude}")
+        Log.d(
+            "CameraFragment-> LocationChanged: ",
+            "New Latitude: ${location.latitude} and New Longitude: ${location.longitude}"
+        )
     }
 
     override fun onRequestPermissionsResult(
@@ -136,16 +165,32 @@ class CameraFragment: Fragment(), LocationListener {
         when (requestCode) {
             1 -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (ContextCompat.checkSelfPermission(requireContext(),
-                            Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    if (ContextCompat.checkSelfPermission(
+                            requireContext(),
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
                         Log.d("CameraFragment-> OnRequestPermissionResult: ", "Granted")
                     }
                 } else {
                     // Permission is not granted
+                        activity?.finish()
                     Log.d("CameraFragment-> OnRequestPermissionResult: ", "Denied")
                 }
                 return
             }
         }
+    }
+
+    private fun buildAlertMessageNoGps() {
+        val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
+        builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
+            .setCancelable(false)
+            .setPositiveButton("Yes"
+            ) { _, _ -> startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
+            .setNegativeButton("No"
+            ) { dialog, _ -> dialog.cancel() }
+        val alert: AlertDialog = builder.create()
+        alert.show()
     }
 }
