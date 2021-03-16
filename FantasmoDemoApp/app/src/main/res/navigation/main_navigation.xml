@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_navigation"
+    app:startDestination="@id/main_navigation">
+
+    <fragment
+        android:id="@+id/main_navigation"
+        android:name="com.example.fantasmo_android.screens.title.TitleFragment"
+        android:label="title_fragment"
+        tools:layout="@layout/title_fragment">
+        <action
+            android:id="@+id/action_title_to_camera"
+            app:destination="@id/camera_destination" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/camera_destination"
+        android:name="com.example.fantasmo_android.screens.camera.CameraFragment"
+        android:label="camera_fragment"
+        tools:layout="@layout/camera_fragment">
+        <action
+            android:id="@+id/action_camera_destination_to_title_destination"
+            app:destination="@id/main_navigation" />
+    </fragment>
+
+</navigation>
