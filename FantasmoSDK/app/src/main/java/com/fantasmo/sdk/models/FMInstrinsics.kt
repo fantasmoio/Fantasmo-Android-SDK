@@ -11,28 +11,29 @@ import android.view.Surface
 /**
  * Represents camera intrinsics. The intrinsics change on a frame-to-frame basis which requires they
  * are parsed for each frame.
- * @property intrinsics
- * @property atScale
- * @property interfaceOrientation
- * @property deviceOrientation
- * @property frameWidth
- * @property frameHeight
  */
-data class FMIntrinsics(
-    private val intrinsics: Array<Array<Float>>,
-    private val atScale: Float,
-    private val interfaceOrientation: Int,
-    private val deviceOrientation: Int,
-    private val frameWidth: Int,
-    private val frameHeight: Int
-) {
+class FMIntrinsics() {
 
     var fx: Float = 0.0f
     var fy: Float = 0.0f
     var cx: Float = 0.0f
     var cy: Float = 0.0f
 
-    init {
+    constructor(fx: Float, fy: Float, cx: Float, cy: Float) : this() {
+        this.fx = fx
+        this.fy = fy
+        this.cx = cx
+        this.cy = cy
+    }
+
+    constructor(
+        intrinsics: Array<Array<Float>>,
+        atScale: Float,
+        interfaceOrientation: Int,
+        deviceOrientation: Int,
+        frameWidth: Int,
+        frameHeight: Int
+    ) : this() {
         when (deviceOrientation) {
             // SCREEN_ORIENTATION_REVERSE_LANDSCAPE
             Surface.ROTATION_270 -> {
@@ -74,39 +75,5 @@ data class FMIntrinsics(
         fy *= atScale
         cx *= atScale
         cy *= atScale
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as FMIntrinsics
-
-        if (!intrinsics.contentDeepEquals(other.intrinsics)) return false
-        if (atScale != other.atScale) return false
-        if (interfaceOrientation != other.interfaceOrientation) return false
-        if (deviceOrientation != other.deviceOrientation) return false
-        if (frameWidth != other.frameWidth) return false
-        if (frameHeight != other.frameHeight) return false
-        if (fx != other.fx) return false
-        if (fy != other.fy) return false
-        if (cx != other.cx) return false
-        if (cy != other.cy) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = intrinsics.contentDeepHashCode()
-        result = 31 * result + atScale.hashCode()
-        result = 31 * result + interfaceOrientation
-        result = 31 * result + deviceOrientation
-        result = 31 * result + frameWidth
-        result = 31 * result + frameHeight
-        result = 31 * result + fx.hashCode()
-        result = 31 * result + fy.hashCode()
-        result = 31 * result + cx.hashCode()
-        result = 31 * result + cy.hashCode()
-        return result
     }
 }

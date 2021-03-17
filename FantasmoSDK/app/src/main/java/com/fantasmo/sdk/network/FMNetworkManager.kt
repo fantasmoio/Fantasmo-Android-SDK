@@ -12,6 +12,7 @@ import com.android.volley.*
 import com.android.volley.toolbox.Volley
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.LocalizeResponse
+import com.fantasmo.sdk.models.ZoneInRadiusResponse
 import com.google.gson.Gson
 import org.json.JSONException
 
@@ -32,13 +33,20 @@ class FMNetworkManager(
     /**
      * Method to upload an image with the given [imageData] and [parameters].
      */
-    fun uploadImage(imageData: ByteArray, parameters: HashMap<String, String>, onCompletion: (LocalizeResponse) -> Unit, onError: (ErrorResponse) -> Unit) {
+    fun uploadImage(
+        imageData: ByteArray,
+        parameters: HashMap<String, String>,
+        token: String,
+        onCompletion: (LocalizeResponse) -> Unit,
+        onError: (ErrorResponse) -> Unit
+    ) {
         val multipartRequest: MultiPartRequest = object : MultiPartRequest(
             Method.POST, url,
             Response.Listener<NetworkResponse> { response ->
                 val resultResponse = String(response.data)
                 try {
-                    var localizeResult = Gson().fromJson(resultResponse, LocalizeResponse::class.java)
+                    val localizeResult =
+                        Gson().fromJson(resultResponse, LocalizeResponse::class.java)
                     onCompletion(localizeResult)
 
                 } catch (e: JSONException) {
@@ -46,40 +54,11 @@ class FMNetworkManager(
                 }
             },
             Response.ErrorListener { error ->
-                val networkResponse = error.networkResponse
-                var errorMessage = "Unknown error"
-                if (networkResponse == null) {
-                    if (error.javaClass == TimeoutError::class.java) {
-                        errorMessage = "Request timeout"
-                    } else if (error.javaClass == NoConnectionError::class.java) {
-                        errorMessage = "Failed to connect server"
-                    }
-                } else {
-                    val errorResult = String(networkResponse.data)
-                    try {
-                        val response = Gson().fromJson(errorResult, ErrorResponse::class.java)
-                        onError(response)
+                onError(error)
 
-                        when (networkResponse.statusCode) {
-                            404 -> {
-                                errorMessage = "Resource not found"
-                            }
-                            401 -> {
-                                errorMessage = "${response.message} Authentication error"
-                            }
-                            400 -> {
-                                errorMessage = "${response.message} Wrong parameters"
-                            }
-                            500 -> {
-                                errorMessage = "${response.message} Something is wrong"
-                            }
-                        }
-                    } catch (e: JSONException) {
-                        e.printStackTrace()
-                    }
-                }
-                Log.e("Error", errorMessage)
-                error.printStackTrace()
+                val errorResult = String(error.networkResponse.data)
+                val response = Gson().fromJson(errorResult, ErrorResponse::class.java)
+                onError(response)
             }) {
 
             override fun getByteData(): MutableMap<String, FileDataPart> {
@@ -96,12 +75,95 @@ class FMNetworkManager(
             // Overriding getHeaders() to pass our parameters
             override fun getHeaders(): MutableMap<String, String> {
                 val headers = HashMap<String, String>()
-                headers["Fantasmo-Key"] = "API_KEY"
+                headers["Fantasmo-Key"] = token
                 return headers
             }
         }
 
         // Adding request to the queue
         requestQueue.add(multipartRequest)
+    }
+
+    /**
+     * Method to send a POST request to check whether a zone is in a provided radius.
+     */
+    fun zoneInRadiusRequest(
+        parameters: HashMap<String, String>,
+        token: String,
+        onCompletion: (Boolean) -> Unit
+    ) {
+        val multipartRequest: MultiPartRequest = object : MultiPartRequest(
+            Method.POST, url,
+            Response.Listener<NetworkResponse> { response ->
+                val resultResponse = String(response.data)
+                Log.d("zoneInRadiusRequest RESPONSE: ", resultResponse)
+                try {
+                    val inRadius =
+                        Gson().fromJson(resultResponse, ZoneInRadiusResponse::class.java)
+                    onCompletion(inRadius.result.toBoolean())
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                }
+                onCompletion(true)
+            },
+            Response.ErrorListener { error ->
+                onError(error)
+                onCompletion(false)
+            }) {
+
+            // Overriding getParams() to pass our parameters
+            override fun getParams(): MutableMap<String, String> {
+                return parameters
+            }
+
+            // Overriding getHeaders() to pass our parameters
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Fantasmo-Key"] = token
+                return headers
+            }
+        }
+
+        // Adding request to the queue
+        requestQueue.add(multipartRequest)
+    }
+
+    /**
+     * Method to process and log network error.
+     */
+    private fun onError(error: VolleyError) {
+        val networkResponse = error.networkResponse
+        var errorMessage = "Unknown error"
+        if (networkResponse == null) {
+            if (error.javaClass == TimeoutError::class.java) {
+                errorMessage = "Request timeout"
+            } else if (error.javaClass == NoConnectionError::class.java) {
+                errorMessage = "Failed to connect server"
+            }
+        } else {
+            val errorResult = String(networkResponse.data)
+            try {
+                val response = Gson().fromJson(errorResult, ErrorResponse::class.java)
+
+                when (networkResponse.statusCode) {
+                    404 -> {
+                        errorMessage = "Resource not found"
+                    }
+                    401 -> {
+                        errorMessage = "${response.message} Authentication error"
+                    }
+                    400 -> {
+                        errorMessage = "${response.message} Wrong parameters"
+                    }
+                    500 -> {
+                        errorMessage = "${response.message} Something is wrong"
+                    }
+                }
+            } catch (e: JSONException) {
+                e.printStackTrace()
+            }
+        }
+        Log.e("Network Error:", errorMessage)
+        error.printStackTrace()
     }
 }
