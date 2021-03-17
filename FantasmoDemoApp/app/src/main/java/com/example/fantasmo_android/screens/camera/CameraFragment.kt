@@ -18,7 +18,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Switch
 import android.widget.TextView
-import android.widget.ToggleButton
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.fragment.app.Fragment
@@ -89,26 +88,23 @@ class CameraFragment: Fragment(), LocationListener {
             }
 
             checkParkingButton.setOnClickListener{
+                // Add Check Parking Functionality
                 Log.d("CameraFragment-> CheckPark Pressed", "CheckPark")
             }
 
             localizeToggleButton.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
-                    // if toggle button is enabled/on
-                    Log.d("CameraFragment-> LocalizeToggle ", "Enabled")
+                    Log.d("CameraFragment-> LocalizeToggle", "Enabled")
                 } else {
-                    // If toggle button is disabled/off
-                    Log.d("CameraFragment-> LocalizeToggle ", "Disabled")
+                    Log.d("CameraFragment-> LocalizeToggle", "Disabled")
                 }
             }
 
             anchorToggleButton.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
-                    // if toggle button is enabled/on
-                    Log.d("CameraFragment-> AnchorToggle ", "Enabled")
+                    Log.d("CameraFragment-> AnchorToggle", "Enabled")
                 } else {
-                    // If toggle button is disabled/off
-                    Log.d("CameraFragment-> AnchorToggle ", "Disabled")
+                    Log.d("CameraFragment-> AnchorToggle", "Disabled")
                 }
             }
 
@@ -185,7 +181,7 @@ class CameraFragment: Fragment(), LocationListener {
     override fun onLocationChanged(location: Location) {
         deviceCoorTv.text = "Device Lat: ${location.latitude} , Long: ${location.longitude}"
         Log.d(
-                "CameraFragment-> LocationChanged: ",
+                "CameraFragment-> LocationChanged",
                 "New Latitude: ${location.latitude} and New Longitude: ${location.longitude}"
         )
     }
@@ -226,7 +222,8 @@ class CameraFragment: Fragment(), LocationListener {
         val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
         builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
             .setCancelable(false)
-            .setPositiveButton("Yes"
+            .setPositiveButton(
+                    "Yes"
             ) { _, _ -> startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
             .setNegativeButton("No"
             ) { dialog, _ -> dialog.cancel() }
