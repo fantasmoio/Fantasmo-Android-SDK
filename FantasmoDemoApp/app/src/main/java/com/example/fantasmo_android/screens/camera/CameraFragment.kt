@@ -20,6 +20,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.fragment.app.Fragment
 import com.example.fantasmo_android.R
 import com.example.fantasmo_android.utils.DemoAppUtils.AppUtils.createStringDisplay
@@ -53,8 +54,11 @@ class CameraFragment: Fragment(), LocationListener {
         deviceCoorTv = currentView.findViewById(R.id.coordinatesText)
 
         locationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        getLocation()
-
+        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            buildAlertMessageNoGps()
+        }else{
+            getLocation()
+        }
         return currentView
     }
 
@@ -90,6 +94,7 @@ class CameraFragment: Fragment(), LocationListener {
      * Data obtained from the sensor: Camera Translation and Camera Rotation values
      * */
     private fun onUpdate() {
+        getLocation()
         val arFrame = arSceneView.arFrame
 
         val cameraTranslation = arFrame?.androidSensorPose?.translation
@@ -116,41 +121,41 @@ class CameraFragment: Fragment(), LocationListener {
     /**
      * Gets system location through the app context
      * Then checks if it has permission to ACCESS_FINE_LOCATION
-     * Keeps crashing at the first time when asking for location permissions
      */
     private fun getLocation() {
-        if (context?.let {
-                ContextCompat.checkSelfPermission(
+        if ((context?.let {
+                checkSelfPermission(
                     it,
                     Manifest.permission.ACCESS_FINE_LOCATION
                 )
-            } != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(
-                    requireActivity(),
+            } != PackageManager.PERMISSION_GRANTED) &&
+                (context?.let{
+                    checkSelfPermission(
+                            it,
+                            Manifest.permission.CAMERA
+                    )
+                } != PackageManager.PERMISSION_GRANTED)) {
+            if (shouldShowRequestPermissionRationale(
                     Manifest.permission.ACCESS_FINE_LOCATION
                 )) {
-                ActivityCompat.requestPermissions(
-                    requireActivity(),
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                this.requestPermissions(
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.CAMERA),
                     1
                 )
             } else {
-                ActivityCompat.requestPermissions(
-                    requireActivity(),
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                    1
+                this.requestPermissions(
+                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.CAMERA),
+                        1
                 )
             }
-        }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5f, this)
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            buildAlertMessageNoGps()
+        }else{
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5f, this)
         }
     }
 
     @SuppressLint("SetTextI18n")
     override fun onLocationChanged(location: Location) {
-        deviceCoorTv.text = "Device Latitude: ${location.latitude} , Longitude: ${location.longitude}"
+        deviceCoorTv.text = "Device Lat: ${location.latitude} , Long: ${location.longitude}"
         Log.d(
             "CameraFragment-> LocationChanged: ",
             "New Latitude: ${location.latitude} and New Longitude: ${location.longitude}"
@@ -170,7 +175,14 @@ class CameraFragment: Fragment(), LocationListener {
                             Manifest.permission.ACCESS_FINE_LOCATION
                         ) == PackageManager.PERMISSION_GRANTED
                     ) {
-                        Log.d("CameraFragment-> OnRequestPermissionResult: ", "Granted")
+                        Log.d("CameraFragment-> OnRequestPermissionResult: Location", "Granted")
+                    }
+                    if((ContextCompat.checkSelfPermission(
+                                    requireContext(),
+                                    Manifest.permission.CAMERA
+                            ) == PackageManager.PERMISSION_GRANTED
+                                    )){
+                        Log.d("CameraFragment-> OnRequestPermissionResult: Camera", "Granted")
                     }
                 } else {
                     // Permission is not granted
