@@ -1,4 +1,4 @@
-package com.example.fantasmo_android.screens.camera
+package com.example.fantasmo_android
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -21,11 +21,10 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.fragment.app.Fragment
-import com.example.fantasmo_android.R
+import com.example.fantasmo_android.databinding.CameraFragmentBinding
 import com.example.fantasmo_android.utils.DemoAppUtils.AppUtils.createStringDisplay
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.ux.ArFragment
-
 
 class CameraFragment: Fragment(), LocationListener {
 
@@ -46,10 +45,11 @@ class CameraFragment: Fragment(), LocationListener {
     private lateinit var locationManager: LocationManager
 
     override fun onCreateView(
-            inflater: LayoutInflater, container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
 
+        //_binding = CameraFragmentBinding.
         currentView = inflater.inflate(R.layout.camera_fragment, container, false)
 
         cameraTranslationTv = currentView.findViewById(R.id.cameraTranslation)
@@ -71,8 +71,8 @@ class CameraFragment: Fragment(), LocationListener {
     /**
      * To make any changes or get any values from ArFragment always call onResume lifecycle
      * */
-    override fun onResume(){
-        super.onResume()
+    override fun onStart(){
+        super.onStart()
 
         try{
             arFragment = childFragmentManager.findFragmentById(R.id.ar_fragment) as ArFragment
@@ -118,27 +118,27 @@ class CameraFragment: Fragment(), LocationListener {
      * Data obtained from the sensor: Camera Translation and Camera Rotation values
      * */
     private fun onUpdate() {
-        getLocation()
+        //getLocation()
         val arFrame = arSceneView.arFrame
 
         val cameraTranslation = arFrame?.androidSensorPose?.translation
         cameraTranslationTv.text =
             createStringDisplay("Camera Translation: ", cameraTranslation)
         Log.d(
-                "CameraFragment-> Camera Translation", createStringDisplay(
+            "CameraFragment-> Camera Translation", createStringDisplay(
                 "Camera Translation: ",
                 cameraTranslation
-        )
+            )
         )
 
         val cameraRotation = arFrame?.androidSensorPose?.rotationQuaternion
         cameraAnglesTv.text =
             createStringDisplay("Camera Angles: ", cameraRotation)
         Log.d(
-                "CameraFragment-> Camera Angles", createStringDisplay(
+            "CameraFragment-> Camera Angles", createStringDisplay(
                 "Camera Angles: ",
                 cameraRotation
-        )
+            )
         )
     }
 
@@ -149,27 +149,33 @@ class CameraFragment: Fragment(), LocationListener {
     private fun getLocation() {
         if ((context?.let {
                 checkSelfPermission(
-                        it,
-                        Manifest.permission.ACCESS_FINE_LOCATION
+                    it,
+                    Manifest.permission.ACCESS_FINE_LOCATION
                 )
             } != PackageManager.PERMISSION_GRANTED) &&
                 (context?.let{
                     checkSelfPermission(
-                            it,
-                            Manifest.permission.CAMERA
+                        it,
+                        Manifest.permission.CAMERA
                     )
                 } != PackageManager.PERMISSION_GRANTED)) {
             if (shouldShowRequestPermissionRationale(
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                    )) {
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                )) {
                 this.requestPermissions(
-                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.CAMERA),
-                        1
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.CAMERA
+                    ),
+                    1
                 )
             } else {
                 this.requestPermissions(
-                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.CAMERA),
-                        1
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.CAMERA
+                    ),
+                    1
                 )
             }
         }else{
@@ -181,31 +187,32 @@ class CameraFragment: Fragment(), LocationListener {
     override fun onLocationChanged(location: Location) {
         deviceCoorTv.text = "Device Lat: ${location.latitude} , Long: ${location.longitude}"
         Log.d(
-                "CameraFragment-> LocationChanged",
-                "New Latitude: ${location.latitude} and New Longitude: ${location.longitude}"
+            "CameraFragment-> LocationChanged",
+            "New Latitude: ${location.latitude} and New Longitude: ${location.longitude}"
         )
     }
 
     override fun onRequestPermissionsResult(
-            requestCode: Int,
-            permissions: Array<out String>,
-            grantResults: IntArray
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
     ) {
         when (requestCode) {
             1 -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     if (ContextCompat.checkSelfPermission(
-                                    requireContext(),
-                                    Manifest.permission.ACCESS_FINE_LOCATION
-                            ) == PackageManager.PERMISSION_GRANTED
+                            requireContext(),
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ) == PackageManager.PERMISSION_GRANTED
                     ) {
                         Log.d("CameraFragment-> OnRequestPermissionResult: Location", "Granted")
                     }
                     if ((ContextCompat.checkSelfPermission(
-                                    requireContext(),
-                                    Manifest.permission.CAMERA
-                            ) == PackageManager.PERMISSION_GRANTED
-                                    )) {
+                            requireContext(),
+                            Manifest.permission.CAMERA
+                        ) == PackageManager.PERMISSION_GRANTED
+                                )
+                    ) {
                         Log.d("CameraFragment-> OnRequestPermissionResult: Camera", "Granted")
                     }
                 } else {
@@ -223,9 +230,11 @@ class CameraFragment: Fragment(), LocationListener {
         builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
             .setCancelable(false)
             .setPositiveButton(
-                    "Yes"
-            ) { _, _ -> startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
-            .setNegativeButton("No"
+                "Yes"
+            ) { _, _ -> startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+            }
+            .setNegativeButton(
+                "No"
             ) { dialog, _ -> dialog.cancel() }
         val alert: AlertDialog = builder.create()
         alert.show()

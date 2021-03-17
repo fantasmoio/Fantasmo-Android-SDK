@@ -7,22 +7,8 @@
 
     <fragment
         android:id="@+id/main_navigation"
-        android:name="com.example.fantasmo_android.screens.title.TitleFragment"
-        android:label="title_fragment"
-        tools:layout="@layout/title_fragment">
-        <action
-            android:id="@+id/action_title_to_camera"
-            app:destination="@id/camera_destination" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/camera_destination"
-        android:name="com.example.fantasmo_android.screens.camera.CameraFragment"
+        android:name="com.example.fantasmo_android.CameraFragment"
         android:label="camera_fragment"
-        tools:layout="@layout/camera_fragment">
-        <action
-            android:id="@+id/action_camera_destination_to_title_destination"
-            app:destination="@id/main_navigation" />
-    </fragment>
+        tools:layout="@layout/camera_fragment"/>
 
 </navigation>
