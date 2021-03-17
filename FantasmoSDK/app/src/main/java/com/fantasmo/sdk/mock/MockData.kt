@@ -43,13 +43,13 @@ class MockData {
                 params = parkingMockParameters()
 
                 val bitmap =
-                    BitmapFactory.decodeResource(context.resources, R.drawable.imageInParking)
+                    BitmapFactory.decodeResource(context.resources, R.drawable.image_in_parking)
                 jpegData = getFileDataFromDrawable(bitmap)
             } else {
                 params = streetMockParameters()
 
                 val bitmap =
-                    BitmapFactory.decodeResource(context.resources, R.drawable.imageOnStreet)
+                    BitmapFactory.decodeResource(context.resources, R.drawable.image_on_street)
                 jpegData = getFileDataFromDrawable(bitmap)
             }
 
