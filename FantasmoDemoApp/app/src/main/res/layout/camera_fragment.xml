@@ -19,9 +19,38 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/users_data"
         android:layout_width="match_parent"
-        android:layout_height="183dp"
+        android:layout_height="wrap_content"
         android:background="#00FFFFFF"
+        android:layout_gravity="bottom"
         android:visibility="visible">
+
+        <Button
+            android:id="@+id/checkParkingButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/check_parking"
+            app:layout_constraintStart_toStartOf="@+id/anchorToggle"
+            app:layout_constraintTop_toBottomOf="@+id/anchorToggle" />
+
+        <Switch
+            android:id="@+id/anchorToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#FFFFFF"
+            android:text="@string/anchor"
+            app:layout_constraintStart_toStartOf="@+id/localizeToggle"
+            app:layout_constraintTop_toBottomOf="@+id/localizeToggle"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+        <Switch
+            android:id="@+id/localizeToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#FFFFFF"
+            android:text="@string/localize"
+            app:layout_constraintStart_toStartOf="@+id/coordinatesText"
+            app:layout_constraintTop_toBottomOf="@+id/coordinatesText"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
 
         <TextView
             android:id="@+id/cameraTranslation"
@@ -52,32 +81,6 @@
             android:text="@string/device_coordinates"
             app:layout_constraintStart_toStartOf="@+id/cameraAnglesText"
             app:layout_constraintTop_toBottomOf="@+id/cameraAnglesText" />
-
-        <Switch
-            android:id="@+id/localizeToggle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="#FFFFFF"
-            android:text="@string/localize"
-            app:layout_constraintStart_toStartOf="@+id/coordinatesText"
-            app:layout_constraintTop_toBottomOf="@+id/coordinatesText" />
-
-        <Switch
-            android:id="@+id/anchorToggle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="#FFFFFF"
-            android:text="@string/anchor"
-            app:layout_constraintStart_toStartOf="@+id/localizeToggle"
-            app:layout_constraintTop_toBottomOf="@+id/localizeToggle" />
-
-        <Button
-            android:id="@+id/checkParkingButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/check_parking"
-            app:layout_constraintStart_toStartOf="@+id/anchorToggle"
-            app:layout_constraintTop_toBottomOf="@+id/anchorToggle" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
