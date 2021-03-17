@@ -8,11 +8,13 @@ package com.fantasmo.sdk
 
 import android.content.Context
 import android.util.Log
+import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.google.ar.core.Frame
+import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -38,7 +40,7 @@ interface FMLocationListener {
     fun locationManager(error: ErrorResponse, metadata: Any?)
 }
 
-class FMLocationManager(context: Context) {
+class FMLocationManager(private val context: Context) {
     private val TAG = "FMLocationManager"
 
     enum class State {
@@ -69,11 +71,12 @@ class FMLocationManager(context: Context) {
     var simulationZone = FMZone.ZoneType.parking
     var isConnected = false
 
-    /// Connect to the location service.
-    ///
-    /// - Parameters:
-    ///   - accessToken: Token for service authorization.
-    ///   - delegate: Delegate for receiving location events.
+    /**
+     * Connect to the location service.
+     *
+     * @param accessToken: Token for service authorization.
+     * @param callback: FMLocationListener
+     */
     fun connect(
         accessToken: String,
         callback: FMLocationListener
@@ -136,6 +139,7 @@ class FMLocationManager(context: Context) {
             fmNetworkManager.uploadImage(
                 FMUtility.getImageDataFromARFrame(arFrame.acquireCameraImage()),
                 getLocalizeParams(),
+                token!!,
                 {
                     val location = it.location
                     val geofences = it.geofences
@@ -150,11 +154,32 @@ class FMLocationManager(context: Context) {
                             fmZones.add(fmZone)
                         }
                     }
-                    location?.let { it1 -> fmLocationListener?.locationManager(it1, fmZones) }
+                    location?.let { localizeResponse ->
+                        fmLocationListener?.locationManager(
+                            localizeResponse,
+                            fmZones
+                        )
+                    }
                 },
                 {
                     fmLocationListener?.locationManager(it, null)
                 })
+        }
+    }
+
+    /**
+     * Check to see if a given zone is in the provided radius
+     * @param zone: zone to search for
+     * @param radius: search radius in meters
+     * @param onCompletion: closure that consumes boolean server result
+     */
+    fun isZoneInRadius(zone: FMZone.ZoneType, radius: Int, onCompletion: (Boolean) -> Unit) {
+        if (!isConnected) {
+            return
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            fmNetworkManager.zoneInRadiusRequest(getZoneInRadiusParams(radius), token!!, onCompletion)
         }
     }
 
@@ -178,6 +203,22 @@ class FMLocationManager(context: Context) {
             "{\"longitude\" : 2.371750713292894, \"latitude\": 48.848138681935886}"
         params["intrinsics"] =
             "{\"cx\":481.0465087890625,\"fy\":1083.401611328125,\"fx\":1083.401611328125,\"cy\":629.142822265625}"
+
+        return params
+    }
+
+    /**
+     * Generate the zoneInRadius HTTP request parameters.
+     * @param radius: search radius in meters
+     * @return an HashMap with all the localization parameters.
+     */
+    private fun getZoneInRadiusParams(radius: Int): HashMap<String, String> {
+        val params = hashMapOf<String, String>()
+
+        val coordinate = Coordinate(48.848138681935886, 2.371750713292894)
+
+        params["radius"] = radius.toString()
+        params["coordinate"] = Gson().toJson(coordinate)
 
         return params
     }
