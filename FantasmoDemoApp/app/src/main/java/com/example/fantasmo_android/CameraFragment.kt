@@ -20,7 +20,6 @@ import android.widget.Switch
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
-import com.example.fantasmo_android.utils.DemoAppUtils.AppUtils.createStringDisplay
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.ux.ArFragment
 
@@ -176,5 +175,10 @@ class CameraFragment : Fragment(), LocationListener {
                 ) { dialog, _ -> dialog.cancel() }
         val alert: AlertDialog = builder.create()
         alert.show()
+    }
+
+    private fun createStringDisplay(s: String, cameraAttr: FloatArray?): String {
+        return s + String.format("%.2f", cameraAttr?.get(0)) + ", " +
+                String.format("%.2f", cameraAttr?.get(1)) + ", " + String.format("%.2f", cameraAttr?.get(2))
     }
 }
