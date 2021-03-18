@@ -6,6 +6,8 @@
 //
 package com.fantasmo.sdk.models
 
+import com.google.ar.core.Pose
+
 /**
  * Device pose at the moment of image capture. The coordinate frame is
  * right-handed, Y down (i.e., OpenCV convention). Y is gravity aligned. Rotation
@@ -82,9 +84,9 @@ class FMPose {
         this.orientation = FMOrientation(0.0f, 0.0f, 0.0f, 0.0f)
     }
 
-    constructor(pose: FMPose) {
-        this.position = FMPosition(pose.position)
-        this.orientation = FMOrientation(pose.orientation)
+    constructor(pose: Pose) {
+        this.position = FMPosition(pose.translation)
+        this.orientation = FMOrientation(pose.rotationQuaternion)
     }
 
     override fun toString(): String =

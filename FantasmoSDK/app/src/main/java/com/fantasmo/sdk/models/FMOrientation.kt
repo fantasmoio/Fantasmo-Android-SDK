@@ -81,6 +81,13 @@ class FMOrientation {
         this.w = fmOrientation.w
     }
 
+    constructor(rotationQuaternion: FloatArray) {
+        this.x = rotationQuaternion[0]
+        this.y = rotationQuaternion[1]
+        this.z = rotationQuaternion[2]
+        this.w = rotationQuaternion[3]
+    }
+
     private fun toQuaternion(): Quaternion = Quaternion(this.x, this.y, this.z, this.w)
 
     private fun getRotationTo(orientation: FMOrientation): Quaternion =
