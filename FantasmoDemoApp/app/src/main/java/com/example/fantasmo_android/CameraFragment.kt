@@ -23,6 +23,8 @@ import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
+import com.google.ar.core.Config
+import com.google.ar.core.Session
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.ux.ArFragment
 
@@ -48,6 +50,8 @@ class CameraFragment : Fragment() {
 
     private lateinit var locationManager: LocationManager
     private lateinit var fmLocationManager: FMLocationManager
+
+    private var autoFocus: Boolean = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -84,6 +88,7 @@ class CameraFragment : Fragment() {
             arFragment.planeDiscoveryController.hide()
             arFragment.planeDiscoveryController.setInstructionView(null)
             arSceneView = arFragment.arSceneView
+
             val scene = arSceneView.scene
             scene.addOnUpdateListener { frameTime ->
                 run {
@@ -151,6 +156,13 @@ class CameraFragment : Fragment() {
     private fun onUpdate() {
         val arFrame = arSceneView.arFrame
 
+        if(!autoFocus){
+            val config = arSceneView.session?.config
+            config?.focusMode = Config.FocusMode.AUTO
+            arSceneView.session?.configure(config)
+            Log.d("CameraFragment-> Session", arSceneView.session?.config?.focusMode.toString())
+            autoFocus = true
+        }
         val cameraTranslation = arFrame?.androidSensorPose?.translation
         cameraTranslationTv.text = createStringDisplay("Camera Translation: ", cameraTranslation)
 
