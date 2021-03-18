@@ -2,7 +2,6 @@ package com.example.fantasmo_android
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity.RESULT_CANCELED
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
@@ -24,6 +23,7 @@ import androidx.fragment.app.Fragment
 import com.example.fantasmo_android.utils.DemoAppUtils.AppUtils.createStringDisplay
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.ux.ArFragment
+
 
 class CameraFragment : Fragment(), LocationListener {
 
@@ -169,7 +169,7 @@ class CameraFragment : Fragment(), LocationListener {
                         "Yes"
                 ) { _, _ ->
                     val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                    startActivityForResult(intent, 1)
+                    startActivity(intent)
                 }
                 .setNegativeButton(
                         "No"
@@ -177,15 +177,4 @@ class CameraFragment : Fragment(), LocationListener {
         val alert: AlertDialog = builder.create()
         alert.show()
     }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (resultCode != RESULT_CANCELED) {
-            if (requestCode == 1) {
-                getLocation()
-            } else {
-                buildAlertMessageNoGps()
-            }
-        }
-    }
-
 }
