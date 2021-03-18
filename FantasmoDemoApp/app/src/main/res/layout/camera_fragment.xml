@@ -29,6 +29,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/check_parking"
+            android:textSize="18sp"
             app:layout_constraintStart_toStartOf="@+id/anchorToggle"
             app:layout_constraintTop_toBottomOf="@+id/anchorToggle" />
 
@@ -36,7 +37,10 @@
             android:id="@+id/anchorToggle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="#FFFFFF"
             android:text="@string/anchor"
+            android:textColor="#000000"
+            android:textSize="18sp"
             app:layout_constraintStart_toStartOf="@+id/localizeToggle"
             app:layout_constraintTop_toBottomOf="@+id/localizeToggle"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
@@ -45,7 +49,10 @@
             android:id="@+id/localizeToggle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="#FFFFFF"
             android:text="@string/localize"
+            android:textColor="#000000"
+            android:textSize="18sp"
             app:layout_constraintStart_toStartOf="@+id/coordinatesText"
             app:layout_constraintTop_toBottomOf="@+id/coordinatesText"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
@@ -54,7 +61,10 @@
             android:id="@+id/cameraTranslation"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="#FFFFFF"
             android:text="@string/camera_translation"
+            android:textColor="#000000"
+            android:textSize="18sp"
             android:visibility="visible"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -63,7 +73,10 @@
             android:id="@+id/cameraAnglesText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="#FFFFFF"
             android:text="@string/camera_angles"
+            android:textColor="#000000"
+            android:textSize="18sp"
             android:visibility="visible"
             app:layout_constraintStart_toStartOf="@+id/cameraTranslation"
             app:layout_constraintTop_toBottomOf="@+id/cameraTranslation" />
@@ -72,7 +85,10 @@
             android:id="@+id/coordinatesText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="#FFFFFF"
             android:text="@string/device_coordinates"
+            android:textColor="#000000"
+            android:textSize="18sp"
             app:layout_constraintStart_toStartOf="@+id/cameraAnglesText"
             app:layout_constraintTop_toBottomOf="@+id/cameraAnglesText" />
     </androidx.constraintlayout.widget.ConstraintLayout>

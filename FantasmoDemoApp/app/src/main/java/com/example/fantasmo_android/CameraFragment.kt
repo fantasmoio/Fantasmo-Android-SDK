@@ -153,17 +153,9 @@ class CameraFragment : Fragment() {
 
         val cameraTranslation = arFrame?.androidSensorPose?.translation
         cameraTranslationTv.text = createStringDisplay("Camera Translation: ", cameraTranslation)
-        Log.d(
-            "CameraFragment-> Camera Translation",
-            createStringDisplay("Camera Translation: ", cameraTranslation)
-        )
 
         val cameraRotation = arFrame?.androidSensorPose?.rotationQuaternion
         cameraAnglesTv.text = createStringDisplay("Camera Angles: ", cameraRotation)
-        Log.d(
-            "CameraFragment-> Camera Angles",
-            createStringDisplay("Camera Angles: ", cameraRotation)
-        )
 
         if (fmLocationManager.state == FMLocationManager.State.LOCALIZING) {
             arFrame?.let { fmLocationManager.localize(it) }
