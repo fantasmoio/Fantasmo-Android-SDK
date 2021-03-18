@@ -2,6 +2,7 @@ package com.example.fantasmo_android
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity.RESULT_CANCELED
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
@@ -18,15 +19,13 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Switch
 import android.widget.TextView
-import androidx.core.content.ContextCompat
-import androidx.core.content.PermissionChecker.checkSelfPermission
+import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
-import com.example.fantasmo_android.databinding.CameraFragmentBinding
 import com.example.fantasmo_android.utils.DemoAppUtils.AppUtils.createStringDisplay
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.ux.ArFragment
 
-class CameraFragment: Fragment(), LocationListener {
+class CameraFragment : Fragment(), LocationListener {
 
     private lateinit var arSceneView: ArSceneView
     private lateinit var arFragment: ArFragment
@@ -34,22 +33,22 @@ class CameraFragment: Fragment(), LocationListener {
 
     private lateinit var cameraTranslationTv: TextView
     private lateinit var cameraAnglesTv: TextView
-    private lateinit var deviceCoorTv : TextView
-    private lateinit var checkParkingButton : Button
+    private lateinit var deviceCoorTv: TextView
+    private lateinit var checkParkingButton: Button
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var localizeToggleButton : Switch
+    private lateinit var localizeToggleButton: Switch
+
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var anchorToggleButton : Switch
+    private lateinit var anchorToggleButton: Switch
 
     private lateinit var locationManager: LocationManager
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+            inflater: LayoutInflater, container: ViewGroup?,
+            savedInstanceState: Bundle?
     ): View {
 
-        //_binding = CameraFragmentBinding.
         currentView = inflater.inflate(R.layout.camera_fragment, container, false)
 
         cameraTranslationTv = currentView.findViewById(R.id.cameraTranslation)
@@ -60,21 +59,17 @@ class CameraFragment: Fragment(), LocationListener {
         anchorToggleButton = currentView.findViewById(R.id.anchorToggle)
 
         locationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            buildAlertMessageNoGps()
-        }else{
-            getLocation()
-        }
+        getLocation()
         return currentView
     }
 
     /**
      * To make any changes or get any values from ArFragment always call onResume lifecycle
      * */
-    override fun onStart(){
+    override fun onStart() {
         super.onStart()
 
-        try{
+        try {
             arFragment = childFragmentManager.findFragmentById(R.id.ar_fragment) as ArFragment
             arFragment.planeDiscoveryController.hide()
             arFragment.planeDiscoveryController.setInstructionView(null)
@@ -87,7 +82,7 @@ class CameraFragment: Fragment(), LocationListener {
                 }
             }
 
-            checkParkingButton.setOnClickListener{
+            checkParkingButton.setOnClickListener {
                 // Add Check Parking Functionality
                 Log.d("CameraFragment-> CheckPark Pressed", "CheckPark")
             }
@@ -108,7 +103,7 @@ class CameraFragment: Fragment(), LocationListener {
                 }
             }
 
-        }catch (e: Exception){
+        } catch (e: Exception) {
             Log.d("CameraFragment-> ArFragment Null", "ArFragment")
         }
     }
@@ -118,68 +113,42 @@ class CameraFragment: Fragment(), LocationListener {
      * Data obtained from the sensor: Camera Translation and Camera Rotation values
      * */
     private fun onUpdate() {
-        //getLocation()
         val arFrame = arSceneView.arFrame
 
         val cameraTranslation = arFrame?.androidSensorPose?.translation
-        cameraTranslationTv.text =
-            createStringDisplay("Camera Translation: ", cameraTranslation)
-        Log.d(
-            "CameraFragment-> Camera Translation", createStringDisplay(
-                "Camera Translation: ",
-                cameraTranslation
-            )
-        )
+        cameraTranslationTv.text = createStringDisplay("Camera Translation: ", cameraTranslation)
+        Log.d("CameraFragment-> Camera Translation",
+                createStringDisplay("Camera Translation: ", cameraTranslation))
 
         val cameraRotation = arFrame?.androidSensorPose?.rotationQuaternion
-        cameraAnglesTv.text =
-            createStringDisplay("Camera Angles: ", cameraRotation)
-        Log.d(
-            "CameraFragment-> Camera Angles", createStringDisplay(
-                "Camera Angles: ",
-                cameraRotation
-            )
-        )
+        cameraAnglesTv.text = createStringDisplay("Camera Angles: ", cameraRotation)
+        Log.d("CameraFragment-> Camera Angles",
+                createStringDisplay("Camera Angles: ", cameraRotation))
     }
 
     /**
-     * Gets system location through the app context
-     * Then checks if it has permission to ACCESS_FINE_LOCATION
+     * Gets system location through the locationManager
      */
     private fun getLocation() {
-        if ((context?.let {
-                checkSelfPermission(
-                    it,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                )
-            } != PackageManager.PERMISSION_GRANTED) &&
-                (context?.let{
-                    checkSelfPermission(
-                        it,
-                        Manifest.permission.CAMERA
+        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            if ((activity?.let {
+                        ActivityCompat.checkSelfPermission(
+                                it,
+                                Manifest.permission.ACCESS_FINE_LOCATION
+                        )
+                    } != PackageManager.PERMISSION_GRANTED)
+            ) {
+                activity?.let { it ->
+                    ActivityCompat.requestPermissions(
+                            it,
+                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                            1
                     )
-                } != PackageManager.PERMISSION_GRANTED)) {
-            if (shouldShowRequestPermissionRationale(
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                )) {
-                this.requestPermissions(
-                    arrayOf(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.CAMERA
-                    ),
-                    1
-                )
-            } else {
-                this.requestPermissions(
-                    arrayOf(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.CAMERA
-                    ),
-                    1
-                )
+                }
             }
-        }else{
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5f, this)
+        } else {
+            buildAlertMessageNoGps()
         }
     }
 
@@ -187,56 +156,36 @@ class CameraFragment: Fragment(), LocationListener {
     override fun onLocationChanged(location: Location) {
         deviceCoorTv.text = "Device Lat: ${location.latitude} , Long: ${location.longitude}"
         Log.d(
-            "CameraFragment-> LocationChanged",
-            "New Latitude: ${location.latitude} and New Longitude: ${location.longitude}"
+                "CameraFragment-> LocationChanged",
+                "New Latitude: ${location.latitude} and New Longitude: ${location.longitude}"
         )
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        when (requestCode) {
-            1 -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (ContextCompat.checkSelfPermission(
-                            requireContext(),
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        ) == PackageManager.PERMISSION_GRANTED
-                    ) {
-                        Log.d("CameraFragment-> OnRequestPermissionResult: Location", "Granted")
-                    }
-                    if ((ContextCompat.checkSelfPermission(
-                            requireContext(),
-                            Manifest.permission.CAMERA
-                        ) == PackageManager.PERMISSION_GRANTED
-                                )
-                    ) {
-                        Log.d("CameraFragment-> OnRequestPermissionResult: Camera", "Granted")
-                    }
-                } else {
-                    // Permission is not granted
-                    activity?.finish()
-                    Log.d("CameraFragment-> OnRequestPermissionResult: ", "Denied")
-                }
-                return
-            }
-        }
     }
 
     private fun buildAlertMessageNoGps() {
         val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
         builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
-            .setCancelable(false)
-            .setPositiveButton(
-                "Yes"
-            ) { _, _ -> startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-            }
-            .setNegativeButton(
-                "No"
-            ) { dialog, _ -> dialog.cancel() }
+                .setCancelable(false)
+                .setPositiveButton(
+                        "Yes"
+                ) { _, _ ->
+                    val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                    startActivityForResult(intent, 1)
+                }
+                .setNegativeButton(
+                        "No"
+                ) { dialog, _ -> dialog.cancel() }
         val alert: AlertDialog = builder.create()
         alert.show()
     }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (resultCode != RESULT_CANCELED) {
+            if (requestCode == 1) {
+                getLocation()
+            } else {
+                buildAlertMessageNoGps()
+            }
+        }
+    }
+
 }
