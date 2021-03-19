@@ -49,8 +49,8 @@ class CameraFragment : Fragment() {
     private lateinit var fmLocationManager: FMLocationManager
 
     override fun onCreateView(
-            inflater: LayoutInflater, container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
 
         currentView = inflater.inflate(R.layout.camera_fragment, container, false)
@@ -95,8 +95,8 @@ class CameraFragment : Fragment() {
 
             // Connect the FMLocationManager from Fantasmo SDK
             fmLocationManager.connect(
-                    "8e785284ca284c01bd84116c0d18e8fd",
-                    fmLocationListener
+                "8e785284ca284c01bd84116c0d18e8fd",
+                fmLocationListener
             )
 
             checkParkingButton.setOnClickListener {
@@ -150,15 +150,15 @@ class CameraFragment : Fragment() {
      * Listener for the Fantasmo SDK Location results.
      */
     private val fmLocationListener: FMLocationListener =
-            object : FMLocationListener {
-                override fun locationManager(error: ErrorResponse, metadata: Any?) {
-                    Log.d(TAG, error.message.toString())
-                }
-
-                override fun locationManager(location: Location, zones: List<FMZone>?) {
-                    Log.d(TAG, location.toString())
-                }
+        object : FMLocationListener {
+            override fun locationManager(error: ErrorResponse, metadata: Any?) {
+                Log.d(TAG, error.message.toString())
             }
+
+            override fun locationManager(location: Location, zones: List<FMZone>?) {
+                Log.d(TAG, location.toString())
+            }
+        }
 
     /**
      * On any changes to the scene call onUpdate method to get arFrames and get the camera data
@@ -173,6 +173,7 @@ class CameraFragment : Fragment() {
         val cameraRotation = arFrame?.androidSensorPose?.rotationQuaternion
         cameraAnglesTv.text = createStringDisplay("Camera Angles: ", cameraRotation)
 
+        // Localize current frame if not already localizing
         if (fmLocationManager.state == FMLocationManager.State.LOCALIZING) {
             arFrame?.let { fmLocationManager.localize(it) }
         }
