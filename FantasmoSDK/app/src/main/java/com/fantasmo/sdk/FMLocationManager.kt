@@ -205,7 +205,7 @@ class FMLocationManager(private val context: Context) : LocationListener {
 
             try {
                 fmNetworkManager.uploadImage(
-                    FMUtility.getImageDataFromARFrame(arFrame),
+                    FMUtility.getImageDataFromARFrame(context, arFrame),
                     getLocalizeParams(arFrame),
                     token!!,
                     {
@@ -277,7 +277,6 @@ class FMLocationManager(private val context: Context) : LocationListener {
      */
     private fun getLocalizeParams(frame: Frame): HashMap<String, String> {
         val pose = FMPose(frame.camera.pose)
-//        val orientation: Int = context.resources.configuration.orientation
 
         val coordinates = if (isSimulation) {
             val simulationLocation = FMConfiguration.getConfigLocation()
@@ -291,26 +290,20 @@ class FMLocationManager(private val context: Context) : LocationListener {
         val intrinsics = FMIntrinsics(
             focalLength.component1(),
             focalLength.component2(),
-            principalPoint.component1(),
-            principalPoint.component2()
+            principalPoint.component2(),
+            principalPoint.component1()
         )
 
         val params = hashMapOf<String, String>()
-
+        val gson = Gson()
         params["capturedAt"] = System.currentTimeMillis().toString()
-        //     params["gravity"] = Gson().toJson(pose.orientation)
+        params["gravity"] = gson.toJson(pose.orientation)
         params["uuid"] = UUID.randomUUID().toString()
-        params["coordinate"] = Gson().toJson(coordinates)
-//      params["intrinsics"] = Gson().toJson(intrinsics)
+        params["coordinate"] = gson.toJson(coordinates)
+        params["intrinsics"] = gson.toJson(intrinsics)
 
-//        params["capturedAt"] = "1615487312.571168"
-        params["gravity"] =
-            "{\"y\":0.92625105381011963,\"w\":0.27762770652770996,\"z\":0.25091192126274109,\"x\":-0.044999953359365463}"
-//        params["uuid"] = "30989AC2-B7C7-4619-B078-04E669A13937"
-//        params["coordinate"] =
-//            "{\"longitude\" : 2.371750713292894, \"latitude\": 48.848138681935886}"
-        params["intrinsics"] =
-            "{\"cx\":481.0465087890625,\"fy\":1083.401611328125,\"fx\":1083.401611328125,\"cy\":629.142822265625}"
+//        params["gravity"] =
+//            "{\"y\":0.92625105381011963,\"w\":0.27762770652770996,\"z\":0.25091192126274109,\"x\":-0.044999953359365463}"
 
         return params
     }
