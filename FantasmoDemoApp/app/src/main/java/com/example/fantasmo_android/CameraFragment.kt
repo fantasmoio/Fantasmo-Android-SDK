@@ -28,13 +28,16 @@ import com.google.ar.core.Session
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.ux.ArFragment
 
-
+/**
+ * Fragment to show AR camera image and make use of the Fantasmo SDK localization feature.
+ */
 class CameraFragment : Fragment() {
 
     private val TAG = "CameraFragment"
 
     private lateinit var arSceneView: ArSceneView
     private lateinit var arFragment: ArFragment
+    private lateinit var arSession: Session
     private lateinit var currentView: View
 
     private lateinit var cameraTranslationTv: TextView
@@ -50,8 +53,6 @@ class CameraFragment : Fragment() {
 
     private lateinit var locationManager: LocationManager
     private lateinit var fmLocationManager: FMLocationManager
-
-    private var autoFocus: Boolean = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -89,6 +90,7 @@ class CameraFragment : Fragment() {
             arFragment.planeDiscoveryController.setInstructionView(null)
             arSceneView = arFragment.arSceneView
 
+            configureARSession()
             val scene = arSceneView.scene
             scene.addOnUpdateListener { frameTime ->
                 run {
@@ -96,6 +98,10 @@ class CameraFragment : Fragment() {
                     onUpdate()
                 }
             }
+
+            // Enable simulation mode to test purposes with specific location
+            // depending on which SDK flavor it's being used (Paris, Munich, Miami)
+            //fmLocationManager.isSimulation = true
 
             // Connect the FMLocationManager from Fantasmo SDK
             fmLocationManager.connect(
@@ -136,6 +142,20 @@ class CameraFragment : Fragment() {
     }
 
     /**
+     * Method to configure the AR Session, used to
+     * enable auto focus for ARSceneView.
+     */
+    private fun configureARSession() {
+        arSession = Session(context)
+        val config = Config(arSession)
+        config.focusMode = Config.FocusMode.AUTO
+        config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
+        arSession.configure(config)
+        arSceneView.setupSession(arSession)
+        Log.d("CameraFragment-> Session", arSceneView.session?.config.toString())
+    }
+
+    /**
      * Listener for the Fantasmo SDK Location results.
      */
     private val fmLocationListener: FMLocationListener =
@@ -156,13 +176,6 @@ class CameraFragment : Fragment() {
     private fun onUpdate() {
         val arFrame = arSceneView.arFrame
 
-        if(!autoFocus){
-            val config = arSceneView.session?.config
-            config?.focusMode = Config.FocusMode.AUTO
-            arSceneView.session?.configure(config)
-            Log.d("CameraFragment-> Session", arSceneView.session?.config?.focusMode.toString())
-            autoFocus = true
-        }
         val cameraTranslation = arFrame?.androidSensorPose?.translation
         cameraTranslationTv.text = createStringDisplay("Camera Translation: ", cameraTranslation)
 
