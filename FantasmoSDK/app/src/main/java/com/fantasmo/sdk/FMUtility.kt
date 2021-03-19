@@ -1,8 +1,13 @@
 package com.fantasmo.sdk
 
+import android.content.Context
 import android.graphics.*
+import android.view.Display
+import android.view.Surface
+import android.view.WindowManager
 import com.google.ar.core.Frame
 import java.io.ByteArrayOutputStream
+
 
 /**
  * Class with utility methods and constants
@@ -14,7 +19,7 @@ class FMUtility {
          * @param arFrame the AR Frame to localize.
          * @return a ByteArray with the data of the [arFrame]
          */
-        fun getImageDataFromARFrame(arFrame: Frame): ByteArray {
+        fun getImageDataFromARFrame(context: Context, arFrame: Frame): ByteArray {
             //The camera image
             val cameraImage = arFrame.acquireCameraImage()
 
@@ -50,14 +55,48 @@ class FMUtility {
                 baOutputStream
             )
 
-            val imageBytes: ByteArray = baOutputStream.toByteArray()
-            val imageBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-            val data = getFileDataFromDrawable(imageBitmap.rotate(90f))
-
             // Release the image
             cameraImage.close()
 
+            val imageBytes: ByteArray = baOutputStream.toByteArray()
+            val imageBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                .rotate(getImageRotationDegrees(context))
+            val data = getFileDataFromDrawable(imageBitmap)
+
+            imageBitmap.recycle()
             return data
+        }
+
+        private fun getImageRotationDegrees(context: Context): Float {
+            val rotation: Int = try {
+                context.display?.rotation!!
+            } catch (exception: UnsupportedOperationException) {
+                val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                val display: Display = wm.defaultDisplay
+                display.rotation
+            }
+
+            when (rotation) {
+                // SCREEN_ORIENTATION_REVERSE_LANDSCAPE
+                Surface.ROTATION_270 -> {
+                    return 180f
+                }
+                // SCREEN_ORIENTATION_LANDSCAPE
+                Surface.ROTATION_90 -> {
+                    return 0f
+                }
+                // SCREEN_ORIENTATION_PORTRAIT
+                Surface.ROTATION_0 -> {
+                    return 90f
+                }
+                // SCREEN_ORIENTATION_REVERSE_PORTRAIT
+                Surface.ROTATION_180 -> {
+                    return 180f
+                }
+                else -> {
+                    return 0f
+                }
+            }
         }
 
         private fun Bitmap.rotate(degrees: Float): Bitmap {
@@ -67,7 +106,11 @@ class FMUtility {
 
         private fun getFileDataFromDrawable(bitmap: Bitmap): ByteArray {
             val byteArrayOutputStream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, Constants.JpegCompressionRatio, byteArrayOutputStream)
+            bitmap.compress(
+                Bitmap.CompressFormat.JPEG,
+                Constants.JpegCompressionRatio,
+                byteArrayOutputStream
+            )
             return byteArrayOutputStream.toByteArray()
         }
     }
