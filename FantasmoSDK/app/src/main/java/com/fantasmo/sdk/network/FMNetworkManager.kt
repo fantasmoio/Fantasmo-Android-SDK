@@ -7,6 +7,8 @@
 package com.fantasmo.sdk.network
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.util.Log
 import com.android.volley.*
 import com.android.volley.toolbox.Volley
@@ -21,8 +23,9 @@ import org.json.JSONException
  */
 class FMNetworkManager(
     val url: String,
-    context: Context
+    private val context: Context
 ) {
+    private val TAG = "FMNetworkManager"
 
     private val requestQueue: RequestQueue by lazy {
         // applicationContext is key, it keeps you from leaking the
@@ -54,11 +57,15 @@ class FMNetworkManager(
                 }
             },
             Response.ErrorListener { error ->
-                onError(error)
+                processAndLogError(error)
 
-                val errorResult = String(error.networkResponse.data)
-                val response = Gson().fromJson(errorResult, ErrorResponse::class.java)
-                onError(response)
+                if (error.networkResponse != null) {
+                    val errorResult = String(error.networkResponse.data)
+                    val response = Gson().fromJson(errorResult, ErrorResponse::class.java)
+                    onError(response)
+                } else {
+                    onError(ErrorResponse(404, "UnknownError"))
+                }
             }) {
 
             override fun getByteData(): MutableMap<String, FileDataPart> {
@@ -80,8 +87,12 @@ class FMNetworkManager(
             }
         }
 
-        // Adding request to the queue
-        requestQueue.add(multipartRequest)
+        // Adding request to the queue if there is a connection
+        if (isInternetAvailable()) {
+            requestQueue.add(multipartRequest)
+        } else {
+            Log.d(TAG, "No internet connection available")
+        }
     }
 
     /**
@@ -96,7 +107,7 @@ class FMNetworkManager(
             Method.POST, url,
             Response.Listener<NetworkResponse> { response ->
                 val resultResponse = String(response.data)
-                Log.d("zoneInRadiusRequest RESPONSE: ", resultResponse)
+                Log.d(TAG, "zoneInRadiusRequest RESPONSE: $resultResponse")
                 try {
                     val inRadius =
                         Gson().fromJson(resultResponse, ZoneInRadiusResponse::class.java)
@@ -107,7 +118,7 @@ class FMNetworkManager(
                 onCompletion(true)
             },
             Response.ErrorListener { error ->
-                onError(error)
+                processAndLogError(error)
                 onCompletion(false)
             }) {
 
@@ -124,14 +135,18 @@ class FMNetworkManager(
             }
         }
 
-        // Adding request to the queue
-        requestQueue.add(multipartRequest)
+        // Adding request to the queue if there is a connection
+        if (isInternetAvailable()) {
+            requestQueue.add(multipartRequest)
+        } else {
+            Log.d(TAG, "No internet connection available")
+        }
     }
 
     /**
      * Method to process and log network error.
      */
-    private fun onError(error: VolleyError) {
+    private fun processAndLogError(error: VolleyError) {
         val networkResponse = error.networkResponse
         var errorMessage = "Unknown error"
         if (networkResponse == null) {
@@ -163,7 +178,25 @@ class FMNetworkManager(
                 e.printStackTrace()
             }
         }
-        Log.e("Network Error:", errorMessage)
+        Log.e(TAG, "Network Error: $errorMessage")
         error.printStackTrace()
+    }
+
+    /**
+     * Check for internet connection.
+     */
+    private fun isInternetAvailable(): Boolean {
+        val connectivityManager =
+            context.applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val networkCapabilities = connectivityManager.activeNetwork ?: return false
+        val actNw =
+            connectivityManager.getNetworkCapabilities(networkCapabilities) ?: return false
+
+        return when {
+            actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+            actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+            actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
+            else -> false
+        }
     }
 }
