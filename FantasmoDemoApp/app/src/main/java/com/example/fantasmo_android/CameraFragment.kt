@@ -91,7 +91,7 @@ class CameraFragment : Fragment() {
 
             // Enable simulation mode to test purposes with specific location
             // depending on which SDK flavor it's being used (Paris, Munich, Miami)
-            fmLocationManager.isSimulation = true
+            //fmLocationManager.isSimulation = true
 
             // Connect the FMLocationManager from Fantasmo SDK
             fmLocationManager.connect(

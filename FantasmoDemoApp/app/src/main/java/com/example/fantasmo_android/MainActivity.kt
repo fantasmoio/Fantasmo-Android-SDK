@@ -70,12 +70,24 @@ class MainActivity : AppCompatActivity() {
                         "Yes"
                 ) { _, _ ->
                     val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                    startActivity(intent)
+                    startActivityForResult(intent, 2)
                 }
                 .setNegativeButton(
                         "No"
                 ) { dialog, _ -> dialog.cancel() }
         val alert: AlertDialog = builder.create()
         alert.show()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        when (requestCode) {
+            2 -> {
+                if (resultCode == 0) {
+                    finish()
+                    startActivity(intent)
+                }
+            }
+        }
     }
 }
