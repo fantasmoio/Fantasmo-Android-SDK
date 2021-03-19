@@ -6,18 +6,25 @@
 //
 package com.fantasmo.sdk
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.location.LocationListener
+import android.location.LocationManager
+import android.os.Bundle
 import android.util.Log
-import com.fantasmo.sdk.models.Coordinate
-import com.fantasmo.sdk.models.ErrorResponse
-import com.fantasmo.sdk.models.FMZone
-import com.fantasmo.sdk.models.Location
+import androidx.core.content.PermissionChecker
+import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.google.ar.core.Frame
+import com.google.ar.core.exceptions.DeadlineExceededException
+import com.google.ar.core.exceptions.NotYetAvailableException
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.*
+import kotlin.collections.HashMap
 
 /**
  * The methods that you use to receive events from an associated
@@ -40,7 +47,7 @@ interface FMLocationListener {
     fun locationManager(error: ErrorResponse, metadata: Any?)
 }
 
-class FMLocationManager(private val context: Context) {
+class FMLocationManager(private val context: Context) : LocationListener {
     private val TAG = "FMLocationManager"
 
     enum class State {
@@ -55,10 +62,14 @@ class FMLocationManager(private val context: Context) {
     }
 
     private val fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), context)
+    private lateinit var locationManager: LocationManager
+
     var state = State.STOPPED
 
     private var anchorFrame: Frame? = null
     var anchorDelta: Array<Array<Float>>? = null
+
+    private var currentLocation: android.location.Location = android.location.Location("")
 
     private var fmLocationListener: FMLocationListener? = null
     private var token: String? = null
@@ -95,6 +106,13 @@ class FMLocationManager(private val context: Context) {
 
         this.isConnected = true
         this.state = State.LOCALIZING
+
+        locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            getLocation()
+        } else {
+            Log.e(TAG, "Your GPS seems to be disabled")
+        }
     }
 
     /**
@@ -126,6 +144,53 @@ class FMLocationManager(private val context: Context) {
     }
 
     /**
+     * Gets system location through the app context
+     * Then checks if it has permission to ACCESS_FINE_LOCATION
+     */
+    private fun getLocation() {
+        if ((context.let {
+                PermissionChecker.checkSelfPermission(
+                    it,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                )
+            } != PackageManager.PERMISSION_GRANTED) &&
+            (context.let {
+                PermissionChecker.checkSelfPermission(
+                    it,
+                    Manifest.permission.CAMERA
+                )
+            } != PackageManager.PERMISSION_GRANTED)) {
+            Log.e(TAG, "Location permission needs to be granted.")
+        } else {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5f, this)
+        }
+    }
+
+    /**
+     * Listener for Location updates.
+     */
+    override fun onLocationChanged(location: android.location.Location) {
+        Log.d(TAG, "New Latitude: ${location.latitude} and New Longitude: ${location.longitude}")
+
+        currentLocation = location
+    }
+
+    /**
+     * Stop location updates if provider is disabled.
+     */
+    override fun onProviderDisabled(provider: String) {
+        if (provider == LocationManager.GPS_PROVIDER) {
+            Log.d(TAG, "GPS provider was disabled")
+        }
+    }
+
+    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+    }
+
+    override fun onProviderEnabled(provider: String) {
+    }
+
+    /**
      * Localize the image frame. It triggers a network request that
      * provides a response via the callback [FMLocationListener].
      * @param arFrame an AR Frame to localize
@@ -136,34 +201,51 @@ class FMLocationManager(private val context: Context) {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            fmNetworkManager.uploadImage(
-                FMUtility.getImageDataFromARFrame(arFrame.acquireCameraImage()),
-                getLocalizeParams(),
-                token!!,
-                {
-                    val location = it.location
-                    val geofences = it.geofences
+            state = State.UPLOADING
 
-                    val fmZones = mutableListOf<FMZone>()
-                    if (geofences != null && geofences.isNotEmpty()) {
-                        for (geofence in geofences) {
-                            val fmZone = FMZone(
-                                FMZone.ZoneType.valueOf(geofence.elementType),
-                                geofence.elementID.toString()
-                            )
-                            fmZones.add(fmZone)
+            try {
+                fmNetworkManager.uploadImage(
+                    FMUtility.getImageDataFromARFrame(context, arFrame),
+                    getLocalizeParams(arFrame),
+                    token!!,
+                    {
+                        val location = it.location
+                        val geofences = it.geofences
+
+                        val fmZones = mutableListOf<FMZone>()
+                        if (geofences != null && geofences.isNotEmpty()) {
+                            for (geofence in geofences) {
+                                val fmZone = FMZone(
+                                    FMZone.ZoneType.valueOf(geofence.elementType),
+                                    geofence.elementID.toString()
+                                )
+                                fmZones.add(fmZone)
+                            }
                         }
-                    }
-                    location?.let { localizeResponse ->
-                        fmLocationListener?.locationManager(
-                            localizeResponse,
-                            fmZones
-                        )
-                    }
-                },
-                {
-                    fmLocationListener?.locationManager(it, null)
-                })
+                        location?.let { localizeResponse ->
+                            fmLocationListener?.locationManager(
+                                localizeResponse,
+                                fmZones
+                            )
+
+                            state = State.LOCALIZING
+                        }
+                    },
+                    {
+                        fmLocationListener?.locationManager(it, null)
+
+                        state = State.LOCALIZING
+                    })
+            } catch (e: NotYetAvailableException) {
+                Log.e(TAG, "NotYetAvailableException $e")
+                state = State.LOCALIZING
+            } catch (e: DeadlineExceededException) {
+                Log.e(TAG, "DeadlineExceededException $e")
+                state = State.LOCALIZING
+            } catch (e: Exception) {
+                e.printStackTrace()
+                state = State.LOCALIZING
+            }
         }
     }
 
@@ -179,7 +261,11 @@ class FMLocationManager(private val context: Context) {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            fmNetworkManager.zoneInRadiusRequest(getZoneInRadiusParams(radius), token!!, onCompletion)
+            fmNetworkManager.zoneInRadiusRequest(
+                getZoneInRadiusParams(radius),
+                token!!,
+                onCompletion
+            )
         }
     }
 
@@ -187,22 +273,37 @@ class FMLocationManager(private val context: Context) {
      * Generate the localize HTTP request parameters. Can fail if the jpeg
      * conversion throws an exception.
      * @param frame: Frame to localize
-     * @param deviceOrientation: Current device orientation for computing intrinsics
-     * @param interfaceOrientation: Current interface orientation for computing intrinsics
-     * @param currentLocation: Current geo location for coarse estimate
      * @return an HashMap with all the localization parameters.
      */
-    private fun getLocalizeParams(): HashMap<String, String> {
-        val params = hashMapOf<String, String>()
+    private fun getLocalizeParams(frame: Frame): HashMap<String, String> {
+        val pose = FMPose(frame.camera.pose)
 
-        params["capturedAt"] = "1615487312.571168"
-        params["gravity"] =
-            "{\"y\":0.92625105381011963,\"w\":0.27762770652770996,\"z\":0.25091192126274109,\"x\":-0.044999953359365463}"
-        params["uuid"] = "30989AC2-B7C7-4619-B078-04E669A13937"
-        params["coordinate"] =
-            "{\"longitude\" : 2.371750713292894, \"latitude\": 48.848138681935886}"
-        params["intrinsics"] =
-            "{\"cx\":481.0465087890625,\"fy\":1083.401611328125,\"fx\":1083.401611328125,\"cy\":629.142822265625}"
+        val coordinates = if (isSimulation) {
+            val simulationLocation = FMConfiguration.getConfigLocation()
+            Coordinate(simulationLocation.latitude, simulationLocation.longitude)
+        } else {
+            Coordinate(currentLocation.latitude, currentLocation.longitude)
+        }
+
+        val focalLength = frame.camera.imageIntrinsics.focalLength
+        val principalPoint = frame.camera.imageIntrinsics.principalPoint
+        val intrinsics = FMIntrinsics(
+            focalLength.component1(),
+            focalLength.component2(),
+            principalPoint.component2(),
+            principalPoint.component1()
+        )
+
+        val params = hashMapOf<String, String>()
+        val gson = Gson()
+        params["capturedAt"] = System.currentTimeMillis().toString()
+        params["gravity"] = gson.toJson(pose.orientation)
+        params["uuid"] = UUID.randomUUID().toString()
+        params["coordinate"] = gson.toJson(coordinates)
+        params["intrinsics"] = gson.toJson(intrinsics)
+
+//        params["gravity"] =
+//            "{\"y\":0.92625105381011963,\"w\":0.27762770652770996,\"z\":0.25091192126274109,\"x\":-0.044999953359365463}"
 
         return params
     }
@@ -215,10 +316,15 @@ class FMLocationManager(private val context: Context) {
     private fun getZoneInRadiusParams(radius: Int): HashMap<String, String> {
         val params = hashMapOf<String, String>()
 
-        val coordinate = Coordinate(48.848138681935886, 2.371750713292894)
+        val coordinates = if (isSimulation) {
+            val simulationLocation = FMConfiguration.getConfigLocation()
+            Coordinate(simulationLocation.latitude, simulationLocation.longitude)
+        } else {
+            Coordinate(currentLocation.latitude, currentLocation.longitude)
+        }
 
         params["radius"] = radius.toString()
-        params["coordinate"] = Gson().toJson(coordinate)
+        params["coordinate"] = Gson().toJson(coordinates)
 
         return params
     }

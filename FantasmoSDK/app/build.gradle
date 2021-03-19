@@ -20,6 +20,10 @@ android {
     }
 
     buildTypes {
+        debug{
+            minifyEnabled = false
+            shrinkResources false
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -52,6 +56,23 @@ android {
             dimension "env"
             buildConfigField "String", "FM_API_BASE_URL", "\"13.90.158.61:8090/v1/image.localize\""
             buildConfigField "String", "FM_GPS_LAT_LONG", "\"25.762586765198417,-80.19404801110545\""
+        }
+    }
+
+    libraryVariants.all { variant ->
+        variant.outputs.all {
+            def appName = "FantasmoSDK"
+            def versionNameValue = defaultConfig.versionName
+            def buildType = variant.buildType.name
+            def newName
+
+            if (buildType == "debug") {
+                newName = "${appName}_${versionNameValue}-${buildType}.aar"
+            } else {
+                newName = "${appName}_${versionNameValue}.aar"
+            }
+
+            outputFileName = newName
         }
     }
 }

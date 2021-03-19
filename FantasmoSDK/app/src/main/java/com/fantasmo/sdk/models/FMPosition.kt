@@ -34,10 +34,10 @@ class FMPosition {
      * Extracts the position from an ARCore camera transform matrix and converts
      * from android coordinates (right-handed, Y Up) to OpenCV coordinates (right-handed, Y Down)
      */
-    constructor(transform: Array<Array<Float>>) {
-        x = transform[3][0]
-        y = -transform[3][0]
-        z = -transform[3][0]
+    constructor(translation: FloatArray) {
+        x = translation[0]
+        y = -translation[1]
+        z = -translation[2]
     }
 
     constructor(x: Float, y: Float, z: Float) {
