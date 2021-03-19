@@ -17,6 +17,8 @@ import androidx.core.content.PermissionChecker
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.google.ar.core.Frame
+import com.google.ar.core.exceptions.DeadlineExceededException
+import com.google.ar.core.exceptions.NotYetAvailableException
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -178,7 +180,7 @@ class FMLocationManager(private val context: Context) : LocationListener {
      */
     override fun onProviderDisabled(provider: String) {
         if (provider == LocationManager.GPS_PROVIDER) {
-            Log.d(TAG,"GPS provider was disabled")
+            Log.d(TAG, "GPS provider was disabled")
         }
     }
 
@@ -201,39 +203,49 @@ class FMLocationManager(private val context: Context) : LocationListener {
         CoroutineScope(Dispatchers.IO).launch {
             state = State.UPLOADING
 
-            val imageData = FMUtility.getImageDataFromARFrame(arFrame)
-            fmNetworkManager.uploadImage(
-                imageData,
-                getLocalizeParams(arFrame),
-                token!!,
-                {
-                    val location = it.location
-                    val geofences = it.geofences
+            try {
+                fmNetworkManager.uploadImage(
+                    FMUtility.getImageDataFromARFrame(arFrame),
+                    getLocalizeParams(arFrame),
+                    token!!,
+                    {
+                        val location = it.location
+                        val geofences = it.geofences
 
-                    val fmZones = mutableListOf<FMZone>()
-                    if (geofences != null && geofences.isNotEmpty()) {
-                        for (geofence in geofences) {
-                            val fmZone = FMZone(
-                                FMZone.ZoneType.valueOf(geofence.elementType),
-                                geofence.elementID.toString()
-                            )
-                            fmZones.add(fmZone)
+                        val fmZones = mutableListOf<FMZone>()
+                        if (geofences != null && geofences.isNotEmpty()) {
+                            for (geofence in geofences) {
+                                val fmZone = FMZone(
+                                    FMZone.ZoneType.valueOf(geofence.elementType),
+                                    geofence.elementID.toString()
+                                )
+                                fmZones.add(fmZone)
+                            }
                         }
-                    }
-                    location?.let { localizeResponse ->
-                        fmLocationListener?.locationManager(
-                            localizeResponse,
-                            fmZones
-                        )
+                        location?.let { localizeResponse ->
+                            fmLocationListener?.locationManager(
+                                localizeResponse,
+                                fmZones
+                            )
+
+                            state = State.LOCALIZING
+                        }
+                    },
+                    {
+                        fmLocationListener?.locationManager(it, null)
 
                         state = State.LOCALIZING
-                    }
-                },
-                {
-                    fmLocationListener?.locationManager(it, null)
-
-                    state = State.LOCALIZING
-                })
+                    })
+            } catch (e: NotYetAvailableException) {
+                Log.e(TAG, "NotYetAvailableException $e")
+                state = State.LOCALIZING
+            } catch (e: DeadlineExceededException) {
+                Log.e(TAG, "DeadlineExceededException $e")
+                state = State.LOCALIZING
+            } catch (e: Exception) {
+                e.printStackTrace()
+                state = State.LOCALIZING
+            }
         }
     }
 
@@ -267,31 +279,38 @@ class FMLocationManager(private val context: Context) : LocationListener {
         val pose = FMPose(frame.camera.pose)
 //        val orientation: Int = context.resources.configuration.orientation
 
-        if (isSimulation) {
-            currentLocation = FMConfiguration.getConfigLocation()
+        val coordinates = if (isSimulation) {
+            val simulationLocation = FMConfiguration.getConfigLocation()
+            Coordinate(simulationLocation.latitude, simulationLocation.longitude)
+        } else {
+            Coordinate(currentLocation.latitude, currentLocation.longitude)
         }
-        val coordinates = Coordinate(currentLocation.latitude, currentLocation.longitude)
 
         val focalLength = frame.camera.imageIntrinsics.focalLength
         val principalPoint = frame.camera.imageIntrinsics.principalPoint
-        val intrinsics = FMIntrinsics(focalLength.component1(), focalLength.component2(), principalPoint.component1(), principalPoint.component2())
+        val intrinsics = FMIntrinsics(
+            focalLength.component1(),
+            focalLength.component2(),
+            principalPoint.component1(),
+            principalPoint.component2()
+        )
 
         val params = hashMapOf<String, String>()
 
         params["capturedAt"] = System.currentTimeMillis().toString()
-        params["gravity"] = Gson().toJson(pose.orientation)
+        //     params["gravity"] = Gson().toJson(pose.orientation)
         params["uuid"] = UUID.randomUUID().toString()
         params["coordinate"] = Gson().toJson(coordinates)
-        params["intrinsics"] = Gson().toJson(intrinsics)
+//      params["intrinsics"] = Gson().toJson(intrinsics)
 
 //        params["capturedAt"] = "1615487312.571168"
-//        params["gravity"] =
-//            "{\"y\":0.92625105381011963,\"w\":0.27762770652770996,\"z\":0.25091192126274109,\"x\":-0.044999953359365463}"
+        params["gravity"] =
+            "{\"y\":0.92625105381011963,\"w\":0.27762770652770996,\"z\":0.25091192126274109,\"x\":-0.044999953359365463}"
 //        params["uuid"] = "30989AC2-B7C7-4619-B078-04E669A13937"
 //        params["coordinate"] =
 //            "{\"longitude\" : 2.371750713292894, \"latitude\": 48.848138681935886}"
-//        params["intrinsics"] =
-//            "{\"cx\":481.0465087890625,\"fy\":1083.401611328125,\"fx\":1083.401611328125,\"cy\":629.142822265625}"
+        params["intrinsics"] =
+            "{\"cx\":481.0465087890625,\"fy\":1083.401611328125,\"fx\":1083.401611328125,\"cy\":629.142822265625}"
 
         return params
     }
@@ -304,10 +323,15 @@ class FMLocationManager(private val context: Context) : LocationListener {
     private fun getZoneInRadiusParams(radius: Int): HashMap<String, String> {
         val params = hashMapOf<String, String>()
 
-        val coordinate = Coordinate(48.848138681935886, 2.371750713292894)
+        val coordinates = if (isSimulation) {
+            val simulationLocation = FMConfiguration.getConfigLocation()
+            Coordinate(simulationLocation.latitude, simulationLocation.longitude)
+        } else {
+            Coordinate(currentLocation.latitude, currentLocation.longitude)
+        }
 
         params["radius"] = radius.toString()
-        params["coordinate"] = Gson().toJson(coordinate)
+        params["coordinate"] = Gson().toJson(coordinates)
 
         return params
     }

@@ -1,8 +1,6 @@
 package com.fantasmo.sdk
 
-import android.graphics.ImageFormat
-import android.graphics.Rect
-import android.graphics.YuvImage
+import android.graphics.*
 import com.google.ar.core.Frame
 import java.io.ByteArrayOutputStream
 
@@ -48,14 +46,29 @@ class FMUtility {
             )
             yuvImage.compressToJpeg(
                 Rect(0, 0, cameraImage.width, cameraImage.height),
-                Constants.JpegCompressionRatio,
+                100,
                 baOutputStream
             )
+
+            val imageBytes: ByteArray = baOutputStream.toByteArray()
+            val imageBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            val data = getFileDataFromDrawable(imageBitmap.rotate(90f))
 
             // Release the image
             cameraImage.close()
 
-            return baOutputStream.toByteArray()
+            return data
+        }
+
+        private fun Bitmap.rotate(degrees: Float): Bitmap {
+            val matrix = Matrix().apply { postRotate(degrees) }
+            return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
+        }
+
+        private fun getFileDataFromDrawable(bitmap: Bitmap): ByteArray {
+            val byteArrayOutputStream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, Constants.JpegCompressionRatio, byteArrayOutputStream)
+            return byteArrayOutputStream.toByteArray()
         }
     }
 
