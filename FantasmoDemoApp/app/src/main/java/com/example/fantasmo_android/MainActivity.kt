@@ -51,6 +51,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * After Requesting Permission if Camera and Location Permission are given, return main_activity_layout
+     * @param requestCode: Request Code sent by requestPermission
+     * @param permissions: Permissions to be given
+     * @param grantResults: Result of permissions given (PERMISSION_GRANTED or PERMISSION_DENIED)
+     * */
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String?>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 1) {
@@ -62,6 +68,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Builds Alert Message to turn on GPS and redirects user to device settings
+     */
     private fun buildAlertMessageNoGps() {
         val builder: AlertDialog.Builder = AlertDialog.Builder(this)
         builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
@@ -79,6 +88,12 @@ class MainActivity : AppCompatActivity() {
         alert.show()
     }
 
+    /**
+     * After the user has been directed to Settings, restart Activity
+     * @param requestCode: Request sent by startActivityForResult
+     * @param resultCode: Result after activity started
+     * @param data: Intent of the performed activity
+     * */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
