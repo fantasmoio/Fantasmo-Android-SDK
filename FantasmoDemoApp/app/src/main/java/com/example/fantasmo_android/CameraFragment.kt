@@ -1,14 +1,9 @@
 package com.example.fantasmo_android
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.app.AlertDialog
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -16,7 +11,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Switch
 import android.widget.TextView
-import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.fantasmo.sdk.FMLocationListener
 import com.fantasmo.sdk.FMLocationManager
@@ -70,11 +64,7 @@ class CameraFragment : Fragment() {
 
         fmLocationManager = context?.let { FMLocationManager(it.applicationContext) }!!
         locationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            buildAlertMessageNoGps()
-        } else {
-            checkLocationPermission()
-        }
+
         return currentView
     }
 
@@ -101,7 +91,7 @@ class CameraFragment : Fragment() {
 
             // Enable simulation mode to test purposes with specific location
             // depending on which SDK flavor it's being used (Paris, Munich, Miami)
-            //fmLocationManager.isSimulation = true
+            fmLocationManager.isSimulation = true
 
             // Connect the FMLocationManager from Fantasmo SDK
             fmLocationManager.connect(
@@ -185,48 +175,6 @@ class CameraFragment : Fragment() {
         if (fmLocationManager.state == FMLocationManager.State.LOCALIZING) {
             arFrame?.let { fmLocationManager.localize(it) }
         }
-    }
-
-    /**
-     * Gets system location through the locationManager
-     */
-    private fun checkLocationPermission() {
-        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            if ((activity?.let {
-                    ActivityCompat.checkSelfPermission(
-                        it,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    )
-                } != PackageManager.PERMISSION_GRANTED)
-            ) {
-                activity?.let { it ->
-                    ActivityCompat.requestPermissions(
-                        it,
-                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                        1
-                    )
-                }
-            }
-        } else {
-            buildAlertMessageNoGps()
-        }
-    }
-
-    private fun buildAlertMessageNoGps() {
-        val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
-        builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
-            .setCancelable(false)
-            .setPositiveButton(
-                "Yes"
-            ) { _, _ ->
-                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                startActivity(intent)
-            }
-            .setNegativeButton(
-                "No"
-            ) { dialog, _ -> dialog.cancel() }
-        val alert: AlertDialog = builder.create()
-        alert.show()
     }
 
     private fun createStringDisplay(s: String, cameraAttr: FloatArray?): String {
