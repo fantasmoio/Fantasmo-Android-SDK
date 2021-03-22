@@ -39,7 +39,7 @@ class MockData {
             val params: Map<String, Any>?
             val jpegData: ByteArray?
 
-            if (zone == FMZone.ZoneType.parking) {
+            if (zone == FMZone.ZoneType.PARKING) {
                 params = parkingMockParameters()
 
                 val bitmap =
