@@ -276,7 +276,7 @@ class FMLocationManager(private val context: Context) : LocationListener {
      * @return an HashMap with all the localization parameters.
      */
     private fun getLocalizeParams(frame: Frame): HashMap<String, String> {
-        val pose = FMPose(frame.camera.pose)
+        val pose = FMPose(frame.androidSensorPose.extractRotation())
 
         val coordinates = if (isSimulation) {
             val simulationLocation = FMConfiguration.getConfigLocation()
@@ -301,9 +301,6 @@ class FMLocationManager(private val context: Context) : LocationListener {
         params["uuid"] = UUID.randomUUID().toString()
         params["coordinate"] = gson.toJson(coordinates)
         params["intrinsics"] = gson.toJson(intrinsics)
-
-//        params["gravity"] =
-//            "{\"y\":0.92625105381011963,\"w\":0.27762770652770996,\"z\":0.25091192126274109,\"x\":-0.044999953359365463}"
 
         return params
     }
