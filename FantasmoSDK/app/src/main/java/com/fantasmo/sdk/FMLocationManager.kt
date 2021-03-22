@@ -79,7 +79,7 @@ class FMLocationManager(private val context: Context) : LocationListener {
     var isSimulation = false
 
     /// The zone that will be simulated.
-    var simulationZone = FMZone.ZoneType.parking
+    var simulationZone = FMZone.ZoneType.PARKING
     var isConnected = false
 
     /**
@@ -261,7 +261,9 @@ class FMLocationManager(private val context: Context) : LocationListener {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
+            val url = "https://api.fantasmo.io/v1/parking.in.radius"
             fmNetworkManager.zoneInRadiusRequest(
+                url,
                 getZoneInRadiusParams(radius),
                 token!!,
                 onCompletion
@@ -309,6 +311,8 @@ class FMLocationManager(private val context: Context) : LocationListener {
      * Generate the zoneInRadius HTTP request parameters.
      * @param radius: search radius in meters
      * @return an HashMap with all the localization parameters.
+     *
+     * Only works with PARKING zones currently
      */
     private fun getZoneInRadiusParams(radius: Int): HashMap<String, String> {
         val params = hashMapOf<String, String>()
