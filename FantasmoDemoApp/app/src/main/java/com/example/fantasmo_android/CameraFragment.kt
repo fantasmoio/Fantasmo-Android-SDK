@@ -37,7 +37,6 @@ class CameraFragment : Fragment() {
 
     private lateinit var cameraTranslationTv: TextView
     private lateinit var cameraAnglesTv: TextView
-    private lateinit var deviceCoorTv: TextView
     private lateinit var serverCoorTv: TextView
     private lateinit var checkParkingButton: Button
 
@@ -60,7 +59,6 @@ class CameraFragment : Fragment() {
         cameraTranslationTv = currentView.findViewById(R.id.cameraTranslation)
         cameraAnglesTv = currentView.findViewById(R.id.cameraAnglesText)
         checkParkingButton = currentView.findViewById(R.id.checkParkingButton)
-        deviceCoorTv = currentView.findViewById(R.id.deviceCoordsText)
         serverCoorTv = currentView.findViewById(R.id.serverCoordsText)
         localizeToggleButton = currentView.findViewById(R.id.localizeToggle)
         anchorToggleButton = currentView.findViewById(R.id.anchorToggle)
@@ -94,7 +92,7 @@ class CameraFragment : Fragment() {
 
             // Enable simulation mode to test purposes with specific location
             // depending on which SDK flavor it's being used (Paris, Munich, Miami)
-            fmLocationManager.isSimulation = true
+            //fmLocationManager.isSimulation = true
 
             // Connect the FMLocationManager from Fantasmo SDK
             fmLocationManager.connect(

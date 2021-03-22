@@ -53,8 +53,8 @@
             android:text="@string/localize"
             android:textColor="#000000"
             android:textSize="18sp"
-            app:layout_constraintStart_toStartOf="@+id/deviceCoordsText"
-            app:layout_constraintTop_toBottomOf="@+id/deviceCoordsText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/serverCoordsText"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
 
         <TextView
@@ -80,17 +80,6 @@
             android:visibility="visible"
             app:layout_constraintStart_toStartOf="@+id/cameraTranslation"
             app:layout_constraintTop_toBottomOf="@+id/cameraTranslation" />
-
-        <TextView
-            android:id="@+id/deviceCoordsText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFF"
-            android:text="@string/device_coordinates"
-            android:textColor="#000000"
-            android:textSize="18sp"
-            app:layout_constraintStart_toStartOf="@+id/cameraAnglesText"
-            app:layout_constraintTop_toBottomOf="@+id/serverCoordsText" />
 
         <TextView
             android:id="@+id/serverCoordsText"
