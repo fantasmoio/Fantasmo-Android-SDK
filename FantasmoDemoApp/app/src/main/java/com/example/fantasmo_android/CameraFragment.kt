@@ -91,7 +91,7 @@ class CameraFragment : Fragment() {
 
             // Enable simulation mode to test purposes with specific location
             // depending on which SDK flavor it's being used (Paris, Munich, Miami)
-            //fmLocationManager.isSimulation = true
+            fmLocationManager.isSimulation = true
 
             // Connect the FMLocationManager from Fantasmo SDK
             fmLocationManager.connect(
@@ -101,17 +101,17 @@ class CameraFragment : Fragment() {
 
             checkParkingButton.setOnClickListener {
                 // Add Check Parking Functionality
-                Log.d("CameraFragment-> CheckPark Pressed", "CheckPark")
+                Log.d(TAG, "CheckPark Pressed")
             }
 
             localizeToggleButton.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
-                    Log.d("CameraFragment-> LocalizeToggle", "Enabled")
+                    Log.d(TAG, "LocalizeToggle Enabled")
 
                     // Start getting location updates
                     fmLocationManager.startUpdatingLocation()
                 } else {
-                    Log.d("CameraFragment-> LocalizeToggle", "Disabled")
+                    Log.d(TAG, "LocalizeToggle Disabled")
 
                     // Stop getting location updates
                     fmLocationManager.startUpdatingLocation()
@@ -120,14 +120,14 @@ class CameraFragment : Fragment() {
 
             anchorToggleButton.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
-                    Log.d("CameraFragment-> AnchorToggle", "Enabled")
+                    Log.d(TAG, "AnchorToggle Enabled")
                 } else {
-                    Log.d("CameraFragment-> AnchorToggle", "Disabled")
+                    Log.d(TAG, "AnchorToggle Disabled")
                 }
             }
 
         } catch (e: Exception) {
-            Log.d("CameraFragment-> ArFragment Null", "ArFragment")
+            Log.d(TAG, "ArFragment Null")
         }
     }
 
@@ -143,7 +143,7 @@ class CameraFragment : Fragment() {
         config.planeFindingMode = Config.PlaneFindingMode.DISABLED
         arSession.configure(config)
         arSceneView.setupSession(arSession)
-        Log.d("CameraFragment-> Session", arSceneView.session?.config.toString())
+        Log.d(TAG, arSceneView.session?.config.toString())
     }
 
     /**
@@ -153,10 +153,13 @@ class CameraFragment : Fragment() {
         object : FMLocationListener {
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
                 Log.d(TAG, error.message.toString())
+                deviceCoorTv.text = error.message.toString()
             }
 
+            @SuppressLint("SetTextI18n")
             override fun locationManager(location: Location, zones: List<FMZone>?) {
                 Log.d(TAG, location.toString())
+                deviceCoorTv.text = "Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}"
             }
         }
 
