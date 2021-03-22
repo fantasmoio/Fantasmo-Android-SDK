@@ -6,7 +6,6 @@ plugins {
     id 'com.google.ar.sceneform.plugin'
     //Navigation
     id 'androidx.navigation.safeargs'
-
 }
 
 android {
@@ -44,7 +43,7 @@ android {
         variant.outputs.all {
             def appName = "Fantasmo_SDK_Demo_App"
             def buildType = variant.buildType.name
-            def newName;
+            def newName
 
             if (buildType == "debug") {
                 newName = "${appName}_${variant.versionName}-${buildType}.apk"
@@ -67,12 +66,9 @@ dependencies {
     implementation 'com.google.android.material:material:1.3.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    testImplementation 'junit:junit:4.+'
+    testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
-
-    // KTX
-    implementation 'androidx.core:core-ktx:1.3.1'
 
     // Navigation
     implementation "androidx.navigation:navigation-fragment-ktx:2.3.0"
@@ -83,9 +79,11 @@ dependencies {
     implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.17.1'
     implementation 'com.google.ar.sceneform:core:1.17.1'
     implementation 'com.google.ar.sceneform:animation:1.17.1'
-    implementation 'com.google.android.material:material:1.3.0-alpha02'
+    implementation 'com.google.android.material:material:1.4.0-alpha01'
 
     // Location Services
+    implementation 'com.google.gms:google-services:4.3.5'
+    implementation 'com.google.android.gms:play-services-auth:19.0.0'
     implementation 'com.google.android.gms:play-services-location:18.0.0'
 
     //GSON for JSON parse

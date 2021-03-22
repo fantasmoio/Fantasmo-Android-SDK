@@ -37,7 +37,7 @@ class CameraFragment : Fragment() {
 
     private lateinit var cameraTranslationTv: TextView
     private lateinit var cameraAnglesTv: TextView
-    private lateinit var deviceCoorTv: TextView
+    private lateinit var serverCoorTv: TextView
     private lateinit var checkParkingButton: Button
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
@@ -59,7 +59,7 @@ class CameraFragment : Fragment() {
         cameraTranslationTv = currentView.findViewById(R.id.cameraTranslation)
         cameraAnglesTv = currentView.findViewById(R.id.cameraAnglesText)
         checkParkingButton = currentView.findViewById(R.id.checkParkingButton)
-        deviceCoorTv = currentView.findViewById(R.id.coordinatesText)
+        serverCoorTv = currentView.findViewById(R.id.serverCoordsText)
         localizeToggleButton = currentView.findViewById(R.id.localizeToggle)
         anchorToggleButton = currentView.findViewById(R.id.anchorToggle)
 
@@ -101,7 +101,7 @@ class CameraFragment : Fragment() {
             )
 
             checkParkingButton.setOnClickListener {
-                Log.d("CameraFragment-> CheckPark Pressed", "CheckPark")
+                Log.d(TAG, "CheckPark Pressed")
 
                 fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, 10) {
                     Toast.makeText(activity?.applicationContext, "Is Zone In Radius Response: $it", Toast.LENGTH_LONG).show()
@@ -110,12 +110,12 @@ class CameraFragment : Fragment() {
 
             localizeToggleButton.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
-                    Log.d("CameraFragment-> LocalizeToggle", "Enabled")
+                    Log.d(TAG, "LocalizeToggle Enabled")
 
                     // Start getting location updates
                     fmLocationManager.startUpdatingLocation()
                 } else {
-                    Log.d("CameraFragment-> LocalizeToggle", "Disabled")
+                    Log.d(TAG, "LocalizeToggle Disabled")
 
                     // Stop getting location updates
                     fmLocationManager.stopUpdatingLocation()
@@ -124,14 +124,14 @@ class CameraFragment : Fragment() {
 
             anchorToggleButton.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
-                    Log.d("CameraFragment-> AnchorToggle", "Enabled")
+                    Log.d(TAG, "AnchorToggle Enabled")
                 } else {
-                    Log.d("CameraFragment-> AnchorToggle", "Disabled")
+                    Log.d(TAG, "AnchorToggle Disabled")
                 }
             }
 
         } catch (e: Exception) {
-            Log.d("CameraFragment-> ArFragment Null", "ArFragment")
+            Log.d(TAG, "ArFragment Null")
         }
     }
 
@@ -147,7 +147,7 @@ class CameraFragment : Fragment() {
         config.planeFindingMode = Config.PlaneFindingMode.DISABLED
         arSession.configure(config)
         arSceneView.setupSession(arSession)
-        Log.d("CameraFragment-> Session", arSceneView.session?.config.toString())
+        Log.d(TAG, arSceneView.session?.config.toString())
     }
 
     /**
@@ -157,10 +157,13 @@ class CameraFragment : Fragment() {
         object : FMLocationListener {
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
                 Log.d(TAG, error.message.toString())
+                serverCoorTv.text = error.message.toString()
             }
 
+            @SuppressLint("SetTextI18n")
             override fun locationManager(location: Location, zones: List<FMZone>?) {
                 Log.d(TAG, location.toString())
+                serverCoorTv.text = "Server Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}"
             }
         }
 
