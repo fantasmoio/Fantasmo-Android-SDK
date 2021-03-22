@@ -167,11 +167,10 @@ class FMLocationManager(private val context: Context) : LocationListener {
     }
 
     /**
-     * Listener for Location updates.
+     * Listener for Location updates. Update the [currentLocation] coordinates
+     * being used to localize.
      */
     override fun onLocationChanged(location: android.location.Location) {
-        Log.d(TAG, "New Latitude: ${location.latitude} and New Longitude: ${location.longitude}")
-
         currentLocation = location
     }
 
@@ -228,23 +227,23 @@ class FMLocationManager(private val context: Context) : LocationListener {
                                 fmZones
                             )
 
-                            state = State.LOCALIZING
+                            if (state != State.STOPPED) {
+                                state = State.LOCALIZING
+                            }
                         }
                     },
                     {
                         fmLocationListener?.locationManager(it, null)
 
-                        state = State.LOCALIZING
+                        if (state != State.STOPPED) {
+                            state = State.LOCALIZING
+                        }
                     })
-            } catch (e: NotYetAvailableException) {
-                Log.e(TAG, "NotYetAvailableException $e")
-                state = State.LOCALIZING
-            } catch (e: DeadlineExceededException) {
-                Log.e(TAG, "DeadlineExceededException $e")
-                state = State.LOCALIZING
             } catch (e: Exception) {
                 e.printStackTrace()
-                state = State.LOCALIZING
+                if (state != State.STOPPED) {
+                    state = State.LOCALIZING
+                }
             }
         }
     }

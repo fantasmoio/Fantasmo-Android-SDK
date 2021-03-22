@@ -118,7 +118,7 @@ class CameraFragment : Fragment() {
                     Log.d("CameraFragment-> LocalizeToggle", "Disabled")
 
                     // Stop getting location updates
-                    fmLocationManager.startUpdatingLocation()
+                    fmLocationManager.stopUpdatingLocation()
                 }
             }
 
