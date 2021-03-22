@@ -38,6 +38,7 @@ class CameraFragment : Fragment() {
     private lateinit var cameraTranslationTv: TextView
     private lateinit var cameraAnglesTv: TextView
     private lateinit var deviceCoorTv: TextView
+    private lateinit var serverCoorTv: TextView
     private lateinit var checkParkingButton: Button
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
@@ -59,7 +60,8 @@ class CameraFragment : Fragment() {
         cameraTranslationTv = currentView.findViewById(R.id.cameraTranslation)
         cameraAnglesTv = currentView.findViewById(R.id.cameraAnglesText)
         checkParkingButton = currentView.findViewById(R.id.checkParkingButton)
-        deviceCoorTv = currentView.findViewById(R.id.coordinatesText)
+        deviceCoorTv = currentView.findViewById(R.id.deviceCoordsText)
+        serverCoorTv = currentView.findViewById(R.id.serverCoordsText)
         localizeToggleButton = currentView.findViewById(R.id.localizeToggle)
         anchorToggleButton = currentView.findViewById(R.id.anchorToggle)
 
@@ -157,13 +159,13 @@ class CameraFragment : Fragment() {
         object : FMLocationListener {
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
                 Log.d(TAG, error.message.toString())
-                deviceCoorTv.text = error.message.toString()
+                serverCoorTv.text = error.message.toString()
             }
 
             @SuppressLint("SetTextI18n")
             override fun locationManager(location: Location, zones: List<FMZone>?) {
                 Log.d(TAG, location.toString())
-                deviceCoorTv.text = "Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}"
+                serverCoorTv.text = "Server Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}"
             }
         }
 
