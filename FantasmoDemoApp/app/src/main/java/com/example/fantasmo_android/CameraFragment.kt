@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Switch
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.fantasmo.sdk.FMLocationListener
 import com.fantasmo.sdk.FMLocationManager
@@ -100,8 +101,11 @@ class CameraFragment : Fragment() {
             )
 
             checkParkingButton.setOnClickListener {
-                // Add Check Parking Functionality
                 Log.d("CameraFragment-> CheckPark Pressed", "CheckPark")
+
+                fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, 10) {
+                    Toast.makeText(activity?.applicationContext, "Is Zone In Radius Response: $it", Toast.LENGTH_LONG).show()
+                }
             }
 
             localizeToggleButton.setOnCheckedChangeListener { _, isChecked ->
@@ -114,7 +118,7 @@ class CameraFragment : Fragment() {
                     Log.d("CameraFragment-> LocalizeToggle", "Disabled")
 
                     // Stop getting location updates
-                    fmLocationManager.startUpdatingLocation()
+                    fmLocationManager.stopUpdatingLocation()
                 }
             }
 

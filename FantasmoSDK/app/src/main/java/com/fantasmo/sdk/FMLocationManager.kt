@@ -79,7 +79,7 @@ class FMLocationManager(private val context: Context) : LocationListener {
     var isSimulation = false
 
     /// The zone that will be simulated.
-    var simulationZone = FMZone.ZoneType.parking
+    var simulationZone = FMZone.ZoneType.PARKING
     var isConnected = false
 
     /**
@@ -167,11 +167,10 @@ class FMLocationManager(private val context: Context) : LocationListener {
     }
 
     /**
-     * Listener for Location updates.
+     * Listener for Location updates. Update the [currentLocation] coordinates
+     * being used to localize.
      */
     override fun onLocationChanged(location: android.location.Location) {
-        Log.d(TAG, "New Latitude: ${location.latitude} and New Longitude: ${location.longitude}")
-
         currentLocation = location
     }
 
@@ -228,23 +227,23 @@ class FMLocationManager(private val context: Context) : LocationListener {
                                 fmZones
                             )
 
-                            state = State.LOCALIZING
+                            if (state != State.STOPPED) {
+                                state = State.LOCALIZING
+                            }
                         }
                     },
                     {
                         fmLocationListener?.locationManager(it, null)
 
-                        state = State.LOCALIZING
+                        if (state != State.STOPPED) {
+                            state = State.LOCALIZING
+                        }
                     })
-            } catch (e: NotYetAvailableException) {
-                Log.e(TAG, "NotYetAvailableException $e")
-                state = State.LOCALIZING
-            } catch (e: DeadlineExceededException) {
-                Log.e(TAG, "DeadlineExceededException $e")
-                state = State.LOCALIZING
             } catch (e: Exception) {
                 e.printStackTrace()
-                state = State.LOCALIZING
+                if (state != State.STOPPED) {
+                    state = State.LOCALIZING
+                }
             }
         }
     }
@@ -261,7 +260,9 @@ class FMLocationManager(private val context: Context) : LocationListener {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
+            val url = "https://api.fantasmo.io/v1/parking.in.radius"
             fmNetworkManager.zoneInRadiusRequest(
+                url,
                 getZoneInRadiusParams(radius),
                 token!!,
                 onCompletion
@@ -276,7 +277,7 @@ class FMLocationManager(private val context: Context) : LocationListener {
      * @return an HashMap with all the localization parameters.
      */
     private fun getLocalizeParams(frame: Frame): HashMap<String, String> {
-        val pose = FMPose(frame.camera.pose)
+        val pose = FMPose(frame.androidSensorPose.extractRotation())
 
         val coordinates = if (isSimulation) {
             val simulationLocation = FMConfiguration.getConfigLocation()
@@ -302,9 +303,6 @@ class FMLocationManager(private val context: Context) : LocationListener {
         params["coordinate"] = gson.toJson(coordinates)
         params["intrinsics"] = gson.toJson(intrinsics)
 
-//        params["gravity"] =
-//            "{\"y\":0.92625105381011963,\"w\":0.27762770652770996,\"z\":0.25091192126274109,\"x\":-0.044999953359365463}"
-
         return params
     }
 
@@ -312,6 +310,8 @@ class FMLocationManager(private val context: Context) : LocationListener {
      * Generate the zoneInRadius HTTP request parameters.
      * @param radius: search radius in meters
      * @return an HashMap with all the localization parameters.
+     *
+     * Only works with PARKING zones currently
      */
     private fun getZoneInRadiusParams(radius: Int): HashMap<String, String> {
         val params = hashMapOf<String, String>()

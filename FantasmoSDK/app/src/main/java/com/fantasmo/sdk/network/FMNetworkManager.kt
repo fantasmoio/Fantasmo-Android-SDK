@@ -99,6 +99,7 @@ class FMNetworkManager(
      * Method to send a POST request to check whether a zone is in a provided radius.
      */
     fun zoneInRadiusRequest(
+        url: String,
         parameters: HashMap<String, String>,
         token: String,
         onCompletion: (Boolean) -> Unit
