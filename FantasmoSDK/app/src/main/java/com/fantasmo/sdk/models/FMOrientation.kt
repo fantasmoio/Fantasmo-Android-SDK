@@ -74,17 +74,10 @@ class FMOrientation {
         this.w = rotation.w
     }
 
-    constructor(fmOrientation: FMOrientation) {
-        this.x = fmOrientation.x
-        this.y = fmOrientation.y
-        this.z = fmOrientation.z
-        this.w = fmOrientation.w
-    }
-
     constructor(rotationQuaternion: FloatArray) {
         this.x = rotationQuaternion[0]
-        this.y = rotationQuaternion[1]
-        this.z = rotationQuaternion[2]
+        this.y = -rotationQuaternion[1]
+        this.z = -rotationQuaternion[2]
         this.w = rotationQuaternion[3]
     }
 

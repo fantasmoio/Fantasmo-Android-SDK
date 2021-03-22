@@ -16,15 +16,15 @@ data class FMZone(private val _zoneType: ZoneType, val id: String?)  {
     var zoneType: String = _zoneType.name
 
     enum class ZoneType {
-        street,
-        sidewalk,
-        furniture,
-        crosswalk,
-        accessRamp,
-        autoParking,
-        busStop,
-        planter,
-        parking,
-        unknown;
+        STREET,
+        SIDEWALK,
+        FURNITURE,
+        CROSSWALK,
+        ACESSRAMP,
+        AUTOPARKING,
+        BUSSTOP,
+        PLANTER,
+        PARKING,
+        UNKOWN;
     }
 }
