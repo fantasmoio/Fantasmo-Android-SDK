@@ -49,12 +49,12 @@ android {
         }
         devMunich {
             dimension "env"
-            buildConfigField "String", "FM_API_BASE_URL", "\"168.62.177.24:8090/v1/image.localize\""
+            buildConfigField "String", "FM_API_BASE_URL", "\"https://api.fantasmo.io/v1/image.localize\""
             buildConfigField "String", "FM_GPS_LAT_LONG", "\"48.12863302178715,11.572371166069702\""
         }
         devMiami{
             dimension "env"
-            buildConfigField "String", "FM_API_BASE_URL", "\"13.90.158.61:8090/v1/image.localize\""
+            buildConfigField "String", "FM_API_BASE_URL", "\"https://api.fantasmo.io/v1/image.localize\""
             buildConfigField "String", "FM_GPS_LAT_LONG", "\"25.762586765198417,-80.19404801110545\""
         }
     }
