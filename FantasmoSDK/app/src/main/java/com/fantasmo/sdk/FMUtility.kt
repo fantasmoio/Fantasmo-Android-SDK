@@ -5,6 +5,7 @@ import android.graphics.*
 import android.view.Display
 import android.view.Surface
 import android.view.WindowManager
+import com.fantasmo.sdk.models.FMPose
 import com.google.ar.core.Frame
 import java.io.ByteArrayOutputStream
 
@@ -95,6 +96,38 @@ class FMUtility {
                 }
                 else -> {
                     return 0f
+                }
+            }
+        }
+
+        fun getPoseBasedOnDeviceOrientation(context: Context, frame: Frame): FMPose {
+            val rotation: Int = try {
+                context.display?.rotation!!
+            } catch (exception: UnsupportedOperationException) {
+                val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                val display: Display = wm.defaultDisplay
+                display.rotation
+            }
+
+            when (rotation) {
+                // SCREEN_ORIENTATION_REVERSE_LANDSCAPE
+                Surface.ROTATION_270 -> {
+                    return FMPose(frame.camera.pose.inverse())
+                }
+                // SCREEN_ORIENTATION_LANDSCAPE
+                Surface.ROTATION_90 -> {
+                    return FMPose(frame.camera.pose)
+                }
+                // SCREEN_ORIENTATION_PORTRAIT
+                Surface.ROTATION_0 -> {
+                    return FMPose(frame.androidSensorPose.extractRotation())
+                }
+                // SCREEN_ORIENTATION_REVERSE_PORTRAIT
+                Surface.ROTATION_180 -> {
+                    return FMPose(frame.androidSensorPose.extractRotation().inverse())
+                }
+                else -> {
+                    return FMPose()
                 }
             }
         }
