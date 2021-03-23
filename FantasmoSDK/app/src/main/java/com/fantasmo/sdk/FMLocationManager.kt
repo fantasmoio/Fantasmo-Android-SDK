@@ -12,19 +12,19 @@ import android.content.pm.PackageManager
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
+import android.os.Looper
 import android.util.Log
 import androidx.core.content.PermissionChecker
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.network.FMNetworkManager
+import com.google.android.gms.location.*
 import com.google.ar.core.Frame
-import com.google.ar.core.exceptions.DeadlineExceededException
-import com.google.ar.core.exceptions.NotYetAvailableException
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
-import kotlin.collections.HashMap
+
 
 /**
  * The methods that you use to receive events from an associated
@@ -63,6 +63,7 @@ class FMLocationManager(private val context: Context) : LocationListener {
 
     private val fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), context)
     private lateinit var locationManager: LocationManager
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     var state = State.STOPPED
 
@@ -107,6 +108,7 @@ class FMLocationManager(private val context: Context) : LocationListener {
         this.isConnected = true
         this.state = State.LOCALIZING
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this.context)
         locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             getLocation()
@@ -162,7 +164,19 @@ class FMLocationManager(private val context: Context) : LocationListener {
             } != PackageManager.PERMISSION_GRANTED)) {
             Log.e(TAG, "Location permission needs to be granted.")
         } else {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5f, this)
+            //locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5f, this)
+            val locationRequest = LocationRequest.create()
+            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            locationRequest.smallestDisplacement = 1f
+            locationRequest.fastestInterval = 300
+            locationRequest.interval = 300
+
+            val locationCallback = object : LocationCallback() {
+                override fun onLocationResult(locationResult: LocationResult) {
+                    Log.d(TAG, "Locations: ${locationResult.locations}")
+                }
+            }
+            fusedLocationClient.requestLocationUpdates(locationRequest,locationCallback,Looper.myLooper())
         }
     }
 
@@ -172,6 +186,7 @@ class FMLocationManager(private val context: Context) : LocationListener {
      */
     override fun onLocationChanged(location: android.location.Location) {
         currentLocation = location
+        Log.d(TAG, "Lat: ${location.latitude}, Long: ${location.longitude}")
     }
 
     /**
