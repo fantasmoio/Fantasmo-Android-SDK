@@ -276,7 +276,7 @@ class FMLocationManager(private val context: Context) : LocationListener {
      * @return an HashMap with all the localization parameters.
      */
     private fun getLocalizeParams(frame: Frame): HashMap<String, String> {
-        val pose = FMPose(frame.androidSensorPose.extractRotation())
+        val pose = FMUtility.getPoseBasedOnDeviceOrientation(context, frame)
 
         val coordinates = if (isSimulation) {
             val simulationLocation = FMConfiguration.getConfigLocation()
