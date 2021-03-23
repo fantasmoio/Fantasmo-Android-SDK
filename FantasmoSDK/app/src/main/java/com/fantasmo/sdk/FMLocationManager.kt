@@ -129,10 +129,11 @@ class FMLocationManager(private val context: Context) : LocationListener {
     /**
      * Set an anchor point. All location updates will now report the
      * location of the anchor instead of the camera.
+     * @param [arFrame] an AR Frame to use as anchor.
      */
-    fun setAnchor() {
+    fun setAnchor(arFrame: Frame) {
         Log.d(TAG, "FMLocationManager:setAnchor")
-        //this.anchorFrame = ARSession.lastFrame
+        this.anchorFrame = arFrame
     }
 
     /**
@@ -292,7 +293,7 @@ class FMLocationManager(private val context: Context) : LocationListener {
      * @return an HashMap with all the localization parameters.
      */
     private fun getLocalizeParams(frame: Frame): HashMap<String, String> {
-        val pose = FMPose(frame.androidSensorPose.extractRotation())
+        val pose = FMUtility.getPoseBasedOnDeviceOrientation(context, frame)
 
         val coordinates = if (isSimulation) {
             val simulationLocation = FMConfiguration.getConfigLocation()
@@ -318,6 +319,11 @@ class FMLocationManager(private val context: Context) : LocationListener {
         params["coordinate"] = gson.toJson(coordinates)
         params["intrinsics"] = gson.toJson(intrinsics)
 
+        // calculate and send reference frame if anchoring
+        if (anchorFrame != null) {
+            params["referenceFrame"] = gson.toJson(anchorDeltaPoseForFrame(frame))
+        }
+
         return params
     }
 
@@ -342,5 +348,19 @@ class FMLocationManager(private val context: Context) : LocationListener {
         params["coordinate"] = Gson().toJson(coordinates)
 
         return params
+    }
+
+    /**
+     * Calculate the FMPose difference of the anchor frame with respect to the given frame.
+     * @param arFrame the current AR Frame.
+     */
+    private fun anchorDeltaPoseForFrame(arFrame: Frame): FMPose {
+        return if (anchorFrame != null) {
+            val poseARFrame = arFrame.androidSensorPose.extractRotation()
+            val poseAnchor = anchorFrame!!.androidSensorPose.extractRotation()
+            FMPose.diffPose(poseAnchor, poseARFrame)
+        } else {
+            FMPose()
+        }
     }
 }
