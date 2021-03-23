@@ -7,6 +7,7 @@
 package com.fantasmo.sdk.models
 
 import com.google.ar.core.Pose
+import com.google.ar.sceneform.math.Quaternion
 
 /**
  * Device pose at the moment of image capture. The coordinate frame is
@@ -66,6 +67,20 @@ class FMPose {
             }
 
             return interpolatedPoses
+        }
+
+        fun diffPose(anchorTransform: Pose, cameraTransform: Pose): FMPose {
+            val anchorPose = FMPose(anchorTransform)
+            val cameraPose = FMPose(cameraTransform)
+
+            val anchorPoseQuaternion = anchorPose.orientation.toQuaternion().normalized()
+            val cameraPoseQuaternion = cameraPose.orientation.toQuaternion().normalized()
+
+            val resultPoseQuaternion = Quaternion.multiply(cameraPoseQuaternion.inverted(), anchorPoseQuaternion)
+            val resultPoseOrientation = FMOrientation(resultPoseQuaternion.w, resultPoseQuaternion.x, resultPoseQuaternion.y, resultPoseQuaternion.z)
+            val resultPosePosition = FMPosition(resultPoseQuaternion.x, resultPoseQuaternion.y, resultPoseQuaternion.z)
+
+            return FMPose(resultPosePosition, resultPoseOrientation, "")
         }
     }
 

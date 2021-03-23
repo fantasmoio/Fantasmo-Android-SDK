@@ -125,8 +125,13 @@ class CameraFragment : Fragment() {
             anchorToggleButton.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
                     Log.d(TAG, "AnchorToggle Enabled")
+
+                    val currentArFrame = arSceneView.arFrame
+                    currentArFrame?.let { fmLocationManager.setAnchor(it) }
                 } else {
                     Log.d(TAG, "AnchorToggle Disabled")
+
+                    fmLocationManager.unsetAnchor()
                 }
             }
 
