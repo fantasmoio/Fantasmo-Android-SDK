@@ -12,17 +12,19 @@ import android.content.pm.PackageManager
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
+import android.os.Looper
 import android.util.Log
 import androidx.core.content.PermissionChecker
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.network.FMNetworkManager
+import com.google.android.gms.location.*
 import com.google.ar.core.Frame
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
-import kotlin.collections.HashMap
+
 
 /**
  * The methods that you use to receive events from an associated
@@ -45,7 +47,7 @@ interface FMLocationListener {
     fun locationManager(error: ErrorResponse, metadata: Any?)
 }
 
-class FMLocationManager(private val context: Context) : LocationListener {
+class FMLocationManager(private val context: Context) {
     private val TAG = "FMLocationManager"
 
     enum class State {
@@ -61,6 +63,7 @@ class FMLocationManager(private val context: Context) : LocationListener {
 
     private val fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), context)
     private lateinit var locationManager: LocationManager
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     var state = State.STOPPED
 
@@ -105,6 +108,7 @@ class FMLocationManager(private val context: Context) : LocationListener {
         this.isConnected = true
         this.state = State.LOCALIZING
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this.context)
         locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             getLocation()
@@ -145,6 +149,8 @@ class FMLocationManager(private val context: Context) : LocationListener {
     /**
      * Gets system location through the app context
      * Then checks if it has permission to ACCESS_FINE_LOCATION
+     * Also includes Callback for Location updates.
+     * Updates the [currentLocation] coordinates being used to localize.
      */
     private fun getLocation() {
         if ((context.let {
@@ -161,31 +167,24 @@ class FMLocationManager(private val context: Context) : LocationListener {
             } != PackageManager.PERMISSION_GRANTED)) {
             Log.e(TAG, "Location permission needs to be granted.")
         } else {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5f, this)
+            val locationRequest = LocationRequest.create()
+            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            locationRequest.smallestDisplacement = 1f
+            locationRequest.fastestInterval = 300
+            locationRequest.interval = 300
+
+            val locationCallback = object : LocationCallback() {
+                override fun onLocationResult(locationResult: LocationResult) {
+                    currentLocation = locationResult.lastLocation
+                    Log.d(TAG, "Location: ${locationResult.lastLocation}")
+                }
+            }
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                Looper.myLooper()
+            )
         }
-    }
-
-    /**
-     * Listener for Location updates. Update the [currentLocation] coordinates
-     * being used to localize.
-     */
-    override fun onLocationChanged(location: android.location.Location) {
-        currentLocation = location
-    }
-
-    /**
-     * Stop location updates if provider is disabled.
-     */
-    override fun onProviderDisabled(provider: String) {
-        if (provider == LocationManager.GPS_PROVIDER) {
-            Log.d(TAG, "GPS provider was disabled")
-        }
-    }
-
-    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-    }
-
-    override fun onProviderEnabled(provider: String) {
     }
 
     /**
@@ -194,7 +193,7 @@ class FMLocationManager(private val context: Context) : LocationListener {
      * @param arFrame an AR Frame to localize
      */
     fun localize(arFrame: Frame) {
-        if (!isConnected) {
+        if (!isConnected || currentLocation.latitude == 0.0) {
             return
         }
 

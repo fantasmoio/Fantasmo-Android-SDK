@@ -176,11 +176,10 @@ class FMNetworkManager(
                     }
                 }
             } catch (e: JSONException) {
-                e.printStackTrace()
+                Log.e(TAG, "JSONException: ${e.message}")
             }
         }
         Log.e(TAG, "Network Error: $errorMessage")
-        error.printStackTrace()
     }
 
     /**
