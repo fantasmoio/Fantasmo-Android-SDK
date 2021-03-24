@@ -16,7 +16,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField "String", "FM_API_BASE_URL", "\"https://api.fantasmo.io/v1/image.localize\""
-        buildConfigField "String", "FM_GPS_LAT_LONG", ""
+        buildConfigField "String", "FM_GPS_LAT_LONG", "\"\""
     }
 
     buildTypes {
@@ -25,7 +25,7 @@ android {
             shrinkResources false
         }
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
