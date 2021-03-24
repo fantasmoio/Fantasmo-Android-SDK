@@ -47,7 +47,7 @@ interface FMLocationListener {
     fun locationManager(error: ErrorResponse, metadata: Any?)
 }
 
-class FMLocationManager(private val context: Context) : LocationListener {
+class FMLocationManager(private val context: Context) {
     private val TAG = "FMLocationManager"
 
     enum class State {
@@ -90,8 +90,8 @@ class FMLocationManager(private val context: Context) : LocationListener {
      * @param callback: FMLocationListener
      */
     fun connect(
-        accessToken: String,
-        callback: FMLocationListener
+            accessToken: String,
+            callback: FMLocationListener
     ) {
         Log.d(TAG, "FMLocationManager connected with")
 
@@ -149,60 +149,40 @@ class FMLocationManager(private val context: Context) : LocationListener {
     /**
      * Gets system location through the app context
      * Then checks if it has permission to ACCESS_FINE_LOCATION
+     * Also includes Callback for Location updates.
+     * Updates the [currentLocation] coordinates being used to localize.
      */
     private fun getLocation() {
         if ((context.let {
-                PermissionChecker.checkSelfPermission(
-                    it,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                )
-            } != PackageManager.PERMISSION_GRANTED) &&
-            (context.let {
-                PermissionChecker.checkSelfPermission(
-                    it,
-                    Manifest.permission.CAMERA
-                )
-            } != PackageManager.PERMISSION_GRANTED)) {
+                    PermissionChecker.checkSelfPermission(
+                            it,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                    )
+                } != PackageManager.PERMISSION_GRANTED) &&
+                (context.let {
+                    PermissionChecker.checkSelfPermission(
+                            it,
+                            Manifest.permission.CAMERA
+                    )
+                } != PackageManager.PERMISSION_GRANTED)) {
             Log.e(TAG, "Location permission needs to be granted.")
         } else {
-            //locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5f, this)
             val locationRequest = LocationRequest.create()
             locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
             locationRequest.smallestDisplacement = 1f
             locationRequest.fastestInterval = 300
             locationRequest.interval = 300
 
+            currentLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)!!
+
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
-                    Log.d(TAG, "Locations: ${locationResult.locations}")
+                    currentLocation = locationResult.lastLocation
+                    Log.d(TAG, "Location: ${locationResult.lastLocation}")
                 }
             }
-            fusedLocationClient.requestLocationUpdates(locationRequest,locationCallback,Looper.myLooper())
+            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
         }
-    }
-
-    /**
-     * Listener for Location updates. Update the [currentLocation] coordinates
-     * being used to localize.
-     */
-    override fun onLocationChanged(location: android.location.Location) {
-        currentLocation = location
-        Log.d(TAG, "Lat: ${location.latitude}, Long: ${location.longitude}")
-    }
-
-    /**
-     * Stop location updates if provider is disabled.
-     */
-    override fun onProviderDisabled(provider: String) {
-        if (provider == LocationManager.GPS_PROVIDER) {
-            Log.d(TAG, "GPS provider was disabled")
-        }
-    }
-
-    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-    }
-
-    override fun onProviderEnabled(provider: String) {
     }
 
     /**
@@ -220,41 +200,41 @@ class FMLocationManager(private val context: Context) : LocationListener {
 
             try {
                 fmNetworkManager.uploadImage(
-                    FMUtility.getImageDataFromARFrame(context, arFrame),
-                    getLocalizeParams(arFrame),
-                    token!!,
-                    {
-                        val location = it.location
-                        val geofences = it.geofences
+                        FMUtility.getImageDataFromARFrame(context, arFrame),
+                        getLocalizeParams(arFrame),
+                        token!!,
+                        {
+                            val location = it.location
+                            val geofences = it.geofences
 
-                        val fmZones = mutableListOf<FMZone>()
-                        if (geofences != null && geofences.isNotEmpty()) {
-                            for (geofence in geofences) {
-                                val fmZone = FMZone(
-                                    FMZone.ZoneType.valueOf(geofence.elementType),
-                                    geofence.elementID.toString()
-                                )
-                                fmZones.add(fmZone)
+                            val fmZones = mutableListOf<FMZone>()
+                            if (geofences != null && geofences.isNotEmpty()) {
+                                for (geofence in geofences) {
+                                    val fmZone = FMZone(
+                                            FMZone.ZoneType.valueOf(geofence.elementType),
+                                            geofence.elementID.toString()
+                                    )
+                                    fmZones.add(fmZone)
+                                }
                             }
-                        }
-                        location?.let { localizeResponse ->
-                            fmLocationListener?.locationManager(
-                                localizeResponse,
-                                fmZones
-                            )
+                            location?.let { localizeResponse ->
+                                fmLocationListener?.locationManager(
+                                        localizeResponse,
+                                        fmZones
+                                )
+
+                                if (state != State.STOPPED) {
+                                    state = State.LOCALIZING
+                                }
+                            }
+                        },
+                        {
+                            fmLocationListener?.locationManager(it, null)
 
                             if (state != State.STOPPED) {
                                 state = State.LOCALIZING
                             }
-                        }
-                    },
-                    {
-                        fmLocationListener?.locationManager(it, null)
-
-                        if (state != State.STOPPED) {
-                            state = State.LOCALIZING
-                        }
-                    })
+                        })
             } catch (e: Exception) {
                 e.printStackTrace()
                 if (state != State.STOPPED) {
@@ -278,10 +258,10 @@ class FMLocationManager(private val context: Context) : LocationListener {
         CoroutineScope(Dispatchers.IO).launch {
             val url = "https://api.fantasmo.io/v1/parking.in.radius"
             fmNetworkManager.zoneInRadiusRequest(
-                url,
-                getZoneInRadiusParams(radius),
-                token!!,
-                onCompletion
+                    url,
+                    getZoneInRadiusParams(radius),
+                    token!!,
+                    onCompletion
             )
         }
     }
@@ -305,10 +285,10 @@ class FMLocationManager(private val context: Context) : LocationListener {
         val focalLength = frame.camera.imageIntrinsics.focalLength
         val principalPoint = frame.camera.imageIntrinsics.principalPoint
         val intrinsics = FMIntrinsics(
-            focalLength.component1(),
-            focalLength.component2(),
-            principalPoint.component2(),
-            principalPoint.component1()
+                focalLength.component1(),
+                focalLength.component2(),
+                principalPoint.component2(),
+                principalPoint.component1()
         )
 
         val params = hashMapOf<String, String>()
