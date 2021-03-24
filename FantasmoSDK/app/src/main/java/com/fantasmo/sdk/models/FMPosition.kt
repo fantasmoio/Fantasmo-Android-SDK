@@ -46,66 +46,68 @@ class FMPosition {
         this.z = z
     }
 
-    fun plus(left: FMPosition, right: FMPosition): FMPosition {
-        val sx = left.x + right.x
-        val sy = left.y + right.y
-        val sz = left.z + right.z
-        return FMPosition(sx, sy, sz)
-    }
+    companion object {
+        fun plus(left: FMPosition, right: FMPosition): FMPosition {
+            val sx = left.x + right.x
+            val sy = left.y + right.y
+            val sz = left.z + right.z
+            return FMPosition(sx, sy, sz)
+        }
 
-    fun minus(left: FMPosition, right: FMPosition): FMPosition {
-        val sx = left.x - right.x
-        val sy = left.y - right.y
-        val sz = left.z - right.z
-        return FMPosition(sx, sy, sz)
-    }
+        fun minus(left: FMPosition, right: FMPosition): FMPosition {
+            val sx = left.x - right.x
+            val sy = left.y - right.y
+            val sz = left.z - right.z
+            return FMPosition(sx, sy, sz)
+        }
 
-    fun plusEquals(left: FMPosition, right: FMPosition) {
-        left.x += right.x
-        left.y += right.y
-        left.z += right.z
-    }
+        fun plusEquals(left: FMPosition, right: FMPosition) {
+            left.x += right.x
+            left.y += right.y
+            left.z += right.z
+        }
 
-    fun divide(left: FMPosition, right: Double): FMPosition {
-        val sx = left.x / right
-        val sy = left.y / right
-        val sz = left.z / right
-        return FMPosition(sx, sy, sz)
-    }
+        fun divide(left: FMPosition, right: Double): FMPosition {
+            val sx = left.x / right
+            val sy = left.y / right
+            val sz = left.z / right
+            return FMPosition(sx, sy, sz)
+        }
 
-    fun divide(left: FMPosition, right: Float): FMPosition {
-        val sx = left.x / right
-        val sy = left.y / right
-        val sz = left.z / right
-        return FMPosition(sx, sy, sz)
-    }
+        fun divide(left: FMPosition, right: Float): FMPosition {
+            val sx = left.x / right
+            val sy = left.y / right
+            val sz = left.z / right
+            return FMPosition(sx, sy, sz)
+        }
 
-    fun divide(left: FMPosition, right: Int): FMPosition {
-        val sx = left.x / right
-        val sy = left.y / right
-        val sz = left.z / right
-        return FMPosition(sx, sy, sz)
-    }
+        fun divide(left: FMPosition, right: Int): FMPosition {
+            val sx = left.x / right
+            val sy = left.y / right
+            val sz = left.z / right
+            return FMPosition(sx, sy, sz)
+        }
 
-    fun multiply(left: FMPosition, right: Double): FMPosition {
-        val sx = left.x * right
-        val sy = left.y * right
-        val sz = left.z * right
-        return FMPosition(sx, sy, sz)
-    }
+        fun multiply(left: FMPosition, right: Double): FMPosition {
+            val sx = left.x * right
+            val sy = left.y * right
+            val sz = left.z * right
+            return FMPosition(sx, sy, sz)
+        }
 
-    fun multiply(left: FMPosition, right: Float): FMPosition {
-        val sx = left.x * right
-        val sy = left.y * right
-        val sz = left.z * right
-        return FMPosition(sx, sy, sz)
-    }
+        fun multiply(left: FMPosition, right: Float): FMPosition {
+            val sx = left.x * right
+            val sy = left.y * right
+            val sz = left.z * right
+            return FMPosition(sx, sy, sz)
+        }
 
-    fun multiply(left: FMPosition, right: Int): FMPosition {
-        val sx = left.x * right
-        val sy = left.y * right
-        val sz = left.z * right
-        return FMPosition(sx, sy, sz)
+        fun multiply(left: FMPosition, right: Int): FMPosition {
+            val sx = left.x * right
+            val sy = left.y * right
+            val sz = left.z * right
+            return FMPosition(sx, sy, sz)
+        }
     }
 
     fun interpolated(

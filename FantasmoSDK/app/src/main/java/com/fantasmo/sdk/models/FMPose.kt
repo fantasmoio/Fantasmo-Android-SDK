@@ -78,7 +78,7 @@ class FMPose {
 
             val resultPoseQuaternion = Quaternion.multiply(cameraPoseQuaternion.inverted(), anchorPoseQuaternion)
             val resultPoseOrientation = FMOrientation(resultPoseQuaternion.w, resultPoseQuaternion.x, resultPoseQuaternion.y, resultPoseQuaternion.z)
-            val resultPosePosition = FMPosition(resultPoseQuaternion.x, resultPoseQuaternion.y, resultPoseQuaternion.z)
+            val resultPosePosition = FMPosition(FMPosition.minus(anchorPose.position, cameraPose.position))
 
             return FMPose(resultPosePosition, resultPoseOrientation, "")
         }
@@ -122,13 +122,13 @@ class FMPose {
     }
 
     fun diffPose(toPose: FMPose): FMPose {
-        val diffPosition = this.position.minus(this.position, toPose.position)
+        val diffPosition = FMPosition.minus(this.position, toPose.position)
         val diffOrientation = this.orientation.difference(toPose.orientation)
         return FMPose(position = diffPosition, orientation = diffOrientation)
     }
 
     fun applyTransform(pose: FMPose) {
-        this.position = this.position.minus(this.position, pose.position)
+        this.position = FMPosition.minus(this.position, pose.position)
         this.orientation = this.orientation.rotate(pose.orientation)
     }
 }

@@ -9,9 +9,7 @@ package com.fantasmo.sdk
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.location.LocationListener
 import android.location.LocationManager
-import android.os.Bundle
 import android.os.Looper
 import android.util.Log
 import androidx.core.content.PermissionChecker
@@ -19,12 +17,12 @@ import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.google.android.gms.location.*
 import com.google.ar.core.Frame
+import com.google.ar.core.TrackingState
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
-
 
 /**
  * The methods that you use to receive events from an associated
@@ -193,7 +191,7 @@ class FMLocationManager(private val context: Context) {
      * @param arFrame an AR Frame to localize
      */
     fun localize(arFrame: Frame) {
-        if (!isConnected || currentLocation.latitude == 0.0) {
+        if (!shouldLocalize(arFrame)) {
             return
         }
 
@@ -244,6 +242,14 @@ class FMLocationManager(private val context: Context) {
                 }
             }
         }
+    }
+
+    /**
+     * Method to check whether the SDK is ready to localize a frame or not.
+     * @return true if it can localize the ARFrame and false otherwise.
+     */
+    private fun shouldLocalize(arFrame: Frame): Boolean {
+        return isConnected && currentLocation.latitude > 0.0 && arFrame.camera.trackingState == TrackingState.TRACKING
     }
 
     /**
@@ -338,8 +344,8 @@ class FMLocationManager(private val context: Context) {
      */
     private fun anchorDeltaPoseForFrame(arFrame: Frame): FMPose {
         return if (anchorFrame != null) {
-            val poseARFrame = arFrame.androidSensorPose.extractRotation()
-            val poseAnchor = anchorFrame!!.androidSensorPose.extractRotation()
+            val poseARFrame = arFrame.androidSensorPose
+            val poseAnchor = anchorFrame!!.androidSensorPose
             FMPose.diffPose(poseAnchor, poseARFrame)
         } else {
             FMPose()
