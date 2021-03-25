@@ -76,9 +76,10 @@ class FMPose {
             val anchorPoseQuaternion = anchorPose.orientation.toQuaternion().normalized()
             val cameraPoseQuaternion = cameraPose.orientation.toQuaternion().normalized()
 
+            val resultCameraPosition = FMPosition(cameraTransform.inverse().translation)
             val resultPoseQuaternion = Quaternion.multiply(cameraPoseQuaternion.inverted(), anchorPoseQuaternion)
             val resultPoseOrientation = FMOrientation(resultPoseQuaternion.w, resultPoseQuaternion.x, resultPoseQuaternion.y, resultPoseQuaternion.z)
-            val resultPosePosition = FMPosition(FMPosition.minus(anchorPose.position, cameraPose.position))
+            val resultPosePosition = FMPosition.minus(resultCameraPosition, anchorPose.position)
 
             return FMPose(resultPosePosition, resultPoseOrientation, "")
         }

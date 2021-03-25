@@ -342,7 +342,7 @@ class FMLocationManager(private val context: Context) {
      * Calculate the FMPose difference of the anchor frame with respect to the given frame.
      * @param arFrame the current AR Frame.
      */
-    private fun anchorDeltaPoseForFrame(arFrame: Frame): FMPose {
+    fun anchorDeltaPoseForFrame(arFrame: Frame): FMPose {
         return if (anchorFrame != null) {
             val poseARFrame = arFrame.androidSensorPose
             val poseAnchor = anchorFrame!!.androidSensorPose

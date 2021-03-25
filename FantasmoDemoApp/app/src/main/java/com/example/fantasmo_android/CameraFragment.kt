@@ -192,6 +192,12 @@ class CameraFragment : Fragment() {
         val cameraRotation = arFrame?.androidSensorPose?.rotationQuaternion
         cameraAnglesTv.text = createStringDisplay("Camera Angles: ", cameraRotation)
 
+        val anchorDelta = arFrame?.let { fmLocationManager.anchorDeltaPoseForFrame(it) }
+        if (anchorDeltaTv.isVisible && anchorDelta != null) {
+            val position = floatArrayOf(anchorDelta.position.x, anchorDelta.position.y, anchorDelta.position.z)
+            anchorDeltaTv.text = createStringDisplay("Anchor Delta: ", position)
+        }
+
         // Localize current frame if not already localizing
         if (fmLocationManager.state == FMLocationManager.State.LOCALIZING) {
             arFrame?.let { fmLocationManager.localize(it) }
