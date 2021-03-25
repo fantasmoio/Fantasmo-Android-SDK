@@ -12,6 +12,7 @@ import android.widget.Button
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.fantasmo.sdk.FMLocationListener
 import com.fantasmo.sdk.FMLocationManager
@@ -35,6 +36,7 @@ class CameraFragment : Fragment() {
     private lateinit var arSession: Session
     private lateinit var currentView: View
 
+    private lateinit var anchorDeltaTv: TextView
     private lateinit var cameraTranslationTv: TextView
     private lateinit var cameraAnglesTv: TextView
     private lateinit var serverCoorTv: TextView
@@ -56,6 +58,7 @@ class CameraFragment : Fragment() {
 
         currentView = inflater.inflate(R.layout.camera_fragment, container, false)
 
+        anchorDeltaTv = currentView.findViewById(R.id.anchorDeltaText)
         cameraTranslationTv = currentView.findViewById(R.id.cameraTranslation)
         cameraAnglesTv = currentView.findViewById(R.id.cameraAnglesText)
         checkParkingButton = currentView.findViewById(R.id.checkParkingButton)
@@ -126,10 +129,14 @@ class CameraFragment : Fragment() {
                 if (isChecked) {
                     Log.d(TAG, "AnchorToggle Enabled")
 
+                    anchorDeltaTv.visibility = View.VISIBLE
+
                     val currentArFrame = arSceneView.arFrame
                     currentArFrame?.let { fmLocationManager.setAnchor(it) }
                 } else {
                     Log.d(TAG, "AnchorToggle Disabled")
+
+                    anchorDeltaTv.visibility = View.INVISIBLE
 
                     fmLocationManager.unsetAnchor()
                 }
