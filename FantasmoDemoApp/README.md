@@ -39,7 +39,7 @@ ARCore compatibility is required so the minSdkVersion is 24. The necessary permi
 
 ## Schemes and Simulation Mode
 
-Depending on the building flavor of the SDK when setting the flag isSimulation to true , GPS location and server URL will be overriden. Example of the values used when simulation is turned on for the devMunich flavour.
+Depending on the building flavor of the SDK when setting the flag isSimulation to true , GPS location and server URL will be overriden. Example of the values used when simulation is turned on for the devMunich flavour. You can find the aar files for the three available flavours on the folder "SimulationTestLibraryFiles" inside the folder libs. Replace the production aar with any of the flavours, in conjunction with isSimulation set to true to test with specific coordinates and url.
 
     devMunich {
             dimension "env"
