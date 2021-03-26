@@ -20,9 +20,7 @@ class FMConfiguration {
          * Current location
          */
         fun getConfigLocation(): Location {
-            return if (BuildConfig.FLAVOR.startsWith("dev") &&
-                BuildConfig.FM_GPS_LAT_LONG.isNotBlank()
-            ) {
+            return if (BuildConfig.FM_GPS_LAT_LONG.isNotBlank()) {
                 val locationComponents = BuildConfig.FM_GPS_LAT_LONG.split(",").toTypedArray()
 
                 val location = Location("")
