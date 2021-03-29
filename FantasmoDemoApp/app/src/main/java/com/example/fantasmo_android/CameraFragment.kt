@@ -21,6 +21,7 @@ import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
 import com.google.ar.core.Config
 import com.google.ar.core.Session
+import com.google.ar.core.TrackingState
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.ux.ArFragment
 
@@ -39,7 +40,8 @@ class CameraFragment : Fragment() {
     private lateinit var anchorDeltaTv: TextView
     private lateinit var cameraTranslationTv: TextView
     private lateinit var cameraAnglesTv: TextView
-    private lateinit var serverCoorTv: TextView
+    private lateinit var serverCoordinatesTv: TextView
+    private lateinit var trackingFailureTv: TextView
     private lateinit var checkParkingButton: Button
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
@@ -62,7 +64,8 @@ class CameraFragment : Fragment() {
         cameraTranslationTv = currentView.findViewById(R.id.cameraTranslation)
         cameraAnglesTv = currentView.findViewById(R.id.cameraAnglesText)
         checkParkingButton = currentView.findViewById(R.id.checkParkingButton)
-        serverCoorTv = currentView.findViewById(R.id.serverCoordsText)
+        serverCoordinatesTv = currentView.findViewById(R.id.serverCoordsText)
+        trackingFailureTv = currentView.findViewById(R.id.trackingFailureText)
         localizeToggleButton = currentView.findViewById(R.id.localizeToggle)
         anchorToggleButton = currentView.findViewById(R.id.anchorToggle)
 
@@ -107,7 +110,11 @@ class CameraFragment : Fragment() {
                 Log.d(TAG, "CheckPark Pressed")
 
                 fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, 10) {
-                    Toast.makeText(activity?.applicationContext, "Is Zone In Radius Response: $it", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        activity?.applicationContext,
+                        "Is Zone In Radius Response: $it",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
 
@@ -129,15 +136,24 @@ class CameraFragment : Fragment() {
                 if (isChecked) {
                     Log.d(TAG, "AnchorToggle Enabled")
 
-                    anchorDeltaTv.visibility = View.VISIBLE
-
                     val currentArFrame = arSceneView.arFrame
-                    currentArFrame?.let { fmLocationManager.setAnchor(it) }
+                    currentArFrame?.let {
+                        if (currentArFrame.camera.trackingState == TrackingState.TRACKING) {
+                            anchorDeltaTv.visibility = View.VISIBLE
+                            fmLocationManager.setAnchor(it)
+                        } else {
+                            Toast.makeText(
+                                activity?.applicationContext,
+                                "Anchor can't be set because tracking state is not correct, please try again.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            anchorToggleButton.isChecked = false
+                        }
+                    }
                 } else {
                     Log.d(TAG, "AnchorToggle Disabled")
 
-                    anchorDeltaTv.visibility = View.INVISIBLE
-
+                    anchorDeltaTv.visibility = View.GONE
                     fmLocationManager.unsetAnchor()
                 }
             }
@@ -169,13 +185,14 @@ class CameraFragment : Fragment() {
         object : FMLocationListener {
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
                 Log.d(TAG, error.message.toString())
-                serverCoorTv.text = error.message.toString()
+                serverCoordinatesTv.text = error.message.toString()
             }
 
             @SuppressLint("SetTextI18n")
             override fun locationManager(location: Location, zones: List<FMZone>?) {
                 Log.d(TAG, location.toString())
-                serverCoorTv.text = "Server Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}"
+                serverCoordinatesTv.text =
+                    "Server Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}"
             }
         }
 
@@ -194,8 +211,18 @@ class CameraFragment : Fragment() {
 
         val anchorDelta = arFrame?.let { fmLocationManager.anchorDeltaPoseForFrame(it) }
         if (anchorDeltaTv.isVisible && anchorDelta != null) {
-            val position = floatArrayOf(anchorDelta.position.x, anchorDelta.position.y, anchorDelta.position.z)
+            val position =
+                floatArrayOf(anchorDelta.position.x, anchorDelta.position.y, anchorDelta.position.z)
             anchorDeltaTv.text = createStringDisplay("Anchor Delta: ", position)
+        }
+
+        // Show the TrackingFailureReason if the Tracking stops
+        if (arFrame?.camera?.trackingState != TrackingState.TRACKING) {
+            val errorText = "Tracking error: ${arFrame?.camera?.trackingFailureReason.toString()}"
+            trackingFailureTv.text = errorText
+            trackingFailureTv.visibility = View.VISIBLE
+        } else {
+            trackingFailureTv.visibility = View.GONE
         }
 
         // Localize current frame if not already localizing
