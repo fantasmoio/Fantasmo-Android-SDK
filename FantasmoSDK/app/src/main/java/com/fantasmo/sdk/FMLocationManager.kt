@@ -66,7 +66,6 @@ class FMLocationManager(private val context: Context) {
     var state = State.STOPPED
 
     private var anchorFrame: Frame? = null
-    var anchorDelta: Array<Array<Float>>? = null
 
     private var currentLocation: android.location.Location = android.location.Location("")
 

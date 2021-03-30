@@ -10,11 +10,11 @@ import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.volley.utils.ImmediateResponseDelivery
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
-import org.junit.Assert
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
-import org.mockito.Mockito
+import org.mockito.Mockito.mock
 
 class FMLocationManagerTest {
 
@@ -28,7 +28,7 @@ class FMLocationManagerTest {
 
     @Before
     fun setUp() {
-        val context = Mockito.mock(Context::class.java)
+        val context = mock(Context::class.java)
         fmLocationManager = FMLocationManager(context)
 
         mDelivery = ImmediateResponseDelivery()
@@ -54,12 +54,12 @@ class FMLocationManagerTest {
         fmLocationManager.isConnected = false
         fmLocationManager.isSimulation = true
         fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius) {
-            Assert.assertEquals(it, true)
+            assertEquals(it, true)
         }
 
         val radius2 = 100
         fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius2) {
-            Assert.assertEquals(it, false)
+            assertEquals(it, false)
         }
     }
 
@@ -68,15 +68,15 @@ class FMLocationManagerTest {
         fmLocationManager.connect("testToken", fmLocationListener)
 
         fmLocationManager.startUpdatingLocation()
-        Assert.assertEquals(true, fmLocationManager.isConnected)
-        Assert.assertEquals(FMLocationManager.State.LOCALIZING, fmLocationManager.state)
+        assertEquals(true, fmLocationManager.isConnected)
+        assertEquals(FMLocationManager.State.LOCALIZING, fmLocationManager.state)
     }
 
     @Test
     fun stopUpdatingLocation() {
         fmLocationManager.stopUpdatingLocation()
-        Assert.assertEquals(false, fmLocationManager.isConnected)
-        Assert.assertEquals(FMLocationManager.State.STOPPED, fmLocationManager.state)
+        assertEquals(false, fmLocationManager.isConnected)
+        assertEquals(FMLocationManager.State.STOPPED, fmLocationManager.state)
     }
 
     @Test
@@ -102,20 +102,20 @@ class FMLocationManagerTest {
 
     @Test
     fun anchorDeltaPoseForNullFrameTest() {
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = mock(Frame::class.java)
 
         val deltaFMPose = fmLocationManager.anchorDeltaPoseForFrame(frame)
         val position = FMPosition(0f, 0f, 0f)
         val orientation = FMOrientation(0f, 0f, 0f, 0f)
 
-        Assert.assertEquals(position.x, deltaFMPose.position.x)
-        Assert.assertEquals(position.y, deltaFMPose.position.y)
-        Assert.assertEquals(position.z, deltaFMPose.position.z)
+        assertEquals(position.x, deltaFMPose.position.x)
+        assertEquals(position.y, deltaFMPose.position.y)
+        assertEquals(position.z, deltaFMPose.position.z)
 
-        Assert.assertEquals(orientation.x, deltaFMPose.orientation.x)
-        Assert.assertEquals(orientation.y, deltaFMPose.orientation.y)
-        Assert.assertEquals(orientation.z, deltaFMPose.orientation.z)
-        Assert.assertEquals(orientation.w, deltaFMPose.orientation.w)
+        assertEquals(orientation.x, deltaFMPose.orientation.x)
+        assertEquals(orientation.y, deltaFMPose.orientation.y)
+        assertEquals(orientation.z, deltaFMPose.orientation.z)
+        assertEquals(orientation.w, deltaFMPose.orientation.w)
     }
 
     @Test
@@ -132,14 +132,14 @@ class FMLocationManagerTest {
             FMOrientation(0.81345063f, 0.3877355f, -0.4324503f, 0.030760288f)
         )
 
-        Assert.assertEquals(expectedFMPose.position.x, anchorDeltaPose.position.x)
-        Assert.assertEquals(expectedFMPose.position.y, anchorDeltaPose.position.y)
-        Assert.assertEquals(expectedFMPose.position.z, anchorDeltaPose.position.z)
+        assertEquals(expectedFMPose.position.x, anchorDeltaPose.position.x)
+        assertEquals(expectedFMPose.position.y, anchorDeltaPose.position.y)
+        assertEquals(expectedFMPose.position.z, anchorDeltaPose.position.z)
 
-        Assert.assertEquals(expectedFMPose.orientation.x, anchorDeltaPose.orientation.x)
-        Assert.assertEquals(expectedFMPose.orientation.y, anchorDeltaPose.orientation.y)
-        Assert.assertEquals(expectedFMPose.orientation.z, anchorDeltaPose.orientation.z)
-        Assert.assertEquals(expectedFMPose.orientation.w, anchorDeltaPose.orientation.w)
+        assertEquals(expectedFMPose.orientation.x, anchorDeltaPose.orientation.x)
+        assertEquals(expectedFMPose.orientation.y, anchorDeltaPose.orientation.y)
+        assertEquals(expectedFMPose.orientation.z, anchorDeltaPose.orientation.z)
+        assertEquals(expectedFMPose.orientation.w, anchorDeltaPose.orientation.w)
     }
 
     /**
