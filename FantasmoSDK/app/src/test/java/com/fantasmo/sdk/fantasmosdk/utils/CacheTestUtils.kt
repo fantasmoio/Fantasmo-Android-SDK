@@ -1,4 +1,4 @@
-package com.fantasmo.sdk.volley.utils
+package com.fantasmo.sdk.fantasmosdk.utils
 
 import com.android.volley.Cache
 import com.android.volley.NetworkResponse

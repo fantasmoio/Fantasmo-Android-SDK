@@ -5,28 +5,16 @@ import android.os.Build
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.volley.Request
 import com.android.volley.ResponseDelivery
-import com.android.volley.RetryPolicy
-import com.android.volley.toolbox.BasicNetwork
-import com.android.volley.toolbox.HttpResponse
-import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.fantasmosdk.network.MockMultiPartRequest
-import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.FMZone
-import com.fantasmo.sdk.network.FMNetworkManager
-import com.fantasmo.sdk.network.MultiPartRequest
-import com.fantasmo.sdk.volley.utils.ImmediateResponseDelivery
-import com.google.gson.Gson
+import com.fantasmo.sdk.fantasmosdk.utils.ImmediateResponseDelivery
 import junit.framework.TestCase
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mock
-import org.mockito.Mockito.mock
-import org.mockito.MockitoAnnotations
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.util.*
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.O_MR1])
