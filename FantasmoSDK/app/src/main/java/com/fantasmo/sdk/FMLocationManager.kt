@@ -106,12 +106,16 @@ class FMLocationManager(private val context: Context) {
         this.isConnected = true
         this.state = State.LOCALIZING
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this.context)
-        locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            getLocation()
-        } else {
-            Log.e(TAG, "Your GPS seems to be disabled")
+        try {
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(this.context)
+            locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                getLocation()
+            } else {
+                Log.e(TAG, "Your GPS seems to be disabled")
+            }
+        } catch (exception: Exception) {
+            Log.e(TAG,"Can't instantiate FusedLocationProviderClient: ${exception.message}")
         }
     }
 
