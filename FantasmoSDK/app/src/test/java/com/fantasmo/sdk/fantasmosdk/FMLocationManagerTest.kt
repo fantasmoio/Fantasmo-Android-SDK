@@ -1,46 +1,30 @@
 package com.fantasmo.sdk.fantasmosdk
 
 import android.content.Context
-import com.android.volley.Request
-import com.android.volley.ResponseDelivery
+import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.FMLocationListener
 import com.fantasmo.sdk.FMLocationManager
-import com.fantasmo.sdk.fantasmosdk.network.MockMultiPartRequest
 import com.fantasmo.sdk.models.*
-import com.fantasmo.sdk.volley.utils.ImmediateResponseDelivery
+import com.fantasmo.sdk.network.FMNetworkManager
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
-import org.mockito.Mockito.mock
+import org.mockito.Mockito.*
 
 class FMLocationManagerTest {
 
     private lateinit var fmLocationManager: FMLocationManager
+    private lateinit var context: Context
 
-    private var mDelivery: ResponseDelivery? = null
-    private var mRequest: MockMultiPartRequest? = null
-    private val url = "https://api.fantasmo.io/v1/parking.in.radius"
-    private val radius = 10
     private val token = "8e785284ca284c01bd84116c0d18e8fd"
 
     @Before
     fun setUp() {
-        val context = mock(Context::class.java)
+        context = mock(Context::class.java)
         fmLocationManager = FMLocationManager(context)
-
-        mDelivery = ImmediateResponseDelivery()
-        mRequest = MockMultiPartRequest(
-            Request.Method.POST, url,
-            {
-
-            },
-            {
-
-            }
-        )
     }
 
     @Test
@@ -50,22 +34,34 @@ class FMLocationManagerTest {
     }
 
     @Test
+    fun testLocalizeNotConnected() {
+        fmLocationManager.isConnected = false
+
+        val frame = mock(Frame::class.java)
+        fmLocationManager.localize(frame)
+
+        assertEquals(FMLocationManager.State.STOPPED, fmLocationManager.state)
+    }
+
+    @Test
     fun testIsZoneInRadius() {
         fmLocationManager.isConnected = false
         fmLocationManager.isSimulation = true
+
+        var radius = 10
         fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius) {
-            assertEquals(it, true)
+            assertEquals(true, it)
         }
 
-        val radius2 = 100
-        fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius2) {
-            assertEquals(it, false)
+        radius = 100
+        fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius) {
+            assertEquals(false, it)
         }
     }
 
     @Test
     fun connectAndStart() {
-        fmLocationManager.connect("testToken", fmLocationListener)
+        fmLocationManager.connect(token, fmLocationListener)
 
         fmLocationManager.startUpdatingLocation()
         assertEquals(true, fmLocationManager.isConnected)
