@@ -2,16 +2,17 @@ package com.fantasmo.sdk.fantasmosdk.network
 
 import com.android.volley.*
 import com.fantasmo.sdk.network.FileDataPart
-import com.fantasmo.sdk.volley.utils.CacheTestUtils
+import com.fantasmo.sdk.fantasmosdk.utils.CacheTestUtils
 import java.io.*
 import kotlin.math.min
 
-class MockMultiPartRequest(
+open class MockMultiPartRequest(
     method: Int,
     url: String,
     listener: Response.Listener<NetworkResponse>,
     errorListener: Response.ErrorListener
 ) : Request<NetworkResponse>(method, url, errorListener) {
+
     private var responseListener: Response.Listener<NetworkResponse>? = null
 
     init {

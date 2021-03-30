@@ -82,7 +82,7 @@ class MockData {
             )
         }
 
-        private fun streetMockParameters(): HashMap<String, String> {
+        fun streetMockParameters(): HashMap<String, String> {
             val intrinsic = hashMapOf(
                 "fx" to 1036.486083984375,
                 "fy" to 1036.486083984375,
@@ -108,7 +108,7 @@ class MockData {
             )
         }
 
-        private fun getFileDataFromDrawable(bitmap: Bitmap): ByteArray {
+        fun getFileDataFromDrawable(bitmap: Bitmap): ByteArray {
             val byteArrayOutputStream = ByteArrayOutputStream()
             bitmap.compress(
                 CompressFormat.JPEG,

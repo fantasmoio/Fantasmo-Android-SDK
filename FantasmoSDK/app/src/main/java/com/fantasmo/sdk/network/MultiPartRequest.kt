@@ -61,17 +61,31 @@ open class MultiPartRequest(
 
     override fun parseNetworkResponse(response: NetworkResponse): Response<NetworkResponse> {
         return try {
+            parseResponseCalled = true
             Response.success(response, HttpHeaderParser.parseCacheHeaders(response))
         } catch (e: Exception) {
             Response.error(ParseError(e))
         }
     }
 
-    override fun deliverResponse(response: NetworkResponse) {
+    var deliverResponseCalled = false
+    var parseResponseCalled = false
+
+    var deliverErrorCalled = false
+
+    var cancelCalled = false
+    override fun cancel() {
+        cancelCalled = true
+        super.cancel()
+    }
+
+    public override fun deliverResponse(response: NetworkResponse) {
+        deliverResponseCalled = true
         responseListener?.onResponse(response)
     }
 
     override fun deliverError(error: VolleyError) {
+        deliverErrorCalled = true
         errorListener?.onErrorResponse(error)
     }
 
