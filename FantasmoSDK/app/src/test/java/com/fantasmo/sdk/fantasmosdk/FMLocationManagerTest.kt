@@ -81,12 +81,23 @@ class FMLocationManagerTest {
 
     @Test
     fun setAnchor() {
+        val frame = mock(Frame::class.java)
+        fmLocationManager.setAnchor(frame)
 
+        val anchorFrame = fmLocationManager.javaClass.getDeclaredField("anchorFrame")
+        anchorFrame.isAccessible = true
+
+        assertNotNull(anchorFrame.get(fmLocationManager))
     }
 
     @Test
     fun unsetAnchor() {
+        fmLocationManager.unsetAnchor()
 
+        val anchorFrame = fmLocationManager.javaClass.getDeclaredField("anchorFrame")
+        anchorFrame.isAccessible = true
+
+        assertNull(anchorFrame.get(fmLocationManager))
     }
 
     @Test
