@@ -1,95 +1,146 @@
 package com.fantasmo.sdk.fantasmosdk.network
 
-import android.os.Build
 import com.android.volley.*
 import com.fantasmo.sdk.fantasmosdk.utils.CacheTestUtils
 import com.fantasmo.sdk.fantasmosdk.utils.ImmediateResponseDelivery
-import com.fantasmo.sdk.mock.MockData
-import junit.framework.TestCase
+import com.fantasmo.sdk.models.*
+import com.fantasmo.sdk.network.MultiPartRequest
+import com.google.gson.Gson
+import junit.framework.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
-import java.util.HashMap
+import java.util.*
 
-@RunWith(RobolectricTestRunner::class)
-@Config(sdk = [Build.VERSION_CODES.O_MR1])
+
 class ResponseDeliveryTest {
 
-    private var mDelivery: ExecutorDelivery? = null
-    private var mRequest: MockMultiPartRequest? = null
-    private var mSuccessResponse: Response<NetworkResponse>? = null
-
-    private var respZoneIsInRadius : String = ""
-    private var reqRespZoneIsInRadius : NetworkResponse? = null
-    private var reqErrorZoneInRadiusResponse: VolleyError? = null
+    private lateinit var mDelivery: ExecutorDelivery
+    private lateinit var mRequest: MultiPartRequest
+    private lateinit var mSuccessResponse: Response<NetworkResponse>
 
     private val token = "8e785284ca284c01bd84116c0d18e8fd"
 
     @Before
-    @Throws(Exception::class)
     fun setUp() {
         // Make the delivery just run its posted responses immediately.
         mDelivery = ImmediateResponseDelivery()
         mockMultiPartRequest()
-        mRequest!!.sequence = 1
-        val data = NetworkResponse(ByteArray(16))
+        mRequest.sequence = 1
+
+        val localizeResponseMock = createLocalizeResponse()
+        val jsonResponse = Gson().toJson(localizeResponseMock)
+        val networkResponse = NetworkResponse(jsonResponse.toByteArray())
         val cacheTest = CacheTestUtils()
-        val cacheEntry: Cache.Entry = cacheTest.makeRandomCacheEntry(data)
-        mSuccessResponse = Response.success(data, cacheEntry)
+        val cacheEntry: Cache.Entry = cacheTest.makeRandomCacheEntry(networkResponse)
+        mSuccessResponse = Response.success(networkResponse, cacheEntry)
     }
 
     @Test
     fun postResponseCallsDeliverResponse() {
-        mDelivery!!.postResponse(mRequest, mSuccessResponse)
-        mRequest?.let {
-            TestCase.assertTrue(it.deliverResponseCalled)
-        }
-        mRequest?.let {
-            TestCase.assertFalse(it.deliverErrorCalled)
-        }
+        mDelivery.postResponse(mRequest, mSuccessResponse)
+        assertTrue(mRequest.deliverResponseCalled)
+        assertFalse(mRequest.deliverErrorCalled)
     }
 
     @Test
     fun postResponseSuppressesCanceled() {
-        mRequest?.cancel()
-        mDelivery!!.postResponse(mRequest, mSuccessResponse)
-        mRequest?.let {
-            TestCase.assertFalse(it.deliverResponseCalled)
-        }
-        mRequest?.let {
-            TestCase.assertFalse(it.deliverErrorCalled)
-        }
+        mRequest.cancel()
+        mDelivery.postResponse(mRequest, mSuccessResponse)
+        assertFalse(mRequest.deliverResponseCalled)
+        assertFalse(mRequest.deliverErrorCalled)
     }
 
     @Test
     fun postErrorCallsDeliverError() {
         val errorResponse: Response<ByteArray> = Response.error(ServerError())
-        mDelivery!!.postResponse(mRequest, errorResponse)
-        mRequest?.let {
-            TestCase.assertTrue(it.deliverErrorCalled)
-        }
-        mRequest?.let {
-            TestCase.assertFalse(it.deliverResponseCalled)
-        }
+        mDelivery.postResponse(mRequest, errorResponse)
+        assertTrue(mRequest.deliverErrorCalled)
+        assertFalse(mRequest.deliverResponseCalled)
+    }
+
+    @Test
+    fun postErrorCallsDeliverTimeoutError() {
+        val errorResponse: Response<ByteArray> = Response.error(TimeoutError())
+        mDelivery.postResponse(mRequest, errorResponse)
+        assertTrue(mRequest.deliverErrorCalled)
+        assertFalse(mRequest.deliverResponseCalled)
+    }
+
+    @Test
+    fun postErrorCallsDeliverNoConnectionError() {
+        val errorResponse: Response<ByteArray> = Response.error(NoConnectionError())
+        mDelivery.postResponse(mRequest, errorResponse)
+        assertTrue(mRequest.deliverErrorCalled)
+        assertFalse(mRequest.deliverResponseCalled)
+    }
+
+    @Test
+    fun postErrorCallsDeliverResourceNotFoundError() {
+        val error = ErrorResponse(404,"Resource not found")
+        val jsonResponse = Gson().toJson(error)
+        val volleyError = VolleyError(jsonResponse)
+        val errorResponse: Response<ByteArray> = Response.error(volleyError)
+        mDelivery.postResponse(mRequest, errorResponse)
+        assertEquals(true, mRequest.deliverErrorCalled)
+        assertEquals(false, mRequest.deliverResponseCalled)
+    }
+
+    @Test
+    fun postErrorCallsDeliverAuthenticationError() {
+        val error = ErrorResponse(401,"Authentication error")
+        val jsonResponse = Gson().toJson(error)
+        val volleyError = VolleyError(jsonResponse)
+        val errorResponse: Response<ByteArray> = Response.error(volleyError)
+        mDelivery.postResponse(mRequest, errorResponse)
+        assertEquals(true, mRequest.deliverErrorCalled)
+        assertEquals(false, mRequest.deliverResponseCalled)
+    }
+
+    @Test
+    fun postErrorCallsDeliverImageNotValidError() {
+        val error = ErrorResponse(400,"Query image is not a valid JPEG")
+        val jsonResponse = Gson().toJson(error)
+        val volleyError = VolleyError(jsonResponse)
+        val errorResponse: Response<ByteArray> = Response.error(volleyError)
+        mDelivery.postResponse(mRequest, errorResponse)
+        assertEquals(true, mRequest.deliverErrorCalled)
+        assertEquals(false, mRequest.deliverResponseCalled)
+    }
+
+    @Test
+    fun postErrorCallsDeliverOutOfMapError() {
+        val error = ErrorResponse(400,"map not found! lat=48.848138681935886, lon=4.371750713292894 is not in any map.")
+        val jsonResponse = Gson().toJson(error)
+        val volleyError = VolleyError(jsonResponse)
+        val errorResponse: Response<ByteArray> = Response.error(volleyError)
+        mDelivery.postResponse(mRequest, errorResponse)
+        assertEquals(true, mRequest.deliverErrorCalled)
+        assertEquals(false, mRequest.deliverResponseCalled)
+    }
+
+    private fun createLocalizeResponse(): LocalizeResponse {
+        val coordinate = Coordinate(48.84972140031428, 2.3726263972863566)
+        val location = Location(null, coordinate, null, null, null, null)
+        val pose = Pose(
+            "N/A",
+            Orientation(
+                0.8418958187103271,
+                0.03637034818530083,
+                0.5383867025375366,
+                -0.005325936246663332
+            ),
+            Position(-0.9883674383163452, -0.9312995672225952, 0.6059572100639343)
+        )
+        return LocalizeResponse(null, location, pose, "30989ac2-b7c7-4619-b078-04e669a13937")
     }
 
     private fun mockMultiPartRequest() {
-        mRequest = object : MockMultiPartRequest(
+        mRequest = object : MultiPartRequest(
             Method.POST, "https://api.fantasmo.io/v1/parking.in.radius",
-            Response.Listener<NetworkResponse> { response ->
-                reqRespZoneIsInRadius = response
-                respZoneIsInRadius = String(response.data)
+            {
             },
-            Response.ErrorListener {
-                reqErrorZoneInRadiusResponse  = it
+            {
             }) {
-
-            // Overriding getParams() to pass our parameters
-            override fun getParams(): MutableMap<String, String> {
-                return MockData.streetMockParameters()
-            }
 
             // Overriding getHeaders() to pass our parameters
             override fun getHeaders(): MutableMap<String, String> {
