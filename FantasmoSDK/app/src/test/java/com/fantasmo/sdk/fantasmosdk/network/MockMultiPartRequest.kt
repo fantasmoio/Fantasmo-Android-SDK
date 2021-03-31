@@ -1,6 +1,7 @@
 package com.fantasmo.sdk.fantasmosdk.network
 
 import com.android.volley.*
+import com.android.volley.toolbox.HttpHeaderParser
 import com.fantasmo.sdk.network.FileDataPart
 import com.fantasmo.sdk.fantasmosdk.utils.CacheTestUtils
 import java.io.*
@@ -72,10 +73,9 @@ open class MockMultiPartRequest(
     override fun parseNetworkResponse(response: NetworkResponse): Response<NetworkResponse>? {
         return try {
             parseResponseCalled = true
-            val cacheTest = CacheTestUtils()
-            Response.success(response, cacheTest.makeRandomCacheEntry(response.data))
-            //Response.success(response, HttpHeaderParser.parseCacheHeaders(response))
+            Response.success(response, HttpHeaderParser.parseCacheHeaders(response))
         } catch (e: Exception) {
+            parseResponseCalled = false
             Response.error(ParseError(e))
         }
     }
