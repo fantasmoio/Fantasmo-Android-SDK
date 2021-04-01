@@ -1,19 +1,18 @@
-package com.fantasmo.sdk.network
+package com.fantasmo.sdk.fantasmosdk.network
 
 import com.android.volley.*
 import com.android.volley.toolbox.HttpHeaderParser
+import com.fantasmo.sdk.network.FileDataPart
 import java.io.*
 import kotlin.math.min
 
-/**
- * Class with a custom implementation of a multipart/form-data request.
- */
-open class MultiPartRequest(
+open class MockMultiPartRequest(
     method: Int,
     url: String,
     listener: Response.Listener<NetworkResponse>,
     errorListener: Response.ErrorListener
 ) : Request<NetworkResponse>(method, url, errorListener) {
+
     private var responseListener: Response.Listener<NetworkResponse>? = null
 
     init {
@@ -59,15 +58,6 @@ open class MultiPartRequest(
         return null
     }
 
-    override fun parseNetworkResponse(response: NetworkResponse): Response<NetworkResponse> {
-        return try {
-            parseResponseCalled = true
-            Response.success(response, HttpHeaderParser.parseCacheHeaders(response))
-        } catch (e: Exception) {
-            Response.error(ParseError(e))
-        }
-    }
-
     var deliverResponseCalled = false
     var parseResponseCalled = false
 
@@ -79,12 +69,23 @@ open class MultiPartRequest(
         super.cancel()
     }
 
-    public override fun deliverResponse(response: NetworkResponse) {
+    override fun parseNetworkResponse(response: NetworkResponse): Response<NetworkResponse>? {
+        return try {
+            parseResponseCalled = true
+            Response.success(response, HttpHeaderParser.parseCacheHeaders(response))
+        } catch (e: Exception) {
+            parseResponseCalled = false
+            Response.error(ParseError(e))
+        }
+    }
+
+    override fun deliverResponse(response: NetworkResponse) {
         deliverResponseCalled = true
         responseListener?.onResponse(response)
     }
 
     override fun deliverError(error: VolleyError) {
+        super.deliverError(error)
         deliverErrorCalled = true
         errorListener?.onErrorResponse(error)
     }
@@ -135,5 +136,3 @@ open class MultiPartRequest(
         }
     }
 }
-
-class FileDataPart(var fileName: String?, var data: ByteArray, var type: String)

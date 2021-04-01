@@ -7,6 +7,15 @@ android {
     compileSdkVersion 30
     buildToolsVersion "30.0.3"
 
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            returnDefaultValues = true
+        }
+    }
+
+    useLibrary  'org.apache.http.legacy'
+
     defaultConfig {
         minSdkVersion 24
         targetSdkVersion 30
@@ -87,6 +96,8 @@ dependencies {
     implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.17.1'
     implementation 'com.google.android.gms:play-services-location:18.0.0'
     testImplementation 'junit:junit:4.13.2'
+    testImplementation "org.robolectric:robolectric:4.5.1"
+    testImplementation "org.mockito:mockito-core:3.8.0"
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 }
