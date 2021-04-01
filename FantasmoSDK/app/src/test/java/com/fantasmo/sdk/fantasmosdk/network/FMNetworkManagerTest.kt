@@ -4,21 +4,22 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.os.Build
 import androidx.test.platform.app.InstrumentationRegistry
-import com.android.volley.*
+import com.android.volley.Cache
+import com.android.volley.NetworkResponse
+import com.android.volley.Response
+import com.android.volley.ResponseDelivery
 import com.fantasmo.sdk.FMConfiguration
-import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.fantasmosdk.R
-import com.fantasmo.sdk.mock.MockData.Companion.getFileDataFromDrawable
-import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.fantasmosdk.utils.CacheTestUtils
 import com.fantasmo.sdk.fantasmosdk.utils.ImmediateResponseDelivery
+import com.fantasmo.sdk.mock.MockData.Companion.getFileDataFromDrawable
 import com.fantasmo.sdk.models.*
+import com.fantasmo.sdk.network.FMNetworkManager
 import com.google.gson.Gson
 import junit.framework.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito
 import org.mockito.MockitoAnnotations.openMocks
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -36,10 +37,8 @@ class FMNetworkManagerTest {
 
     private lateinit var mDelivery: ResponseDelivery
 
-    // ZoneIsInRadius MockRequest
     private lateinit var reqZoneIsInRadius: MockMultiPartRequest
 
-    // UploadImage MockRequest
     private lateinit var reqUploadImage: MockMultiPartRequest
 
     private lateinit var cacheTest: CacheTestUtils
@@ -52,11 +51,11 @@ class FMNetworkManagerTest {
     fun setUp() {
         openMocks(this)
         instrumentationContext = InstrumentationRegistry.getInstrumentation().context
-        //Mockito.mock(Context::class.java)
+
         fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), instrumentationContext)
-        // Create Fake Service Responder
+
         mDelivery = ImmediateResponseDelivery()
-        // Create Mock MultiPartRequest
+
         mockMultiPartRequestZoneIsInRadius()
         mockMultiPartRequestUploadImage()
 
@@ -73,13 +72,11 @@ class FMNetworkManagerTest {
             Position(-0.9883674383163452, -0.9312995672225952, 0.6059572100639343)
         )
 
-        // Create fake cache
         cacheTest = CacheTestUtils()
     }
 
     @Test
     fun testUploadImage() {
-        // Make real request
         fmNetworkManager.uploadImage(
             getFileDataFromDrawable(
                 BitmapFactory.decodeResource(
@@ -101,43 +98,36 @@ class FMNetworkManagerTest {
             {
             }
         )
-        // Assert fake and real requests
         assertNotNull(reqUploadImage)
         assertNotNull(fmNetworkManager.multipartRequest)
 
-        // Assert fake and real request construction
         assertEquals(reqUploadImage.url, fmNetworkManager.multipartRequest.url)
         assertEquals(reqUploadImage.method, fmNetworkManager.multipartRequest.method)
         assertEquals(reqUploadImage.headers, fmNetworkManager.multipartRequest.headers)
         assertEquals(reqUploadImage.priority, fmNetworkManager.multipartRequest.priority)
 
         postResponseRequest()
-        // Assert if response was delivered without errors
         assertTrue(fmNetworkManager.multipartRequest.deliverResponseCalled)
         assertFalse(fmNetworkManager.multipartRequest.deliverErrorCalled)
     }
 
     @Test
     fun testZoneInRadiusRequest() {
-        val fmLocationManager = FMLocationManager(Mockito.mock(Context::class.java))
-        // Make real request
         fmNetworkManager.zoneInRadiusRequest(
             "https://api.fantasmo.io/v1/parking.in.radius",
             getZoneInRadiusParams(10),
             token
         ) {
         }
-        // Assert fake and real requests
         assertNotNull(reqZoneIsInRadius)
         assertNotNull(fmNetworkManager.multipartRequest)
 
-        // Assert fake and real request construction
         assertEquals(reqZoneIsInRadius.url, fmNetworkManager.multipartRequest.url)
         assertEquals(reqZoneIsInRadius.method, fmNetworkManager.multipartRequest.method)
         assertEquals(reqZoneIsInRadius.headers, fmNetworkManager.multipartRequest.headers)
+        assertEquals(reqZoneIsInRadius.priority, fmNetworkManager.multipartRequest.priority)
 
         postResponseRequest()
-        // Assert if response was delivered without errors
         assertTrue(fmNetworkManager.multipartRequest.deliverResponseCalled)
         assertFalse(fmNetworkManager.multipartRequest.deliverErrorCalled)
     }
@@ -149,7 +139,6 @@ class FMNetworkManagerTest {
             },
             {
             }) {
-            // Overriding getHeaders() to pass our parameters
             override fun getHeaders(): MutableMap<String, String> {
                 val headers = HashMap<String, String>()
                 headers["Fantasmo-Key"] = token
@@ -165,7 +154,6 @@ class FMNetworkManagerTest {
             },
             {
             }) {
-            // Overriding getHeaders() to pass our parameters
             override fun getHeaders(): MutableMap<String, String> {
                 val headers = HashMap<String, String>()
                 headers["Fantasmo-Key"] = token

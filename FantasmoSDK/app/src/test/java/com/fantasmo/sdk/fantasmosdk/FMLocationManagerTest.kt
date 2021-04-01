@@ -8,9 +8,8 @@ import com.google.ar.core.Frame
 import com.google.ar.core.Pose
 import org.junit.Assert.*
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
-import org.mockito.Mockito.*
+import org.mockito.Mockito.mock
 
 class FMLocationManagerTest {
 
@@ -23,12 +22,6 @@ class FMLocationManagerTest {
     fun setUp() {
         context = mock(Context::class.java)
         fmLocationManager = FMLocationManager(context)
-    }
-
-    @Test
-    @Ignore
-    fun testLocalize() {
-        TODO("Not yet implemented")
     }
 
     @Test
