@@ -16,10 +16,10 @@ package com.fantasmo.sdk.models
  * @property verticalAccuracy
  */
 data class Location(
-    val altitude: Any,
+    val altitude: Any?,
     val coordinate: Coordinate,
-    val floor: Any,
-    val heading: Any,
-    val horizontalAccuracy: Any,
-    val verticalAccuracy: Any
+    val floor: Any?,
+    val heading: Any?,
+    val horizontalAccuracy: Any?,
+    val verticalAccuracy: Any?
 )

@@ -33,6 +33,8 @@ class FMNetworkManager(
         Volley.newRequestQueue(context.applicationContext)
     }
 
+    lateinit var multipartRequest : MultiPartRequest
+
     /**
      * Method to upload an image with the given [imageData] and [parameters].
      */
@@ -43,7 +45,7 @@ class FMNetworkManager(
         onCompletion: (LocalizeResponse) -> Unit,
         onError: (ErrorResponse) -> Unit
     ) {
-        val multipartRequest: MultiPartRequest = object : MultiPartRequest(
+        multipartRequest = object : MultiPartRequest(
             Method.POST, url,
             Response.Listener<NetworkResponse> { response ->
                 val resultResponse = String(response.data)
@@ -104,7 +106,7 @@ class FMNetworkManager(
         token: String,
         onCompletion: (Boolean) -> Unit
     ) {
-        val multipartRequest: MultiPartRequest = object : MultiPartRequest(
+        multipartRequest = object : MultiPartRequest(
             Method.POST, url,
             Response.Listener<NetworkResponse> { response ->
                 val resultResponse = String(response.data)

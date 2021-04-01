@@ -108,7 +108,7 @@ class MockData {
             )
         }
 
-        private fun getFileDataFromDrawable(bitmap: Bitmap): ByteArray {
+        fun getFileDataFromDrawable(bitmap: Bitmap): ByteArray {
             val byteArrayOutputStream = ByteArrayOutputStream()
             bitmap.compress(
                 CompressFormat.JPEG,
