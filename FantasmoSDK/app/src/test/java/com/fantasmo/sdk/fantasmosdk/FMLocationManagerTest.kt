@@ -3,6 +3,7 @@ package com.fantasmo.sdk.fantasmosdk
 import android.content.Context
 import com.fantasmo.sdk.FMLocationListener
 import com.fantasmo.sdk.FMLocationManager
+import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.models.*
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
@@ -90,8 +91,9 @@ class FMLocationManagerTest {
     @Test
     fun anchorDeltaPoseForNullFrameTest() {
         val frame = mock(Frame::class.java)
+        val anchorFrame = mock(Frame::class.java)
 
-        val deltaFMPose = fmLocationManager.anchorDeltaPoseForFrame(frame)
+        val deltaFMPose = FMUtility.anchorDeltaPoseForFrame(frame, anchorFrame)
         val position = FMPosition(0f, 0f, 0f)
         val orientation = FMOrientation(0f, 0f, 0f, 0f)
 

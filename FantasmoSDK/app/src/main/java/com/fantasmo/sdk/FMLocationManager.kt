@@ -14,15 +14,14 @@ import android.os.Looper
 import android.util.Log
 import androidx.core.content.PermissionChecker
 import com.fantasmo.sdk.models.*
+import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.google.android.gms.location.*
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
-import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.*
 
 /**
  * The methods that you use to receive events from an associated
@@ -62,22 +61,19 @@ class FMLocationManager(private val context: Context) {
     private val fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), context)
     private lateinit var locationManager: LocationManager
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var fmApi: FMApi
 
     var state = State.STOPPED
-
-    private var anchorFrame: Frame? = null
-
-    private var currentLocation: android.location.Location = android.location.Location("")
+    var anchorFrame: Frame? = null
+    var currentLocation: android.location.Location = android.location.Location("")
 
     private var fmLocationListener: FMLocationListener? = null
-    private var token: String? = null
+    private var token: String = ""
 
     /// When in simulation mode, mock data is used from the assets directory instead of the live camera feed.
     /// This mode is useful for implementation and debugging.
     var isSimulation = false
 
-    /// The zone that will be simulated.
-    var simulationZone = FMZone.ZoneType.PARKING
     var isConnected = false
 
     /**
@@ -94,6 +90,7 @@ class FMLocationManager(private val context: Context) {
 
         this.token = accessToken
         this.fmLocationListener = callback
+        fmApi = FMApi(fmNetworkManager, this, context, token)
     }
 
     /**
@@ -114,7 +111,7 @@ class FMLocationManager(private val context: Context) {
                 Log.e(TAG, "Your GPS seems to be disabled")
             }
         } catch (exception: Exception) {
-            Log.e(TAG,"Can't instantiate FusedLocationProviderClient: ${exception.message}")
+            Log.e(TAG, "Can't instantiate FusedLocationProviderClient: ${exception.message}")
         }
     }
 
@@ -201,49 +198,30 @@ class FMLocationManager(private val context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             state = State.UPLOADING
 
-            try {
-                fmNetworkManager.uploadImage(
-                    FMUtility.getImageDataFromARFrame(context, arFrame),
-                    getLocalizeParams(arFrame),
-                    token!!,
-                    {
-                        val location = it.location
-                        val geofences = it.geofences
+            fmApi.sendLocalizeRequest(
+                arFrame,
+                { localizeResponse, fmZones ->
+                    fmLocationListener?.locationManager(
+                        localizeResponse,
+                        fmZones
+                    )
 
-                        val fmZones = mutableListOf<FMZone>()
-                        if (geofences != null && geofences.isNotEmpty()) {
-                            for (geofence in geofences) {
-                                val fmZone = FMZone(
-                                    FMZone.ZoneType.valueOf(geofence.elementType),
-                                    geofence.elementID.toString()
-                                )
-                                fmZones.add(fmZone)
-                            }
-                        }
-                        location?.let { localizeResponse ->
-                            fmLocationListener?.locationManager(
-                                localizeResponse,
-                                fmZones
-                            )
+                    updateStateAfterLocalization()
+                },
+                {
+                    fmLocationListener?.locationManager(it, null)
 
-                            if (state != State.STOPPED) {
-                                state = State.LOCALIZING
-                            }
-                        }
-                    },
-                    {
-                        fmLocationListener?.locationManager(it, null)
+                    updateStateAfterLocalization()
+                })
+        }
+    }
 
-                        if (state != State.STOPPED) {
-                            state = State.LOCALIZING
-                        }
-                    })
-            } catch (e: Exception) {
-                e.printStackTrace()
-                if (state != State.STOPPED) {
-                    state = State.LOCALIZING
-                }
-            }
+    /**
+     * Update the state back to LOCALIZING is not STOPPED.
+     */
+    private fun updateStateAfterLocalization() {
+        if (state != State.STOPPED) {
+            state = State.LOCALIZING
         }
     }
 
@@ -267,91 +245,10 @@ class FMLocationManager(private val context: Context) {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            val url = "https://api.fantasmo.io/v1/parking.in.radius"
-            fmNetworkManager.zoneInRadiusRequest(
-                url,
-                getZoneInRadiusParams(radius),
-                token!!,
+            fmApi.sendZoneInRadiusRequest(
+                radius,
                 onCompletion
             )
-        }
-    }
-
-    /**
-     * Generate the localize HTTP request parameters. Can fail if the jpeg
-     * conversion throws an exception.
-     * @param frame: Frame to localize
-     * @return an HashMap with all the localization parameters.
-     */
-    private fun getLocalizeParams(frame: Frame): HashMap<String, String> {
-        val pose = FMUtility.getPoseBasedOnDeviceOrientation(context, frame)
-
-        val coordinates = if (isSimulation) {
-            val simulationLocation = FMConfiguration.getConfigLocation()
-            Coordinate(simulationLocation.latitude, simulationLocation.longitude)
-        } else {
-            Coordinate(currentLocation.latitude, currentLocation.longitude)
-        }
-
-        val focalLength = frame.camera.imageIntrinsics.focalLength
-        val principalPoint = frame.camera.imageIntrinsics.principalPoint
-        val intrinsics = FMIntrinsics(
-            focalLength.component1(),
-            focalLength.component2(),
-            principalPoint.component2(),
-            principalPoint.component1()
-        )
-
-        val params = hashMapOf<String, String>()
-        val gson = Gson()
-        params["capturedAt"] = System.currentTimeMillis().toString()
-        params["gravity"] = gson.toJson(pose.orientation)
-        params["uuid"] = UUID.randomUUID().toString()
-        params["coordinate"] = gson.toJson(coordinates)
-        params["intrinsics"] = gson.toJson(intrinsics)
-
-        // calculate and send reference frame if anchoring
-        if (anchorFrame != null) {
-            params["referenceFrame"] = gson.toJson(anchorDeltaPoseForFrame(frame))
-        }
-
-        return params
-    }
-
-    /**
-     * Generate the zoneInRadius HTTP request parameters.
-     * @param radius: search radius in meters
-     * @return an HashMap with all the localization parameters.
-     *
-     * Only works with PARKING zones currently
-     */
-    private fun getZoneInRadiusParams(radius: Int): HashMap<String, String> {
-        val params = hashMapOf<String, String>()
-
-        val coordinates = if (isSimulation) {
-            val simulationLocation = FMConfiguration.getConfigLocation()
-            Coordinate(simulationLocation.latitude, simulationLocation.longitude)
-        } else {
-            Coordinate(currentLocation.latitude, currentLocation.longitude)
-        }
-
-        params["radius"] = radius.toString()
-        params["coordinate"] = Gson().toJson(coordinates)
-
-        return params
-    }
-
-    /**
-     * Calculate the FMPose difference of the anchor frame with respect to the given frame.
-     * @param arFrame the current AR Frame.
-     */
-    fun anchorDeltaPoseForFrame(arFrame: Frame): FMPose {
-        return if (anchorFrame != null) {
-            val poseARFrame = arFrame.androidSensorPose
-            val poseAnchor = anchorFrame!!.androidSensorPose
-            FMPose.diffPose(poseAnchor, poseARFrame)
-        } else {
-            FMPose()
         }
     }
 }
