@@ -112,7 +112,7 @@ class FMUtility {
             when (rotation) {
                 // SCREEN_ORIENTATION_REVERSE_LANDSCAPE
                 Surface.ROTATION_270 -> {
-                    return FMPose(frame.camera.pose.inverse())
+                    return FMPose(frame.camera.pose.compose(frame.camera.pose))
                 }
                 // SCREEN_ORIENTATION_LANDSCAPE
                 Surface.ROTATION_90 -> {
