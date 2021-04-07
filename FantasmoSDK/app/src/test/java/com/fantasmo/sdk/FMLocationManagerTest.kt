@@ -1,9 +1,6 @@
-package com.fantasmo.sdk.fantasmosdk
+package com.fantasmo.sdk
 
 import android.content.Context
-import com.fantasmo.sdk.FMLocationListener
-import com.fantasmo.sdk.FMLocationManager
-import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.models.*
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
