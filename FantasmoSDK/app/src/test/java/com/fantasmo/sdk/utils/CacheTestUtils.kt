@@ -1,8 +1,7 @@
-package com.fantasmo.sdk.fantasmosdk.utils
+package com.fantasmo.sdk.utils
 
 import com.android.volley.Cache
 import com.android.volley.NetworkResponse
-import java.lang.String
 import java.util.*
 
 class CacheTestUtils {
@@ -23,7 +22,7 @@ class CacheTestUtils {
         } else {
             entry.data = ByteArray(random.nextInt(1024))
         }
-        entry.etag = String.valueOf(random.nextLong())
+        entry.etag = random.nextLong().toString()
         entry.lastModified = random.nextLong()
         entry.ttl = if (isExpired) 0 else Long.MAX_VALUE
         entry.softTtl = if (needsRefresh) 0 else Long.MAX_VALUE

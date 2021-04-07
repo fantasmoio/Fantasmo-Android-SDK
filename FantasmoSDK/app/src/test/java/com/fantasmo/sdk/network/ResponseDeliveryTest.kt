@@ -1,10 +1,9 @@
-package com.fantasmo.sdk.fantasmosdk.network
+package com.fantasmo.sdk.network
 
 import com.android.volley.*
-import com.fantasmo.sdk.fantasmosdk.utils.CacheTestUtils
-import com.fantasmo.sdk.fantasmosdk.utils.ImmediateResponseDelivery
+import com.fantasmo.sdk.utils.CacheTestUtils
+import com.fantasmo.sdk.utils.ImmediateResponseDelivery
 import com.fantasmo.sdk.models.*
-import com.fantasmo.sdk.network.MultiPartRequest
 import com.google.gson.Gson
 import junit.framework.Assert.*
 import org.junit.Before

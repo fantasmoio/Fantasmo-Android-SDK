@@ -16,6 +16,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.fantasmo.sdk.FMLocationListener
 import com.fantasmo.sdk.FMLocationManager
+import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
@@ -185,14 +186,14 @@ class CameraFragment : Fragment() {
         object : FMLocationListener {
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
                 Log.d(TAG, error.message.toString())
-                serverCoordinatesTv.text = error.message.toString()
+                activity?.runOnUiThread { serverCoordinatesTv.text = error.message.toString() }
             }
 
             @SuppressLint("SetTextI18n")
             override fun locationManager(location: Location, zones: List<FMZone>?) {
                 Log.d(TAG, location.toString())
-                serverCoordinatesTv.text =
-                    "Server Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}"
+                activity?.runOnUiThread { serverCoordinatesTv.text =
+                    "Server Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}" }
             }
         }
 
@@ -209,7 +210,15 @@ class CameraFragment : Fragment() {
         val cameraRotation = arFrame?.androidSensorPose?.rotationQuaternion
         cameraAnglesTv.text = createStringDisplay("Camera Angles: ", cameraRotation)
 
-        val anchorDelta = arFrame?.let { fmLocationManager.anchorDeltaPoseForFrame(it) }
+        val anchorDelta = arFrame?.let { frame ->
+            fmLocationManager.anchorFrame?.let { anchorFrame ->
+                FMUtility.anchorDeltaPoseForFrame(
+                    frame,
+                    anchorFrame
+                )
+            }
+        }
+
         if (anchorDeltaTv.isVisible && anchorDelta != null) {
             val position =
                 floatArrayOf(anchorDelta.position.x, anchorDelta.position.y, anchorDelta.position.z)

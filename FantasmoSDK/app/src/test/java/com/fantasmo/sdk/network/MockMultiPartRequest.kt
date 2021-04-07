@@ -1,8 +1,7 @@
-package com.fantasmo.sdk.fantasmosdk.network
+package com.fantasmo.sdk.network
 
 import com.android.volley.*
 import com.android.volley.toolbox.HttpHeaderParser
-import com.fantasmo.sdk.network.FileDataPart
 import java.io.*
 import kotlin.math.min
 
