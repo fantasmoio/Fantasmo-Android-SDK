@@ -45,6 +45,7 @@ class FMNetworkManager(
         onCompletion: (LocalizeResponse) -> Unit,
         onError: (ErrorResponse) -> Unit
     ) {
+        Log.i(TAG,"$url $parameters")
         multipartRequest = object : MultiPartRequest(
             Method.POST, url,
             Response.Listener<NetworkResponse> { response ->
@@ -93,7 +94,7 @@ class FMNetworkManager(
         if (isInternetAvailable()) {
             requestQueue.add(multipartRequest)
         } else {
-            Log.d(TAG, "No internet connection available")
+            Log.w(TAG, "No internet connection available")
         }
     }
 
@@ -106,6 +107,7 @@ class FMNetworkManager(
         token: String,
         onCompletion: (Boolean) -> Unit
     ) {
+        Log.i(TAG,"$url $parameters")
         multipartRequest = object : MultiPartRequest(
             Method.POST, url,
             Response.Listener<NetworkResponse> { response ->
@@ -142,7 +144,7 @@ class FMNetworkManager(
         if (isInternetAvailable()) {
             requestQueue.add(multipartRequest)
         } else {
-            Log.d(TAG, "No internet connection available")
+            Log.w(TAG, "No internet connection available")
         }
     }
 
