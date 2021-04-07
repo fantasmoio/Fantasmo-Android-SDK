@@ -180,7 +180,7 @@ class FMLocationManager(private val context: Context) {
             fusedLocationClient.requestLocationUpdates(
                 locationRequest,
                 locationCallback,
-                Looper.myLooper()
+                Looper.myLooper()!!
             )
         }
     }
