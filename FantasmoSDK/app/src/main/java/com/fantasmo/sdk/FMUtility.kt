@@ -5,15 +5,15 @@ import android.graphics.*
 import android.view.Display
 import android.view.Surface
 import android.view.WindowManager
-import com.fantasmo.sdk.models.FMPose
+import com.fantasmo.sdk.models.*
 import com.google.ar.core.Frame
 import java.io.ByteArrayOutputStream
-
 
 /**
  * Class with utility methods and constants
  */
 class FMUtility {
+
     companion object {
         /**
          * Method to get the the AR Frame camera image data.
@@ -100,6 +100,9 @@ class FMUtility {
             }
         }
 
+        /**
+         * Utility method to get the correct Pose for each of the device orientations.
+         */
         fun getPoseBasedOnDeviceOrientation(context: Context, frame: Frame): FMPose {
             val rotation: Int = try {
                 context.display?.rotation!!
@@ -129,6 +132,21 @@ class FMUtility {
                 else -> {
                     return FMPose()
                 }
+            }
+        }
+
+        /**
+         * Calculate the FMPose difference of the anchor frame with respect to the given frame.
+         * @param arFrame the current AR Frame.
+         */
+        fun anchorDeltaPoseForFrame(arFrame: Frame, anchorFrame: Frame): FMPose {
+            val poseARFrame = arFrame.androidSensorPose
+            val poseAnchor = anchorFrame.androidSensorPose
+
+            return if (poseAnchor != null && poseARFrame != null) {
+                FMPose.diffPose(poseAnchor, poseARFrame)
+            } else {
+                FMPose()
             }
         }
 

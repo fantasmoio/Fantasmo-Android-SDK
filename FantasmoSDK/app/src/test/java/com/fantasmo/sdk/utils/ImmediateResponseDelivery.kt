@@ -1,4 +1,4 @@
-package com.fantasmo.sdk.fantasmosdk.utils
+package com.fantasmo.sdk.utils
 
 import com.android.volley.ExecutorDelivery
 import java.util.concurrent.Executor
