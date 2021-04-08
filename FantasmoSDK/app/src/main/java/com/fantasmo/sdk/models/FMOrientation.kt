@@ -43,7 +43,7 @@ class FMOrientation {
                         firstQuaternion.y += quaternion.y
                         firstQuaternion.z += quaternion.z
                     } else {
-                        Log.d(TAG, "Invalid quaternion for averaging")
+                        Log.w(TAG, "Invalid quaternion for averaging")
                     }
                 }
                 firstQuaternion.w /= numberOfQuaternionsSummedUp

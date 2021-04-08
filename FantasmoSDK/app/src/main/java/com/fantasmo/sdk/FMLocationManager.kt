@@ -86,7 +86,7 @@ class FMLocationManager(private val context: Context) {
         accessToken: String,
         callback: FMLocationListener
     ) {
-        Log.d(TAG, "FMLocationManager connected with")
+        Log.d(TAG, "connect: $callback")
 
         this.token = accessToken
         this.fmLocationListener = callback
@@ -97,7 +97,7 @@ class FMLocationManager(private val context: Context) {
      * Starts the generation of updates that report the user’s current location.
      */
     fun startUpdatingLocation() {
-        Log.d(TAG, "FMLocationManager:startUpdatingLocation")
+        Log.d(TAG, "startUpdatingLocation")
 
         this.isConnected = true
         this.state = State.LOCALIZING
@@ -108,7 +108,7 @@ class FMLocationManager(private val context: Context) {
             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 getLocation()
             } else {
-                Log.e(TAG, "Your GPS seems to be disabled")
+                Log.e(TAG, "GPS is disabled")
             }
         } catch (exception: Exception) {
             Log.e(TAG, "Can't instantiate FusedLocationProviderClient: ${exception.message}")
@@ -119,7 +119,7 @@ class FMLocationManager(private val context: Context) {
      * Stops the generation of location updates.
      */
     fun stopUpdatingLocation() {
-        Log.d(TAG, "FMLocationManager:stopUpdatingLocation")
+        Log.d(TAG, "stopUpdatingLocation")
 
         this.state = State.STOPPED
     }
@@ -130,7 +130,8 @@ class FMLocationManager(private val context: Context) {
      * @param [arFrame] an AR Frame to use as anchor.
      */
     fun setAnchor(arFrame: Frame) {
-        Log.d(TAG, "FMLocationManager:setAnchor")
+        Log.d(TAG, "setAnchor")
+
         this.anchorFrame = arFrame
     }
 
@@ -139,7 +140,7 @@ class FMLocationManager(private val context: Context) {
      * location of the camera.
      */
     fun unsetAnchor() {
-        Log.d(TAG, "FMLocationManager:unsetAnchor")
+        Log.d(TAG, "unsetAnchor")
 
         this.anchorFrame = null
     }
@@ -163,7 +164,7 @@ class FMLocationManager(private val context: Context) {
                     Manifest.permission.CAMERA
                 )
             } != PackageManager.PERMISSION_GRANTED)) {
-            Log.e(TAG, "Location permission needs to be granted.")
+            Log.w(TAG, "Location permission needs to be granted.")
         } else {
             val locationRequest = LocationRequest.create()
             locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
@@ -174,7 +175,7 @@ class FMLocationManager(private val context: Context) {
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
                     currentLocation = locationResult.lastLocation
-                    Log.d(TAG, "Location: ${locationResult.lastLocation}")
+                    Log.d(TAG, "onLocationResult: ${locationResult.lastLocation}")
                 }
             }
             fusedLocationClient.requestLocationUpdates(
@@ -195,12 +196,14 @@ class FMLocationManager(private val context: Context) {
             return
         }
 
+        Log.d(TAG,"localize: isSimulation $isSimulation")
         CoroutineScope(Dispatchers.IO).launch {
             state = State.UPLOADING
 
             fmApi.sendLocalizeRequest(
                 arFrame,
                 { localizeResponse, fmZones ->
+                    Log.d(TAG,"localize: $localizeResponse, Zones $fmZones")
                     fmLocationListener?.locationManager(
                         localizeResponse,
                         fmZones
@@ -209,6 +212,7 @@ class FMLocationManager(private val context: Context) {
                     updateStateAfterLocalization()
                 },
                 {
+                    Log.e(TAG,"localize: $it")
                     fmLocationListener?.locationManager(it, null)
 
                     updateStateAfterLocalization()
@@ -243,7 +247,7 @@ class FMLocationManager(private val context: Context) {
         if (!isConnected) {
             return
         }
-
+        Log.d(TAG,"isZoneInRadius")
         CoroutineScope(Dispatchers.IO).launch {
             fmApi.sendZoneInRadiusRequest(
                 radius,
