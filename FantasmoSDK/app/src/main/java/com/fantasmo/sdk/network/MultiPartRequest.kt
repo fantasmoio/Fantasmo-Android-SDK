@@ -25,6 +25,13 @@ open class MultiPartRequest(
     private val ending = "\r\n"
     private val boundary = "request${System.currentTimeMillis()}"
 
+    var deliverResponseCalled = false
+    var parseResponseCalled = false
+
+    var deliverErrorCalled = false
+
+    var cancelCalled = false
+
     override fun getHeaders(): MutableMap<String, String> =
         when (headers) {
             null -> super.getHeaders()
@@ -68,12 +75,6 @@ open class MultiPartRequest(
         }
     }
 
-    var deliverResponseCalled = false
-    var parseResponseCalled = false
-
-    var deliverErrorCalled = false
-
-    var cancelCalled = false
     override fun cancel() {
         cancelCalled = true
         super.cancel()
