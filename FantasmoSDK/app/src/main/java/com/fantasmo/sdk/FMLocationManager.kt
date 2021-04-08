@@ -108,7 +108,7 @@ class FMLocationManager(private val context: Context) {
             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 getLocation()
             } else {
-                Log.e(TAG, "Your GPS seems to be disabled")
+                Log.e(TAG, "GPS is disabled")
             }
         } catch (exception: Exception) {
             Log.e(TAG, "Can't instantiate FusedLocationProviderClient: ${exception.message}")
@@ -131,6 +131,7 @@ class FMLocationManager(private val context: Context) {
      */
     fun setAnchor(arFrame: Frame) {
         Log.d(TAG, "setAnchor")
+
         this.anchorFrame = arFrame
     }
 
