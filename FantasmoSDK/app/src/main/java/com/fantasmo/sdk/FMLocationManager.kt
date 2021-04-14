@@ -13,6 +13,8 @@ import android.location.LocationManager
 import android.os.Looper
 import android.util.Log
 import androidx.core.content.PermissionChecker
+import com.fantasmo.sdk.filters.FMBehaviorRequest
+import com.fantasmo.sdk.filters.FMInputQualityFilter
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
@@ -42,6 +44,12 @@ interface FMLocationListener {
      * @param metadata: Metadata related to the error.
      */
     fun locationManager(error: ErrorResponse, metadata: Any?)
+
+    /**
+     * Tells the listener that a request behavior has occurred.
+     * @param didRequestBehavior: The behavior reported.
+     */
+    fun locationManager(didRequestBehavior: FMBehaviorRequest)
 }
 
 class FMLocationManager(private val context: Context) {
@@ -64,6 +72,7 @@ class FMLocationManager(private val context: Context) {
     private lateinit var fmApi: FMApi
 
     var state = State.STOPPED
+    private lateinit var qualityFilter : FMInputQualityFilter
     var anchorFrame: Frame? = null
     var currentLocation: android.location.Location = android.location.Location("")
 
@@ -91,6 +100,7 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(fmNetworkManager, this, context, token)
+        qualityFilter = FMInputQualityFilter(this, context)
     }
 
     /**
@@ -101,6 +111,7 @@ class FMLocationManager(private val context: Context) {
 
         this.isConnected = true
         this.state = State.LOCALIZING
+        this.qualityFilter.startFiltering()
 
         try {
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(this.context)
@@ -234,7 +245,10 @@ class FMLocationManager(private val context: Context) {
      * @return true if it can localize the ARFrame and false otherwise.
      */
     private fun shouldLocalize(arFrame: Frame): Boolean {
-        return isConnected && currentLocation.latitude > 0.0 && arFrame.camera.trackingState == TrackingState.TRACKING
+        return isConnected
+                && currentLocation.latitude > 0.0
+                && arFrame.camera.trackingState == TrackingState.TRACKING
+                && qualityFilter.accepts(arFrame)
     }
 
     /**
