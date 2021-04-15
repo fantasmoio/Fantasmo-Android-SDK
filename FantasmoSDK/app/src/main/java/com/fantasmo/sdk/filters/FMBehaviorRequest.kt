@@ -5,13 +5,4 @@ enum class FMBehaviorRequest(val displayName : String) {
     TILTDOWN("Tilt your device down"),
     PANAROUND("Pan around the scene"),
     PANSLOWLY("Pan more slowly");
-
-    constructor(rejection:FMFilterRejectionReason){
-        when (rejection){
-            FMFilterRejectionReason.PITCHTOOLOW -> TILTUP
-            FMFilterRejectionReason.PITCHTOOHIGH -> TILTDOWN
-            FMFilterRejectionReason.MOVINGTOOFAST -> PANSLOWLY
-            FMFilterRejectionReason.MOVINGTOOLITTLE -> PANAROUND
-        }
-    }
 }

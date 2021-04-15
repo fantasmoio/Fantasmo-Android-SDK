@@ -1,14 +1,8 @@
 package com.fantasmo.sdk.utilities
 
-class MovingAverage {
+class MovingAverage(private var period: Int = 30) {
     private var index = 0
-    private var period = 0
-    private lateinit var samples : ArrayList<Double>
-
-    constructor(period: Int = 30) {
-        this.period = period
-        samples = ArrayList()
-    }
+    private var samples : ArrayList<Double> = ArrayList()
 
     var average = (samples.sum())/(samples.size)
 

@@ -100,7 +100,7 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(fmNetworkManager, this, context, token)
-        qualityFilter = FMInputQualityFilter(this, context)
+        qualityFilter = FMInputQualityFilter(this.fmLocationListener!!, context)
     }
 
     /**

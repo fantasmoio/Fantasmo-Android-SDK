@@ -20,6 +20,7 @@ import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
+import com.fantasmo.sdk.filters.FMBehaviorRequest
 import com.google.ar.core.Config
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingState
@@ -194,6 +195,10 @@ class CameraFragment : Fragment() {
                 Log.d(TAG, location.toString())
                 activity?.runOnUiThread { serverCoordinatesTv.text =
                     "Server Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}" }
+            }
+
+            override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
+                Log.d(TAG, didRequestBehavior.toString())
             }
         }
 
