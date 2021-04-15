@@ -9,15 +9,13 @@ class FMMovementFilter : FMFrameFilter{
     private val threshold = 0.25
     private var lastTransform : FloatArray = floatArrayOf(0F, 0F, 0F)
 
-    override fun accepts(arFrame: Frame): FMFilterResult {
+    override fun accepts(arFrame: Frame): Pair<FMFilterResult,FMFilterRejectionReason> {
         Log.d(TAG,"accepts")
         return if(exceededThreshold(arFrame.camera.pose.translation)){
             lastTransform = arFrame.camera.pose.translation
-            FMFilterResult.ACCEPTED
+            Pair(FMFilterResult.ACCEPTED,FMFilterRejectionReason.ACCEPTED)
         }else{
-            val result = FMFilterResult.REJECTED
-            result.rejection = FMFilterRejectionReason.MOVINGTOOLITTLE
-            result
+            Pair(FMFilterResult.REJECTED,FMFilterRejectionReason.MOVINGTOOLITTLE)
         }
     }
 

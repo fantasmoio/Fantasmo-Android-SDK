@@ -16,22 +16,18 @@ enum class FMFilterRejectionReason {
     MOVINGTOOFAST,
 
     //
-    MOVINGTOOLITTLE
+    MOVINGTOOLITTLE,
+
+    ACCEPTED
 }
 
 enum class FMFilterResult{
     ACCEPTED,
     REJECTED;
-    var rejection: FMFilterRejectionReason
-        get() {
-            return rejection
-        }set(rejection){
-            this.rejection = rejection
-        }
 }
 
 interface FMFrameFilter{
-    fun accepts(arFrame: Frame): FMFilterResult
+    fun accepts(arFrame: Frame): Pair<FMFilterResult, FMFilterRejectionReason>
 }
 
 class FMInputQualityFilter(fmLocationListener: FMLocationListener, context: Context) {
@@ -52,7 +48,7 @@ class FMInputQualityFilter(fmLocationListener: FMLocationListener, context: Cont
     var incidenceThreshold = 30
 
     private var filters = listOf(
-        //FMCameraPitchFilter(),
+        FMCameraPitchFilter(),
         FMMovementFilter(),
         //FMBlurFilter()
     )
@@ -72,8 +68,8 @@ class FMInputQualityFilter(fmLocationListener: FMLocationListener, context: Cont
             for(filter in filters){
                 val result = filter.accepts(arFrame)
                 Log.d(TAG, result.toString())
-                if(result != FMFilterResult.ACCEPTED){
-                    val rejection = filter.accepts(arFrame).rejection
+                if(result.first != FMFilterResult.ACCEPTED){
+                    val rejection = filter.accepts(arFrame).second
                     addRejection(rejection)
                     notifyIfNeeded(rejection)
                     Log.d(TAG, "accepts $result -> False")
@@ -121,6 +117,7 @@ class FMInputQualityFilter(fmLocationListener: FMLocationListener, context: Cont
             FMFilterRejectionReason.PITCHTOOHIGH -> FMBehaviorRequest.TILTDOWN
             FMFilterRejectionReason.MOVINGTOOFAST -> FMBehaviorRequest.PANSLOWLY
             FMFilterRejectionReason.MOVINGTOOLITTLE -> FMBehaviorRequest.PANAROUND
+            else -> FMBehaviorRequest.ACCEPTED
         }
     }
 

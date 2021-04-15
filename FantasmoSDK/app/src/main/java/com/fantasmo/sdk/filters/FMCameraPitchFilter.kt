@@ -7,24 +7,20 @@ import kotlin.math.abs
 
 class FMCameraPitchFilter : FMFrameFilter {
     private val TAG = "FMCameraPitchFilter"
-    private val radianThreshold = (PI)/(8.0f)
+    private val radianThreshold = (PI.toFloat())/8
 
-    override fun accepts(arFrame: Frame): FMFilterResult {
+    override fun accepts(arFrame: Frame): Pair<FMFilterResult,FMFilterRejectionReason> {
         Log.d(TAG,"accepts")
         val x = arFrame.camera.pose.rotationQuaternion[0]
         return when {
             x<=radianThreshold -> {
-                FMFilterResult.ACCEPTED
+                Pair(FMFilterResult.ACCEPTED,FMFilterRejectionReason.ACCEPTED)
             }
             x>0 -> {
-                val result = FMFilterResult.REJECTED
-                result.rejection = FMFilterRejectionReason.PITCHTOOHIGH
-                result
+                Pair(FMFilterResult.REJECTED,FMFilterRejectionReason.PITCHTOOHIGH)
             }
             else -> {
-                val result = FMFilterResult.REJECTED
-                result.rejection = FMFilterRejectionReason.PITCHTOOLOW
-                result
+                Pair(FMFilterResult.REJECTED,FMFilterRejectionReason.PITCHTOOLOW)
             }
         }
     }
