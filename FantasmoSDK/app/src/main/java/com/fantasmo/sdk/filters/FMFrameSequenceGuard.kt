@@ -20,26 +20,26 @@ class FMFrameSequenceGuard(fmLocationListener: FMLocationListener, context: Cont
     private var filters = listOf(
         FMCameraPitchValidator(),
         FMMovementValidator(),
-        FMBlurValidator()
+        //FMBlurValidator()
     )
 
     fun startFiltering(){
         //OpenCVLoader.initDebug() //init OpenCV process
-        resetAcceptanceClock()
+        prepareForNewFrameSequence()
     }
 
-    private fun resetAcceptanceClock() {
+    private fun prepareForNewFrameSequence() {
         timestampOfPreviousApprovedFrame = 0
     }
 
     fun accepts(arFrame : Frame) : Boolean{
-        //if(shouldForceAccept()){ //Test forcing to accept frame
-        if(!shouldForceAccept(arFrame)) {
+        if(!shouldForceApprove(arFrame)) {
             timestampOfPreviousApprovedFrame = arFrame.timestamp
-            Log.d(TAG, "shouldForceAccept")
+            Log.d(TAG, "shouldForceAccept True")
             return true
         }
         else{
+            Log.d(TAG, "shouldForceAccept False")
             for(filter in filters){
                 val result = filter.accepts(arFrame)
                 Log.d(TAG, "$filter, $result")
@@ -54,11 +54,11 @@ class FMFrameSequenceGuard(fmLocationListener: FMLocationListener, context: Cont
         return true
     }
 
-    private fun shouldForceAccept(arFrame: Frame): Boolean {
+    private fun shouldForceApprove(arFrame: Frame): Boolean {
         if(timestampOfPreviousApprovedFrame != 0L){
             val elapsed = arFrame.timestamp - timestampOfPreviousApprovedFrame
             return elapsed > acceptanceThreshold
         }
-        return true
+        return false
     }
 }
