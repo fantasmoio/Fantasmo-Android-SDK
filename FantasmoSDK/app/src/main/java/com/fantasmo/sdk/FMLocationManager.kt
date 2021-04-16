@@ -14,7 +14,7 @@ import android.os.Looper
 import android.util.Log
 import androidx.core.content.PermissionChecker
 import com.fantasmo.sdk.filters.FMBehaviorRequest
-import com.fantasmo.sdk.filters.FMInputQualityFilter
+import com.fantasmo.sdk.filters.FMFrameSequenceGuard
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
@@ -72,7 +72,7 @@ class FMLocationManager(private val context: Context) {
     private lateinit var fmApi: FMApi
 
     var state = State.STOPPED
-    private lateinit var qualityFilter : FMInputQualityFilter
+    private lateinit var qualityFilter : FMFrameSequenceGuard
     var anchorFrame: Frame? = null
     var currentLocation: android.location.Location = android.location.Location("")
 
@@ -100,7 +100,7 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(fmNetworkManager, this, context, token)
-        qualityFilter = FMInputQualityFilter(this.fmLocationListener!!, context)
+        qualityFilter = FMFrameSequenceGuard(this.fmLocationListener!!, context)
     }
 
     /**

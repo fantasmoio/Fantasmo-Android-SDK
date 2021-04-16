@@ -2,6 +2,7 @@ package com.fantasmo.sdk
 
 import android.content.Context
 import android.graphics.*
+import android.media.Image
 import android.view.Display
 import android.view.Surface
 import android.view.WindowManager
@@ -24,6 +25,21 @@ class FMUtility {
             //The camera image
             val cameraImage = arFrame.acquireCameraImage()
 
+            val baOutputStream = createByteArrayOutputStream(cameraImage)
+
+            // Release the image
+            cameraImage.close()
+
+            val imageBytes: ByteArray = baOutputStream.toByteArray()
+            val imageBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                .rotate(getImageRotationDegrees(context))
+            val data = getFileDataFromDrawable(imageBitmap)
+
+            imageBitmap.recycle()
+            return data
+        }
+
+        fun createByteArrayOutputStream(cameraImage: Image): ByteArrayOutputStream {
             //The camera image received is in YUV YCbCr Format. Get buffers for each of the planes and use
             // them to create a new byte array defined by the size of all three buffers combined
             val cameraPlaneY = cameraImage.planes[0].buffer
@@ -55,17 +71,7 @@ class FMUtility {
                 100,
                 baOutputStream
             )
-
-            // Release the image
-            cameraImage.close()
-
-            val imageBytes: ByteArray = baOutputStream.toByteArray()
-            val imageBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                .rotate(getImageRotationDegrees(context))
-            val data = getFileDataFromDrawable(imageBitmap)
-
-            imageBitmap.recycle()
-            return data
+            return baOutputStream
         }
 
         private fun getImageRotationDegrees(context: Context): Float {

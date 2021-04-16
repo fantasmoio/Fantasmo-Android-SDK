@@ -1,21 +1,18 @@
 package com.fantasmo.sdk.filters
 
-import android.util.Log
 import com.fantasmo.sdk.models.FMPosition
 import com.google.ar.core.Frame
 
-class FMMovementFilter : FMFrameFilter{
-    private val TAG = "FMMovementFilter"
+class FMMovementValidator : FMFrameValidator{
     private val threshold = 0.25
     private var lastTransform : FloatArray = floatArrayOf(0F, 0F, 0F)
 
-    override fun accepts(arFrame: Frame): Pair<FMFilterResult,FMFilterRejectionReason> {
-        Log.d(TAG,"accepts")
+    override fun accepts(arFrame: Frame): Pair<FMValidatorResult,FMFrameValidationError> {
         return if(exceededThreshold(arFrame.camera.pose.translation)){
             lastTransform = arFrame.camera.pose.translation
-            Pair(FMFilterResult.ACCEPTED,FMFilterRejectionReason.ACCEPTED)
+            Pair(FMValidatorResult.ACCEPTED,FMFrameValidationError.ACCEPTED)
         }else{
-            Pair(FMFilterResult.REJECTED,FMFilterRejectionReason.MOVINGTOOLITTLE)
+            Pair(FMValidatorResult.REJECTED,FMFrameValidationError.MOVINGTOOLITTLE)
         }
     }
 
