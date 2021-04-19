@@ -1,4 +1,4 @@
-package com.fantasmo.sdk.filters
+package com.fantasmo.sdk.validators
 
 import android.graphics.BitmapFactory
 import android.util.Log

@@ -13,8 +13,8 @@ import android.location.LocationManager
 import android.os.Looper
 import android.util.Log
 import androidx.core.content.PermissionChecker
-import com.fantasmo.sdk.filters.FMBehaviorRequest
-import com.fantasmo.sdk.filters.FMFrameSequenceGuard
+import com.fantasmo.sdk.validators.FMBehaviorRequest
+import com.fantasmo.sdk.validators.FMFrameSequenceGuard
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager

@@ -1,4 +1,4 @@
-package com.fantasmo.sdk.filters
+package com.fantasmo.sdk.validators
 
 import com.google.ar.core.Frame
 import kotlin.math.PI

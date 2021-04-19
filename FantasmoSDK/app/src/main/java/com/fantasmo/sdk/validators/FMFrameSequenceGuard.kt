@@ -1,10 +1,10 @@
-package com.fantasmo.sdk.filters
+package com.fantasmo.sdk.validators
 
 import android.content.Context
 import android.util.Log
 import com.fantasmo.sdk.FMLocationListener
 import com.google.ar.core.Frame
-//import org.opencv.android.OpenCVLoader //Decomment after OpenCV installation
+import org.opencv.android.OpenCVLoader //Decomment after OpenCV installation
 
 class FMFrameSequenceGuard(fmLocationListener: FMLocationListener, context: Context) {
 
@@ -20,11 +20,11 @@ class FMFrameSequenceGuard(fmLocationListener: FMLocationListener, context: Cont
     private var filters = listOf(
         FMCameraPitchValidator(),
         FMMovementValidator(),
-        //FMBlurValidator()
+        FMBlurValidator()
     )
 
     fun startFiltering(){
-        //OpenCVLoader.initDebug() //init OpenCV process
+        OpenCVLoader.initDebug() //init OpenCV process
         prepareForNewFrameSequence()
     }
 

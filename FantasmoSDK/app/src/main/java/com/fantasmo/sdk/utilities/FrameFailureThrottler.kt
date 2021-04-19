@@ -1,7 +1,7 @@
 package com.fantasmo.sdk.utilities
 
-import com.fantasmo.sdk.filters.FMFrameValidationError
-import com.fantasmo.sdk.filters.mapToBehaviourRequest
+import com.fantasmo.sdk.validators.FMFrameValidationError
+import com.fantasmo.sdk.validators.mapToBehaviourRequest
 import java.util.*
 
 class FrameFailureThrottler {

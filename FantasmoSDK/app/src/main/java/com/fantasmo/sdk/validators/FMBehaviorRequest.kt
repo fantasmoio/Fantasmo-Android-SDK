@@ -1,4 +1,4 @@
-package com.fantasmo.sdk.filters
+package com.fantasmo.sdk.validators
 
 enum class FMBehaviorRequest(val displayName : String) {
     TILTUP("Tilt your device up"),
