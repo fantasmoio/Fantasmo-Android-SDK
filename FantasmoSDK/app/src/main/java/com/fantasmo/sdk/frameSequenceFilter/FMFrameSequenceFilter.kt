@@ -1,15 +1,12 @@
-package com.fantasmo.sdk.validators
+package com.fantasmo.sdk.frameSequenceFilter
 
-import android.content.Context
 import android.util.Log
-import com.fantasmo.sdk.FMLocationListener
 import com.google.ar.core.Frame
-import org.opencv.android.OpenCVLoader //Decomment after OpenCV installation
+import org.opencv.android.OpenCVLoader
 
-class FMFrameSequenceGuard(fmLocationListener: FMLocationListener, context: Context) {
+class FMFrameSequenceFilter {
 
-    private val TAG = "FMInputQualityFilter"
-    private val locationListener = fmLocationListener
+    private val TAG = "FMFrameSequenceGuard"
 
     // the last time a frame was accepted
     var timestampOfPreviousApprovedFrame : Long = 0
@@ -17,41 +14,39 @@ class FMFrameSequenceGuard(fmLocationListener: FMLocationListener, context: Cont
     // number of seconds after which we force acceptance
     var acceptanceThreshold = 6.0
 
-    private var filters = listOf(
-        FMCameraPitchValidator(),
-        FMMovementValidator(),
-        FMBlurValidator()
+    private var rules = listOf(
+        FMCameraPitchFilterRule(),
+        FMMovementFilterRule(),
+        FMBlurFilterRule()
     )
 
-    fun startFiltering(){
+    fun prepareForNewFrameSequence() {
         OpenCVLoader.initDebug() //init OpenCV process
-        prepareForNewFrameSequence()
-    }
-
-    private fun prepareForNewFrameSequence() {
         timestampOfPreviousApprovedFrame = 0
     }
 
-    fun accepts(arFrame : Frame) : Boolean{
-        if(!shouldForceApprove(arFrame)) {
+
+    fun check(arFrame : Frame) : Pair<FMFrameFilterResult, FMFrameFilterFailure> {
+        if(!shouldForceApprove(arFrame)) { //DEBUG: Force Filters to work on frame receiving
+        //if(shouldForceApprove(arFrame)) {
             timestampOfPreviousApprovedFrame = arFrame.timestamp
             Log.d(TAG, "shouldForceAccept True")
-            return true
+            return Pair(FMFrameFilterResult.ACCEPTED,FMFrameFilterFailure.ACCEPTED)
         }
         else{
             Log.d(TAG, "shouldForceAccept False")
-            for(filter in filters){
-                val result = filter.accepts(arFrame)
-                Log.d(TAG, "$filter, $result")
-                if(result.first != FMValidatorResult.ACCEPTED){
+            for(rule in rules){
+                val result = rule.check(arFrame)
+                Log.d(TAG, "$rule, $result")
+                if(result.first != FMFrameFilterResult.ACCEPTED){
                     Log.d(TAG, "accepts -> False")
-                    return false
+                    return result
                 }
             }
         }
         timestampOfPreviousApprovedFrame = arFrame.timestamp
         Log.d(TAG, "accepts -> True")
-        return true
+        return Pair(FMFrameFilterResult.ACCEPTED,FMFrameFilterFailure.ACCEPTED)
     }
 
     private fun shouldForceApprove(arFrame: Frame): Boolean {

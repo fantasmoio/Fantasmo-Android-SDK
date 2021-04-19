@@ -1,47 +1,41 @@
 package com.fantasmo.sdk.utilities
 
-import com.fantasmo.sdk.validators.FMFrameValidationError
-import com.fantasmo.sdk.validators.mapToBehaviourRequest
+import com.fantasmo.sdk.FMBehaviorRequest
+import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterFailure
+import com.fantasmo.sdk.frameSequenceFilter.mapToBehaviourRequest
 import java.util.*
 
 class FrameFailureThrottler {
 
-    // The last time of triggering.
-    var lastErrorTime = System.currentTimeMillis()
     // Minimum number of seconds that must elapse between triggering.
-    var throttleThreshold = 2.0
+    private var throttleThreshold = 2.0
+
     // The number of times a validation error of certain kind occurs before triggering.
     var incidenceThreshold = 30
 
-    private var rejections : MutableMap<FMFrameValidationError,Int> = EnumMap(
-        FMFrameValidationError::class.java)
+    // The last time of triggering.
+    var lastErrorTime = System.currentTimeMillis()
 
-    private fun onNext(rejection: FMFrameValidationError) {
-        val count = addRejection(rejection)
-        val elapsed = System.currentTimeMillis() - lastErrorTime
-
-        if(elapsed > throttleThreshold && count > incidenceThreshold){
-            val behaviorRequest = mapToBehaviourRequest(rejection)
-            //locationListener.locationManager(behaviorRequest)
-            startNewCycle()
-        } else{
-            rejections[rejection] = count
-        }
+    fun handler(failure: FMFrameFilterFailure): FMBehaviorRequest {
+        return mapToBehaviourRequest(failure)
     }
 
-    private fun addRejection(rejection: FMFrameValidationError):Int {
-        if(rejections.containsKey(rejection)){
-            var count = rejections[rejection]
-            if(count!=null){
-                count+=1
-                rejections[rejection] = count
-                return count
-            }
-        }else{
-            rejections[rejection] = 0
-            return 0
+    private var validationErrorToCountDict : MutableMap<FMFrameFilterFailure,Int> = EnumMap(
+        FMFrameFilterFailure::class.java)
+
+    fun onNext(failure: FMFrameFilterFailure) {
+        var count = 0
+        if(validationErrorToCountDict.containsKey(failure)){
+            count = validationErrorToCountDict[failure]!!
         }
-        return 0
+
+        val elapsed = System.currentTimeMillis() - lastErrorTime
+
+        if(elapsed > throttleThreshold && count >= incidenceThreshold){
+            startNewCycle()
+        } else{
+            validationErrorToCountDict[failure] = count + 1
+        }
     }
 
     fun restart() {
@@ -50,6 +44,6 @@ class FrameFailureThrottler {
 
     private fun startNewCycle() {
         lastErrorTime = System.currentTimeMillis()
-        rejections.clear()
+        validationErrorToCountDict.clear()
     }
 }

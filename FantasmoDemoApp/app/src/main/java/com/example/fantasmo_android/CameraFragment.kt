@@ -20,7 +20,7 @@ import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
-import com.fantasmo.sdk.filters.FMBehaviorRequest
+import com.fantasmo.sdk.validators.FMBehaviorRequest
 import com.google.ar.core.Config
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingState
@@ -39,6 +39,7 @@ class CameraFragment : Fragment() {
     private lateinit var arSession: Session
     private lateinit var currentView: View
 
+    private lateinit var filterRejectionTv: TextView
     private lateinit var anchorDeltaTv: TextView
     private lateinit var cameraTranslationTv: TextView
     private lateinit var cameraAnglesTv: TextView
@@ -62,6 +63,7 @@ class CameraFragment : Fragment() {
 
         currentView = inflater.inflate(R.layout.camera_fragment, container, false)
 
+        filterRejectionTv = currentView.findViewById(R.id.filterRejectionText)
         anchorDeltaTv = currentView.findViewById(R.id.anchorDeltaText)
         cameraTranslationTv = currentView.findViewById(R.id.cameraTranslation)
         cameraAnglesTv = currentView.findViewById(R.id.cameraAnglesText)
@@ -126,11 +128,13 @@ class CameraFragment : Fragment() {
 
                     // Start getting location updates
                     fmLocationManager.startUpdatingLocation()
+                    filterRejectionTv.visibility = View.VISIBLE
                 } else {
                     Log.d(TAG, "LocalizeToggle Disabled")
 
                     // Stop getting location updates
                     fmLocationManager.stopUpdatingLocation()
+                    filterRejectionTv.visibility = View.GONE
                 }
             }
 
@@ -197,8 +201,10 @@ class CameraFragment : Fragment() {
                     "Server Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}" }
             }
 
+            @SuppressLint("SetTextI18n")
             override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
-                Log.d(TAG, didRequestBehavior.toString())
+                Log.d(TAG, didRequestBehavior.displayName)
+                activity?.runOnUiThread { filterRejectionTv.text = "FrameFilterResult: ${didRequestBehavior.displayName}" }
             }
         }
 

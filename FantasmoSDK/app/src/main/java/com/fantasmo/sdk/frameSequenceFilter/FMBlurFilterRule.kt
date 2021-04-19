@@ -1,4 +1,4 @@
-package com.fantasmo.sdk.validators
+package com.fantasmo.sdk.frameSequenceFilter
 
 import android.graphics.BitmapFactory
 import android.util.Log
@@ -12,9 +12,10 @@ import org.opencv.core.Mat
 import org.opencv.core.MatOfDouble
 import org.opencv.imgproc.Imgproc
 import java.text.DecimalFormat
+import kotlin.math.pow
 
-class FMBlurValidator : FMFrameValidator {
-    private val TAG = "FMBlurValidator"
+class FMBlurFilterRule : FMFrameSequenceFilterRule {
+    private val TAG = "FMBlurFilterRule"
 
     var variance: Double = 0.0
     var varianceAverager = MovingAverage()
@@ -26,7 +27,7 @@ class FMBlurValidator : FMFrameValidator {
     var throughputAverager = MovingAverage(8)
     var averageThroughput: Double = throughputAverager.average
 
-    override fun accepts(arFrame: Frame): Pair<FMValidatorResult,FMFrameValidationError> {
+    override fun check(arFrame: Frame): Pair<FMFrameFilterResult,FMFrameFilterFailure> {
         variance = calculateVariance(arFrame)
         varianceAverager.addSample(variance)
 
@@ -50,9 +51,9 @@ class FMBlurValidator : FMFrameValidator {
         }
 
         return if (isBlurry) {
-            Pair(FMValidatorResult.REJECTED,FMFrameValidationError.MOVINGTOOFAST)
+            Pair(FMFrameFilterResult.REJECTED,FMFrameFilterFailure.MOVINGTOOFAST)
         } else {
-            Pair(FMValidatorResult.ACCEPTED,FMFrameValidationError.ACCEPTED)
+            Pair(FMFrameFilterResult.ACCEPTED,FMFrameFilterFailure.ACCEPTED)
         }
     }
 
@@ -85,8 +86,8 @@ class FMBlurValidator : FMFrameValidator {
             Core.meanStdDev(destination, median, std)
 
             // Get variance from std which is the result of last operation
-            val result = DecimalFormat("0.00").format(Math.pow(std.get(0, 0)[0], 2.0)).toDouble()
-            Log.d(TAG,"result -> $result")
+            val result = DecimalFormat("0.00").format(std.get(0, 0)[0].pow(2.0)).toDouble()
+            Log.d(TAG,"Variance result -> $result")
             return result
 
         }catch(e:NotYetAvailableException){
