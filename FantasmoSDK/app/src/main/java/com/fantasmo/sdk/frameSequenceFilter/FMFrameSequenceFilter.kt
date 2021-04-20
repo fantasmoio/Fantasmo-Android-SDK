@@ -6,10 +6,10 @@ import org.opencv.android.OpenCVLoader
 
 class FMFrameSequenceFilter {
 
-    private val TAG = "FMFrameSequenceGuard"
+    private val TAG = "FMFrameSequenceFilter"
 
     // the last time a frame was accepted
-    var timestampOfPreviousApprovedFrame : Long = 0
+    var timestampOfPreviousApprovedFrame : Long = 0L
 
     // number of seconds after which we force acceptance
     var acceptanceThreshold = 6.0
@@ -22,13 +22,12 @@ class FMFrameSequenceFilter {
 
     fun prepareForNewFrameSequence() {
         OpenCVLoader.initDebug() //init OpenCV process
-        timestampOfPreviousApprovedFrame = 0
+        timestampOfPreviousApprovedFrame = 0L
     }
 
 
     fun check(arFrame : Frame) : Pair<FMFrameFilterResult, FMFrameFilterFailure> {
-        if(!shouldForceApprove(arFrame)) { //DEBUG: Force Filters to work on frame receiving
-        //if(shouldForceApprove(arFrame)) {
+        if(shouldForceApprove(arFrame)) {
             timestampOfPreviousApprovedFrame = arFrame.timestamp
             Log.d(TAG, "shouldForceAccept True")
             return Pair(FMFrameFilterResult.ACCEPTED,FMFrameFilterFailure.ACCEPTED)
@@ -39,7 +38,7 @@ class FMFrameSequenceFilter {
                 val result = rule.check(arFrame)
                 Log.d(TAG, "$rule, $result")
                 if(result.first != FMFrameFilterResult.ACCEPTED){
-                    Log.d(TAG, "accepts -> False")
+                    Log.d(TAG, "RULE_CHECK -> Frame not accepted $result")
                     return result
                 }
             }
@@ -51,7 +50,8 @@ class FMFrameSequenceFilter {
 
     private fun shouldForceApprove(arFrame: Frame): Boolean {
         if(timestampOfPreviousApprovedFrame != 0L){
-            val elapsed = arFrame.timestamp - timestampOfPreviousApprovedFrame
+            //convert to seconds (Frame timestamp is in nanoseconds)
+            val elapsed = (arFrame.timestamp - timestampOfPreviousApprovedFrame)/1000000000
             return elapsed > acceptanceThreshold
         }
         return false

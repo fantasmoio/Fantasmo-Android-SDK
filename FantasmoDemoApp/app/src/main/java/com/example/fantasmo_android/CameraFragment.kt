@@ -20,7 +20,7 @@ import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
-import com.fantasmo.sdk.validators.FMBehaviorRequest
+import com.fantasmo.sdk.FMBehaviorRequest
 import com.google.ar.core.Config
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingState
@@ -203,7 +203,7 @@ class CameraFragment : Fragment() {
 
             @SuppressLint("SetTextI18n")
             override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
-                Log.d(TAG, didRequestBehavior.displayName)
+                Log.d(TAG, "FrameFilterResult " + didRequestBehavior.displayName)
                 activity?.runOnUiThread { filterRejectionTv.text = "FrameFilterResult: ${didRequestBehavior.displayName}" }
             }
         }
