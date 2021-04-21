@@ -2,7 +2,6 @@ package com.fantasmo.sdk.frameSequenceFilter
 
 import android.util.Log
 import com.google.ar.core.Frame
-import org.opencv.android.OpenCVLoader
 
 class FMFrameSequenceFilter {
 
@@ -21,10 +20,8 @@ class FMFrameSequenceFilter {
     )
 
     fun prepareForNewFrameSequence() {
-        OpenCVLoader.initDebug() //init OpenCV process
         timestampOfPreviousApprovedFrame = 0L
     }
-
 
     fun check(arFrame : Frame) : Pair<FMFrameFilterResult, FMFrameFilterFailure> {
         if(shouldForceApprove(arFrame)) {
@@ -38,13 +35,12 @@ class FMFrameSequenceFilter {
                 val result = rule.check(arFrame)
                 Log.d(TAG, "$rule, $result")
                 if(result.first != FMFrameFilterResult.ACCEPTED){
-                    Log.d(TAG, "RULE_CHECK -> Frame not accepted $result")
+                    Log.d(TAG, "RULE_CHECK: Frame not accepted $result")
                     return result
                 }
             }
         }
         timestampOfPreviousApprovedFrame = arFrame.timestamp
-        Log.d(TAG, "accepts -> True")
         return Pair(FMFrameFilterResult.ACCEPTED,FMFrameFilterFailure.ACCEPTED)
     }
 

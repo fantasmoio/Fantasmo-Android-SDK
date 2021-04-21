@@ -25,6 +25,7 @@ import com.google.ar.core.TrackingState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.opencv.android.OpenCVLoader
 
 /**
  * The methods that you use to receive events from an associated
@@ -104,6 +105,7 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(fmNetworkManager, this, context, token)
+        OpenCVLoader.initDebug() //init OpenCV process
         frameFilter = FMFrameSequenceFilter()
         frameFailureThrottler = FrameFailureThrottler()
     }
