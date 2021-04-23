@@ -2,13 +2,13 @@ package com.fantasmo.sdk
 
 import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterFailure
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
-import junit.framework.Assert.assertEquals
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class FrameFailureThrottlerTest {
 
     @Test
-    fun testHandler(){
+    fun testHandler() {
         var failure = FMFrameFilterFailure.PITCHTOOLOW
         val frameFailure = FrameFailureThrottler()
 
@@ -43,7 +43,7 @@ class FrameFailureThrottlerTest {
     }
 
     @Test
-    fun testOnNext(){
+    fun testOnNext() {
         val failure = FMFrameFilterFailure.PITCHTOOLOW
         val frameFailure = FrameFailureThrottler()
 
@@ -61,7 +61,7 @@ class FrameFailureThrottlerTest {
     }
 
     @Test
-    fun testOnNextWithFailure(){
+    fun testOnNextWithFailure() {
         val failure = FMFrameFilterFailure.PITCHTOOLOW
         val frameFailure = FrameFailureThrottler()
 
@@ -81,7 +81,7 @@ class FrameFailureThrottlerTest {
     }
 
     @Test
-    fun testOnNextStartNewCycle(){
+    fun testOnNextStartNewCycle() {
         val failure = FMFrameFilterFailure.PITCHTOOLOW
         val frameFailure = FrameFailureThrottler()
 

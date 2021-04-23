@@ -11,7 +11,7 @@ class FrameFailureThrottler {
     private var throttleThreshold = 2.0
 
     // The number of times a validation error of certain kind occurs before triggering.
-    var incidenceThreshold = 30
+    private var incidenceThreshold = 30
 
     // The last time of triggering.
     var lastErrorTime = System.currentTimeMillis()

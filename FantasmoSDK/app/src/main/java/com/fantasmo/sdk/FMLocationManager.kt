@@ -86,8 +86,8 @@ class FMLocationManager(private val context: Context) {
 
     var isConnected = false
 
-    private lateinit var frameFilter : FMFrameSequenceFilter
-    private lateinit var frameFailureThrottler : FrameFailureThrottler
+    private lateinit var frameFilter: FMFrameSequenceFilter
+    private lateinit var frameFailureThrottler: FrameFailureThrottler
 
     /**
      * Connect to the location service.
@@ -213,14 +213,14 @@ class FMLocationManager(private val context: Context) {
             return
         }
 
-        Log.d(TAG,"localize: isSimulation $isSimulation")
+        Log.d(TAG, "localize: isSimulation $isSimulation")
         CoroutineScope(Dispatchers.IO).launch {
             state = State.UPLOADING
 
             fmApi.sendLocalizeRequest(
                 arFrame,
                 { localizeResponse, fmZones ->
-                    Log.d(TAG,"localize: $localizeResponse, Zones $fmZones")
+                    Log.d(TAG, "localize: $localizeResponse, Zones $fmZones")
                     fmLocationListener?.locationManager(
                         localizeResponse,
                         fmZones
@@ -229,7 +229,7 @@ class FMLocationManager(private val context: Context) {
                     updateStateAfterLocalization()
                 },
                 {
-                    Log.e(TAG,"localize: $it")
+                    Log.e(TAG, "localize: $it")
                     fmLocationListener?.locationManager(it, null)
 
                     updateStateAfterLocalization()
@@ -251,16 +251,17 @@ class FMLocationManager(private val context: Context) {
      * @return true if it can localize the ARFrame and false otherwise.
      */
     private fun shouldLocalize(arFrame: Frame): Boolean {
-        if(isConnected
-                && currentLocation.latitude > 0.0
-                && arFrame.camera.trackingState == TrackingState.TRACKING){
-                    val result = frameFilter.check(arFrame)
-            return if(result.first == FMFrameFilterResult.ACCEPTED){
+        if (isConnected
+            && currentLocation.latitude > 0.0
+            && arFrame.camera.trackingState == TrackingState.TRACKING
+        ) {
+            val result = frameFilter.check(arFrame)
+            return if (result.first == FMFrameFilterResult.ACCEPTED) {
                 // DEBUG: Check if it's accepting frames
                 fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
                 frameFailureThrottler.restart()
                 true
-            }else{
+            } else {
                 frameFailureThrottler.onNext(result.second)
                 fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
                 false
@@ -279,7 +280,7 @@ class FMLocationManager(private val context: Context) {
         if (!isConnected) {
             return
         }
-        Log.d(TAG,"isZoneInRadius")
+        Log.d(TAG, "isZoneInRadius")
         CoroutineScope(Dispatchers.IO).launch {
             fmApi.sendZoneInRadiusRequest(
                 radius,

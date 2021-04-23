@@ -6,14 +6,14 @@ import com.fantasmo.sdk.frameSequenceFilter.FMFrameSequenceFilter
 import com.google.ar.core.Camera
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
-import junit.framework.Assert.assertEquals
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.Mockito
 
 class FMFrameSequenceFilterTest {
 
     @Test
-    fun testShouldForceAcceptTrue(){
+    fun testShouldForceAcceptTrue() {
         val filter = FMFrameSequenceFilter()
         val frame = Mockito.mock(Frame::class.java)
 
@@ -28,15 +28,17 @@ class FMFrameSequenceFilterTest {
     }
 
     @Test
-    fun testShouldForceAcceptFalse(){
+    fun testShouldForceAcceptFalse() {
         val filter = FMFrameSequenceFilter()
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
-            floatArrayOf((-0.01).toFloat(),
+            floatArrayOf(
+                (-0.01).toFloat(),
                 (-0.01).toFloat(),
                 0.01F
             ),
-            floatArrayOf(0.01F, 0.01F, 0.01F,
+            floatArrayOf(
+                0.01F, 0.01F, 0.01F,
                 (-0.01).toFloat()
             )
         )
@@ -49,7 +51,8 @@ class FMFrameSequenceFilterTest {
         Mockito.`when`(frame.camera.pose).thenReturn(pose2)
         Mockito.`when`(frame.camera.pose.translation).thenReturn(pose.translation)
         Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
-        Mockito.`when`(frame.androidSensorPose.rotationQuaternion).thenReturn(pose.rotationQuaternion)
+        Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
+            .thenReturn(pose.rotationQuaternion)
 
         assertEquals(
             Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOLITTLE),
@@ -58,14 +61,17 @@ class FMFrameSequenceFilterTest {
     }
 
     @Test
-    fun testFrameCheck(){
+    fun testFrameCheck() {
         val filter = FMFrameSequenceFilter()
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
-            floatArrayOf((-0.92).toFloat(),
+            floatArrayOf(
                 (-0.92).toFloat(),
-                0.63F),
-            floatArrayOf(0.1F, 0.03F, 0.6F,
+                (-0.92).toFloat(),
+                0.63F
+            ),
+            floatArrayOf(
+                0.1F, 0.03F, 0.6F,
                 (-0.005).toFloat()
             )
         )
@@ -78,7 +84,8 @@ class FMFrameSequenceFilterTest {
         Mockito.`when`(frame.camera.pose).thenReturn(pose2)
         Mockito.`when`(frame.camera.pose.translation).thenReturn(pose.translation)
         Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
-        Mockito.`when`(frame.androidSensorPose.rotationQuaternion).thenReturn(pose.rotationQuaternion)
+        Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
+            .thenReturn(pose.rotationQuaternion)
 
         assertEquals(
             Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED),
