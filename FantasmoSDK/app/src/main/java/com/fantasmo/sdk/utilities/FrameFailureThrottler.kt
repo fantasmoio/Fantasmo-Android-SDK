@@ -20,7 +20,7 @@ class FrameFailureThrottler {
         return mapToBehaviourRequest(failure)
     }
 
-    private var validationErrorToCountDict : MutableMap<FMFrameFilterFailure,Int> = EnumMap(
+    var validationErrorToCountDict : MutableMap<FMFrameFilterFailure,Int> = EnumMap(
         FMFrameFilterFailure::class.java)
 
     fun onNext(failure: FMFrameFilterFailure) {
