@@ -86,7 +86,9 @@ class FMLocationManager(private val context: Context) {
 
     var isConnected = false
 
+    // Used to validate frame for sufficient quality before sending to API.
     private lateinit var frameFilter: FMFrameSequenceFilter
+    // Throttler for invalid frames.
     private lateinit var frameFailureThrottler: FrameFailureThrottler
 
     /**

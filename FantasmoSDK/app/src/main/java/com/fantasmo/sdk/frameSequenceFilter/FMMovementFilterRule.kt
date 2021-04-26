@@ -7,7 +7,7 @@ import kotlin.math.abs
 
 class FMMovementFilterRule : FMFrameSequenceFilterRule {
     private val TAG = "FMMovementFilterRule"
-    private val threshold = 0.01 //0.25 is too big to test with simulation
+    private val threshold = 0.01 //0.25
     private var lastTransform: FloatArray = floatArrayOf(0F, 0F, 0F)
 
     override fun check(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
@@ -20,9 +20,7 @@ class FMMovementFilterRule : FMFrameSequenceFilterRule {
     }
 
     private fun exceededThreshold(newTransform: FloatArray?): Boolean {
-        Log.d(TAG, "exceededThreshold: ${FMPosition(lastTransform)}, ${FMPosition(newTransform!!)}")
-        val diff = FMPosition.minus(FMPosition(lastTransform), FMPosition(newTransform))
-        Log.d(TAG, "exceededThreshold DIFF: $diff")
+        val diff = FMPosition.minus(FMPosition(lastTransform), FMPosition(newTransform!!))
         return !((abs(diff.x) < threshold)
                 && (abs(diff.y) < threshold)
                 && (abs(diff.z) < threshold))

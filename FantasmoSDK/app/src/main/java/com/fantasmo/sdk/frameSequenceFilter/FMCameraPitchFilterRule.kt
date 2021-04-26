@@ -7,6 +7,7 @@ class FMCameraPitchFilterRule : FMFrameSequenceFilterRule {
     private val radianThreshold = 0.20
 
     override fun check(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
+        // Angle of X-plane of device sensor system (Y-Axis up).
         val x = arFrame.androidSensorPose.rotationQuaternion[0]
 
         return when {
