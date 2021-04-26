@@ -136,6 +136,9 @@ class FMLocationManagerTest {
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
             }
 
+            override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
+            }
+
             override fun locationManager(location: Location, zones: List<FMZone>?) {
             }
         }

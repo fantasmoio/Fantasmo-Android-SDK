@@ -13,9 +13,12 @@ import android.location.LocationManager
 import android.os.Looper
 import android.util.Log
 import androidx.core.content.PermissionChecker
+import com.fantasmo.sdk.frameSequenceFilter.FMFrameSequenceFilter
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
+import com.fantasmo.sdk.utilities.FrameFailureThrottler
+import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterResult
 import com.google.android.gms.location.*
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
@@ -42,6 +45,12 @@ interface FMLocationListener {
      * @param metadata: Metadata related to the error.
      */
     fun locationManager(error: ErrorResponse, metadata: Any?)
+
+    /**
+     * Tells the listener that a request behavior has occurred.
+     * @param didRequestBehavior: The behavior reported.
+     */
+    fun locationManager(didRequestBehavior: FMBehaviorRequest)
 }
 
 class FMLocationManager(private val context: Context) {
@@ -64,6 +73,7 @@ class FMLocationManager(private val context: Context) {
     private lateinit var fmApi: FMApi
 
     var state = State.STOPPED
+
     var anchorFrame: Frame? = null
     var currentLocation: android.location.Location = android.location.Location("")
 
@@ -75,6 +85,11 @@ class FMLocationManager(private val context: Context) {
     var isSimulation = false
 
     var isConnected = false
+
+    // Used to validate frame for sufficient quality before sending to API.
+    private lateinit var frameFilter: FMFrameSequenceFilter
+    // Throttler for invalid frames.
+    private lateinit var frameFailureThrottler: FrameFailureThrottler
 
     /**
      * Connect to the location service.
@@ -91,6 +106,8 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(fmNetworkManager, this, context, token)
+        frameFilter = FMFrameSequenceFilter()
+        frameFailureThrottler = FrameFailureThrottler()
     }
 
     /**
@@ -101,6 +118,8 @@ class FMLocationManager(private val context: Context) {
 
         this.isConnected = true
         this.state = State.LOCALIZING
+        this.frameFilter.prepareForNewFrameSequence()
+        this.frameFailureThrottler.restart()
 
         try {
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(this.context)
@@ -196,14 +215,14 @@ class FMLocationManager(private val context: Context) {
             return
         }
 
-        Log.d(TAG,"localize: isSimulation $isSimulation")
+        Log.d(TAG, "localize: isSimulation $isSimulation")
         CoroutineScope(Dispatchers.IO).launch {
             state = State.UPLOADING
 
             fmApi.sendLocalizeRequest(
                 arFrame,
                 { localizeResponse, fmZones ->
-                    Log.d(TAG,"localize: $localizeResponse, Zones $fmZones")
+                    Log.d(TAG, "localize: $localizeResponse, Zones $fmZones")
                     fmLocationListener?.locationManager(
                         localizeResponse,
                         fmZones
@@ -212,7 +231,7 @@ class FMLocationManager(private val context: Context) {
                     updateStateAfterLocalization()
                 },
                 {
-                    Log.e(TAG,"localize: $it")
+                    Log.e(TAG, "localize: $it")
                     fmLocationListener?.locationManager(it, null)
 
                     updateStateAfterLocalization()
@@ -234,7 +253,23 @@ class FMLocationManager(private val context: Context) {
      * @return true if it can localize the ARFrame and false otherwise.
      */
     private fun shouldLocalize(arFrame: Frame): Boolean {
-        return isConnected && currentLocation.latitude > 0.0 && arFrame.camera.trackingState == TrackingState.TRACKING
+        if (isConnected
+            && currentLocation.latitude > 0.0
+            && arFrame.camera.trackingState == TrackingState.TRACKING
+        ) {
+            val result = frameFilter.check(arFrame)
+            return if (result.first == FMFrameFilterResult.ACCEPTED) {
+                // DEBUG: Check if it's accepting frames
+                fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
+                frameFailureThrottler.restart()
+                true
+            } else {
+                frameFailureThrottler.onNext(result.second)
+                fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
+                false
+            }
+        }
+        return false
     }
 
     /**
@@ -247,7 +282,7 @@ class FMLocationManager(private val context: Context) {
         if (!isConnected) {
             return
         }
-        Log.d(TAG,"isZoneInRadius")
+        Log.d(TAG, "isZoneInRadius")
         CoroutineScope(Dispatchers.IO).launch {
             fmApi.sendZoneInRadiusRequest(
                 radius,
