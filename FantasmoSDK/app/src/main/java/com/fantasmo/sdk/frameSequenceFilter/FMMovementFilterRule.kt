@@ -1,15 +1,20 @@
 package com.fantasmo.sdk.frameSequenceFilter
 
-import android.util.Log
 import com.fantasmo.sdk.models.FMPosition
 import com.google.ar.core.Frame
 import kotlin.math.abs
 
 class FMMovementFilterRule : FMFrameSequenceFilterRule {
-    private val TAG = "FMMovementFilterRule"
+    // Sideways movement threshold
     private val threshold = 0.01 //0.25
+    // Previous frame translation
     private var lastTransform: FloatArray = floatArrayOf(0F, 0F, 0F)
 
+    /**
+     * Check frame acceptance
+     * @param arFrame: Frame to be evaluated
+     * @return Accepts frame or Rejects frame with MovingTooLittle failure
+     */
     override fun check(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
         return if (exceededThreshold(arFrame.camera.pose.translation)) {
             lastTransform = arFrame.camera.pose.translation
@@ -19,6 +24,11 @@ class FMMovementFilterRule : FMFrameSequenceFilterRule {
         }
     }
 
+    /**
+     * Check if frame translation has exceeded threshold
+     * @param newTransform: Frame translation
+     * @return If frame translation is within(false) or without threshold(true)
+     */
     private fun exceededThreshold(newTransform: FloatArray?): Boolean {
         val diff = FMPosition.minus(FMPosition(lastTransform), FMPosition(newTransform!!))
         return !((abs(diff.x) < threshold)
