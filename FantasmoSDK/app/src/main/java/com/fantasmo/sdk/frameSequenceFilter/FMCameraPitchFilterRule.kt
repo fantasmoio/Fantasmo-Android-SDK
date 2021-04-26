@@ -3,12 +3,17 @@ package com.fantasmo.sdk.frameSequenceFilter
 import com.google.ar.core.Frame
 import kotlin.math.abs
 
+/**
+ * Class responsible for filtering frames due to critical angles.
+ * Prevents from sending ground and sky images which have no characteristics
+ * to determine location
+ */
 class FMCameraPitchFilterRule : FMFrameSequenceFilterRule {
     // Maximum value for tilting phone up or down
     private val radianThreshold = 0.20
 
     /**
-     * Check frame acceptance
+     * Check frame acceptance.
      * @param arFrame: Frame to be evaluated
      * @return Accepts frame or Rejects frame with PitchTooHigh or PitchTooLow failure
      */

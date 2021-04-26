@@ -3,6 +3,9 @@ package com.fantasmo.sdk.frameSequenceFilter
 import com.fantasmo.sdk.FMBehaviorRequest
 import com.google.ar.core.Frame
 
+/**
+ * Defines rules for the implemented filters.
+ */
 interface FMFrameSequenceFilterRule {
     fun check(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure>
 }
@@ -20,6 +23,11 @@ enum class FMFrameFilterResult {
     REJECTED;
 }
 
+/**
+ * Method responsible for mapping a FrameFilterFailure to the end user.
+ * @param rejection: FrameFilterFailure
+ * @return: FMBehaviorRequest corresponding to and instruction to the end-user
+ */
 fun mapToBehaviourRequest(rejection: FMFrameFilterFailure): FMBehaviorRequest {
     return when (rejection) {
         FMFrameFilterFailure.PITCHTOOLOW -> FMBehaviorRequest.TILTUP

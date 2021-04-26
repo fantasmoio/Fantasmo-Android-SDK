@@ -5,6 +5,9 @@ import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterFailure
 import com.fantasmo.sdk.frameSequenceFilter.mapToBehaviourRequest
 import java.util.*
 
+/**
+ * Throttler for frame validation failure events each of which occurs when a frame turns out to be not acceptable for determining location.
+ */
 class FrameFailureThrottler {
 
     // Minimum number of seconds that must elapse between triggering.
@@ -31,7 +34,7 @@ class FrameFailureThrottler {
     )
 
     /**
-     * On new failure, onNext is invoked to update validationErrorToCountDict
+     * On new failure, onNext is invoked to update validationErrorToCountDict.
      * @param failure: PITCHTOOLOW, PITCHTOOHIGH, MOVINGTOOFAST, MOVINGTOOLITTLE, ACCEPTED
      */
     fun onNext(failure: FMFrameFilterFailure) {
@@ -50,14 +53,14 @@ class FrameFailureThrottler {
     }
 
     /**
-     * Restart Counting Failure Process after a sequence
+     * Restart Counting Failure Process after a sequence.
      */
     fun restart() {
         startNewCycle()
     }
 
     /**
-     * Creates a new for frame sequence acceptance
+     * Creates a new for frame sequence acceptance.
      */
     private fun startNewCycle() {
         lastErrorTime = System.currentTimeMillis()

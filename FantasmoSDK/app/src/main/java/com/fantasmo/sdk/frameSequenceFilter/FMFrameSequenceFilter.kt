@@ -3,6 +3,9 @@ package com.fantasmo.sdk.frameSequenceFilter
 import android.util.Log
 import com.google.ar.core.Frame
 
+/**
+ * Class responsible for filtering frames according the implemented filters
+ */
 class FMFrameSequenceFilter {
 
     private val TAG = "FMFrameSequenceFilter"
@@ -14,7 +17,7 @@ class FMFrameSequenceFilter {
     var acceptanceThreshold = 6.0
 
     /**
-     * List of filter rules to apply on frame received
+     * List of filter rules to apply on frame received.
      */
     private var rules = listOf(
             FMCameraPitchFilterRule(),
@@ -31,7 +34,6 @@ class FMFrameSequenceFilter {
 
     /**
      * Check if frame is valid to determine localize result.
-     *
      * @param arFrame: Frame for approval.
      * @return result: Pair<FMFrameFilterResult, FMFrameFilterFailure>
      */
