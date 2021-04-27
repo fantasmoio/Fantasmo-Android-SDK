@@ -1,6 +1,7 @@
 package com.fantasmo.sdk.network
 
 import com.android.volley.*
+import com.fantasmo.sdk.FMAPI_KEY
 import com.fantasmo.sdk.utils.CacheTestUtils
 import com.fantasmo.sdk.utils.ImmediateResponseDelivery
 import com.fantasmo.sdk.models.*
@@ -17,7 +18,7 @@ class ResponseDeliveryTest {
     private lateinit var mRequest: MultiPartRequest
     private lateinit var mSuccessResponse: Response<NetworkResponse>
 
-    private val token = "API_KEY"
+    private val token = FMAPI_KEY.API_KEY
 
     @Before
     fun setUp() {

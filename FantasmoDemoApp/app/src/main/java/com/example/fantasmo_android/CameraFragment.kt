@@ -106,7 +106,7 @@ class CameraFragment : Fragment() {
 
             // Connect the FMLocationManager from Fantasmo SDK
             fmLocationManager.connect(
-                "API_KEY",
+                FMAPI_KEY.API_KEY,
                 fmLocationListener
             )
 

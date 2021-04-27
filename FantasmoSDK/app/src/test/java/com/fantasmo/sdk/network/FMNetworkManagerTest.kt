@@ -8,6 +8,7 @@ import com.android.volley.Cache
 import com.android.volley.NetworkResponse
 import com.android.volley.Response
 import com.android.volley.ResponseDelivery
+import com.fantasmo.sdk.FMAPI_KEY
 import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.fantasmosdk.R
 import com.fantasmo.sdk.utils.CacheTestUtils
@@ -32,7 +33,7 @@ class FMNetworkManagerTest {
     private lateinit var instrumentationContext: Context
     private lateinit var fmNetworkManager: FMNetworkManager
 
-    private val token = "API_KEY"
+    private val token = FMAPI_KEY.API_KEY
 
     private lateinit var mDelivery: ResponseDelivery
 
