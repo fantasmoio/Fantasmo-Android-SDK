@@ -1,12 +1,13 @@
 package com.fantasmo.sdk.frameSequenceFilter
 
+import android.content.Context
 import android.util.Log
 import com.google.ar.core.Frame
 
 /**
  * Class responsible for filtering frames according the implemented filters
  */
-class FMFrameSequenceFilter {
+class FMFrameSequenceFilter(private val context: Context) {
 
     private val TAG = "FMFrameSequenceFilter"
 
@@ -20,9 +21,9 @@ class FMFrameSequenceFilter {
      * List of filter rules to apply on frame received.
      */
     private var rules = listOf(
-            FMCameraPitchFilterRule(),
-            FMMovementFilterRule(),
-            FMBlurFilterRule()
+            //FMCameraPitchFilterRule(),
+            //FMMovementFilterRule(),
+            FMBlurFilterRule(context)
     )
 
     /**

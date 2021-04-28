@@ -106,7 +106,7 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(fmNetworkManager, this, context, token)
-        frameFilter = FMFrameSequenceFilter()
+        frameFilter = FMFrameSequenceFilter(context)
         frameFailureThrottler = FrameFailureThrottler()
     }
 
