@@ -83,7 +83,7 @@ class FMApi(
     private fun getLocalizeParams(
         frame: Frame
     ): HashMap<String, String> {
-        val pose = FMUtility.getPoseBasedOnDeviceOrientation(context, frame)
+        val pose = FMUtility.getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context, frame)
 
         val coordinates = if (fmLocationManager.isSimulation) {
             val simulationLocation = FMConfiguration.getConfigLocation()

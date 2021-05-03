@@ -89,7 +89,7 @@ class FMUtility {
             when (rotation) {
                 // SCREEN_ORIENTATION_REVERSE_LANDSCAPE
                 Surface.ROTATION_270 -> {
-                    return 180f
+                    return -90f
                 }
                 // SCREEN_ORIENTATION_LANDSCAPE
                 Surface.ROTATION_90 -> {
@@ -104,7 +104,7 @@ class FMUtility {
                     return 180f
                 }
                 else -> {
-                    return 0f
+                    return 90f
                 }
             }
         }
@@ -112,36 +112,8 @@ class FMUtility {
         /**
          * Utility method to get the correct Pose for each of the device orientations.
          */
-        fun getPoseBasedOnDeviceOrientation(context: Context, frame: Frame): FMPose {
-            val rotation: Int = try {
-                context.display?.rotation!!
-            } catch (exception: UnsupportedOperationException) {
-                val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-                val display: Display = wm.defaultDisplay
-                display.rotation
-            }
-
-            when (rotation) {
-                // SCREEN_ORIENTATION_REVERSE_LANDSCAPE
-                Surface.ROTATION_270 -> {
-                    return FMPose(frame.camera.pose.compose(frame.camera.pose))
-                }
-                // SCREEN_ORIENTATION_LANDSCAPE
-                Surface.ROTATION_90 -> {
-                    return FMPose(frame.camera.pose)
-                }
-                // SCREEN_ORIENTATION_PORTRAIT
-                Surface.ROTATION_0 -> {
-                    return FMPose(frame.androidSensorPose.extractRotation())
-                }
-                // SCREEN_ORIENTATION_REVERSE_PORTRAIT
-                Surface.ROTATION_180 -> {
-                    return FMPose(frame.androidSensorPose.extractRotation().inverse())
-                }
-                else -> {
-                    return FMPose()
-                }
-            }
+        fun getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context: Context, frame: Frame): FMPose {
+            return FMPose(frame.camera.getDisplayOrientedPose())
         }
 
         /**
