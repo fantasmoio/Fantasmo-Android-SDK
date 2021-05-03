@@ -8,7 +8,10 @@ import android.view.Surface
 import android.view.WindowManager
 import com.fantasmo.sdk.models.*
 import com.google.ar.core.Frame
+import com.google.ar.core.Pose
+import com.google.ar.sceneform.math.Vector3
 import java.io.ByteArrayOutputStream
+import kotlin.math.*
 
 /**
  * Class with utility methods and constants
@@ -154,6 +157,13 @@ class FMUtility {
             } else {
                 FMPose()
             }
+        }
+
+        /// Axis vector must be represented with unit vector.
+        fun makeRotation(angle: Float, axis: Vector3): Pose {
+            assert( abs(axis.length() - 1) < 0.001 )
+            val a = sin(angle/2)
+            return Pose.makeRotation(a * axis.x, a * axis.y, a * axis.z, cos(angle/2))
         }
 
         private fun Bitmap.rotate(degrees: Float): Bitmap {
