@@ -113,7 +113,7 @@ class FMUtility {
          * Utility method to get the correct Pose for each of the device orientations.
          */
         fun getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context: Context, frame: Frame): FMPose {
-            return FMPose(frame.camera.getDisplayOrientedPose())
+            return FMPose(frame.camera.displayOrientedPose)
         }
 
         /**
@@ -121,11 +121,13 @@ class FMUtility {
          * @param arFrame the current AR Frame.
          */
         fun anchorDeltaPoseForFrame(arFrame: Frame, anchorFrame: Frame): FMPose {
-            val poseARFrame = arFrame.androidSensorPose
+            // Pose of frame must be taken for "virtual" device as we send to server orientation of
+            // "virtual" device for "localization" frame
+            val poseARVirtualFrame = arFrame.camera.displayOrientedPose
             val poseAnchor = anchorFrame.androidSensorPose
 
-            return if (poseAnchor != null && poseARFrame != null) {
-                FMPose.diffPose(poseAnchor, poseARFrame)
+            return if (poseAnchor != null && poseARVirtualFrame != null) {
+                FMPose.diffPose(poseAnchor, poseARVirtualFrame)
             } else {
                 FMPose()
             }
