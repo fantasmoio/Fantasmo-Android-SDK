@@ -14,23 +14,23 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMLocationListener
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
-import com.fantasmo.sdk.FMBehaviorRequest
-import com.google.ar.core.Config
-import com.google.ar.core.Session
-import com.google.ar.core.TrackingState
+import com.google.ar.core.*
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.ux.ArFragment
+
+import java.util.*
 
 /**
  * Fragment to show AR camera image and make use of the Fantasmo SDK localization feature.
  */
-class CameraFragment : Fragment() {
+class CameraFragment : Fragment(){
 
     private val TAG = "CameraFragment"
 
@@ -93,10 +93,9 @@ class CameraFragment : Fragment() {
 
             configureARSession()
             val scene = arSceneView.scene
-            scene.addOnUpdateListener { frameTime ->
+            scene.addOnUpdateListener {
                 run {
-                    arFragment.onUpdate(frameTime)
-                    onUpdate()
+                    //onUpdate()
                 }
             }
 
@@ -179,8 +178,24 @@ class CameraFragment : Fragment() {
         config.focusMode = Config.FocusMode.AUTO
         config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
         config.planeFindingMode = Config.PlaneFindingMode.DISABLED
+
+        config.augmentedFaceMode = Config.AugmentedFaceMode.DISABLED
+        config.cloudAnchorMode = Config.CloudAnchorMode.DISABLED
+        config.augmentedImageDatabase = null
+        config.lightEstimationMode = Config.LightEstimationMode.DISABLED
+        config.instantPlacementMode = Config.InstantPlacementMode.DISABLED
+        config.depthMode = Config.DepthMode.DISABLED
+
         arSession.configure(config)
+
+        val cameraConfig = CameraConfigFilter(arSession)
+        cameraConfig.depthSensorUsage = EnumSet.of(CameraConfig.DepthSensorUsage.DO_NOT_USE)
+        val cameraConfigList = arSession.getSupportedCameraConfigs(cameraConfig)
+        arSession.cameraConfig = cameraConfigList[0]
         arSceneView.setupSession(arSession)
+        arSceneView.planeRenderer.isEnabled = false
+        arSceneView.planeRenderer.isVisible = false
+
         Log.d(TAG, arSceneView.session?.config.toString())
     }
 
@@ -258,5 +273,21 @@ class CameraFragment : Fragment() {
         return s + String.format("%.2f", cameraAttr?.get(0)) + ", " +
                 String.format("%.2f", cameraAttr?.get(1)) + ", " +
                 String.format("%.2f", cameraAttr?.get(2))
+    }
+
+    /**
+     * Call onPause method to pause the AR session
+     * */
+    override fun onPause() {
+        arSession.pause()
+        super.onPause()
+    }
+
+    /**
+     * Release heap allocation of the AR session
+     * */
+    override fun onDestroy() {
+        arSession.close()
+        super.onDestroy()
     }
 }
