@@ -9,11 +9,11 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.Button
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.example.fantasmo_android.R
@@ -80,6 +80,8 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+
+        (activity as AppCompatActivity?)!!.supportActionBar!!.hide()
 
         currentView = inflater.inflate(R.layout.camera_fragment, container, false)
 
@@ -343,15 +345,5 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
                 anchored = true
             }
         }
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-    }
-
-    override fun onDetach() {
-        super.onDetach()
-        activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
     }
 }
