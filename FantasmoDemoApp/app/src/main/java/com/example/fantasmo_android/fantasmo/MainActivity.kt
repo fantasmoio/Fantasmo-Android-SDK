@@ -1,4 +1,4 @@
-package com.example.fantasmo_android
+package com.example.fantasmo_android.fantasmo
 
 import android.Manifest
 import android.app.AlertDialog
@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.example.fantasmo_android.R
 
 
 class MainActivity : AppCompatActivity() {
