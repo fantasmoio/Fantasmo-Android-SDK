@@ -114,9 +114,9 @@ class FMNetworkManager(
                         Gson().fromJson(resultResponse, ZoneInRadiusResponse::class.java)
                     onCompletion(inRadius.result.toBoolean())
                 } catch (e: JSONException) {
+                    onCompletion(false)
                     e.printStackTrace()
                 }
-                onCompletion(true)
             },
             Response.ErrorListener { error ->
                 processAndLogError(error)
