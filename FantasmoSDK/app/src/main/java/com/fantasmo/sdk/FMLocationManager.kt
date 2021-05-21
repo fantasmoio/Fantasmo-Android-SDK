@@ -291,11 +291,11 @@ class FMLocationManager(private val context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             val start = System.currentTimeMillis()
             // Wait on First Location Update if it isn't already
-            // available and it's not in simulation mode
+            // available and if it's not in simulation mode
             while(!hasLocation && !isSimulation){
                 delay(LOCATIONINTERVAL)
                 if (System.currentTimeMillis() - start > timeOut){
-                    Log.d(TAG,"Timeout Reached")
+                    Log.d(TAG,"isZoneinRadius Timeout Reached")
                     break
                 }
             }
