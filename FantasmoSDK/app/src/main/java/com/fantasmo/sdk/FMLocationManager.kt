@@ -57,7 +57,7 @@ interface FMLocationListener {
 class FMLocationManager(private val context: Context) {
     private val TAG = "FMLocationManager"
 
-    private val LOCATIONINTERVAL = 300L
+    private val locationInterval = 300L
 
     enum class State {
         // doing nothing
@@ -193,8 +193,8 @@ class FMLocationManager(private val context: Context) {
             val locationRequest = LocationRequest.create()
             locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
             locationRequest.smallestDisplacement = 1f
-            locationRequest.fastestInterval = LOCATIONINTERVAL
-            locationRequest.interval = LOCATIONINTERVAL
+            locationRequest.fastestInterval = locationInterval
+            locationRequest.interval = locationInterval
 
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
@@ -293,9 +293,9 @@ class FMLocationManager(private val context: Context) {
             // Wait on First Location Update if it isn't already
             // available and if it's not in simulation mode
             while(!hasLocation && !isSimulation){
-                delay(LOCATIONINTERVAL)
+                delay(locationInterval)
                 if (System.currentTimeMillis() - start > timeOut){
-                    Log.d(TAG,"isZoneinRadius Timeout Reached")
+                    Log.d(TAG,"isZoneInRadius Timeout Reached")
                     break
                 }
             }
