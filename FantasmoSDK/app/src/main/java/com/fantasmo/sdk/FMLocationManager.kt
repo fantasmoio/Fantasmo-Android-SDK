@@ -13,17 +13,18 @@ import android.location.LocationManager
 import android.os.Looper
 import android.util.Log
 import androidx.core.content.PermissionChecker
+import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterResult
 import com.fantasmo.sdk.frameSequenceFilter.FMFrameSequenceFilter
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterResult
 import com.google.android.gms.location.*
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -56,6 +57,8 @@ interface FMLocationListener {
 class FMLocationManager(private val context: Context) {
     private val TAG = "FMLocationManager"
 
+    private val locationInterval = 300L
+
     enum class State {
         // doing nothing
         STOPPED,
@@ -86,6 +89,8 @@ class FMLocationManager(private val context: Context) {
 
     var isConnected = false
 
+    private var hasLocation = false
+
     // Used to validate frame for sufficient quality before sending to API.
     private lateinit var frameFilter: FMFrameSequenceFilter
     // Throttler for invalid frames.
@@ -108,18 +113,6 @@ class FMLocationManager(private val context: Context) {
         fmApi = FMApi(fmNetworkManager, this, context, token)
         frameFilter = FMFrameSequenceFilter()
         frameFailureThrottler = FrameFailureThrottler()
-    }
-
-    /**
-     * Starts the generation of updates that report the user’s current location.
-     */
-    fun startUpdatingLocation() {
-        Log.d(TAG, "startUpdatingLocation")
-
-        this.isConnected = true
-        this.state = State.LOCALIZING
-        this.frameFilter.prepareForNewFrameSequence()
-        this.frameFailureThrottler.restart()
 
         try {
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(this.context)
@@ -132,6 +125,18 @@ class FMLocationManager(private val context: Context) {
         } catch (exception: Exception) {
             Log.e(TAG, "Can't instantiate FusedLocationProviderClient: ${exception.message}")
         }
+    }
+
+    /**
+     * Starts the generation of updates that report the user’s current location.
+     */
+    fun startUpdatingLocation() {
+        Log.d(TAG, "startUpdatingLocation")
+
+        this.isConnected = true
+        this.state = State.LOCALIZING
+        this.frameFilter.prepareForNewFrameSequence()
+        this.frameFailureThrottler.restart()
     }
 
     /**
@@ -188,15 +193,17 @@ class FMLocationManager(private val context: Context) {
             val locationRequest = LocationRequest.create()
             locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
             locationRequest.smallestDisplacement = 1f
-            locationRequest.fastestInterval = 300
-            locationRequest.interval = 300
+            locationRequest.fastestInterval = locationInterval
+            locationRequest.interval = locationInterval
 
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
+                    hasLocation = true
                     currentLocation = locationResult.lastLocation
                     Log.d(TAG, "onLocationResult: ${locationResult.lastLocation}")
                 }
             }
+
             fusedLocationClient.requestLocationUpdates(
                 locationRequest,
                 locationCallback,
@@ -279,11 +286,20 @@ class FMLocationManager(private val context: Context) {
      * @param onCompletion: closure that consumes boolean server result
      */
     fun isZoneInRadius(zone: FMZone.ZoneType, radius: Int, onCompletion: (Boolean) -> Unit) {
-        if (!isConnected) {
-            return
-        }
         Log.d(TAG, "isZoneInRadius")
+        val timeOut = 2000
         CoroutineScope(Dispatchers.IO).launch {
+            val start = System.currentTimeMillis()
+            // Wait on First Location Update if it isn't already
+            // available and if it's not in simulation mode
+            while(!hasLocation && !isSimulation){
+                delay(locationInterval)
+                if (System.currentTimeMillis() - start > timeOut){
+                    // When timeout is reached, isZoneInRadius sends empty coordinates field
+                    Log.d(TAG,"isZoneInRadius Timeout Reached")
+                    break
+                }
+            }
             fmApi.sendZoneInRadiusRequest(
                 radius,
                 onCompletion

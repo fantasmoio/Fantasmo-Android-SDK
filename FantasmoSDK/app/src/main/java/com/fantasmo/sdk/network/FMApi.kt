@@ -2,6 +2,7 @@ package com.fantasmo.sdk.network
 
 import android.content.Context
 import android.location.Location
+import android.util.Log
 import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
@@ -20,6 +21,8 @@ class FMApi(
     private val token: String,
 ) {
 
+
+    private val TAG = "FMApi"
     /**
      * Method to build the Localize request.
      */
@@ -119,6 +122,7 @@ class FMApi(
                 gson.toJson(FMUtility.anchorDeltaPoseForFrame(frame, anchorFrame))
         }
 
+        Log.i(TAG, "getLocalizeParams: $params")
         return params
     }
 
@@ -147,6 +151,7 @@ class FMApi(
         params["radius"] = radius.toString()
         params["coordinate"] = Gson().toJson(coordinates)
 
+        Log.i(TAG, "getZoneInRadiusParams: $params")
         return params
     }
 }
