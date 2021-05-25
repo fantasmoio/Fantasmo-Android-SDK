@@ -21,6 +21,7 @@ import com.google.ar.core.TrackingState
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -47,6 +48,8 @@ interface FMLocationListener {
 
 class FMLocationManager(private val context: Context) {
     private val TAG = "FMLocationManager"
+
+    private val locationInterval = 300L
 
     enum class State {
         // doing nothing
@@ -81,6 +84,8 @@ class FMLocationManager(private val context: Context) {
     var simulationZone = FMZone.ZoneType.PARKING
     var isConnected = false
 
+    private var hasLocation = false
+
     /**
      * Connect to the location service.
      *
@@ -95,6 +100,14 @@ class FMLocationManager(private val context: Context) {
 
         this.token = accessToken
         this.fmLocationListener = callback
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this.context)
+        locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            getLocation()
+        } else {
+            Log.e(TAG, "Your GPS seems to be disabled")
+        }
     }
 
     /**
@@ -105,14 +118,6 @@ class FMLocationManager(private val context: Context) {
 
         this.isConnected = true
         this.state = State.LOCALIZING
-
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this.context)
-        locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            getLocation()
-        } else {
-            Log.e(TAG, "Your GPS seems to be disabled")
-        }
     }
 
     /**
@@ -168,15 +173,17 @@ class FMLocationManager(private val context: Context) {
             val locationRequest = LocationRequest.create()
             locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
             locationRequest.smallestDisplacement = 1f
-            locationRequest.fastestInterval = 300
-            locationRequest.interval = 300
+            locationRequest.fastestInterval = locationInterval
+            locationRequest.interval = locationInterval
 
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
+                    hasLocation = true
                     currentLocation = locationResult.lastLocation
                     Log.d(TAG, "Location: ${locationResult.lastLocation}")
                 }
             }
+
             fusedLocationClient.requestLocationUpdates(
                 locationRequest,
                 locationCallback,
@@ -259,11 +266,20 @@ class FMLocationManager(private val context: Context) {
      * @param onCompletion: closure that consumes boolean server result
      */
     fun isZoneInRadius(zone: FMZone.ZoneType, radius: Int, onCompletion: (Boolean) -> Unit) {
-        if (!isConnected) {
-            return
-        }
-
+        Log.d(TAG, "isZoneInRadius")
+        val timeOut = 2000
         CoroutineScope(Dispatchers.IO).launch {
+            val start = System.currentTimeMillis()
+            // Wait on First Location Update if it isn't already
+            // available and if it's not in simulation mode
+            while(!hasLocation && !isSimulation){
+                delay(locationInterval)
+                if (System.currentTimeMillis() - start > timeOut){
+                    // When timeout is reached, isZoneInRadius sends empty coordinates field
+                    Log.d(TAG,"isZoneInRadius Timeout Reached")
+                    break
+                }
+            }
             val url = "https://api.fantasmo.io/v1/parking.in.radius"
             fmNetworkManager.zoneInRadiusRequest(
                 url,
@@ -312,6 +328,8 @@ class FMLocationManager(private val context: Context) {
             params["referenceFrame"] = gson.toJson(anchorDeltaPoseForFrame(frame))
         }
 
+        Log.i(TAG, "getLocalizeParams: $params")
+
         return params
     }
 
@@ -334,6 +352,8 @@ class FMLocationManager(private val context: Context) {
 
         params["radius"] = radius.toString()
         params["coordinate"] = Gson().toJson(coordinates)
+
+        Log.i(TAG, "getZoneInRadiusParams: $params")
 
         return params
     }
