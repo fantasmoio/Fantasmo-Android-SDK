@@ -6,8 +6,11 @@
 //
 package com.fantasmo.sdk.models
 
+import com.fantasmo.sdk.FMUtility
 import com.google.ar.core.Pose
 import com.google.ar.sceneform.math.Quaternion
+import com.google.ar.sceneform.math.Vector3
+import kotlin.math.PI
 
 /**
  * Device pose at the moment of image capture. The coordinate frame is
@@ -69,20 +72,22 @@ class FMPose {
             return interpolatedPoses
         }
 
+         /**
+         * Calculates pose of OpenCV anchor in the coordinate system of OpenCV camera.
+         * @property anchorTransform Pose of anchor coordinate system in the world coordinate system.
+         * @property cameraTransform Pose of camera coordinate system in the world coordinate system.
+         */
         fun diffPose(anchorTransform: Pose, cameraTransform: Pose): FMPose {
-            val anchorPose = FMPose(anchorTransform)
-            val cameraPose = FMPose(cameraTransform)
+            val transferToOpenCVAxis = FMUtility.makeRotation(PI.toFloat(), Vector3(0.0f, 0.0f, 1.0f))
 
-            val anchorPoseQuaternion = anchorPose.orientation.toQuaternion().normalized()
-            val cameraPoseQuaternion = cameraPose.orientation.toQuaternion().normalized()
+            val openCVAnchorTransform = anchorTransform.compose(transferToOpenCVAxis)
 
-            val resultCameraPosition = FMPosition(cameraTransform.inverse().translation)
-            val resultPoseQuaternion = Quaternion.multiply(cameraPoseQuaternion.inverted(), anchorPoseQuaternion)
-            val resultPoseOrientation = FMOrientation(resultPoseQuaternion.w, resultPoseQuaternion.x, resultPoseQuaternion.y, resultPoseQuaternion.z)
-            val anchorPosition = FMPosition(anchorTransform.inverse().translation)
-            val resultPosePosition = FMPosition.minus(resultCameraPosition, anchorPosition)
+            // Relative pose in world CS: R_w = A_w * C_w^(-1), then we transfer to CS of Camera.
+            // Transform matrix is C_w^(-1), so R_c = C_w^(-1) * (A_w * C_w^(-1)) * C_w = C_w^(-1) * A_w
+            val openCVAnchorTransformInCameraCS = cameraTransform.inverse().compose(openCVAnchorTransform)
 
-            return FMPose(resultPosePosition, resultPoseOrientation, "")
+            val openCVAnchorPoseInOpenCVCameraCS = FMPose(openCVAnchorTransformInCameraCS)
+            return openCVAnchorPoseInOpenCVCameraCS
         }
     }
 
