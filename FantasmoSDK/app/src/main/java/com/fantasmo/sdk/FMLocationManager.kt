@@ -295,6 +295,7 @@ class FMLocationManager(private val context: Context) {
             while(!hasLocation && !isSimulation){
                 delay(locationInterval)
                 if (System.currentTimeMillis() - start > timeOut){
+                    // When timeout is reached, isZoneInRadius sends empty coordinates field
                     Log.d(TAG,"isZoneInRadius Timeout Reached")
                     break
                 }

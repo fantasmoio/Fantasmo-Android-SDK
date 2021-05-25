@@ -8,7 +8,10 @@ import android.view.Surface
 import android.view.WindowManager
 import com.fantasmo.sdk.models.*
 import com.google.ar.core.Frame
+import com.google.ar.core.Pose
+import com.google.ar.sceneform.math.Vector3
 import java.io.ByteArrayOutputStream
+import kotlin.math.*
 
 /**
  * Class with utility methods and constants
@@ -86,7 +89,7 @@ class FMUtility {
             when (rotation) {
                 // SCREEN_ORIENTATION_REVERSE_LANDSCAPE
                 Surface.ROTATION_270 -> {
-                    return 180f
+                    return -90f
                 }
                 // SCREEN_ORIENTATION_LANDSCAPE
                 Surface.ROTATION_90 -> {
@@ -101,7 +104,7 @@ class FMUtility {
                     return 180f
                 }
                 else -> {
-                    return 0f
+                    return 90f
                 }
             }
         }
@@ -109,36 +112,8 @@ class FMUtility {
         /**
          * Utility method to get the correct Pose for each of the device orientations.
          */
-        fun getPoseBasedOnDeviceOrientation(context: Context, frame: Frame): FMPose {
-            val rotation: Int = try {
-                context.display?.rotation!!
-            } catch (exception: UnsupportedOperationException) {
-                val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-                val display: Display = wm.defaultDisplay
-                display.rotation
-            }
-
-            when (rotation) {
-                // SCREEN_ORIENTATION_REVERSE_LANDSCAPE
-                Surface.ROTATION_270 -> {
-                    return FMPose(frame.camera.pose.compose(frame.camera.pose))
-                }
-                // SCREEN_ORIENTATION_LANDSCAPE
-                Surface.ROTATION_90 -> {
-                    return FMPose(frame.camera.pose)
-                }
-                // SCREEN_ORIENTATION_PORTRAIT
-                Surface.ROTATION_0 -> {
-                    return FMPose(frame.androidSensorPose.extractRotation())
-                }
-                // SCREEN_ORIENTATION_REVERSE_PORTRAIT
-                Surface.ROTATION_180 -> {
-                    return FMPose(frame.androidSensorPose.extractRotation().inverse())
-                }
-                else -> {
-                    return FMPose()
-                }
-            }
+        fun getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context: Context, frame: Frame): FMPose {
+            return FMPose(frame.camera.displayOrientedPose)
         }
 
         /**
@@ -146,14 +121,23 @@ class FMUtility {
          * @param arFrame the current AR Frame.
          */
         fun anchorDeltaPoseForFrame(arFrame: Frame, anchorFrame: Frame): FMPose {
-            val poseARFrame = arFrame.androidSensorPose
+            // Pose of frame must be taken for "virtual" device as we send to server orientation of
+            // "virtual" device for "localization" frame
+            val poseARVirtualFrame = arFrame.camera.displayOrientedPose
             val poseAnchor = anchorFrame.androidSensorPose
 
-            return if (poseAnchor != null && poseARFrame != null) {
-                FMPose.diffPose(poseAnchor, poseARFrame)
+            return if (poseAnchor != null && poseARVirtualFrame != null) {
+                FMPose.diffPose(poseAnchor, poseARVirtualFrame)
             } else {
                 FMPose()
             }
+        }
+
+        /// Axis vector must be represented with unit vector.
+        fun makeRotation(angle: Float, axis: Vector3): Pose {
+            assert( abs(axis.length() - 1) < 0.001 )
+            val a = sin(angle/2)
+            return Pose.makeRotation(a * axis.x, a * axis.y, a * axis.z, cos(angle/2))
         }
 
         private fun Bitmap.rotate(degrees: Float): Bitmap {
