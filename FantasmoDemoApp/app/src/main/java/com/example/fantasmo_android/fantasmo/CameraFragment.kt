@@ -1,8 +1,6 @@
 package com.example.fantasmo_android.fantasmo
 
 import android.annotation.SuppressLint
-import android.content.Context
-import android.location.LocationManager
 import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.util.Log
@@ -59,7 +57,6 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var anchorToggleButton: Switch
 
-    private lateinit var locationManager: LocationManager
     private lateinit var fmLocationManager: FMLocationManager
 
     // Rendering. The Renderers are created here, and initialized when the GL surface is created.
@@ -103,7 +100,6 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
         anchorToggleButton = currentView.findViewById(R.id.anchorToggle)
 
         fmLocationManager = context?.let { FMLocationManager(it.applicationContext) }!!
-        locationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         return currentView
     }
@@ -111,6 +107,13 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
     override fun onResume() {
         super.onResume()
         // Note that order matters - see the note in onPause(), the reverse applies here.
+        try {
+            // Create the session.
+            arSession = Session(this.context)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         try {
             configureARSession()
             arSession.resume()
@@ -129,6 +132,7 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
             "API_KEY",
             fmLocationListener
         )
+
         checkParkingButton.setOnClickListener {
             Log.d(TAG, "CheckPark Pressed")
             fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, 10) {
@@ -139,6 +143,7 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
                 ).show()
             }
         }
+
         localizeToggleButton.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 Log.d(TAG, "LocalizeToggle Enabled")
@@ -152,6 +157,7 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
                 filterRejectionTv.visibility = View.GONE
             }
         }
+
         anchorToggleButton.setOnCheckedChangeListener { _, isChecked ->
             anchorIsChecked = isChecked
             if(!isChecked) {
@@ -168,8 +174,7 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
      * enable auto focus for ARSceneView.
      */
     private fun configureARSession() {
-        arSession = Session(context)
-        val config = Config(arSession)
+        val config = arSession.config
         config.focusMode = Config.FocusMode.AUTO
         config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
         config.planeFindingMode = Config.PlaneFindingMode.DISABLED
@@ -264,6 +269,9 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
      * */
     override fun onPause() {
         super.onPause()
+        // Note that the order matters - GLSurfaceView is paused first so that it does not try
+        // to query the session. If Session is paused before GLSurfaceView, GLSurfaceView may
+        // still call session.update() and get a SessionPausedException.
         displayRotationHelper!!.onPause()
         surfaceView!!.onPause()
         arSession.pause()
