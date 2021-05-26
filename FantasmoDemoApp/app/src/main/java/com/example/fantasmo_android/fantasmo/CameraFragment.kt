@@ -60,14 +60,14 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
     private lateinit var fmLocationManager: FMLocationManager
 
     // Rendering. The Renderers are created here, and initialized when the GL surface is created.
-    private var surfaceView: GLSurfaceView? = null
+    private lateinit var surfaceView: GLSurfaceView
 
-    private var displayRotationHelper: DisplayRotationHelper? = null
+    private lateinit var displayRotationHelper: DisplayRotationHelper
     private lateinit var trackingStateHelper: TrackingStateHelper
 
-    private var render: SampleRender? = null
+    private lateinit var render: SampleRender
 
-    private var backgroundRenderer: BackgroundRenderer? = null
+    private lateinit var backgroundRenderer: BackgroundRenderer
     private var hasSetTextureNames = false
 
     private var anchorIsChecked = false
@@ -84,7 +84,7 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
 
         trackingStateHelper = TrackingStateHelper(requireActivity())
         surfaceView = currentView.findViewById(R.id.surfaceview)
-        displayRotationHelper = DisplayRotationHelper( /*context=*/context)
+        displayRotationHelper = DisplayRotationHelper(context)
 
         // Set up renderer.
         render = SampleRender(surfaceView, this, context?.assets)
@@ -120,8 +120,8 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
         } catch (e: CameraNotAvailableException) {
             return
         }
-        surfaceView!!.onResume()
-        displayRotationHelper!!.onResume()
+        surfaceView.onResume()
+        displayRotationHelper.onResume()
 
         // Enable simulation mode to test purposes with specific location
         // depending on which SDK flavor it's being used (Paris, Munich, Miami)
@@ -272,8 +272,8 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
         // Note that the order matters - GLSurfaceView is paused first so that it does not try
         // to query the session. If Session is paused before GLSurfaceView, GLSurfaceView may
         // still call session.update() and get a SessionPausedException.
-        displayRotationHelper!!.onPause()
-        surfaceView!!.onPause()
+        displayRotationHelper.onPause()
+        surfaceView.onPause()
         arSession.pause()
     }
 
@@ -293,16 +293,16 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
     }
 
     override fun onSurfaceChanged(render: SampleRender?, width: Int, height: Int) {
-        displayRotationHelper!!.onSurfaceChanged(width, height)
+        displayRotationHelper.onSurfaceChanged(width, height)
     }
 
     override fun onDrawFrame(render: SampleRender?) {
         if (!hasSetTextureNames) {
-            arSession.setCameraTextureNames(intArrayOf(backgroundRenderer!!.cameraColorTexture.textureId))
+            arSession.setCameraTextureNames(intArrayOf(backgroundRenderer.cameraColorTexture.textureId))
             hasSetTextureNames = true
         }
 
-        displayRotationHelper!!.updateSessionIfNeeded(arSession)
+        displayRotationHelper.updateSessionIfNeeded(arSession)
 
         val frame: Frame = try {
             arSession.update()
@@ -319,16 +319,16 @@ class CameraFragment : Fragment(), SampleRender.Renderer{
         val camera = frame.camera
 
         try {
-            backgroundRenderer!!.setUseDepthVisualization(false)
+            backgroundRenderer.setUseDepthVisualization(false)
         } catch (e: IOException) {
             Log.e(TAG, "Failed to read a required asset file", e)
             return
         }
-        backgroundRenderer!!.updateDisplayGeometry(frame)
+        backgroundRenderer.updateDisplayGeometry(frame)
 
         trackingStateHelper.updateKeepScreenOnFlag(camera.trackingState)
         if (frame.timestamp != 0L) {
-            backgroundRenderer!!.drawBackground(render)
+            backgroundRenderer.drawBackground(render)
         }
     }
 
