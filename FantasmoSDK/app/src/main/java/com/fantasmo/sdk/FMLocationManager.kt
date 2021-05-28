@@ -6,16 +6,10 @@
 //
 package com.fantasmo.sdk
 
-import android.Manifest
 import android.content.Context
-import android.content.pm.PackageManager
-import android.location.LocationManager
-import android.os.Looper
 import android.util.Log
-import androidx.core.content.PermissionChecker
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.network.FMNetworkManager
-import com.google.android.gms.location.*
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
 import com.google.gson.Gson
@@ -63,8 +57,6 @@ class FMLocationManager(private val context: Context) {
     }
 
     private val fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), context)
-    private lateinit var locationManager: LocationManager
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     var state = State.STOPPED
 
@@ -84,8 +76,6 @@ class FMLocationManager(private val context: Context) {
     var simulationZone = FMZone.ZoneType.PARKING
     var isConnected = false
 
-    private var hasLocation = false
-
     /**
      * Connect to the location service.
      *
@@ -100,14 +90,18 @@ class FMLocationManager(private val context: Context) {
 
         this.token = accessToken
         this.fmLocationListener = callback
+    }
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this.context)
-        locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            getLocation()
-        } else {
-            Log.e(TAG, "Your GPS seems to be disabled")
-        }
+    /**
+     * Sets currentLocation with values given by the client application.
+     *
+     * @param latitude: Location latitude.
+     * @param longitude: Location longitude.
+     * */
+    fun setLocation(latitude: Double, longitude: Double) {
+        this.currentLocation.latitude = latitude
+        this.currentLocation.longitude = longitude
+        Log.d(TAG, "SetLocation: $currentLocation")
     }
 
     /**
@@ -147,49 +141,6 @@ class FMLocationManager(private val context: Context) {
         Log.d(TAG, "FMLocationManager:unsetAnchor")
 
         this.anchorFrame = null
-    }
-
-    /**
-     * Gets system location through the app context
-     * Then checks if it has permission to ACCESS_FINE_LOCATION
-     * Also includes Callback for Location updates.
-     * Updates the [currentLocation] coordinates being used to localize.
-     */
-    private fun getLocation() {
-        if ((context.let {
-                PermissionChecker.checkSelfPermission(
-                    it,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                )
-            } != PackageManager.PERMISSION_GRANTED) &&
-            (context.let {
-                PermissionChecker.checkSelfPermission(
-                    it,
-                    Manifest.permission.CAMERA
-                )
-            } != PackageManager.PERMISSION_GRANTED)) {
-            Log.e(TAG, "Location permission needs to be granted.")
-        } else {
-            val locationRequest = LocationRequest.create()
-            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-            locationRequest.smallestDisplacement = 1f
-            locationRequest.fastestInterval = locationInterval
-            locationRequest.interval = locationInterval
-
-            val locationCallback = object : LocationCallback() {
-                override fun onLocationResult(locationResult: LocationResult) {
-                    hasLocation = true
-                    currentLocation = locationResult.lastLocation
-                    Log.d(TAG, "Location: ${locationResult.lastLocation}")
-                }
-            }
-
-            fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                Looper.myLooper()
-            )
-        }
     }
 
     /**
@@ -267,17 +218,19 @@ class FMLocationManager(private val context: Context) {
      */
     fun isZoneInRadius(zone: FMZone.ZoneType, radius: Int, onCompletion: (Boolean) -> Unit) {
         Log.d(TAG, "isZoneInRadius")
-        val timeOut = 2000
+        val timeOut = 10000
         CoroutineScope(Dispatchers.IO).launch {
-            val start = System.currentTimeMillis()
-            // Wait on First Location Update if it isn't already
-            // available and if it's not in simulation mode
-            while(!hasLocation && !isSimulation){
-                delay(locationInterval)
-                if (System.currentTimeMillis() - start > timeOut){
-                    // When timeout is reached, isZoneInRadius sends empty coordinates field
-                    Log.d(TAG,"isZoneInRadius Timeout Reached")
-                    break
+            // If it's not in simulation mode
+            if (!isSimulation) {
+                // Wait on First Location Update if it isn't already available
+                val start = System.currentTimeMillis()
+                while (currentLocation.latitude == 0.0) {
+                    delay(locationInterval)
+                    if (System.currentTimeMillis() - start > timeOut) {
+                        // When timeout is reached, isZoneInRadius sends empty coordinates field
+                        Log.d(TAG, "isZoneInRadius Timeout Reached")
+                        break
+                    }
                 }
             }
             val url = "https://api.fantasmo.io/v1/parking.in.radius"
