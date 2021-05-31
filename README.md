@@ -102,6 +102,10 @@ The location manager is accessed through a initialized instance.
     
 ### Localizing 
 
+To have location updates the client app must update the device GPS coordinates for the SDK to use. It should be done using the following call:
+
+    fun setLocation(latitude: Double, longitude: Double)
+
 To start location updates:
 
     fmLocationManager.startUpdatingLocation()

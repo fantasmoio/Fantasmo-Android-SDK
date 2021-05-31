@@ -95,6 +95,21 @@ First step is connecting the app with the SDK FMLocationManager. Example with th
         fmLocationListener
     )
 
+Before starting to make use of the SDK features, the GPS location must be passed from the client app to the SDK and to have the best results, it should be kept updated:
+
+     val locationCallback = object : LocationCallback() {
+                override fun onLocationResult(locationResult: LocationResult) {
+                    currentLocation = locationResult.lastLocation
+                    
+                    //Set SDK Location
+                    fmLocationManager.setLocation(
+                        currentLocation.latitude,
+                        currentLocation.longitude
+                    )
+                    Log.d(TAG, "onLocationResult: ${locationResult.lastLocation}")
+                }
+            }
+
 Then you can start or stop localizing using the following calls (done based on the 'Localize' toogle on the demo app):
     
     // Start getting location updates
