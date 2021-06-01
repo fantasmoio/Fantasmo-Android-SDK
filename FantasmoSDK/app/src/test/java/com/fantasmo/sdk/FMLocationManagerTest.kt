@@ -2,11 +2,13 @@ package com.fantasmo.sdk
 
 import android.content.Context
 import com.fantasmo.sdk.models.*
+import com.google.ar.core.Camera
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mockito
 import org.mockito.Mockito.mock
 
 class FMLocationManagerTest {
@@ -30,22 +32,6 @@ class FMLocationManagerTest {
         fmLocationManager.localize(frame)
 
         assertEquals(FMLocationManager.State.STOPPED, fmLocationManager.state)
-    }
-
-    @Test
-    fun testIsZoneInRadius() {
-        fmLocationManager.isConnected = false
-        fmLocationManager.isSimulation = true
-
-        var radius = 10
-        fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius) {
-            assertEquals(true, it)
-        }
-
-        radius = 100
-        fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius) {
-            assertEquals(false, it)
-        }
     }
 
     @Test
@@ -88,6 +74,9 @@ class FMLocationManagerTest {
     @Test
     fun anchorDeltaPoseForNullFrameTest() {
         val frame = mock(Frame::class.java)
+        val camera = mock(Camera::class.java)
+        Mockito.`when`(frame.camera).thenReturn(camera)
+
         val anchorFrame = mock(Frame::class.java)
 
         val deltaFMPose = FMUtility.anchorDeltaPoseForFrame(frame, anchorFrame)
@@ -114,8 +103,8 @@ class FMLocationManagerTest {
 
         val anchorDeltaPose = FMPose.diffPose(anchorPose, cameraPose)
         val expectedFMPose = FMPose(
-            FMPosition(-0.7664018f, -1.2556884f, 3.3475976f),
-            FMOrientation(0.81345063f, 0.3877355f, -0.4324503f, 0.030760288f)
+            FMPosition(2.1176877f, -2.2993965f, 4.1739006f),
+            FMOrientation(0.014999978f, 0.21088079f, 0.189076f, -0.39667243f)
         )
 
         assertEquals(expectedFMPose.position.x, anchorDeltaPose.position.x)
