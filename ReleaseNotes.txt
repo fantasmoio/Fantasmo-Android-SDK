@@ -1,0 +1,17 @@
+Fantasmo-Android-SDK Release Notes
+
+Version 1.0:
+- Initial release.
+
+Version 1.0.1:
+- Fixed issue causing isZoneInRadius request to return 2 responses.
+
+Version 1.0.2:
+- Changed logics to have isZoneInRadius request working without
+calling connect first.
+
+Version 1.0.3:
+- Moved GPS location management to the client side and added a new method
+setLocation(latitude: Double, longitude: Double) to be used by the client to update the GPS 
+coordinates used by the SDK.
+
