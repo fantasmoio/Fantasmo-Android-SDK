@@ -58,9 +58,23 @@ class LocalizeTest {
     }
 
     @Test
+    fun testLocalizeZeroCoords(){
+        fmLocationManager.isSimulation = false
+        val frame = Mockito.mock(Frame::class.java)
+        val camera = Mockito.mock(Camera::class.java)
+        `when`(frame.camera).thenReturn(camera)
+        `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
+
+        testScope.runBlockingTest {
+            fmLocationManager.localize(frame)
+            assertEquals(false, fmLocationManager.testRequest)
+        }
+    }
+
+    @Test
     fun testLocalizeFrameAccepted(){
         fmLocationManager.isConnected = true
-        fmLocationManager.isSimulation = true
+        fmLocationManager.isSimulation = false
         val latitude = 48.12863302178715
         val longitude = 11.572371166069702
         fmLocationManager.setLocation(latitude,longitude)
@@ -98,7 +112,7 @@ class LocalizeTest {
     @Test
     fun testLocalizeFrameRejected(){
         fmLocationManager.isConnected = true
-        fmLocationManager.isSimulation = true
+        fmLocationManager.isSimulation = false
         val latitude = 48.12863302178715
         val longitude = 11.572371166069702
         fmLocationManager.setLocation(latitude,longitude)
