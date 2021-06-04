@@ -63,10 +63,10 @@ class FMLocationManager(private val context: Context) {
         UPLOADING
     }
 
-    private val fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), context)
+    var fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), context)
     var coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
-    private lateinit var fmApi: FMApi
+    lateinit var fmApi: FMApi
 
     var state = State.STOPPED
 
@@ -81,9 +81,6 @@ class FMLocationManager(private val context: Context) {
     var isSimulation = false
 
     var isConnected = false
-
-    var testRequest = false
-    var testTimeOut = false
 
     // Used to validate frame for sufficient quality before sending to API.
     private lateinit var frameFilter: FMFrameSequenceFilter
@@ -194,7 +191,6 @@ class FMLocationManager(private val context: Context) {
 
                     updateStateAfterLocalization()
                 })
-            testRequest = true
         }
     }
 
@@ -211,7 +207,7 @@ class FMLocationManager(private val context: Context) {
      * Method to check whether the SDK is ready to localize a frame or not.
      * @return true if it can localize the ARFrame and false otherwise.
      */
-    private fun shouldLocalize(arFrame: Frame): Boolean {
+    fun shouldLocalize(arFrame: Frame): Boolean {
         if (isConnected
             && currentLocation.latitude > 0.0
             && arFrame.camera.trackingState == TrackingState.TRACKING
@@ -248,13 +244,11 @@ class FMLocationManager(private val context: Context) {
                 while (currentLocation.latitude == 0.0) {
                     delay(locationInterval)
                     if (System.currentTimeMillis() - start > timeOut) {
-                        testTimeOut = true
                         // When timeout is reached, isZoneInRadius sends empty coordinates field
                         Log.d(TAG, "isZoneInRadius Timeout Reached")
                         break
                     }
                 }
-                testRequest = true
             }
 
             fmApi.sendZoneInRadiusRequest(

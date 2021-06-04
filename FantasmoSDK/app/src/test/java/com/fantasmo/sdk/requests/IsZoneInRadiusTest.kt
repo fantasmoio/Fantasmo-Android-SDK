@@ -19,6 +19,7 @@ import com.fantasmo.sdk.utils.ImmediateResponseDelivery
 import com.google.ar.core.Frame
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.*
 import org.junit.After
@@ -28,6 +29,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito
+import org.mockito.Mockito.verify
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
@@ -35,6 +37,10 @@ import org.robolectric.RobolectricTestRunner
 class IsZoneInRadiusTest {
 
     private lateinit var fmLocationManager: FMLocationManager
+
+    private lateinit var spyFMLocationManager: FMLocationManager
+    private lateinit var spyFMNetworkManager: FMNetworkManager
+    private lateinit var spyFMApi: FMApi
     private lateinit var context: Context
     private val token = "API_KEY"
 
@@ -52,6 +58,11 @@ class IsZoneInRadiusTest {
         fmLocationManager = FMLocationManager(instrumentationContext)
         fmLocationManager.connect(token,fmLocationListener)
         fmLocationManager.coroutineScope = testScope
+
+        spyFMLocationManager = Mockito.spy(fmLocationManager)
+
+        spyFMNetworkManager = Mockito.spy(spyFMLocationManager.fmNetworkManager)
+        spyFMApi = Mockito.spy(spyFMLocationManager.fmApi)
     }
 
     @After
@@ -93,12 +104,13 @@ class IsZoneInRadiusTest {
         val radius = 20
         var returnValue = false
         testScope.runBlockingTest {
-            fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius) {
+            spyFMLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius) {
                 returnValue = it
             }
             assertEquals(false, returnValue)
-            assertEquals(true, fmLocationManager.testRequest)
         }
+        verify(spyFMLocationManager, Mockito.times(2)).fmApi
+        verify(spyFMLocationManager, Mockito.times(1)).fmNetworkManager
     }
 
     @Test
@@ -108,12 +120,13 @@ class IsZoneInRadiusTest {
         val radius = 20
         var returnValue = false
         testScope.runBlockingTest {
-            fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius) {
+            spyFMLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius) {
                 returnValue = it
             }
             assertEquals(false, returnValue)
-            assertEquals(false, fmLocationManager.testRequest)
         }
+        verify(spyFMLocationManager, Mockito.times(2)).fmApi
+        verify(spyFMLocationManager, Mockito.times(1)).fmNetworkManager
     }
 
 

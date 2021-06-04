@@ -66,7 +66,6 @@ class ZeroCoordsTestIsZoneInRadius {
 
         assertTrue(delta >= 10000)
         assertEquals(false, returnValue)
-        assertEquals(true, fmLocationManager.testTimeOut)
     }
 
     /**

@@ -12,6 +12,8 @@ import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
+import com.fantasmo.sdk.network.FMApi
+import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.utils.ImmediateResponseDelivery
 import com.google.ar.core.*
 import junit.framework.Assert.assertEquals
@@ -23,7 +25,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 import org.robolectric.RobolectricTestRunner
 import java.nio.ByteBuffer
 
@@ -32,6 +34,10 @@ import java.nio.ByteBuffer
 class LocalizeTest {
 
     private lateinit var fmLocationManager: FMLocationManager
+
+    private lateinit var spyFMLocationManager: FMLocationManager
+    private lateinit var spyFMNetworkManager: FMNetworkManager
+    private lateinit var spyFMApi: FMApi
     private lateinit var context: Context
     private val token = "API_KEY"
 
@@ -43,13 +49,18 @@ class LocalizeTest {
 
     @Before
     fun setup() {
-        context = Mockito.mock(Context::class.java)
+        context = mock(Context::class.java)
         instrumentationContext = InstrumentationRegistry.getInstrumentation().context
         mDelivery = ImmediateResponseDelivery()
         fmLocationManager = FMLocationManager(instrumentationContext)
-        fmLocationManager.connect(token,fmLocationListener)
+        fmLocationManager.connect(token, fmLocationListener)
         fmLocationManager.startUpdatingLocation()
         fmLocationManager.coroutineScope = testScope
+
+        spyFMLocationManager = spy(fmLocationManager)
+
+        spyFMNetworkManager = spy(spyFMLocationManager.fmNetworkManager)
+        spyFMApi = spy(spyFMLocationManager.fmApi)
     }
 
     @After
@@ -60,27 +71,27 @@ class LocalizeTest {
     @Test
     fun testLocalizeZeroCoords(){
         fmLocationManager.isSimulation = false
-        val frame = Mockito.mock(Frame::class.java)
-        val camera = Mockito.mock(Camera::class.java)
+        val frame = mock(Frame::class.java)
+        val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
 
         testScope.runBlockingTest {
             fmLocationManager.localize(frame)
-            assertEquals(false, fmLocationManager.testRequest)
+            assertEquals(FMLocationManager.State.LOCALIZING, fmLocationManager.state)
         }
     }
 
     @Test
-    fun testLocalizeFrameAccepted(){
+    fun testShouldLocalizeFrameAccepted() {
         fmLocationManager.isConnected = true
         fmLocationManager.isSimulation = false
         val latitude = 48.12863302178715
         val longitude = 11.572371166069702
-        fmLocationManager.setLocation(latitude,longitude)
+        fmLocationManager.setLocation(latitude, longitude)
 
-        val frame = Mockito.mock(Frame::class.java)
-        val camera = Mockito.mock(Camera::class.java)
+        val frame = mock(Frame::class.java)
+        val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
 
@@ -95,7 +106,77 @@ class LocalizeTest {
                 (-0.005).toFloat()
             )
         )
-        val pose2 = Mockito.mock(Pose::class.java)
+        val pose2 = mock(Pose::class.java)
+        `when`(frame.androidSensorPose).thenReturn(pose2)
+        `when`(frame.androidSensorPose.rotationQuaternion)
+            .thenReturn(cameraPose.rotationQuaternion)
+
+        `when`(frame.camera.pose).thenReturn(pose2)
+        `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
+
+        assertEquals(true, fmLocationManager.shouldLocalize(frame))
+    }
+
+    @Test
+    fun testShouldLocalizeFrameRejected() {
+        fmLocationManager.isConnected = true
+        fmLocationManager.isSimulation = false
+        val latitude = 48.12863302178715
+        val longitude = 11.572371166069702
+        fmLocationManager.setLocation(latitude, longitude)
+
+        val frame = mock(Frame::class.java)
+        val camera = mock(Camera::class.java)
+        `when`(frame.camera).thenReturn(camera)
+        `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
+
+        val cameraPose = Pose(
+            floatArrayOf(
+                (-0.982).toFloat(),
+                (-0.93).toFloat(),
+                0.6F
+            ),
+            floatArrayOf(
+                0.3F, 0.03F, 0.5F,
+                (-0.005).toFloat()
+            )
+        )
+        val pose2 = mock(Pose::class.java)
+        `when`(frame.androidSensorPose).thenReturn(pose2)
+        `when`(frame.androidSensorPose.rotationQuaternion)
+            .thenReturn(cameraPose.rotationQuaternion)
+
+        `when`(frame.camera.pose).thenReturn(pose2)
+        `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
+
+        assertEquals(false, fmLocationManager.shouldLocalize(frame))
+    }
+
+    @Test
+    fun testLocalizeFrameAccepted() {
+        fmLocationManager.isConnected = false
+        fmLocationManager.isSimulation = false
+        val latitude = 48.12863302178715
+        val longitude = 11.572371166069702
+        fmLocationManager.setLocation(latitude, longitude)
+
+        val frame = mock(Frame::class.java)
+        val camera = mock(Camera::class.java)
+        `when`(frame.camera).thenReturn(camera)
+        `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
+
+        val cameraPose = Pose(
+            floatArrayOf(
+                (-0.982).toFloat(),
+                (-0.93).toFloat(),
+                0.6F
+            ),
+            floatArrayOf(
+                0.15F, 0.03F, 0.5F,
+                (-0.005).toFloat()
+            )
+        )
+        val pose2 = mock(Pose::class.java)
         `when`(frame.androidSensorPose).thenReturn(pose2)
         `when`(frame.androidSensorPose.rotationQuaternion)
             .thenReturn(cameraPose.rotationQuaternion)
@@ -104,21 +185,21 @@ class LocalizeTest {
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
         testScope.runBlockingTest {
-            fmLocationManager.localize(frame)
-            assertEquals(true, fmLocationManager.testRequest)
+            spyFMLocationManager.localize(frame)
         }
+        verify(spyFMLocationManager, times(2)).fmApi
     }
 
     @Test
-    fun testLocalizeFrameRejected(){
+    fun testLocalizeFrameRejected() {
         fmLocationManager.isConnected = true
         fmLocationManager.isSimulation = false
         val latitude = 48.12863302178715
         val longitude = 11.572371166069702
-        fmLocationManager.setLocation(latitude,longitude)
+        fmLocationManager.setLocation(latitude, longitude)
 
-        val frame = Mockito.mock(Frame::class.java)
-        val camera = Mockito.mock(Camera::class.java)
+        val frame = mock(Frame::class.java)
+        val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
 
@@ -133,7 +214,7 @@ class LocalizeTest {
                 (-0.005).toFloat()
             )
         )
-        val pose2 = Mockito.mock(Pose::class.java)
+        val pose2 = mock(Pose::class.java)
         `when`(frame.androidSensorPose).thenReturn(pose2)
         `when`(frame.androidSensorPose.rotationQuaternion)
             .thenReturn(cameraPose.rotationQuaternion)
@@ -142,21 +223,21 @@ class LocalizeTest {
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
         testScope.runBlockingTest {
-            fmLocationManager.localize(frame)
-            assertEquals(false, fmLocationManager.testRequest)
+            spyFMLocationManager.localize(frame)
         }
+        verify(spyFMLocationManager, times(1)).fmApi
     }
 
     @Test
-    fun testLocalizeSimulationFMApi(){
+    fun testLocalizeSimulationFMApi() {
         fmLocationManager.isConnected = true
         fmLocationManager.isSimulation = true
         val latitude = 48.12863302178715
         val longitude = 11.572371166069702
-        fmLocationManager.setLocation(latitude,longitude)
+        fmLocationManager.setLocation(latitude, longitude)
 
-        val frame = Mockito.mock(Frame::class.java)
-        val camera = Mockito.mock(Camera::class.java)
+        val frame = mock(Frame::class.java)
+        val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
 
@@ -171,7 +252,7 @@ class LocalizeTest {
                 (-0.005).toFloat()
             )
         )
-        val pose2 = Mockito.mock(Pose::class.java)
+        val pose2 = mock(Pose::class.java)
         `when`(frame.androidSensorPose).thenReturn(pose2)
         `when`(frame.androidSensorPose.rotationQuaternion)
             .thenReturn(cameraPose.rotationQuaternion)
@@ -179,13 +260,13 @@ class LocalizeTest {
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
-        val image = Mockito.mock(Image::class.java)
+        val image = mock(Image::class.java)
         `when`(frame.acquireCameraImage()).thenReturn(image)
 
-        val imagePlanes = Mockito.mock(Image.Plane::class.java)
-        `when`(image.planes).thenReturn(arrayOf(imagePlanes,imagePlanes,imagePlanes))
+        val imagePlanes = mock(Image.Plane::class.java)
+        `when`(image.planes).thenReturn(arrayOf(imagePlanes, imagePlanes, imagePlanes))
 
-        val buffer = Mockito.mock(ByteBuffer::class.java)
+        val buffer = mock(ByteBuffer::class.java)
         `when`(image.planes[0].buffer).thenReturn(buffer)
         `when`(image.planes[1].buffer).thenReturn(buffer)
         `when`(image.planes[2].buffer).thenReturn(buffer)
@@ -195,34 +276,47 @@ class LocalizeTest {
         `when`(image.height).thenReturn(height)
         `when`(image.width).thenReturn(width)
 
-        val display = Mockito.mock(Display::class.java)
+        val display = mock(Display::class.java)
         `when`(context.display).thenReturn(display)
 
         `when`(display.rotation).thenReturn(Surface.ROTATION_0)
 
         `when`(frame.camera.displayOrientedPose).thenReturn(cameraPose)
 
-        val imageIntrinsics = Mockito.mock(CameraIntrinsics::class.java)
+        val imageIntrinsics = mock(CameraIntrinsics::class.java)
         `when`(frame.camera.imageIntrinsics).thenReturn(imageIntrinsics)
-        `when`(frame.camera.imageIntrinsics.focalLength).thenReturn(floatArrayOf(1083.401611328125f, 1083.401611328125f))
-        `when`(frame.camera.imageIntrinsics.principalPoint).thenReturn(floatArrayOf(481.0465087890625f, 629.142822265625f))
+        `when`(frame.camera.imageIntrinsics.focalLength).thenReturn(
+            floatArrayOf(
+                1083.401611328125f,
+                1083.401611328125f
+            )
+        )
+        `when`(frame.camera.imageIntrinsics.principalPoint).thenReturn(
+            floatArrayOf(
+                481.0465087890625f,
+                629.142822265625f
+            )
+        )
 
         testScope.runBlockingTest {
-            fmLocationManager.localize(frame)
-            assertEquals(true, fmLocationManager.testRequest)
+            spyFMLocationManager.localize(frame)
         }
+        verify(spyFMLocationManager, times(1)).localize(frame)
+        verify(spyFMLocationManager, times(1)).shouldLocalize(frame)
+        verify(spyFMLocationManager, times(2)).fmApi
+        verify(spyFMLocationManager, times(1)).fmNetworkManager
     }
 
     @Test
-    fun testLocalizeNoSimulationFMApi(){
+    fun testLocalizeNoSimulationFMApi() {
         fmLocationManager.isConnected = true
         fmLocationManager.isSimulation = false
         val latitude = 48.12863302178715
         val longitude = 11.572371166069702
-        fmLocationManager.setLocation(latitude,longitude)
+        fmLocationManager.setLocation(latitude, longitude)
 
-        val frame = Mockito.mock(Frame::class.java)
-        val camera = Mockito.mock(Camera::class.java)
+        val frame = mock(Frame::class.java)
+        val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
 
@@ -237,7 +331,7 @@ class LocalizeTest {
                 (-0.005).toFloat()
             )
         )
-        val pose2 = Mockito.mock(Pose::class.java)
+        val pose2 = mock(Pose::class.java)
         `when`(frame.androidSensorPose).thenReturn(pose2)
         `when`(frame.androidSensorPose.rotationQuaternion)
             .thenReturn(cameraPose.rotationQuaternion)
@@ -245,13 +339,13 @@ class LocalizeTest {
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
-        val image = Mockito.mock(Image::class.java)
+        val image = mock(Image::class.java)
         `when`(frame.acquireCameraImage()).thenReturn(image)
 
-        val imagePlanes = Mockito.mock(Image.Plane::class.java)
-        `when`(image.planes).thenReturn(arrayOf(imagePlanes,imagePlanes,imagePlanes))
+        val imagePlanes = mock(Image.Plane::class.java)
+        `when`(image.planes).thenReturn(arrayOf(imagePlanes, imagePlanes, imagePlanes))
 
-        val buffer = Mockito.mock(ByteBuffer::class.java)
+        val buffer = mock(ByteBuffer::class.java)
         `when`(image.planes[0].buffer).thenReturn(buffer)
         `when`(image.planes[1].buffer).thenReturn(buffer)
         `when`(image.planes[2].buffer).thenReturn(buffer)
@@ -261,22 +355,35 @@ class LocalizeTest {
         `when`(image.height).thenReturn(height)
         `when`(image.width).thenReturn(width)
 
-        val display = Mockito.mock(Display::class.java)
+        val display = mock(Display::class.java)
         `when`(context.display).thenReturn(display)
 
         `when`(display.rotation).thenReturn(Surface.ROTATION_0)
 
         `when`(frame.camera.displayOrientedPose).thenReturn(cameraPose)
 
-        val imageIntrinsics = Mockito.mock(CameraIntrinsics::class.java)
+        val imageIntrinsics = mock(CameraIntrinsics::class.java)
         `when`(frame.camera.imageIntrinsics).thenReturn(imageIntrinsics)
-        `when`(frame.camera.imageIntrinsics.focalLength).thenReturn(floatArrayOf(1083.401611328125f, 1083.401611328125f))
-        `when`(frame.camera.imageIntrinsics.principalPoint).thenReturn(floatArrayOf(481.0465087890625f, 629.142822265625f))
+        `when`(frame.camera.imageIntrinsics.focalLength).thenReturn(
+            floatArrayOf(
+                1083.401611328125f,
+                1083.401611328125f
+            )
+        )
+        `when`(frame.camera.imageIntrinsics.principalPoint).thenReturn(
+            floatArrayOf(
+                481.0465087890625f,
+                629.142822265625f
+            )
+        )
 
         testScope.runBlockingTest {
-            fmLocationManager.localize(frame)
-            assertEquals(true, fmLocationManager.testRequest)
+            spyFMLocationManager.localize(frame)
         }
+        verify(spyFMLocationManager, times(1)).localize(frame)
+        verify(spyFMLocationManager, times(1)).shouldLocalize(frame)
+        verify(spyFMLocationManager, times(2)).fmApi
+        verify(spyFMLocationManager, times(1)).fmNetworkManager
     }
 
     /**
