@@ -4,19 +4,14 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.os.Environment
-import android.renderscript.Allocation
-import android.renderscript.Element
-import android.renderscript.RenderScript
-import android.renderscript.ScriptIntrinsicConvolve3x3
+import android.renderscript.*
 import android.util.Log
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.utilities.MovingAverage
 import com.google.ar.core.Frame
 import com.google.ar.core.exceptions.NotYetAvailableException
-import java.io.File
-import java.io.FileOutputStream
-import java.util.*
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 /**
  * Class responsible for filtering frames due to blur on images.
@@ -26,18 +21,18 @@ class FMBlurFilterRule(private val context: Context) : FMFrameSequenceFilterRule
 
     private val TAG = "FMBlurFilter"
 
-    private val CLASSIC_MATRIX = floatArrayOf(
-        -1.0f, -1.0f, -1.0f,
-        -1.0f,  8.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f
+    private val laplacianMatrix = floatArrayOf(
+        0.0f, 1.0f, 0.0f,
+        1.0f, -4.0f, 1.0f,
+        0.0f, 1.0f, 0.0f
     )
 
-    var variance: Double = 0.0
-    var varianceAverager = MovingAverage()
-    var averageVariance = varianceAverager.average
+    private var variance: Double = 0.0
+    private var varianceAverager = MovingAverage()
+    private var averageVariance = varianceAverager.average
 
-    var varianceThreshold = 45.0
-    var suddenDropThreshold = 60.0
+    private var varianceThreshold = 275.0
+    var suddenDropThreshold = 0.4
 
     var throughputAverager = MovingAverage(8)
     var averageThroughput: Double = throughputAverager.average
@@ -52,8 +47,8 @@ class FMBlurFilterRule(private val context: Context) : FMFrameSequenceFilterRule
 
         val isLowVariance: Boolean
 
-        val isBelowThreshold = variance > varianceThreshold
-        val isSuddenDrop = variance > (averageVariance - suddenDropThreshold)
+        val isBelowThreshold = variance < varianceThreshold
+        val isSuddenDrop = variance < (averageVariance - suddenDropThreshold)
         isLowVariance = isBelowThreshold || isSuddenDrop
 
         if (isLowVariance) {
@@ -90,14 +85,37 @@ class FMBlurFilterRule(private val context: Context) : FMFrameSequenceFilterRule
             val imageBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
             val rs = RenderScript.create(context)
 
+            // Greyscale so we're only dealing with white <--> black pixels,
+            // this is so we only need to detect pixel luminosity
+            val greyscaleBitmap = Bitmap.createBitmap(imageBitmap.width,
+                imageBitmap.height,
+                imageBitmap.config
+            )
+            val smootherInput = Allocation.createFromBitmap(rs,
+                imageBitmap,
+                Allocation.MipmapControl.MIPMAP_NONE,
+                Allocation.USAGE_SHARED
+            )
+            val greyscaleTargetAllocation = Allocation.createFromBitmap(rs,
+                greyscaleBitmap,
+                Allocation.MipmapControl.MIPMAP_NONE,
+                Allocation.USAGE_SHARED
+            )
+
+            // Inverts and greyscales the image
+            val colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
+            colorIntrinsic.setGreyscale()
+            colorIntrinsic.forEach(smootherInput, greyscaleTargetAllocation)
+            greyscaleTargetAllocation.copyTo(greyscaleBitmap)
+
             // Run edge detection algorithm using a laplacian matrix convolution
             // Apply 3x3 convolution to detect edges
             val edgesBitmap = Bitmap.createBitmap(imageBitmap.width,
                 imageBitmap.height,
                 imageBitmap.config
             )
-            val sourceAllocation = Allocation.createFromBitmap(rs,
-                imageBitmap,
+            val greyscaleInput = Allocation.createFromBitmap(rs,
+                greyscaleBitmap,
                 Allocation.MipmapControl.MIPMAP_NONE,
                 Allocation.USAGE_SHARED
             )
@@ -108,19 +126,20 @@ class FMBlurFilterRule(private val context: Context) : FMFrameSequenceFilterRule
             )
 
             val convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
-            convolve.setInput(sourceAllocation)
-            convolve.setCoefficients(CLASSIC_MATRIX)
+            convolve.setInput(greyscaleInput)
+            convolve.setCoefficients(laplacianMatrix)
             convolve.forEach(edgesTargetAllocation)
             edgesTargetAllocation.copyTo(edgesBitmap)
 
+            //This is important to be false, otherwise image will be blank
             edgesBitmap.setHasAlpha(false)
             val pixels = IntArray(edgesBitmap.height * edgesBitmap.width)
             edgesBitmap.getPixels(pixels, 0, edgesBitmap.width, 0, 0, edgesBitmap.width, edgesBitmap.height)
 
-            val stdDev = countBlackPixels(edgesBitmap)
+            val stdDev = meanStdDev(edgesBitmap)
 
             // Get variance from std which is the result of last operation
-            Log.d(TAG,"Variance result -> $stdDev")
+            Log.i(TAG,"Variance result -> $stdDev")
             return stdDev
 
         }catch(e:NotYetAvailableException){
@@ -129,24 +148,33 @@ class FMBlurFilterRule(private val context: Context) : FMFrameSequenceFilterRule
         return 0.0
     }
 
-    private fun countBlackPixels(bitmap: Bitmap): Double{
+
+    private fun meanStdDev(bitmap: Bitmap): Double {
         val pixels = IntArray(bitmap.height * bitmap.width)
-        Log.d("AMOUNT OF PIXELS:", "${pixels.size}")
         bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
 
         var count = 0
 
-        for(pixel in pixels){
+        //When converted to greyscale, Reg, Green and Blue have the same value
+        var sumR = 0f
+
+        for (pixel in pixels) {
             val r = Color.red(pixel)
-            val g = Color.green(pixel)
-            val b = Color.blue(pixel)
-            if(r == 0 && g == 0 && b == 0){
+            sumR += r
+            if (r == 0) {
                 count++
             }
         }
-        Log.d("AMOUNT OF BLACK PIXELS:", "$count")
-        val percent = (count.toDouble()/(pixels.size)) * 100
-        Log.d("PERCENTAGE", "$percent")
-        return percent
+
+        val avgR = sumR / (pixels.size)
+
+        var stdDevR = 0.0
+
+        for (pixel in pixels) {
+            val r = Color.red(pixel)
+            stdDevR += (r - avgR).toDouble().pow(2.0)
+        }
+
+        return sqrt(stdDevR / pixels.size) * 100
     }
 }

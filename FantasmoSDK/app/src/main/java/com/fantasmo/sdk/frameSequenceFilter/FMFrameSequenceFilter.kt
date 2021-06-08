@@ -21,8 +21,8 @@ class FMFrameSequenceFilter(private val context: Context) {
      * List of filter rules to apply on frame received.
      */
     private var rules = listOf(
-            //FMCameraPitchFilterRule(),
-            //FMMovementFilterRule(),
+            FMCameraPitchFilterRule(),
+            FMMovementFilterRule(),
             FMBlurFilterRule(context)
     )
 

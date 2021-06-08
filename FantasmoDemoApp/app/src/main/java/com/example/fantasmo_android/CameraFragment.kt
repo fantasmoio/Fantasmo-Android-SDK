@@ -106,7 +106,7 @@ class CameraFragment : Fragment() {
 
             // Connect the FMLocationManager from Fantasmo SDK
             fmLocationManager.connect(
-                FMAPI_KEY.API_KEY,
+                "API_KEY",
                 fmLocationListener
             )
 
@@ -180,23 +180,9 @@ class CameraFragment : Fragment() {
         config.focusMode = Config.FocusMode.AUTO
         config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
         config.planeFindingMode = Config.PlaneFindingMode.DISABLED
-        config.augmentedFaceMode = Config.AugmentedFaceMode.DISABLED
-        config.cloudAnchorMode = Config.CloudAnchorMode.DISABLED
-        config.augmentedImageDatabase = null
-        config.lightEstimationMode = Config.LightEstimationMode.DISABLED
-        config.instantPlacementMode = Config.InstantPlacementMode.DISABLED
-        config.depthMode = Config.DepthMode.DISABLED
 
         arSession.configure(config)
-
-        val cameraConfig = CameraConfigFilter(arSession)
-        cameraConfig.depthSensorUsage = EnumSet.of(CameraConfig.DepthSensorUsage.DO_NOT_USE)
-        val cameraConfigList = arSession.getSupportedCameraConfigs(cameraConfig)
-        arSession.cameraConfig = cameraConfigList[0]
-
         arSceneView.setupSession(arSession)
-        arSceneView.planeRenderer.isEnabled = false
-        arSceneView.planeRenderer.isVisible = false
 
         Log.d(TAG, arSceneView.session?.config.toString())
     }

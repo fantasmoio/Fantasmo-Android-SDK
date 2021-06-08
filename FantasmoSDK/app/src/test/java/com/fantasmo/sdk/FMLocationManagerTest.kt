@@ -14,7 +14,7 @@ class FMLocationManagerTest {
     private lateinit var fmLocationManager: FMLocationManager
     private lateinit var context: Context
 
-    private val token = FMAPI_KEY.API_KEY
+    private val token = "API_KEY"
 
     @Before
     fun setUp() {
