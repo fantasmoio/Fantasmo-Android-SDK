@@ -32,7 +32,7 @@ import com.google.ar.sceneform.ux.ArFragment
 /**
  * Fragment to show AR camera image and make use of the Fantasmo SDK localization feature.
  */
-class CameraFragment : Fragment() {
+class ARCoreFragment : Fragment() {
 
     private val TAG = "CameraFragment"
 
@@ -66,7 +66,7 @@ class CameraFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
-        currentView = inflater.inflate(R.layout.camera_fragment, container, false)
+        currentView = inflater.inflate(R.layout.arcore_fragment, container, false)
 
         anchorDeltaTv = currentView.findViewById(R.id.anchorDeltaText)
         cameraTranslationTv = currentView.findViewById(R.id.cameraTranslation)
@@ -88,7 +88,8 @@ class CameraFragment : Fragment() {
     }
 
     /**
-     * To make any changes or get any values from ArFragment always call onResume lifecycle
+     * onStart lifecycle establishes listeners for the buttons and SDK calls
+     * It's also responsible for creating arFragment and arSession
      * */
     override fun onStart() {
         super.onStart()
