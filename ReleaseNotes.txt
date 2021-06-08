@@ -15,3 +15,7 @@ Version 1.0.3:
 setLocation(latitude: Double, longitude: Double) to be used by the client to update the GPS 
 coordinates used by the SDK.
 
+Version 1.0.4:
+- Changed ARCore to optional so the minimumSDK can be lowered to version 14.
+- Adapted logics to accommodate ARCore being optional.
+- Added proguard rules to demo app.
