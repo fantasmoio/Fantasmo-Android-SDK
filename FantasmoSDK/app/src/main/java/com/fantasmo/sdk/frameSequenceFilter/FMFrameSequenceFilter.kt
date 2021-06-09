@@ -7,7 +7,7 @@ import com.google.ar.core.Frame
 /**
  * Class responsible for filtering frames according the implemented filters
  */
-class FMFrameSequenceFilter(private val context: Context) {
+class FMFrameSequenceFilter(context: Context) {
 
     private val TAG = "FMFrameSequenceFilter"
 
@@ -20,7 +20,7 @@ class FMFrameSequenceFilter(private val context: Context) {
     /**
      * List of filter rules to apply on frame received.
      */
-    private var rules = listOf(
+    var rules = listOf(
             FMCameraPitchFilterRule(),
             FMMovementFilterRule(),
             FMBlurFilterRule(context)

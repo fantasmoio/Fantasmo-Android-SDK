@@ -79,7 +79,7 @@ class FMBlurFilterRule(private val context: Context) : FMFrameSequenceFilterRule
      * @param arFrame: frame to be measure the variance
      * @return variance: blurriness value
      * */
-    private fun calculateVariance(arFrame: Frame): Double {
+    fun calculateVariance(arFrame: Frame): Double {
         try{
 
             val cameraImage = arFrame.acquireCameraImage()
