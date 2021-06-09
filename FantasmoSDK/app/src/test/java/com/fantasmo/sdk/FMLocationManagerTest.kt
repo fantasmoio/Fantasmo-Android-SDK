@@ -2,6 +2,7 @@ package com.fantasmo.sdk
 
 import android.content.Context
 import android.media.Image
+import android.os.Build
 import android.view.Display
 import android.view.Surface
 import androidx.test.platform.app.InstrumentationRegistry
@@ -20,8 +21,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.*
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.nio.ByteBuffer
 
+@Config(sdk = [Build.VERSION_CODES.O_MR1])
 @RunWith(RobolectricTestRunner::class)
 @ExperimentalCoroutinesApi
 class FMLocationManagerTest {
