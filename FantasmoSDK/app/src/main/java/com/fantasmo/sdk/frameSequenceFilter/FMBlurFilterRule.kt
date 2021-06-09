@@ -32,10 +32,10 @@ class FMBlurFilterRule(private val context: Context) : FMFrameSequenceFilterRule
     private var averageVariance = varianceAverager.average
 
     private var varianceThreshold = 275.0
-    var suddenDropThreshold = 0.4
+    private var suddenDropThreshold = 0.4
 
-    var throughputAverager = MovingAverage(8)
-    var averageThroughput: Double = throughputAverager.average
+    private var throughputAverager = MovingAverage(8)
+    private var averageThroughput: Double = throughputAverager.average
     /**
      * Check frame acceptance.
      * @param arFrame: Frame to be evaluated
@@ -71,6 +71,14 @@ class FMBlurFilterRule(private val context: Context) : FMFrameSequenceFilterRule
         }
     }
 
+    /**
+     * Calculates the variance using image convolution
+     * Takes the frame and acquire he image from it and turns into greyscale
+     * After that applies edge detection matrix to the greyscale image and
+     * calculate variance from that
+     * @param arFrame: frame to be measure the variance
+     * @return variance: blurriness value
+     * */
     private fun calculateVariance(arFrame: Frame): Double {
         try{
 
@@ -131,15 +139,16 @@ class FMBlurFilterRule(private val context: Context) : FMFrameSequenceFilterRule
             convolve.forEach(edgesTargetAllocation)
             edgesTargetAllocation.copyTo(edgesBitmap)
 
-            //This is important to be false, otherwise image will be blank
+            // This is important to be false, otherwise image will be blank
             edgesBitmap.setHasAlpha(false)
             val pixels = IntArray(edgesBitmap.height * edgesBitmap.width)
             edgesBitmap.getPixels(pixels, 0, edgesBitmap.width, 0, 0, edgesBitmap.width, edgesBitmap.height)
 
+            // Get standard deviation from meanStdDev
             val stdDev = meanStdDev(edgesBitmap)
 
-            // Get variance from std which is the result of last operation
-            Log.i(TAG,"Variance result -> $stdDev")
+            Log.i(TAG,"calculateVariance: $stdDev")
+
             return stdDev
 
         }catch(e:NotYetAvailableException){
@@ -148,14 +157,19 @@ class FMBlurFilterRule(private val context: Context) : FMFrameSequenceFilterRule
         return 0.0
     }
 
-
+    /**
+     * Finds the average of all pixels in the image
+     * Also calculates the standard deviation from the average and pixel color
+     * @param bitmap: image after edge detection matrix application
+     * @return stdDev: blurriness value
+     * */
     private fun meanStdDev(bitmap: Bitmap): Double {
         val pixels = IntArray(bitmap.height * bitmap.width)
         bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
 
         var count = 0
 
-        //When converted to greyscale, Reg, Green and Blue have the same value
+        // When converted to greyscale, Red, Green and Blue have the same value
         var sumR = 0f
 
         for (pixel in pixels) {
