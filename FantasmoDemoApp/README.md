@@ -150,3 +150,11 @@ SDK methods to set and unset anchor:
     //Unset the current anchor
     fmLocationManager.unsetAnchor()
 
+## ProGuard rules
+
+The following rules should be added to the ProGuard file: 
+
+    -dontwarn com.fantasmo.sdk.**
+    -keep class com.fantasmo.sdk.** { *; }
+    -keep class com.fantasmo.sdk.network.** { *; }the current frame
+
