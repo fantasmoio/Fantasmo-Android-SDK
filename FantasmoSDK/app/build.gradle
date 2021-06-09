@@ -19,8 +19,8 @@ android {
     defaultConfig {
         minSdkVersion 24
         targetSdkVersion 30
-        versionCode 14
-        versionName "1.0.1"
+        versionCode 20
+        versionName "1.0.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -101,10 +101,12 @@ dependencies {
     //GSON for JSON parse
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'com.android.volley:volley:1.2.0'
-
+    
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.0'
     testImplementation 'junit:junit:4.13.2'
     testImplementation "org.robolectric:robolectric:4.5.1"
     testImplementation "org.mockito:mockito-core:3.8.0"
+    testImplementation 'org.mockito:mockito-inline:2.13.0'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 }
