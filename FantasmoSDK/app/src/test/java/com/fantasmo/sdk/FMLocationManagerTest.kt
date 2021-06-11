@@ -77,16 +77,6 @@ class FMLocationManagerTest {
     }
 
     @Test
-    fun testLocalizeNotConnected() {
-        fmLocationManager.isConnected = false
-
-        val frame = mock(Frame::class.java)
-        fmLocationManager.localize(frame)
-
-        assertEquals(FMLocationManager.State.STOPPED, fmLocationManager.state)
-    }
-
-    @Test
     fun connectAndStart() {
         fmLocationManager.connect(token, fmLocationListener)
 
@@ -102,6 +92,7 @@ class FMLocationManagerTest {
         assertEquals(FMLocationManager.State.STOPPED, fmLocationManager.state)
     }
 
+    // Anchor Test
     @Test
     fun setAnchor() {
         val frame = mock(Frame::class.java)
@@ -243,23 +234,7 @@ class FMLocationManagerTest {
         assertEquals(false, returnValue)
     }
 
-    //Localize Test Batch
-    @Test
-    fun testLocalizeZeroCoords(){
-        fmLocationManager.startUpdatingLocation()
-        fmLocationManager.isSimulation = false
-        val frame = mock(Frame::class.java)
-        val camera = mock(Camera::class.java)
-        `when`(frame.camera).thenReturn(camera)
-        `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
-
-        testScope.runBlockingTest {
-            fmLocationManager.localize(frame)
-            assertEquals(FMLocationManager.State.LOCALIZING, fmLocationManager.state)
-        }
-    }
-
-    //Should Localize
+    // Should Localize
     @Test
     fun testShouldLocalizeFrameAccepted() {
         fmLocationManager.startUpdatingLocation()
@@ -343,7 +318,33 @@ class FMLocationManagerTest {
         assertEquals(false, fmLocationManager.shouldLocalize(frame))
     }
 
-    // Localize Frame
+    // Localize Test Batch
+    @Test
+    fun testLocalizeNotConnected() {
+        fmLocationManager.isConnected = false
+
+        val frame = mock(Frame::class.java)
+        fmLocationManager.localize(frame)
+
+        assertEquals(FMLocationManager.State.STOPPED, fmLocationManager.state)
+    }
+
+    @Test
+    fun testLocalizeZeroCoords(){
+        fmLocationManager.startUpdatingLocation()
+        fmLocationManager.isSimulation = false
+        val frame = mock(Frame::class.java)
+        val camera = mock(Camera::class.java)
+        `when`(frame.camera).thenReturn(camera)
+        `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
+
+        testScope.runBlockingTest {
+            fmLocationManager.localize(frame)
+            assertEquals(FMLocationManager.State.LOCALIZING, fmLocationManager.state)
+        }
+    }
+
+    // Localize Test with mocked Frame
     @Test
     fun testLocalizeFrameRejected() {
         fmLocationManager.isConnected = true
@@ -454,7 +455,6 @@ class FMLocationManagerTest {
 
         doReturn(300.0).`when`(spyFMBlurFilterRule).calculateVariance(frame)
 
-
         testScope.runBlockingTest {
             spyFMLocationManager.localize(frame)
         }
@@ -555,6 +555,7 @@ class FMLocationManagerTest {
         testScope.runBlockingTest {
             spyFMLocationManager.localize(frame)
         }
+
         verify(spyFMLocationManager, times(1)).localize(frame)
         verify(spyFMLocationManager, times(1)).shouldLocalize(frame)
         verify(spyFMLocationManager, times(2)).fmApi
@@ -653,6 +654,7 @@ class FMLocationManagerTest {
         testScope.runBlockingTest {
             spyFMLocationManager.localize(frame)
         }
+
         verify(spyFMLocationManager, times(1)).localize(frame)
         verify(spyFMLocationManager, times(1)).shouldLocalize(frame)
         verify(spyFMLocationManager, times(2)).fmApi

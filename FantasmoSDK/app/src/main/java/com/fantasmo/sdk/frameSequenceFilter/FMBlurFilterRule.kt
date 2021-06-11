@@ -73,7 +73,7 @@ class FMBlurFilterRule(private val context: Context) : FMFrameSequenceFilterRule
 
     /**
      * Calculates the variance using image convolution
-     * Takes the frame and acquire he image from it and turns into greyscale
+     * Takes the frame and acquire the image from it and turns into greyscale
      * After that applies edge detection matrix to the greyscale image and
      * calculate variance from that
      * @param arFrame: frame to be measure the variance
