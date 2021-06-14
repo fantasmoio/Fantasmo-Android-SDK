@@ -1,7 +1,6 @@
 package com.example.fantasmo_android
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
@@ -12,8 +11,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.Switch
-import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.PermissionChecker
 import androidx.fragment.app.Fragment
@@ -31,7 +28,6 @@ class NoARCoreFragment : Fragment() {
 
     private lateinit var currentView: View
 
-    private lateinit var serverCoorTv: TextView
     private lateinit var checkParkingButton: Button
 
     private lateinit var locationManager: LocationManager
@@ -50,7 +46,6 @@ class NoARCoreFragment : Fragment() {
         currentView = inflater.inflate(R.layout.noarcore_fragment, container, false)
 
         checkParkingButton = currentView.findViewById(R.id.checkParkingButton)
-        serverCoorTv = currentView.findViewById(R.id.serverCoordsText)
 
         fmLocationManager = context?.let { FMLocationManager(it.applicationContext) }!!
         locationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -98,18 +93,12 @@ class NoARCoreFragment : Fragment() {
     private val fmLocationListener: FMLocationListener =
         object : FMLocationListener {
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
-                Log.d(TAG, error.message.toString())
-                serverCoorTv.text = error.message.toString()
             }
 
             override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
             }
 
-            @SuppressLint("SetTextI18n")
             override fun locationManager(location: Location, zones: List<FMZone>?) {
-                Log.d(TAG, location.toString())
-                serverCoorTv.text =
-                    "Server Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}"
             }
         }
 
