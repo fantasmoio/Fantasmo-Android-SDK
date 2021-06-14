@@ -18,20 +18,15 @@ import android.widget.Toast
 import androidx.core.content.PermissionChecker
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMLocationListener
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
-import com.fantasmo.sdk.FMBehaviorRequest
-import com.google.ar.core.*
-import com.google.ar.core.exceptions.CameraNotAvailableException
 import com.google.android.gms.location.*
-import com.google.ar.core.Config
-import com.google.ar.core.Session
-import com.google.ar.core.TrackingState
-
+import com.google.ar.core.*
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.ux.ArFragment
 import java.util.*
@@ -39,9 +34,9 @@ import java.util.*
 /**
  * Fragment to show AR camera image and make use of the Fantasmo SDK localization feature.
  */
-class CameraFragment : Fragment() {
+class ARCoreFragment : Fragment() {
 
-    private val TAG = "CameraFragment"
+    private val TAG = "ARCoreFragment"
 
     private lateinit var arSceneView: ArSceneView
     private lateinit var arFragment: ArFragment
@@ -75,7 +70,7 @@ class CameraFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
-        currentView = inflater.inflate(R.layout.camera_fragment, container, false)
+        currentView = inflater.inflate(R.layout.arcore_fragment, container, false)
 
         filterRejectionTv = currentView.findViewById(R.id.filterRejectionText)
         anchorDeltaTv = currentView.findViewById(R.id.anchorDeltaText)
