@@ -102,11 +102,17 @@ The location manager is accessed through a initialized instance.
     
 ### Localizing 
 
-To start location updates:
+To have location updates the client app must update the device GPS coordinates for the SDK to use. It should be done using the following call:
 
-    fmLocationManager.startUpdatingLocation()
+    fun setLocation(latitude: Double, longitude: Double)
+    
+To start location updates, there are two options. The first being without any Image frame filtration, which makes Image frames being continuously captured and sent to the server for localization:
 
-Images frames will be continuously captured and sent to the server for localization. 
+    fmLocationManager.startUpdatingLocation() 
+
+The second one, makes each Image frame pass a filter in order to reduce the amount of requests into the server. These filter include discarding Image frames that are blurry, Image frames that have the same position as previous ones and Image frames that have high and low pitch values:
+
+    fmLocationManager.startUpdatingLocation(true) 
 
 To stop location updates:
 
