@@ -82,6 +82,8 @@ class FMLocationManager(private val context: Context) {
 
     var isConnected = false
 
+    var enableFilters = false
+
     // Used to validate frame for sufficient quality before sending to API.
     lateinit var frameFilter: FMFrameSequenceFilter
     // Throttler for invalid frames.
@@ -126,6 +128,19 @@ class FMLocationManager(private val context: Context) {
 
         this.isConnected = true
         this.state = State.LOCALIZING
+        enableFilters = false
+    }
+
+    /**
+     * Starts the generation of updates that report the user’s current location.
+     * Also enables FrameFiltering
+     */
+    fun startUpdatingLocation(filtersEnabled : Boolean) {
+        Log.d(TAG, "startUpdatingLocation")
+
+        this.isConnected = true
+        this.state = State.LOCALIZING
+        enableFilters = filtersEnabled
         this.frameFilter.prepareForNewFrameSequence()
         this.frameFailureThrottler.restart()
     }
@@ -212,16 +227,19 @@ class FMLocationManager(private val context: Context) {
             && currentLocation.latitude > 0.0
             && arFrame.camera.trackingState == TrackingState.TRACKING
         ) {
-            val result = frameFilter.check(arFrame)
-            return if (result.first == FMFrameFilterResult.ACCEPTED) {
-                // DEBUG: Check if it's accepting frames
-                fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
-                frameFailureThrottler.restart()
+            return if(enableFilters){
+                val result = frameFilter.check(arFrame)
+                if (result.first == FMFrameFilterResult.ACCEPTED) {
+                    fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
+                    frameFailureThrottler.restart()
+                    true
+                } else {
+                    frameFailureThrottler.onNext(result.second)
+                    fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
+                    false
+                }
+            }else{
                 true
-            } else {
-                frameFailureThrottler.onNext(result.second)
-                fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
-                false
             }
         }
         return false

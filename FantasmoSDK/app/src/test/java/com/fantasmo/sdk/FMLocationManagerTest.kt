@@ -237,7 +237,7 @@ class FMLocationManagerTest {
     // Should Localize
     @Test
     fun testShouldLocalizeFrameAccepted() {
-        fmLocationManager.startUpdatingLocation()
+        fmLocationManager.startUpdatingLocation(true)
         fmLocationManager.isConnected = true
         fmLocationManager.isSimulation = false
         val latitude = 48.12863302178715
@@ -284,7 +284,7 @@ class FMLocationManagerTest {
 
     @Test
     fun testShouldLocalizeFrameRejected() {
-        fmLocationManager.startUpdatingLocation()
+        fmLocationManager.startUpdatingLocation(true)
         fmLocationManager.isConnected = true
         fmLocationManager.isSimulation = false
         val latitude = 48.12863302178715
@@ -349,6 +349,7 @@ class FMLocationManagerTest {
     fun testLocalizeFrameRejected() {
         fmLocationManager.isConnected = true
         fmLocationManager.isSimulation = false
+        fmLocationManager.enableFilters = true
         val latitude = 48.12863302178715
         val longitude = 11.572371166069702
         fmLocationManager.setLocation(latitude, longitude)
@@ -388,7 +389,7 @@ class FMLocationManagerTest {
         val instrumentationContext = InstrumentationRegistry.getInstrumentation().context
         val fmLocationManager = FMLocationManager(instrumentationContext)
         fmLocationManager.connect(token, fmLocationListener)
-        fmLocationManager.startUpdatingLocation()
+        fmLocationManager.startUpdatingLocation(true)
         val testScope = TestCoroutineScope()
         fmLocationManager.coroutineScope = testScope
 
@@ -468,7 +469,7 @@ class FMLocationManagerTest {
         val instrumentationContext2 = InstrumentationRegistry.getInstrumentation().context
         val fmLocationManager = FMLocationManager(instrumentationContext2)
         fmLocationManager.connect(token, fmLocationListener)
-        fmLocationManager.startUpdatingLocation()
+        fmLocationManager.startUpdatingLocation(true)
         val testScope = TestCoroutineScope()
         fmLocationManager.coroutineScope = testScope
 
@@ -567,7 +568,7 @@ class FMLocationManagerTest {
         val instrumentationContext3 = InstrumentationRegistry.getInstrumentation().context
         val fmLocationManager = FMLocationManager(instrumentationContext3)
         fmLocationManager.connect(token, fmLocationListener)
-        fmLocationManager.startUpdatingLocation()
+        fmLocationManager.startUpdatingLocation(true)
         val testScope = TestCoroutineScope()
         fmLocationManager.coroutineScope = testScope
 

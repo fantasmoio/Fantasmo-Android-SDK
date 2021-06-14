@@ -148,6 +148,8 @@ class CameraFragment : Fragment() {
 
                     // Start getting location updates
                     fmLocationManager.startUpdatingLocation()
+                    // Start getting location updates with frame filtering enabled
+                    //fmLocationManager.startUpdatingLocation(true)
                     filterRejectionTv.visibility = View.VISIBLE
                 } else {
                     Log.d(TAG, "LocalizeToggle Disabled")
