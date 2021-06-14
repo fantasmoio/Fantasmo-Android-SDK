@@ -135,8 +135,10 @@ Create the listener for location updates:
 
         override fun locationManager(location: Location, zones: List<FMZone>?) {
         }
+        
+        override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
+        }
     }
-    
     
 And localize the ARFrames (done in the onUpdate on the sample app):
 

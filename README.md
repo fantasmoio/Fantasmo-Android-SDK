@@ -110,7 +110,7 @@ To start location updates, there are two options. The first being without any Im
 
     fmLocationManager.startUpdatingLocation() 
 
-The second one, makes each Image frame pass a filter in order to reduce the amount of requests into the server. These filter include discarding Image frames that are blurry, Image frames that have the same position as previous ones and Image frames that have high and low pitch values:
+The second one, makes each Image frame pass a filter in order to maximize localization quality and reduce the amount of requests into the server. These filters include discarding Image frames that are blurry, Image frames that have the same position as previous ones and Image frames that have high and low pitch values:
 
     fmLocationManager.startUpdatingLocation(true) 
 
@@ -118,7 +118,7 @@ To stop location updates:
 
     fmLocationManager.stopUpdatingLocation()
 
-Location events are be provided through `FMLocationListener`.
+Location events are provided through `FMLocationListener`.
 
     /**
      * Listener for the Fantasmo SDK Location results.
@@ -132,6 +132,32 @@ Location events are be provided through `FMLocationListener`.
                 // Handle location update
             }
         }
+
+### Behaviors
+
+To maximize localization quality, camera input is filtered against common problems. When `startUpdatingLocation(true)` is invoked, the designated `FMLocationListener` will be called with behavior requests intented to alleviate such problems.
+
+    /**
+     * Listener for the Fantasmo SDK Location results.
+     */
+    private val fmLocationListener: FMLocationListener =
+        object : FMLocationListener {
+            override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
+                // Handle behavior update
+            }
+        }
+
+The following behaviors are currently requested:
+
+    enum class FMBehaviorRequest(val displayName: String) {
+        TILTUP("Tilt your device up"),
+        TILTDOWN("Tilt your device down"),
+        PANAROUND("Pan around the scene"),
+        PANSLOWLY("Pan more slowly"),
+        ACCEPTED("Accepted");
+    }
+
+When notified, your application should prompt the user to undertake the remedial behavior. You may use our enum cases to map to your own verbiage or simply rely on our `.rawValue` strings.
 
 ### Anchors
 
