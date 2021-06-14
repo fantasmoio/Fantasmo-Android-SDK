@@ -132,8 +132,9 @@ class FMLocationManager(private val context: Context) {
     }
 
     /**
-     * Starts the generation of updates that report the user’s current location.
-     * Also enables FrameFiltering
+     * Starts the generation of updates that report the user’s current location
+     * enabling FrameFiltering
+     * @param filtersEnabled: flag that it enables frame filtering
      */
     fun startUpdatingLocation(filtersEnabled : Boolean) {
         Log.d(TAG, "startUpdatingLocation")

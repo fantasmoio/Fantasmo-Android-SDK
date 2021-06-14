@@ -236,6 +236,23 @@ class FMLocationManagerTest {
 
     // Should Localize
     @Test
+    fun testShouldLocalizeFiltersDisabled() {
+        fmLocationManager.startUpdatingLocation()
+        fmLocationManager.isConnected = true
+        fmLocationManager.isSimulation = false
+        val latitude = 48.12863302178715
+        val longitude = 11.572371166069702
+        fmLocationManager.setLocation(latitude, longitude)
+
+        val frame = mock(Frame::class.java)
+        val camera = mock(Camera::class.java)
+        `when`(frame.camera).thenReturn(camera)
+        `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
+
+        assertEquals(true, fmLocationManager.shouldLocalize(frame))
+    }
+
+    @Test
     fun testShouldLocalizeFrameAccepted() {
         fmLocationManager.startUpdatingLocation(true)
         fmLocationManager.isConnected = true
