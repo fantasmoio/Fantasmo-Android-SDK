@@ -28,11 +28,9 @@ The SDK library is located inside the libs folder. When changing the SDK, the .a
 
 
 ## Permissions and requirements
-ARCore compatibility is required so the minSdkVersion is 24. The necessary permissions and feature are:
+ARCore compatibility is optional, so the minSdkVersion is 14 but in case the device does not support ARCore, the localize request will not work. The necessary permissions and feature are:
     
     <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-feature android:name="android.hardware.camera.ar" />
-
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -118,11 +116,6 @@ Then you can start or stop localizing using the following calls (done based on t
     // Stop getting location updates
     fmLocationManager.stopUpdatingLocation()
     
-In order to reduce the amount of requests into the server, you can also use the following call to start localizing:
-
-    // Start getting location updates with frame filtering enabled
-    fmLocationManager.startUpdatingLocation(true)
-    
 Create the listener for location updates:
         
     /**
@@ -135,10 +128,8 @@ Create the listener for location updates:
 
         override fun locationManager(location: Location, zones: List<FMZone>?) {
         }
-        
-        override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
-        }
     }
+    
     
 And localize the ARFrames (done in the onUpdate on the sample app):
 

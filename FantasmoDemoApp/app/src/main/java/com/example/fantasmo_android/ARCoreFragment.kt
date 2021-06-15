@@ -43,7 +43,6 @@ class ARCoreFragment : Fragment() {
     private lateinit var arSession: Session
     private lateinit var currentView: View
 
-    private lateinit var filterRejectionTv: TextView
     private lateinit var anchorDeltaTv: TextView
     private lateinit var cameraTranslationTv: TextView
     private lateinit var cameraAnglesTv: TextView
@@ -72,7 +71,6 @@ class ARCoreFragment : Fragment() {
 
         currentView = inflater.inflate(R.layout.arcore_fragment, container, false)
 
-        filterRejectionTv = currentView.findViewById(R.id.filterRejectionText)
         anchorDeltaTv = currentView.findViewById(R.id.anchorDeltaText)
         cameraTranslationTv = currentView.findViewById(R.id.cameraTranslation)
         cameraAnglesTv = currentView.findViewById(R.id.cameraAnglesText)
@@ -143,15 +141,11 @@ class ARCoreFragment : Fragment() {
 
                     // Start getting location updates
                     fmLocationManager.startUpdatingLocation()
-                    // Start getting location updates with frame filtering enabled
-                    //fmLocationManager.startUpdatingLocation(true)
-                    filterRejectionTv.visibility = View.VISIBLE
                 } else {
                     Log.d(TAG, "LocalizeToggle Disabled")
 
                     // Stop getting location updates
                     fmLocationManager.stopUpdatingLocation()
-                    filterRejectionTv.visibility = View.GONE
                 }
             }
 
@@ -219,12 +213,6 @@ class ARCoreFragment : Fragment() {
                 Log.d(TAG, location.toString())
                 activity?.runOnUiThread { serverCoordinatesTv.text =
                     "Server Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}" }
-            }
-
-            @SuppressLint("SetTextI18n")
-            override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
-                Log.d(TAG, "FrameFilterResult " + didRequestBehavior.displayName)
-                activity?.runOnUiThread { filterRejectionTv.text = "FrameFilterResult: ${didRequestBehavior.displayName}" }
             }
         }
 

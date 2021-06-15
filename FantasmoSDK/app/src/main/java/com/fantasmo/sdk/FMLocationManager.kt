@@ -44,7 +44,7 @@ interface FMLocationListener {
      * Tells the listener that a request behavior has occurred.
      * @param didRequestBehavior: The behavior reported.
      */
-    fun locationManager(didRequestBehavior: FMBehaviorRequest)
+    fun locationManager(didRequestBehavior: FMBehaviorRequest){}
 }
 
 class FMLocationManager(private val context: Context) {

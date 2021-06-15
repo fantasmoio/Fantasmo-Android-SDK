@@ -73,7 +73,6 @@ Try out the `FantasmoDemoApp` project or implement the code below.
                 // Handle error
             }
 
-            @SuppressLint("SetTextI18n")
             override fun locationManager(location: Location, zones: List<FMZone>?) {
                 // Handle location update
             }
@@ -102,17 +101,15 @@ The location manager is accessed through a initialized instance.
     
 ### Localizing 
 
-To have location updates the client app must update the device GPS coordinates for the SDK to use. It should be done using the following call:
+To have location updates, the client app must update the device GPS coordinates for the SDK to use. It should be done using the following call:
 
     fun setLocation(latitude: Double, longitude: Double)
     
-To start location updates, there are two options. The first being without any Image frame filtration, which makes Image frames being continuously captured and sent to the server for localization:
+To start location updates:
 
     fmLocationManager.startUpdatingLocation() 
 
-The second one, makes each Image frame pass a filter in order to maximize localization quality and reduce the amount of requests into the server. These filters include discarding Image frames that are blurry, Image frames that have the same position as previous ones and Image frames that have high and low pitch values:
-
-    fmLocationManager.startUpdatingLocation(true) 
+Image frames will be continuously captured and sent to the server for localization.
 
 To stop location updates:
 
@@ -132,32 +129,6 @@ Location events are provided through `FMLocationListener`.
                 // Handle location update
             }
         }
-
-### Behaviors
-
-To maximize localization quality, camera input is filtered against common problems. When `startUpdatingLocation(true)` is invoked, the designated `FMLocationListener` will be called with behavior requests intented to alleviate such problems.
-
-    /**
-     * Listener for the Fantasmo SDK Location results.
-     */
-    private val fmLocationListener: FMLocationListener =
-        object : FMLocationListener {
-            override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
-                // Handle behavior update
-            }
-        }
-
-The following behaviors are currently requested:
-
-    enum class FMBehaviorRequest(val displayName: String) {
-        TILTUP("Tilt your device up"),
-        TILTDOWN("Tilt your device down"),
-        PANAROUND("Pan around the scene"),
-        PANSLOWLY("Pan more slowly"),
-        ACCEPTED("Accepted");
-    }
-
-When notified, your application should prompt the user to undertake the remedial behavior. You may use our enum cases to map to your own verbiage or simply rely on our `.rawValue` strings.
 
 ### Anchors
 
