@@ -4,6 +4,14 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        fantasmo {
+            storeFile file('../certificate')
+            storePassword 'fantasmo'
+            keyAlias 'fantasmo'
+            keyPassword 'fantasmo'
+        }
+    }
     compileSdkVersion 30
 
     defaultConfig {
@@ -15,11 +23,12 @@ android {
         multiDexEnabled = true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        signingConfig signingConfigs.fantasmo
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
