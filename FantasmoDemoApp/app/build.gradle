@@ -67,7 +67,7 @@ dependencies {
     implementation "androidx.navigation:navigation-fragment-ktx:2.3.0"
 
     // Google ARCore
-    implementation 'com.google.ar:core:1.23.0'
+    implementation 'com.google.ar:core:1.24.0'
     implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.17.1'
     implementation 'com.google.ar.sceneform:core:1.17.1'
     implementation 'com.google.ar.sceneform:animation:1.17.1'
