@@ -44,7 +44,7 @@ interface FMLocationListener {
      * Tells the listener that a request behavior has occurred.
      * @param didRequestBehavior: The behavior reported.
      */
-    fun locationManager(didRequestBehavior: FMBehaviorRequest){}
+    //fun locationManager(didRequestBehavior: FMBehaviorRequest){}
 }
 
 class FMLocationManager(private val context: Context) {
@@ -136,6 +136,7 @@ class FMLocationManager(private val context: Context) {
      * enabling FrameFiltering
      * @param filtersEnabled: flag that it enables frame filtering
      */
+    /*
     fun startUpdatingLocation(filtersEnabled : Boolean) {
         Log.d(TAG, "startUpdatingLocation")
 
@@ -145,7 +146,7 @@ class FMLocationManager(private val context: Context) {
         this.frameFilter.prepareForNewFrameSequence()
         this.frameFailureThrottler.restart()
     }
-
+    */
     /**
      * Stops the generation of location updates.
      */
@@ -231,12 +232,12 @@ class FMLocationManager(private val context: Context) {
             return if(enableFilters){
                 val result = frameFilter.check(arFrame)
                 if (result.first == FMFrameFilterResult.ACCEPTED) {
-                    fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
+                    //fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
                     frameFailureThrottler.restart()
                     true
                 } else {
                     frameFailureThrottler.onNext(result.second)
-                    fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
+                    //fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
                     false
                 }
             }else{
