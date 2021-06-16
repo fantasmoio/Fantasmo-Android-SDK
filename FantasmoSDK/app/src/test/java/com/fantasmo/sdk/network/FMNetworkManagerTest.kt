@@ -16,6 +16,7 @@ import com.fantasmo.sdk.mock.MockData.Companion.getFileDataFromDrawable
 import com.fantasmo.sdk.models.*
 import com.google.gson.Gson
 import junit.framework.Assert.*
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -72,6 +73,20 @@ class FMNetworkManagerTest {
         )
 
         cacheTest = CacheTestUtils()
+    }
+
+    @Test
+    fun testFMZone(){
+        val fmZone = FMZone(FMZone.ZoneType.PARKING,"TestID")
+        Assert.assertEquals("TestID", fmZone.id)
+    }
+
+    @Test
+    fun testGeofence(){
+        val fmZone = FMZone(FMZone.ZoneType.PARKING,"TestID")
+        val geofence = Geofence(1,fmZone.zoneType)
+        Assert.assertEquals(1, geofence.elementID)
+        Assert.assertEquals(fmZone.zoneType, geofence.elementType)
     }
 
     @Test

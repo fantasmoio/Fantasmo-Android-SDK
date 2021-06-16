@@ -44,7 +44,7 @@ interface FMLocationListener {
      * Tells the listener that a request behavior has occurred.
      * @param didRequestBehavior: The behavior reported.
      */
-    fun locationManager(didRequestBehavior: FMBehaviorRequest)
+    //fun locationManager(didRequestBehavior: FMBehaviorRequest){}
 }
 
 class FMLocationManager(private val context: Context) {
@@ -82,8 +82,10 @@ class FMLocationManager(private val context: Context) {
 
     var isConnected = false
 
+    private var enableFilters = false
+
     // Used to validate frame for sufficient quality before sending to API.
-    private lateinit var frameFilter: FMFrameSequenceFilter
+    lateinit var frameFilter: FMFrameSequenceFilter
     // Throttler for invalid frames.
     private lateinit var frameFailureThrottler: FrameFailureThrottler
 
@@ -102,7 +104,7 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(fmNetworkManager, this, context, token)
-        frameFilter = FMFrameSequenceFilter()
+        frameFilter = FMFrameSequenceFilter(context)
         frameFailureThrottler = FrameFailureThrottler()
     }
 
@@ -126,10 +128,25 @@ class FMLocationManager(private val context: Context) {
 
         this.isConnected = true
         this.state = State.LOCALIZING
+        enableFilters = false
+    }
+
+    /**
+     * Starts the generation of updates that report the user’s current location
+     * enabling FrameFiltering
+     * @param filtersEnabled: flag that it enables frame filtering
+     */
+    /*
+    fun startUpdatingLocation(filtersEnabled : Boolean) {
+        Log.d(TAG, "startUpdatingLocation")
+
+        this.isConnected = true
+        this.state = State.LOCALIZING
+        enableFilters = filtersEnabled
         this.frameFilter.prepareForNewFrameSequence()
         this.frameFailureThrottler.restart()
     }
-
+    */
     /**
      * Stops the generation of location updates.
      */
@@ -212,16 +229,19 @@ class FMLocationManager(private val context: Context) {
             && currentLocation.latitude > 0.0
             && arFrame.camera.trackingState == TrackingState.TRACKING
         ) {
-            val result = frameFilter.check(arFrame)
-            return if (result.first == FMFrameFilterResult.ACCEPTED) {
-                // DEBUG: Check if it's accepting frames
-                fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
-                frameFailureThrottler.restart()
+            return if(enableFilters){
+                val result = frameFilter.check(arFrame)
+                if (result.first == FMFrameFilterResult.ACCEPTED) {
+                    //fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
+                    frameFailureThrottler.restart()
+                    true
+                } else {
+                    frameFailureThrottler.onNext(result.second)
+                    //fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
+                    false
+                }
+            }else{
                 true
-            } else {
-                frameFailureThrottler.onNext(result.second)
-                fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
-                false
             }
         }
         return false

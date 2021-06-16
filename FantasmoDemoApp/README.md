@@ -28,11 +28,9 @@ The SDK library is located inside the libs folder. When changing the SDK, the .a
 
 
 ## Permissions and requirements
-ARCore compatibility is required so the minSdkVersion is 24. The necessary permissions and feature are:
+ARCore compatibility is optional, so the minSdkVersion is 14 but in case the device does not support ARCore, the localize request will not work. The necessary permissions and feature are:
     
     <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-feature android:name="android.hardware.camera.ar" />
-
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -95,6 +93,21 @@ First step is connecting the app with the SDK FMLocationManager. Example with th
         fmLocationListener
     )
 
+Before starting to make use of the SDK features, the GPS location must be passed from the client app to the SDK and to have the best results, it should be kept updated:
+
+     val locationCallback = object : LocationCallback() {
+                override fun onLocationResult(locationResult: LocationResult) {
+                    currentLocation = locationResult.lastLocation
+                    
+                    //Set SDK Location
+                    fmLocationManager.setLocation(
+                        currentLocation.latitude,
+                        currentLocation.longitude
+                    )
+                    Log.d(TAG, "onLocationResult: ${locationResult.lastLocation}")
+                }
+            }
+
 Then you can start or stop localizing using the following calls (done based on the 'Localize' toogle on the demo app):
     
     // Start getting location updates
@@ -136,4 +149,12 @@ SDK methods to set and unset anchor:
 
     //Unset the current anchor
     fmLocationManager.unsetAnchor()
+
+## ProGuard rules
+
+The following rules should be added to the ProGuard file: 
+
+    -dontwarn com.fantasmo.sdk.**
+    -keep class com.fantasmo.sdk.** { *; }
+    -keep class com.fantasmo.sdk.network.** { *; }the current frame
 

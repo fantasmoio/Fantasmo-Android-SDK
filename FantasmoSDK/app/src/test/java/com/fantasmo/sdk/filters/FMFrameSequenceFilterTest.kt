@@ -1,20 +1,29 @@
 package com.fantasmo.sdk.filters
 
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterFailure
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterResult
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameSequenceFilter
+import android.content.Context
+import android.os.Build
+import androidx.test.platform.app.InstrumentationRegistry
+import com.fantasmo.sdk.frameSequenceFilter.*
 import com.google.ar.core.Camera
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.mockito.Mockito
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@Config(sdk = [Build.VERSION_CODES.O_MR1])
+@RunWith(RobolectricTestRunner::class)
+@ExperimentalCoroutinesApi
 class FMFrameSequenceFilterTest {
 
     @Test
     fun testShouldForceAcceptTrue() {
-        val filter = FMFrameSequenceFilter()
+        val context = Mockito.mock(Context::class.java)
+        val filter = FMFrameSequenceFilter(context)
         val frame = Mockito.mock(Frame::class.java)
 
         filter.timestampOfPreviousApprovedFrame = 1L
@@ -29,7 +38,8 @@ class FMFrameSequenceFilterTest {
 
     @Test
     fun testShouldForceAcceptFalse() {
-        val filter = FMFrameSequenceFilter()
+        val context = Mockito.mock(Context::class.java)
+        val filter = FMFrameSequenceFilter(context)
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
@@ -62,7 +72,14 @@ class FMFrameSequenceFilterTest {
 
     @Test
     fun testFrameCheck() {
-        val filter = FMFrameSequenceFilter()
+        val instrumentationContext = InstrumentationRegistry.getInstrumentation().context
+        val filter = FMFrameSequenceFilter(instrumentationContext)
+
+        val fmBlurFilterRule = FMBlurFilterRule(instrumentationContext)
+        val spyFMBlurFilterRule = Mockito.spy(fmBlurFilterRule)
+
+        filter.rules = listOf(FMMovementFilterRule(),FMCameraPitchFilterRule(),spyFMBlurFilterRule)
+
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
@@ -86,6 +103,8 @@ class FMFrameSequenceFilterTest {
         Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
         Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
+
+        Mockito.doReturn(300.0).`when`(spyFMBlurFilterRule).calculateVariance(frame)
 
         assertEquals(
             Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED),

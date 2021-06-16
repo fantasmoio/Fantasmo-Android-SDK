@@ -73,7 +73,6 @@ Try out the `FantasmoDemoApp` project or implement the code below.
                 // Handle error
             }
 
-            @SuppressLint("SetTextI18n")
             override fun locationManager(location: Location, zones: List<FMZone>?) {
                 // Handle location update
             }
@@ -102,17 +101,21 @@ The location manager is accessed through a initialized instance.
     
 ### Localizing 
 
+To have location updates, the client app must update the device GPS coordinates for the SDK to use. It should be done using the following call:
+
+    fun setLocation(latitude: Double, longitude: Double)
+    
 To start location updates:
 
-    fmLocationManager.startUpdatingLocation()
+    fmLocationManager.startUpdatingLocation() 
 
-Images frames will be continuously captured and sent to the server for localization. 
+Image frames will be continuously captured and sent to the server for localization.
 
 To stop location updates:
 
     fmLocationManager.stopUpdatingLocation()
 
-Location events are be provided through `FMLocationListener`.
+Location events are provided through `FMLocationListener`.
 
     /**
      * Listener for the Fantasmo SDK Location results.

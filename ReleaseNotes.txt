@@ -1,0 +1,30 @@
+Fantasmo-Android-SDK Release Notes
+
+Version 1.0:
+- Initial release.
+
+Version 1.0.1:
+- Fixed issue causing isZoneInRadius request to return 2 responses.
+
+Version 1.0.2:
+- Changed logics to have isZoneInRadius request working without
+calling connect first.
+
+Version 1.0.3:
+- Moved GPS location management to the client side and added a new method
+setLocation(latitude: Double, longitude: Double) to be used by the client to update the GPS 
+coordinates used by the SDK.
+
+Version 1.0.4:
+- Changed ARCore to optional so the minimumSDK can be lowered to version 14.
+- Adapted logics to accommodate ARCore being optional.
+- Added proguard rules to demo app.
+
+Version 1.0.5:
+- Added TextView and logics to show tracking failure reason
+- Fixed localization on reverse landscape orientation
+- Improved SDK structure
+- Improved logging
+- Improved anchor delta calculation
+- Improved stability
+- Increased testing coverage 

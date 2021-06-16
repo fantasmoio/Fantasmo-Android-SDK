@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main_navigation"
-    app:startDestination="@id/main_fragment">
+    android:id="@+id/main_navigation">
 
     <fragment
-        android:id="@+id/main_fragment"
-        android:name="com.example.fantasmo_android.CameraFragment"
-        android:label="camera_fragment"
-        tools:layout="@layout/camera_fragment"/>
+        android:id="@+id/arcore_fragment"
+        android:name="com.example.fantasmo_android.ARCoreFragment"
+        android:label="arcore_fragment"
+        tools:layout="@layout/arcore_fragment" />
+
+    <fragment
+        android:id="@+id/noarcore_fragment"
+        android:name="com.example.fantasmo_android.NoARCoreFragment"
+        android:label="noarcore_fragment"
+        tools:layout="@layout/noarcore_fragment" />
 
 </navigation>

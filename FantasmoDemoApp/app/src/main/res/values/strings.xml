@@ -11,6 +11,7 @@
     <string name="anchor">Anchor</string>
     <string name="check_parking">Check Parking</string>
     <string name="server_coordinates">Server Coordinates</string>
+    <string name="fm_location_listener">FMLocationListener</string>
     <string name="anchor_delta">Anchor Delta</string>
     <string name="requestBehavior">FrameFilterResult</string>
 

@@ -24,27 +24,24 @@ import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
-import com.fantasmo.sdk.FMBehaviorRequest
 import com.google.android.gms.location.*
-import com.google.ar.core.Config
-import com.google.ar.core.Session
-import com.google.ar.core.TrackingState
+import com.google.ar.core.*
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.ux.ArFragment
+import java.util.*
 
 /**
  * Fragment to show AR camera image and make use of the Fantasmo SDK localization feature.
  */
-class CameraFragment : Fragment() {
+class ARCoreFragment : Fragment() {
 
-    private val TAG = "CameraFragment"
+    private val TAG = "ARCoreFragment"
 
     private lateinit var arSceneView: ArSceneView
     private lateinit var arFragment: ArFragment
     private lateinit var arSession: Session
     private lateinit var currentView: View
 
-    private lateinit var filterRejectionTv: TextView
     private lateinit var anchorDeltaTv: TextView
     private lateinit var cameraTranslationTv: TextView
     private lateinit var cameraAnglesTv: TextView
@@ -71,9 +68,8 @@ class CameraFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
-        currentView = inflater.inflate(R.layout.camera_fragment, container, false)
+        currentView = inflater.inflate(R.layout.arcore_fragment, container, false)
 
-        filterRejectionTv = currentView.findViewById(R.id.filterRejectionText)
         anchorDeltaTv = currentView.findViewById(R.id.anchorDeltaText)
         cameraTranslationTv = currentView.findViewById(R.id.cameraTranslation)
         cameraAnglesTv = currentView.findViewById(R.id.cameraAnglesText)
@@ -144,13 +140,11 @@ class CameraFragment : Fragment() {
 
                     // Start getting location updates
                     fmLocationManager.startUpdatingLocation()
-                    filterRejectionTv.visibility = View.VISIBLE
                 } else {
                     Log.d(TAG, "LocalizeToggle Disabled")
 
                     // Stop getting location updates
                     fmLocationManager.stopUpdatingLocation()
-                    filterRejectionTv.visibility = View.GONE
                 }
             }
 
@@ -191,12 +185,15 @@ class CameraFragment : Fragment() {
      */
     private fun configureARSession() {
         arSession = Session(context)
+
         val config = Config(arSession)
         config.focusMode = Config.FocusMode.AUTO
         config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
         config.planeFindingMode = Config.PlaneFindingMode.DISABLED
+
         arSession.configure(config)
         arSceneView.setupSession(arSession)
+
         Log.d(TAG, arSceneView.session?.config.toString())
     }
 
@@ -215,12 +212,6 @@ class CameraFragment : Fragment() {
                 Log.d(TAG, location.toString())
                 activity?.runOnUiThread { serverCoordinatesTv.text =
                     "Server Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}" }
-            }
-
-            @SuppressLint("SetTextI18n")
-            override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
-                Log.d(TAG, "FrameFilterResult " + didRequestBehavior.displayName)
-                activity?.runOnUiThread { filterRejectionTv.text = "FrameFilterResult: ${didRequestBehavior.displayName}" }
             }
         }
 
@@ -274,6 +265,14 @@ class CameraFragment : Fragment() {
         return s + String.format("%.2f", cameraAttr?.get(0)) + ", " +
                 String.format("%.2f", cameraAttr?.get(1)) + ", " +
                 String.format("%.2f", cameraAttr?.get(2))
+    }
+
+    /**
+     * Release heap allocation of the AR session
+     * */
+    override fun onDestroy() {
+        arSession.close()
+        super.onDestroy()
     }
 
     /**
