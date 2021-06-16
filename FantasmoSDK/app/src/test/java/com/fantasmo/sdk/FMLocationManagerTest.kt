@@ -366,7 +366,7 @@ class FMLocationManagerTest {
     fun testLocalizeFrameRejected() {
         fmLocationManager.isConnected = true
         fmLocationManager.isSimulation = false
-        fmLocationManager.enableFilters = true
+        fmLocationManager.startUpdatingLocation(true)
         val latitude = 48.12863302178715
         val longitude = 11.572371166069702
         fmLocationManager.setLocation(latitude, longitude)

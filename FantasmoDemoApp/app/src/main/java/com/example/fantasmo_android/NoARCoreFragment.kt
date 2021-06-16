@@ -14,7 +14,6 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.core.content.PermissionChecker
 import androidx.fragment.app.Fragment
-import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMLocationListener
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.models.ErrorResponse
@@ -93,9 +92,6 @@ class NoARCoreFragment : Fragment() {
     private val fmLocationListener: FMLocationListener =
         object : FMLocationListener {
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
-            }
-
-            override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
             }
 
             override fun locationManager(location: Location, zones: List<FMZone>?) {

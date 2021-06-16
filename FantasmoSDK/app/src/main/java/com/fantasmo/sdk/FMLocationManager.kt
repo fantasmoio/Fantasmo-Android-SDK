@@ -82,7 +82,7 @@ class FMLocationManager(private val context: Context) {
 
     var isConnected = false
 
-    var enableFilters = false
+    private var enableFilters = false
 
     // Used to validate frame for sufficient quality before sending to API.
     lateinit var frameFilter: FMFrameSequenceFilter

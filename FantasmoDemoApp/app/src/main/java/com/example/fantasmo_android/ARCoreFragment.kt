@@ -18,7 +18,6 @@ import android.widget.Toast
 import androidx.core.content.PermissionChecker
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMLocationListener
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
