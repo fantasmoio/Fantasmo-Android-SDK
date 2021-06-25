@@ -24,7 +24,7 @@ The Fantasmo SDK .aar file can be imported directly into a project.
 
 ## Requirements
 
-- Android version 7.0+
+- Android version 4.0+
 - Android Studio 4.1.2+
 
 ## Functionality
