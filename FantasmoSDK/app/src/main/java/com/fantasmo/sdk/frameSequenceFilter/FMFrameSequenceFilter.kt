@@ -1,7 +1,9 @@
 package com.fantasmo.sdk.frameSequenceFilter
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import com.google.ar.core.Frame
 
 /**
@@ -20,11 +22,18 @@ class FMFrameSequenceFilter(context: Context) {
     /**
      * List of filter rules to apply on frame received.
      */
-    var rules = listOf(
+    var rules = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+        listOf(
+                FMCameraPitchFilterRule(),
+                FMMovementFilterRule(),
+                FMBlurFilterRule(context)
+        )
+    } else {
+        listOf(
             FMCameraPitchFilterRule(),
             FMMovementFilterRule(),
-            FMBlurFilterRule(context)
-    )
+        )
+    }
 
     /**
      * Init a new Sequence of frames
