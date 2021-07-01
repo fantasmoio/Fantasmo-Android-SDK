@@ -3,7 +3,6 @@ package com.fantasmo.sdk.frameSequenceFilter
 import android.content.Context
 import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import com.google.ar.core.Frame
 
 /**
@@ -24,13 +23,13 @@ class FMFrameSequenceFilter(context: Context) {
      */
     var rules = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
         listOf(
-                FMCameraPitchFilterRule(),
+                FMCameraPitchFilterRule(context),
                 FMMovementFilterRule(),
                 FMBlurFilterRule(context)
         )
     } else {
         listOf(
-            FMCameraPitchFilterRule(),
+            FMCameraPitchFilterRule(context),
             FMMovementFilterRule(),
         )
     }
