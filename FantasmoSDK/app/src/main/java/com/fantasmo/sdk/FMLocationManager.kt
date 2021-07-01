@@ -231,12 +231,12 @@ class FMLocationManager(private val context: Context) {
             return if(enableFilters){
                 val result = frameFilter.check(arFrame)
                 if (result.first == FMFrameFilterResult.ACCEPTED) {
-                    //fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
+                    fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
                     frameFailureThrottler.restart()
                     true
                 } else {
                     frameFailureThrottler.onNext(result.second)
-                    //fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
+                    fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
                     false
                 }
             }else{
