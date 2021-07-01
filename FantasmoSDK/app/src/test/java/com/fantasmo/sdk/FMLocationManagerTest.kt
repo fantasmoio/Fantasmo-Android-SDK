@@ -268,7 +268,8 @@ class FMLocationManagerTest {
 
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
 
-        filter.rules = listOf(FMMovementFilterRule(), FMCameraPitchFilterRule(),spyFMBlurFilterRule)
+        val context = mock(Context::class.java)
+        filter.rules = listOf(FMMovementFilterRule(), FMCameraPitchFilterRule(context),spyFMBlurFilterRule)
 
         val frame = mock(Frame::class.java)
         val camera = mock(Camera::class.java)
@@ -290,6 +291,14 @@ class FMLocationManagerTest {
         `when`(frame.androidSensorPose).thenReturn(pose2)
         `when`(frame.androidSensorPose.rotationQuaternion)
             .thenReturn(cameraPose.rotationQuaternion)
+
+        `when`(frame.camera.displayOrientedPose).thenReturn(pose2)
+        `when`(frame.camera.displayOrientedPose.rotationQuaternion)
+            .thenReturn(cameraPose.rotationQuaternion)
+
+        val display = mock(Display::class.java)
+        `when`(context.display).thenReturn(display)
+        `when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_0)
 
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
@@ -328,6 +337,15 @@ class FMLocationManagerTest {
         `when`(frame.androidSensorPose).thenReturn(pose2)
         `when`(frame.androidSensorPose.rotationQuaternion)
             .thenReturn(cameraPose.rotationQuaternion)
+
+        `when`(frame.camera.displayOrientedPose).thenReturn(pose2)
+        `when`(frame.camera.displayOrientedPose.rotationQuaternion)
+            .thenReturn(cameraPose.rotationQuaternion)
+
+        val context = mock(Context::class.java)
+        val display = mock(Display::class.java)
+        `when`(context.display).thenReturn(display)
+        `when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_0)
 
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
@@ -424,7 +442,10 @@ class FMLocationManagerTest {
 
         val fmBlurFilterRule = FMBlurFilterRule(instrumentationContext)
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
-        fmLocationManager.frameFilter.rules = listOf(FMMovementFilterRule(), FMCameraPitchFilterRule(),spyFMBlurFilterRule)
+        val context = mock(Context::class.java)
+        fmLocationManager.frameFilter.rules = listOf(FMMovementFilterRule(), FMCameraPitchFilterRule(
+            context
+        ),spyFMBlurFilterRule)
 
         val frame = mock(Frame::class.java)
 
@@ -471,6 +492,14 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
+        `when`(frame.camera.displayOrientedPose).thenReturn(pose2)
+        `when`(frame.camera.displayOrientedPose.rotationQuaternion)
+            .thenReturn(cameraPose.rotationQuaternion)
+
+        val display = mock(Display::class.java)
+        `when`(context.display).thenReturn(display)
+        `when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_0)
+
         doReturn(300.0).`when`(spyFMBlurFilterRule).calculateVariance(frame)
 
         testScope.runBlockingTest {
@@ -504,7 +533,9 @@ class FMLocationManagerTest {
 
         val fmBlurFilterRule = FMBlurFilterRule(instrumentationContext2)
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
-        fmLocationManager.frameFilter.rules = listOf(FMMovementFilterRule(), FMCameraPitchFilterRule(),spyFMBlurFilterRule)
+        fmLocationManager.frameFilter.rules = listOf(FMMovementFilterRule(), FMCameraPitchFilterRule(
+            context
+        ),spyFMBlurFilterRule)
 
         val frame = mock(Frame::class.java)
         val camera = mock(Camera::class.java)
@@ -603,7 +634,9 @@ class FMLocationManagerTest {
 
         val fmBlurFilterRule = FMBlurFilterRule(instrumentationContext3)
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
-        fmLocationManager.frameFilter.rules = listOf(FMMovementFilterRule(), FMCameraPitchFilterRule(),spyFMBlurFilterRule)
+        fmLocationManager.frameFilter.rules = listOf(FMMovementFilterRule(), FMCameraPitchFilterRule(
+            context
+        ),spyFMBlurFilterRule)
 
         val frame = mock(Frame::class.java)
         val camera = mock(Camera::class.java)
