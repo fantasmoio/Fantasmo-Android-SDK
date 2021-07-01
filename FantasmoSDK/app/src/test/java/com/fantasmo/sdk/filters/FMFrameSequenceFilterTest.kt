@@ -2,6 +2,8 @@ package com.fantasmo.sdk.filters
 
 import android.content.Context
 import android.os.Build
+import android.view.Display
+import android.view.Surface
 import androidx.test.platform.app.InstrumentationRegistry
 import com.fantasmo.sdk.frameSequenceFilter.*
 import com.google.ar.core.Camera
@@ -64,6 +66,14 @@ class FMFrameSequenceFilterTest {
         Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
 
+        Mockito.`when`(frame.camera.displayOrientedPose).thenReturn(pose2)
+        Mockito.`when`(frame.camera.displayOrientedPose.rotationQuaternion)
+            .thenReturn(pose.rotationQuaternion)
+
+        val display = Mockito.mock(Display::class.java)
+        Mockito.`when`(context.display).thenReturn(display)
+        Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_0)
+
         assertEquals(
             Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOLITTLE),
             filter.check(frame)
@@ -78,7 +88,7 @@ class FMFrameSequenceFilterTest {
         val fmBlurFilterRule = FMBlurFilterRule(instrumentationContext)
         val spyFMBlurFilterRule = Mockito.spy(fmBlurFilterRule)
 
-        filter.rules = listOf(FMMovementFilterRule(),FMCameraPitchFilterRule(),spyFMBlurFilterRule)
+        filter.rules = listOf(FMMovementFilterRule(),FMCameraPitchFilterRule(instrumentationContext),spyFMBlurFilterRule)
 
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
@@ -103,6 +113,15 @@ class FMFrameSequenceFilterTest {
         Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
         Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
+
+        Mockito.`when`(frame.camera.displayOrientedPose).thenReturn(pose2)
+        Mockito.`when`(frame.camera.displayOrientedPose.rotationQuaternion)
+            .thenReturn(pose.rotationQuaternion)
+
+        val context = Mockito.mock(Context::class.java)
+        val display = Mockito.mock(Display::class.java)
+        Mockito.`when`(context.display).thenReturn(display)
+        Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_0)
 
         Mockito.doReturn(300.0).`when`(spyFMBlurFilterRule).calculateVariance(frame)
 

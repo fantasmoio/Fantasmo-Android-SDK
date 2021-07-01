@@ -4,8 +4,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.os.Build
 import android.renderscript.*
 import android.util.Log
+import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.utilities.MovingAverage
 import com.google.ar.core.Frame
@@ -17,6 +19,7 @@ import kotlin.math.sqrt
  * Class responsible for filtering frames due to blur on images.
  * Prevents from sending blurred images.
  */
+@RequiresApi(Build.VERSION_CODES.KITKAT)
 class FMBlurFilterRule(private val context: Context) : FMFrameSequenceFilterRule {
 
     private val TAG = "FMBlurFilter"
