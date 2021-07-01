@@ -23,9 +23,9 @@ class FMCameraPitchFilterRule(private val context: Context) : FMFrameSequenceFil
      */
     override fun check(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
         // Angle of X-plane of virtual camera pose
-        val xOrientedPose = arFrame.camera.displayOrientedPose.rotationQuaternion[0]
+        val xOrientedAngle = arFrame.camera.displayOrientedPose.rotationQuaternion[0]
         // Angle of X-plane of device sensor system
-        val xSensorPose = arFrame.androidSensorPose.rotationQuaternion[0]
+        val xSensorAngle = arFrame.androidSensorPose.rotationQuaternion[0]
 
         val rotation: Int = try {
             context.display?.rotation!!
@@ -38,62 +38,42 @@ class FMCameraPitchFilterRule(private val context: Context) : FMFrameSequenceFil
         return when (rotation) {
             // SCREEN_ORIENTATION_REVERSE_LANDSCAPE
             Surface.ROTATION_270 -> {
-                return when {
-                    abs(xOrientedPose) <= radianThreshold -> {
-                        Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
-                    }
-                    xOrientedPose < 0 -> {
-                        Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.PITCHTOOHIGH)
-                    }
-                    else -> {
-                        Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.PITCHTOOLOW)
-                    }
-                }
+                return checkTilt(xOrientedAngle,1)
             }
             // SCREEN_ORIENTATION_LANDSCAPE
             Surface.ROTATION_90 -> {
-                return when {
-                    abs(xOrientedPose) <= radianThreshold -> {
-                        Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
-                    }
-                    xOrientedPose < 0 -> {
-                        Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.PITCHTOOHIGH)
-                    }
-                    else -> {
-                        Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.PITCHTOOLOW)
-                    }
-                }
+                return checkTilt(xOrientedAngle,1)
             }
             // SCREEN_ORIENTATION_PORTRAIT
             Surface.ROTATION_0 -> {
-                return when {
-                    abs(xSensorPose) <= radianThreshold -> {
-                        Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
-                    }
-                    xSensorPose > 0 -> {
-                        Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.PITCHTOOHIGH)
-                    }
-                    else -> {
-                        Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.PITCHTOOLOW)
-                    }
-                }
+                return checkTilt(xSensorAngle,-1)
             }
             // SCREEN_ORIENTATION_REVERSE_PORTRAIT
             Surface.ROTATION_180 -> {
-                return when {
-                    abs(xSensorPose) <= radianThreshold -> {
-                        Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
-                    }
-                    xSensorPose < 0 -> {
-                        Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.PITCHTOOHIGH)
-                    }
-                    else -> {
-                        Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.PITCHTOOLOW)
-                    }
-                }
+                return checkTilt(xSensorAngle,-1)
             }
             else -> {
                 Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
+            }
+        }
+    }
+
+    /**
+     * Verifies if tilt angle is acceptable, high or low
+     * @param xAngle: tilt angle value
+     * @param orientationSign: device orientation
+     * @return Pair<FMFrameFilterResult, FMFrameFilterFailure>
+     * */
+    private fun checkTilt(xAngle: Float, orientationSign: Int): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
+        return when {
+            abs(xAngle) <= radianThreshold -> {
+                Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
+            }
+            xAngle * orientationSign < 0 -> {
+                Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.PITCHTOOHIGH)
+            }
+            else -> {
+                Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.PITCHTOOLOW)
             }
         }
     }
