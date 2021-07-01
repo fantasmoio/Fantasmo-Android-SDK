@@ -254,7 +254,9 @@ class FMLocationManagerTest {
 
     @Test
     fun testShouldLocalizeFrameAccepted() {
-        fmLocationManager.startUpdatingLocation(true)
+        val method = fmLocationManager.javaClass.getDeclaredMethod("startUpdatingLocation", Boolean::class.java)
+        method.isAccessible = true
+        method.invoke(fmLocationManager,true)
         fmLocationManager.isConnected = true
         fmLocationManager.isSimulation = false
         val latitude = 48.12863302178715
@@ -310,7 +312,9 @@ class FMLocationManagerTest {
 
     @Test
     fun testShouldLocalizeFrameRejected() {
-        fmLocationManager.startUpdatingLocation(true)
+        val method = fmLocationManager.javaClass.getDeclaredMethod("startUpdatingLocation", Boolean::class.java)
+        method.isAccessible = true
+        method.invoke(fmLocationManager,true)
         fmLocationManager.isConnected = true
         fmLocationManager.isSimulation = false
         val latitude = 48.12863302178715
@@ -384,7 +388,9 @@ class FMLocationManagerTest {
     fun testLocalizeFrameRejected() {
         fmLocationManager.isConnected = true
         fmLocationManager.isSimulation = false
-        fmLocationManager.startUpdatingLocation(true)
+        val method = fmLocationManager.javaClass.getDeclaredMethod("startUpdatingLocation", Boolean::class.java)
+        method.isAccessible = true
+        method.invoke(fmLocationManager,true)
         val latitude = 48.12863302178715
         val longitude = 11.572371166069702
         fmLocationManager.setLocation(latitude, longitude)
@@ -424,7 +430,9 @@ class FMLocationManagerTest {
         val instrumentationContext = InstrumentationRegistry.getInstrumentation().context
         val fmLocationManager = FMLocationManager(instrumentationContext)
         fmLocationManager.connect(token, fmLocationListener)
-        fmLocationManager.startUpdatingLocation(true)
+        val method = fmLocationManager.javaClass.getDeclaredMethod("startUpdatingLocation", Boolean::class.java)
+        method.isAccessible = true
+        method.invoke(fmLocationManager,true)
         val testScope = TestCoroutineScope()
         fmLocationManager.coroutineScope = testScope
 
@@ -515,7 +523,9 @@ class FMLocationManagerTest {
         val instrumentationContext2 = InstrumentationRegistry.getInstrumentation().context
         val fmLocationManager = FMLocationManager(instrumentationContext2)
         fmLocationManager.connect(token, fmLocationListener)
-        fmLocationManager.startUpdatingLocation(true)
+        val method = fmLocationManager.javaClass.getDeclaredMethod("startUpdatingLocation", Boolean::class.java)
+        method.isAccessible = true
+        method.invoke(fmLocationManager,true)
         val testScope = TestCoroutineScope()
         fmLocationManager.coroutineScope = testScope
 
@@ -616,7 +626,9 @@ class FMLocationManagerTest {
         val instrumentationContext3 = InstrumentationRegistry.getInstrumentation().context
         val fmLocationManager = FMLocationManager(instrumentationContext3)
         fmLocationManager.connect(token, fmLocationListener)
-        fmLocationManager.startUpdatingLocation(true)
+        val method = fmLocationManager.javaClass.getDeclaredMethod("startUpdatingLocation", Boolean::class.java)
+        method.isAccessible = true
+        method.invoke(fmLocationManager,true)
         val testScope = TestCoroutineScope()
         fmLocationManager.coroutineScope = testScope
 
