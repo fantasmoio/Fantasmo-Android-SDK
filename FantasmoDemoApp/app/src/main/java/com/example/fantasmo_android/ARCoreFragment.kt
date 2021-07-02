@@ -15,6 +15,7 @@ import android.widget.Button
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
 import androidx.core.content.PermissionChecker
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -25,15 +26,23 @@ import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
 import com.google.android.gms.location.*
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.ar.core.*
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.ux.ArFragment
 import java.util.*
 
+
 /**
  * Fragment to show AR camera image and make use of the Fantasmo SDK localization feature.
  */
-class ARCoreFragment : Fragment() {
+class ARCoreFragment : Fragment(), OnMapReadyCallback {
 
     private val TAG = "ARCoreFragment"
 
@@ -47,6 +56,14 @@ class ARCoreFragment : Fragment() {
     private lateinit var cameraAnglesTv: TextView
     private lateinit var serverCoordinatesTv: TextView
     private lateinit var trackingFailureTv: TextView
+
+    private lateinit var mapButton: Button
+    private lateinit var googleMapView: MapView
+    private lateinit var googleMap: GoogleMap
+    private val MAPVIEW_BUNDLE_KEY = "MapViewBundleKey"
+
+    private lateinit var markerQueue: Queue<Marker>
+
     private lateinit var checkParkingButton: Button
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
@@ -70,6 +87,7 @@ class ARCoreFragment : Fragment() {
 
         currentView = inflater.inflate(R.layout.arcore_fragment, container, false)
 
+        googleMapView = currentView.findViewById(R.id.mapView)
         anchorDeltaTv = currentView.findViewById(R.id.anchorDeltaText)
         cameraTranslationTv = currentView.findViewById(R.id.cameraTranslation)
         cameraAnglesTv = currentView.findViewById(R.id.cameraAnglesText)
@@ -78,9 +96,13 @@ class ARCoreFragment : Fragment() {
         trackingFailureTv = currentView.findViewById(R.id.trackingFailureText)
         localizeToggleButton = currentView.findViewById(R.id.localizeToggle)
         anchorToggleButton = currentView.findViewById(R.id.anchorToggle)
+        mapButton = currentView.findViewById(R.id.mapButton)
 
         fmLocationManager = context?.let { FMLocationManager(it.applicationContext) }!!
         locationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        initGoogleMap(savedInstanceState)
+        markerQueue = LinkedList()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -96,6 +118,7 @@ class ARCoreFragment : Fragment() {
      * */
     override fun onStart() {
         super.onStart()
+        googleMapView.onStart()
 
         try {
             arFragment = childFragmentManager.findFragmentById(R.id.ar_fragment) as ArFragment
@@ -131,6 +154,14 @@ class ARCoreFragment : Fragment() {
                         "Is Zone In Radius Response: $it",
                         Toast.LENGTH_LONG
                     ).show()
+                }
+            }
+
+            mapButton.setOnClickListener {
+                if(googleMapView.visibility == View.VISIBLE){
+                    googleMapView.visibility = View.GONE
+                }else{
+                    googleMapView.visibility = View.VISIBLE
                 }
             }
 
@@ -210,8 +241,27 @@ class ARCoreFragment : Fragment() {
             @SuppressLint("SetTextI18n")
             override fun locationManager(location: Location, zones: List<FMZone>?) {
                 Log.d(TAG, location.toString())
-                activity?.runOnUiThread { serverCoordinatesTv.text =
-                    "Server Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}" }
+                activity?.runOnUiThread {
+                    serverCoordinatesTv.text =
+                        "Server Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}"
+                    val marker = googleMap.addMarker(
+                        MarkerOptions()
+                            .position(
+                                LatLng(
+                                    location.coordinate.latitude,
+                                    location.coordinate.longitude
+                                )
+                            )
+                            .title("Server Location")
+                    )
+                    markerQueue.add(marker)
+                    val latlng = LatLng(location.coordinate.latitude, location.coordinate.longitude)
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng, 50F))
+                }
+                if (markerQueue.size == 10) {
+                    val markerR = markerQueue.poll()
+                    markerR!!.remove()
+                }
             }
         }
 
@@ -272,6 +322,7 @@ class ARCoreFragment : Fragment() {
      * */
     override fun onDestroy() {
         arSession.close()
+        googleMapView.onDestroy()
         super.onDestroy()
     }
 
@@ -320,5 +371,68 @@ class ARCoreFragment : Fragment() {
                 Looper.myLooper()
             )
         }
+    }
+
+    /**
+     * Initiates GoogleMap display on UI from savedInstanceState from onCreateView method
+     * */
+    private fun initGoogleMap(savedInstanceState: Bundle?) {
+        // *** IMPORTANT ***
+        // MapView requires that the Bundle you pass contain _ONLY_ MapView SDK
+        // objects or sub-Bundles.
+        var mapViewBundle: Bundle? = null
+        if (savedInstanceState != null) {
+            mapViewBundle = savedInstanceState.getBundle(MAPVIEW_BUNDLE_KEY)
+        }
+        googleMapView.onCreate(mapViewBundle)
+        googleMapView.getMapAsync(this)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        googleMapView.onResume()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        var mapViewBundle = outState.getBundle(MAPVIEW_BUNDLE_KEY)
+        if (mapViewBundle == null) {
+            mapViewBundle = Bundle()
+            outState.putBundle(MAPVIEW_BUNDLE_KEY, mapViewBundle)
+        }
+        googleMapView.onSaveInstanceState(mapViewBundle)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        googleMapView.onStop()
+    }
+
+    override fun onPause() {
+        googleMapView.onPause()
+        super.onPause()
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        googleMapView.onLowMemory()
+    }
+
+    override fun onMapReady(map: GoogleMap) {
+        if (ActivityCompat.checkSelfPermission(
+                requireActivity(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+            != PackageManager.PERMISSION_GRANTED
+            && ActivityCompat.checkSelfPermission(
+                requireActivity(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        googleMap = map
+        googleMap.isMyLocationEnabled = true
     }
 }

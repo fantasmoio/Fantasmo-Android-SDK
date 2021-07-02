@@ -17,117 +17,164 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/users_data"
         android:layout_width="match_parent"
-        android:layout_height="242dp"
-        android:layout_gravity="bottom"
-        android:background="#00FFFFFF"
-        android:visibility="visible">
+        android:layout_height="match_parent">
 
-        <Button
-            android:id="@+id/checkParkingButton"
-            android:layout_width="wrap_content"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/users_data"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/check_parking"
-            android:textSize="18sp"
-            app:layout_constraintStart_toStartOf="@+id/anchorToggle"
-            app:layout_constraintBottom_toBottomOf="parent"/>
-
-        <Switch
-            android:id="@+id/anchorToggle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFF"
-            android:text="@string/anchor"
-            android:textColor="#000000"
-            android:textSize="18sp"
-            app:layout_constraintStart_toStartOf="@+id/localizeToggle"
-            app:layout_constraintBottom_toTopOf="@+id/checkParkingButton"
-            tools:ignore="UseSwitchCompatOrMaterialXml" />
-
-        <Switch
-            android:id="@+id/localizeToggle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFF"
-            android:text="@string/localize"
-            android:textColor="#000000"
-            android:textSize="18sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toTopOf="@+id/anchorToggle"
-            tools:ignore="UseSwitchCompatOrMaterialXml" />
-
-        <TextView
-            android:id="@+id/filterRejectionText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFF"
-            android:textColor="#000000"
-            android:text="@string/requestBehavior"
-            android:textSize="18sp"
-            android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@+id/trackingFailureText"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <TextView
-            android:id="@+id/trackingFailureText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFF"
-            android:textColor="#000000"
-            android:textSize="18sp"
-            android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@+id/anchorDeltaText"
-            app:layout_constraintStart_toStartOf="parent"
-            tools:text="@string/anchor_delta" />
-
-        <TextView
-            android:id="@+id/anchorDeltaText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFF"
-            android:text="@string/anchor_delta"
-            android:textColor="#000000"
-            android:textSize="18sp"
-            android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@+id/cameraTranslation"
-            app:layout_constraintStart_toStartOf="parent"
-            tools:text="@string/anchor_delta" />
-
-        <TextView
-            android:id="@+id/cameraTranslation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFF"
-            android:text="@string/camera_translation"
-            android:textColor="#000000"
-            android:textSize="18sp"
+            android:layout_gravity="bottom"
+            android:background="#00FFFFFF"
             android:visibility="visible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/cameraAnglesText" />
+            app:layout_constraintTop_toBottomOf="@+id/mapViewLayout"
+            app:layout_constraintVertical_bias="0.98">
 
-        <TextView
-            android:id="@+id/cameraAnglesText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFF"
-            android:text="@string/camera_angles"
-            android:textColor="#000000"
-            android:textSize="18sp"
+            <Button
+                android:id="@+id/checkParkingButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/check_parking"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/anchorToggle" />
+
+            <Switch
+                android:id="@+id/anchorToggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#FFFFFF"
+                android:text="@string/anchor"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toTopOf="@+id/checkParkingButton"
+                app:layout_constraintStart_toStartOf="@+id/localizeToggle"
+                tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+            <Switch
+                android:id="@+id/localizeToggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#FFFFFF"
+                android:text="@string/localize"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toTopOf="@+id/anchorToggle"
+                app:layout_constraintStart_toStartOf="parent"
+                tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+            <TextView
+                android:id="@+id/filterRejectionText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#FFFFFF"
+                android:text="@string/requestBehavior"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toTopOf="@+id/trackingFailureText"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <TextView
+                android:id="@+id/trackingFailureText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#FFFFFF"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toTopOf="@+id/anchorDeltaText"
+                app:layout_constraintStart_toStartOf="parent"
+                tools:text="@string/anchor_delta" />
+
+            <TextView
+                android:id="@+id/anchorDeltaText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#FFFFFF"
+                android:text="@string/anchor_delta"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toTopOf="@+id/cameraTranslation"
+                app:layout_constraintStart_toStartOf="parent"
+                tools:text="@string/anchor_delta" />
+
+            <TextView
+                android:id="@+id/cameraTranslation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#FFFFFF"
+                android:text="@string/camera_translation"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                android:visibility="visible"
+                app:layout_constraintBottom_toTopOf="@id/cameraAnglesText"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <TextView
+                android:id="@+id/cameraAnglesText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#FFFFFF"
+                android:text="@string/camera_angles"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                android:visibility="visible"
+                app:layout_constraintBottom_toTopOf="@id/serverCoordsText"
+                app:layout_constraintStart_toStartOf="@+id/cameraTranslation" />
+
+            <TextView
+                android:id="@+id/serverCoordsText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#FFFFFF"
+                android:text="@string/server_coordinates"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toTopOf="@+id/localizeToggle"
+                app:layout_constraintStart_toStartOf="@+id/cameraAnglesText" />
+
+            <Button
+                android:id="@+id/mapButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/map"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toBottomOf="@+id/checkParkingButton"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/checkParkingButton"
+                app:layout_constraintTop_toTopOf="@+id/checkParkingButton" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/mapViewLayout"
+            android:layout_width="match_parent"
+            android:layout_height="242dp"
             android:visibility="visible"
-            app:layout_constraintStart_toStartOf="@+id/cameraTranslation"
-            app:layout_constraintBottom_toTopOf="@id/serverCoordsText" />
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0">
 
-        <TextView
-            android:id="@+id/serverCoordsText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFF"
-            android:text="@string/server_coordinates"
-            android:textColor="#000000"
-            android:textSize="18sp"
-            app:layout_constraintStart_toStartOf="@+id/cameraAnglesText"
-            app:layout_constraintBottom_toTopOf="@+id/localizeToggle" />
+            <com.google.android.gms.maps.MapView
+                android:id="@+id/mapView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
