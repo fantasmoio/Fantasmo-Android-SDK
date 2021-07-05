@@ -30,6 +30,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
@@ -62,7 +63,11 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
     private lateinit var googleMap: GoogleMap
     private val MAPVIEW_BUNDLE_KEY = "MapViewBundleKey"
 
-    private lateinit var markerQueue: Queue<Marker>
+    private lateinit var localizeMarkers: Queue<Marker>
+    private lateinit var anchor: Marker
+    private lateinit var anchorRelativePosition: Marker
+    private var anchorSet: Boolean = false
+    private var firstLocalize: Boolean = true
 
     private lateinit var checkParkingButton: Button
 
@@ -102,7 +107,7 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
         locationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         initGoogleMap(savedInstanceState)
-        markerQueue = LinkedList()
+        localizeMarkers = LinkedList()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -158,9 +163,9 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
             }
 
             mapButton.setOnClickListener {
-                if(googleMapView.visibility == View.VISIBLE){
+                if (googleMapView.visibility == View.VISIBLE) {
                     googleMapView.visibility = View.GONE
-                }else{
+                } else {
                     googleMapView.visibility = View.VISIBLE
                 }
             }
@@ -188,6 +193,7 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
                         if (currentArFrame.camera.trackingState == TrackingState.TRACKING) {
                             anchorDeltaTv.visibility = View.VISIBLE
                             fmLocationManager.setAnchor(it)
+                            anchorSet = true
                         } else {
                             Toast.makeText(
                                 activity?.applicationContext,
@@ -202,11 +208,23 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
 
                     anchorDeltaTv.visibility = View.GONE
                     fmLocationManager.unsetAnchor()
+                    unsetAnchor()
                 }
             }
 
         } catch (e: Exception) {
             Log.d(TAG, "ArFragment Null")
+        }
+    }
+
+    private fun unsetAnchor() {
+        anchorSet = false
+        firstLocalize = true
+        if (this::anchor.isInitialized) {
+            anchor.remove()
+        }
+        if (this::anchorRelativePosition.isInitialized) {
+            anchorRelativePosition.remove()
         }
     }
 
@@ -244,26 +262,107 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
                 activity?.runOnUiThread {
                     serverCoordinatesTv.text =
                         "Server Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}"
-                    val marker = googleMap.addMarker(
-                        MarkerOptions()
-                            .position(
-                                LatLng(
-                                    location.coordinate.latitude,
-                                    location.coordinate.longitude
-                                )
-                            )
-                            .title("Server Location")
+                    addCorrespondingMarkersToMap(
+                        location.coordinate.latitude,
+                        location.coordinate.longitude
                     )
-                    markerQueue.add(marker)
-                    val latlng = LatLng(location.coordinate.latitude, location.coordinate.longitude)
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng, 50F))
-                }
-                if (markerQueue.size == 10) {
-                    val markerR = markerQueue.poll()
-                    markerR!!.remove()
                 }
             }
         }
+
+    /**
+     * Receives Coordinates from the server and
+     * marks the mapView with the correspondent marker
+     * Red - Localize or Update Anchor Methods
+     * Blue - Anchor
+     * @param latitude
+     * @param longitude
+     * */
+    private fun addCorrespondingMarkersToMap(latitude: Double, longitude: Double) {
+        if (anchorSet && firstLocalize) {
+            addAnchorToMap(latitude, longitude)
+            firstLocalize = false
+            if (localizeMarkers.isNotEmpty()) {
+                localizeMarkers.forEach { it.remove() }
+            }
+        } else if (anchorSet) {
+            updateAnchorRelativePosition(latitude, longitude)
+        } else if (!anchorSet) {
+            addLocalizeMarker(latitude, longitude)
+        }
+    }
+
+    /**
+     * Receives Coordinates from the server and marks the mapView with
+     * a red marker meaning it's a localize request response from the server
+     * Also zooms in the map according to the coordinates received
+     * @param latitude
+     * @param longitude
+     * */
+    private fun addLocalizeMarker(latitude: Double, longitude: Double) {
+        val marker = googleMap.addMarker(
+            MarkerOptions()
+                .position(
+                    LatLng(
+                        latitude,
+                        longitude
+                    )
+                )
+                .title("Server Location")
+        )
+        localizeMarkers.add(marker)
+        val latLong = LatLng(latitude, longitude)
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLong, 50F))
+
+        if (localizeMarkers.size == 10) {
+            val markerR = localizeMarkers.poll()
+            markerR!!.remove()
+        }
+    }
+
+    /**
+     * When an anchor is set, it receives the latest coordinates from the server and marks
+     * those coordinates in the mapView with a blue marker zooming in to that position
+     * @param latitude
+     * @param longitude
+     * */
+    private fun addAnchorToMap(latitude: Double, longitude: Double) {
+        anchor = googleMap.addMarker(
+            MarkerOptions()
+                .position(
+                    LatLng(
+                        latitude,
+                        longitude
+                    )
+                )
+                .title("Anchor")
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
+        )!!
+        val latLong = LatLng(latitude, longitude)
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLong, 50F))
+    }
+
+    /**
+     * When an anchor is set, it receives Coordinates from the server
+     * and marks that position in the mapView with a red marker
+     * @param latitude
+     * @param longitude
+     * */
+    private fun updateAnchorRelativePosition(latitude: Double, longitude: Double) {
+        if (this::anchorRelativePosition.isInitialized) {
+            anchorRelativePosition.remove()
+        }
+        anchorRelativePosition = googleMap.addMarker(
+            MarkerOptions()
+                .position(
+                    LatLng(
+                        latitude,
+                        longitude
+                    )
+                )
+                .title("Position Relative to Anchor")
+        )!!
+    }
 
     /**
      * On any changes to the scene call onUpdate method to get arFrames and get the camera data
