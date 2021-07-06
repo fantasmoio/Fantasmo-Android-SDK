@@ -66,8 +66,6 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
     private lateinit var localizeMarkers: Queue<Marker>
     private lateinit var anchor: Marker
     private lateinit var anchorRelativePosition: Marker
-    private var anchorSet: Boolean = false
-    private var firstLocalize: Boolean = true
 
     private lateinit var checkParkingButton: Button
 
@@ -193,7 +191,6 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
                         if (currentArFrame.camera.trackingState == TrackingState.TRACKING) {
                             anchorDeltaTv.visibility = View.VISIBLE
                             fmLocationManager.setAnchor(it)
-                            anchorSet = true
                         } else {
                             Toast.makeText(
                                 activity?.applicationContext,
@@ -218,10 +215,9 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun unsetAnchor() {
-        anchorSet = false
-        firstLocalize = true
         if (this::anchor.isInitialized) {
             anchor.remove()
+            anchor.tag = "AnchorDisabled"
         }
         if (this::anchorRelativePosition.isInitialized) {
             anchorRelativePosition.remove()
@@ -279,15 +275,16 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
      * @param longitude
      * */
     private fun addCorrespondingMarkersToMap(latitude: Double, longitude: Double) {
-        if (anchorSet && firstLocalize) {
-            addAnchorToMap(latitude, longitude)
-            firstLocalize = false
-            if (localizeMarkers.isNotEmpty()) {
-                localizeMarkers.forEach { it.remove() }
+        if (anchorToggleButton.isChecked) {
+            if(!this::anchor.isInitialized || anchor.tag == "AnchorDisabled"){
+                addAnchorToMap(latitude, longitude)
+                if (localizeMarkers.isNotEmpty()) {
+                    localizeMarkers.forEach { it.remove() }
+                }
+            }else{
+                updateAnchorRelativePosition(latitude, longitude)
             }
-        } else if (anchorSet) {
-            updateAnchorRelativePosition(latitude, longitude)
-        } else if (!anchorSet) {
+        } else {
             addLocalizeMarker(latitude, longitude)
         }
     }
