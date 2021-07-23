@@ -7,7 +7,9 @@
 package com.fantasmo.sdk
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
+import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterResult
 import com.fantasmo.sdk.frameSequenceFilter.FMFrameSequenceFilter
 import com.fantasmo.sdk.models.ErrorResponse
@@ -18,7 +20,11 @@ import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
 
 /**
  * The methods that you use to receive events from an associated
@@ -89,6 +95,9 @@ class FMLocationManager(private val context: Context) {
     // Throttler for invalid frames.
     private lateinit var frameFailureThrottler: FrameFailureThrottler
 
+    private var deviceModel: String = ""
+    private var deviceOS: String = ""
+    private var fantasmoSdkVersion = ""
     /**
      * Connect to the location service.
      *
@@ -106,6 +115,8 @@ class FMLocationManager(private val context: Context) {
         fmApi = FMApi(fmNetworkManager, this, context, token)
         frameFilter = FMFrameSequenceFilter(context)
         frameFailureThrottler = FrameFailureThrottler()
+
+        gatherDeviceCharacteristics()
     }
 
     /**
@@ -275,5 +286,21 @@ class FMLocationManager(private val context: Context) {
                 onCompletion
             )
         }
+    }
+
+    /**
+     * Gathers Device information to send
+     * into the API request
+     * */
+    private fun gatherDeviceCharacteristics(): String {
+        val manufacturer = Build.MANUFACTURER
+        val model = Build.MODEL
+        deviceModel = "$manufacturer $model"
+
+        deviceOS = Build.VERSION.SDK_INT.toString()
+        fantasmoSdkVersion = BuildConfig.VERSION_NAME
+        val result = "DeviceModel: $deviceModel; DeviceOS: $deviceOS; FantasmoSdkVersion: $fantasmoSdkVersion"
+        Log.i(TAG, result)
+        return result
     }
 }
