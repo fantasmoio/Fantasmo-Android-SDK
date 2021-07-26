@@ -95,9 +95,6 @@ class FMLocationManager(private val context: Context) {
     // Throttler for invalid frames.
     private lateinit var frameFailureThrottler: FrameFailureThrottler
 
-    private var deviceModel: String = ""
-    private var deviceOS: String = ""
-    private var fantasmoSdkVersion = ""
     /**
      * Connect to the location service.
      *
@@ -115,8 +112,6 @@ class FMLocationManager(private val context: Context) {
         fmApi = FMApi(fmNetworkManager, this, context, token)
         frameFilter = FMFrameSequenceFilter(context)
         frameFailureThrottler = FrameFailureThrottler()
-
-        gatherDeviceCharacteristics()
     }
 
     /**
@@ -286,21 +281,5 @@ class FMLocationManager(private val context: Context) {
                 onCompletion
             )
         }
-    }
-
-    /**
-     * Gathers Device information to send
-     * into the API request
-     * */
-    private fun gatherDeviceCharacteristics(): String {
-        val manufacturer = Build.MANUFACTURER
-        val model = Build.MODEL
-        deviceModel = "$manufacturer $model"
-
-        deviceOS = Build.VERSION.SDK_INT.toString()
-        fantasmoSdkVersion = BuildConfig.VERSION_NAME
-        val result = "DeviceModel: $deviceModel; DeviceOS: $deviceOS; FantasmoSdkVersion: $fantasmoSdkVersion"
-        Log.i(TAG, result)
-        return result
     }
 }
