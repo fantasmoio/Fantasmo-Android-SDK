@@ -3,9 +3,7 @@ package com.fantasmo.sdk.filters
 import android.content.Context
 import android.os.Build
 import androidx.test.platform.app.InstrumentationRegistry
-import com.fantasmo.sdk.frameSequenceFilter.FMBlurFilterRule
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterFailure
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterResult
+import com.fantasmo.sdk.filters.primeFilters.FMBlurFilter
 import com.google.ar.core.Frame
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Assert
@@ -21,26 +19,26 @@ import org.robolectric.annotation.Config
 @ExperimentalCoroutinesApi
 class FMBlurFilterTest {
 
-    private lateinit var fmBlurFilterRule: FMBlurFilterRule
-    private lateinit var spyFMBlurFilterRule: FMBlurFilterRule
+    private lateinit var fmBlurFilter: FMBlurFilter
+    private lateinit var spyFMBlurFilter: FMBlurFilter
     private lateinit var instrumentationContext: Context
 
     @Before
     fun setUp() {
         instrumentationContext = InstrumentationRegistry.getInstrumentation().context
-        fmBlurFilterRule = FMBlurFilterRule(instrumentationContext)
-        spyFMBlurFilterRule = spy(fmBlurFilterRule)
+        fmBlurFilter = FMBlurFilter(instrumentationContext)
+        spyFMBlurFilter = spy(fmBlurFilter)
     }
 
     @Test
     fun testBlurFilterAccepts() {
         val frame = mock(Frame::class.java)
 
-        doReturn(300.0).`when`(spyFMBlurFilterRule).calculateVariance(frame)
+        doReturn(300.0).`when`(spyFMBlurFilter).calculateVariance(frame)
 
         Assert.assertEquals(
             Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED),
-            spyFMBlurFilterRule.check(frame)
+            spyFMBlurFilter.accepts(frame)
         )
     }
 
@@ -48,11 +46,11 @@ class FMBlurFilterTest {
     fun testBlurFilterRejects() {
         val frame = mock(Frame::class.java)
 
-        doReturn(250.0).`when`(spyFMBlurFilterRule).calculateVariance(frame)
+        doReturn(250.0).`when`(spyFMBlurFilter).calculateVariance(frame)
 
         Assert.assertEquals(
             Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOFAST),
-            spyFMBlurFilterRule.check(frame)
+            spyFMBlurFilter.accepts(frame)
         )
     }
 }

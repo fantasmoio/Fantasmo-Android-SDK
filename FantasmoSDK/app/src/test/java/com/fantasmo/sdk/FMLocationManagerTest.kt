@@ -7,10 +7,10 @@ import android.os.Build
 import android.view.Display
 import android.view.Surface
 import androidx.test.platform.app.InstrumentationRegistry
-import com.fantasmo.sdk.frameSequenceFilter.FMBlurFilterRule
-import com.fantasmo.sdk.frameSequenceFilter.FMCameraPitchFilterRule
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameSequenceFilter
-import com.fantasmo.sdk.frameSequenceFilter.FMMovementFilterRule
+import com.fantasmo.sdk.filters.*
+import com.fantasmo.sdk.filters.primeFilters.FMBlurFilter
+import com.fantasmo.sdk.filters.primeFilters.FMCameraPitchFilter
+import com.fantasmo.sdk.filters.primeFilters.FMMovementFilter
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
@@ -264,14 +264,14 @@ class FMLocationManagerTest {
         fmLocationManager.setLocation(latitude, longitude)
 
         val instrumentationContext = InstrumentationRegistry.getInstrumentation().context
-        val filter = FMFrameSequenceFilter(instrumentationContext)
-        val fmBlurFilterRule = FMBlurFilterRule(instrumentationContext)
-        fmLocationManager.frameFilter = filter
+        val filter = FMCompoundFrameQualityFilter(instrumentationContext)
+        val fmBlurFilterRule = FMBlurFilter(instrumentationContext)
+        fmLocationManager.compoundFrameFilter = filter
 
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
 
         val context = mock(Context::class.java)
-        filter.rules = listOf(FMMovementFilterRule(), FMCameraPitchFilterRule(context),spyFMBlurFilterRule)
+        filter.filters = listOf(FMMovementFilter(), FMCameraPitchFilter(context),spyFMBlurFilterRule)
 
         val frame = mock(Frame::class.java)
         val camera = mock(Camera::class.java)
@@ -448,10 +448,11 @@ class FMLocationManagerTest {
         val longitude = 11.572371166069702
         fmLocationManager.setLocation(latitude, longitude)
 
-        val fmBlurFilterRule = FMBlurFilterRule(instrumentationContext)
+        val fmBlurFilterRule = FMBlurFilter(instrumentationContext)
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
         val context = mock(Context::class.java)
-        fmLocationManager.frameFilter.rules = listOf(FMMovementFilterRule(), FMCameraPitchFilterRule(
+        fmLocationManager.compoundFrameFilter.filters = listOf(
+            FMMovementFilter(), FMCameraPitchFilter(
             context
         ),spyFMBlurFilterRule)
 
@@ -541,9 +542,10 @@ class FMLocationManagerTest {
         val longitude = 11.572371166069702
         fmLocationManager.setLocation(latitude, longitude)
 
-        val fmBlurFilterRule = FMBlurFilterRule(instrumentationContext2)
+        val fmBlurFilterRule = FMBlurFilter(instrumentationContext2)
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
-        fmLocationManager.frameFilter.rules = listOf(FMMovementFilterRule(), FMCameraPitchFilterRule(
+        fmLocationManager.compoundFrameFilter.filters = listOf(
+            FMMovementFilter(), FMCameraPitchFilter(
             context
         ),spyFMBlurFilterRule)
 
@@ -644,9 +646,10 @@ class FMLocationManagerTest {
         val longitude = 11.572371166069702
         fmLocationManager.setLocation(latitude, longitude)
 
-        val fmBlurFilterRule = FMBlurFilterRule(instrumentationContext3)
+        val fmBlurFilterRule = FMBlurFilter(instrumentationContext3)
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
-        fmLocationManager.frameFilter.rules = listOf(FMMovementFilterRule(), FMCameraPitchFilterRule(
+        fmLocationManager.compoundFrameFilter.filters = listOf(
+            FMMovementFilter(), FMCameraPitchFilter(
             context
         ),spyFMBlurFilterRule)
 

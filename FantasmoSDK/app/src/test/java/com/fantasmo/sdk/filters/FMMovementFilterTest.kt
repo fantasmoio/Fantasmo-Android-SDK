@@ -1,8 +1,6 @@
 package com.fantasmo.sdk.filters
 
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterFailure
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterResult
-import com.fantasmo.sdk.frameSequenceFilter.FMMovementFilterRule
+import com.fantasmo.sdk.filters.primeFilters.FMMovementFilter
 import com.google.ar.core.Camera
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
@@ -15,7 +13,7 @@ class FMMovementFilterTest {
 
     @Test
     fun testMovementFilterAccepts() {
-        val filter = FMMovementFilterRule()
+        val filter = FMMovementFilter()
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
@@ -36,13 +34,13 @@ class FMMovementFilterTest {
 
         assertEquals(
             Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED),
-            filter.check(frame)
+            filter.accepts(frame)
         )
     }
 
     @Test
     fun testMovementFilterRejects() {
-        val filter = FMMovementFilterRule()
+        val filter = FMMovementFilter()
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
@@ -63,7 +61,7 @@ class FMMovementFilterTest {
 
         assertEquals(
             Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOLITTLE),
-            filter.check(frame)
+            filter.accepts(frame)
         )
     }
 }

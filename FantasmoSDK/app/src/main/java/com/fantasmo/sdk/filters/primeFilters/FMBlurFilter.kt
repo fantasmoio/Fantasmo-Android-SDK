@@ -1,4 +1,4 @@
-package com.fantasmo.sdk.frameSequenceFilter
+package com.fantasmo.sdk.filters.primeFilters
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -9,6 +9,9 @@ import android.renderscript.*
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
+import com.fantasmo.sdk.filters.FMFrameFilterFailure
+import com.fantasmo.sdk.filters.FMFrameFilterResult
+import com.fantasmo.sdk.filters.FMFrameFilter
 import com.fantasmo.sdk.utilities.MovingAverage
 import com.google.ar.core.Frame
 import com.google.ar.core.exceptions.NotYetAvailableException
@@ -20,7 +23,7 @@ import kotlin.math.sqrt
  * Prevents from sending blurred images.
  */
 @RequiresApi(Build.VERSION_CODES.KITKAT)
-class FMBlurFilterRule(private val context: Context) : FMFrameSequenceFilterRule {
+class FMBlurFilter(private val context: Context) : FMFrameFilter {
 
     private val TAG = "FMBlurFilter"
 
@@ -44,7 +47,7 @@ class FMBlurFilterRule(private val context: Context) : FMFrameSequenceFilterRule
      * @param arFrame: Frame to be evaluated
      * @return Accepts frame or Rejects frame with MovingTooFast failure
      */
-    override fun check(arFrame: Frame): Pair<FMFrameFilterResult,FMFrameFilterFailure> {
+    override fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
         variance = calculateVariance(arFrame)
         varianceAverager.addSample(variance)
 
@@ -68,9 +71,9 @@ class FMBlurFilterRule(private val context: Context) : FMFrameSequenceFilterRule
         }
 
         return if (isBlurry) {
-            Pair(FMFrameFilterResult.REJECTED,FMFrameFilterFailure.MOVINGTOOFAST)
+            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOFAST)
         } else {
-            Pair(FMFrameFilterResult.ACCEPTED,FMFrameFilterFailure.ACCEPTED)
+            Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
         }
     }
 
