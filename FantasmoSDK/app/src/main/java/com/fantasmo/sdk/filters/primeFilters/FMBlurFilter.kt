@@ -9,9 +9,6 @@ import android.renderscript.*
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
-import com.fantasmo.sdk.filters.FMFrameFilterFailure
-import com.fantasmo.sdk.filters.FMFrameFilterResult
-import com.fantasmo.sdk.filters.FMFrameFilter
 import com.fantasmo.sdk.utilities.MovingAverage
 import com.google.ar.core.Frame
 import com.google.ar.core.exceptions.NotYetAvailableException

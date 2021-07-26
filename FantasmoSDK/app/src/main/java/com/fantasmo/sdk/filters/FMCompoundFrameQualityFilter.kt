@@ -3,9 +3,7 @@ package com.fantasmo.sdk.filters
 import android.content.Context
 import android.os.Build
 import android.util.Log
-import com.fantasmo.sdk.filters.primeFilters.FMBlurFilter
-import com.fantasmo.sdk.filters.primeFilters.FMCameraPitchFilter
-import com.fantasmo.sdk.filters.primeFilters.FMMovementFilter
+import com.fantasmo.sdk.filters.primeFilters.*
 import com.google.ar.core.Frame
 
 /**

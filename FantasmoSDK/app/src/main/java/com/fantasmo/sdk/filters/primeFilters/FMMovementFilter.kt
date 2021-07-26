@@ -1,8 +1,5 @@
 package com.fantasmo.sdk.filters.primeFilters
 
-import com.fantasmo.sdk.filters.FMFrameFilterFailure
-import com.fantasmo.sdk.filters.FMFrameFilterResult
-import com.fantasmo.sdk.filters.FMFrameFilter
 import com.fantasmo.sdk.models.FMPosition
 import com.google.ar.core.Frame
 import kotlin.math.abs

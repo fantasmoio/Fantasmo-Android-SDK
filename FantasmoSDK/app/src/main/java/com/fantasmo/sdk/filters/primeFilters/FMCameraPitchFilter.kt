@@ -4,9 +4,6 @@ import android.content.Context
 import android.view.Display
 import android.view.Surface
 import android.view.WindowManager
-import com.fantasmo.sdk.filters.FMFrameFilterFailure
-import com.fantasmo.sdk.filters.FMFrameFilterResult
-import com.fantasmo.sdk.filters.FMFrameFilter
 import com.google.ar.core.Frame
 import kotlin.math.abs
 

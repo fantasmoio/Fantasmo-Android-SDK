@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Build
 import androidx.test.platform.app.InstrumentationRegistry
 import com.fantasmo.sdk.filters.primeFilters.FMBlurFilter
+import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
+import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterResult
 import com.google.ar.core.Frame
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Assert

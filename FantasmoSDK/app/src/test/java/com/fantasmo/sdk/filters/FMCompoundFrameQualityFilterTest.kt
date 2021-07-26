@@ -5,9 +5,7 @@ import android.os.Build
 import android.view.Display
 import android.view.Surface
 import androidx.test.platform.app.InstrumentationRegistry
-import com.fantasmo.sdk.filters.primeFilters.FMBlurFilter
-import com.fantasmo.sdk.filters.primeFilters.FMCameraPitchFilter
-import com.fantasmo.sdk.filters.primeFilters.FMMovementFilter
+import com.fantasmo.sdk.filters.primeFilters.*
 import com.google.ar.core.Camera
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
