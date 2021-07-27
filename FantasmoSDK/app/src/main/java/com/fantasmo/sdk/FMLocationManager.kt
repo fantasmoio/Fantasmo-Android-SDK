@@ -14,7 +14,6 @@ import com.fantasmo.sdk.filters.FMCompoundFrameQualityFilter
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
-import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatisticsAccumulator
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
@@ -91,8 +90,6 @@ class FMLocationManager(private val context: Context) {
     // Throttler for invalid frames.
     private lateinit var frameFailureThrottler: FrameFailureThrottler
 
-    private var frameRejectionStatisticsAccumulator = FrameFilterRejectionStatisticsAccumulator()
-
     /**
      * Connect to the location service.
      *
@@ -148,7 +145,6 @@ class FMLocationManager(private val context: Context) {
         enableFilters = filtersEnabled
         this.compoundFrameFilter.prepareForNewFrameSequence()
         this.frameFailureThrottler.restart()
-        frameRejectionStatisticsAccumulator.reset()
     }
 
     /**
@@ -231,7 +227,6 @@ class FMLocationManager(private val context: Context) {
     fun shouldLocalize(arFrame: Frame): Boolean {
         if (isConnected
             && currentLocation.latitude > 0.0
-            && arFrame.camera.trackingState == TrackingState.TRACKING
         ) {
             return if(enableFilters){
                 val result = compoundFrameFilter.accepts(arFrame)
@@ -240,7 +235,6 @@ class FMLocationManager(private val context: Context) {
                     frameFailureThrottler.restart()
                     true
                 } else {
-                    frameRejectionStatisticsAccumulator.accumulate(result.second)
                     frameFailureThrottler.onNext(result.second)
                     fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
                     false

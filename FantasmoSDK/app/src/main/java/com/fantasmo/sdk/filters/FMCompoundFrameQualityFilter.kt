@@ -24,12 +24,14 @@ class FMCompoundFrameQualityFilter(context: Context) {
      */
     var filters = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
         listOf(
+                FMTrackingStateFilter(),
                 FMCameraPitchFilter(context),
                 FMMovementFilter(),
                 FMBlurFilter(context)
         )
     } else {
         listOf(
+            FMTrackingStateFilter(),
             FMCameraPitchFilter(context),
             FMMovementFilter(),
         )
