@@ -4,14 +4,17 @@ import com.google.ar.core.Frame
 
 class AccumulatedARCoreInfo {
 
-    private var trackingStateFrameStatistics = TrackingStateFrameStatistics()
+    private var translationAccumulator = TotalDeviceTranslationAccumulator(10)
+    private var rotationAccumulator = TotalDeviceRotationAccumulator()
 
     fun reset(){
-        trackingStateFrameStatistics.reset()
+        translationAccumulator.reset()
+        rotationAccumulator.reset()
     }
 
     fun update(arFrame: Frame) {
-        trackingStateFrameStatistics.update(arFrame)
+        translationAccumulator.update(arFrame)
+        rotationAccumulator.update(arFrame)
     }
 
 }
