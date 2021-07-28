@@ -8,8 +8,9 @@ package com.fantasmo.sdk
 
 import android.content.Context
 import android.util.Log
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterResult
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameSequenceFilter
+import com.fantasmo.sdk.filters.FMBehaviorRequest
+import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterResult
+import com.fantasmo.sdk.filters.FMCompoundFrameQualityFilter
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
@@ -85,7 +86,7 @@ class FMLocationManager(private val context: Context) {
     private var enableFilters = false
 
     // Used to validate frame for sufficient quality before sending to API.
-    lateinit var frameFilter: FMFrameSequenceFilter
+    lateinit var compoundFrameFilter: FMCompoundFrameQualityFilter
     // Throttler for invalid frames.
     private lateinit var frameFailureThrottler: FrameFailureThrottler
 
@@ -104,7 +105,7 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(fmNetworkManager, this, context, token)
-        frameFilter = FMFrameSequenceFilter(context)
+        compoundFrameFilter = FMCompoundFrameQualityFilter(context)
         frameFailureThrottler = FrameFailureThrottler()
     }
 
@@ -136,13 +137,13 @@ class FMLocationManager(private val context: Context) {
      * enabling FrameFiltering
      * @param filtersEnabled: flag that it enables frame filtering
      */
-    private fun startUpdatingLocation(filtersEnabled : Boolean) {
+    fun startUpdatingLocation(filtersEnabled : Boolean) {
         Log.d(TAG, "startUpdatingLocation")
 
         this.isConnected = true
         this.state = State.LOCALIZING
         enableFilters = filtersEnabled
-        this.frameFilter.prepareForNewFrameSequence()
+        this.compoundFrameFilter.prepareForNewFrameSequence()
         this.frameFailureThrottler.restart()
     }
 
@@ -229,7 +230,7 @@ class FMLocationManager(private val context: Context) {
             && arFrame.camera.trackingState == TrackingState.TRACKING
         ) {
             return if(enableFilters){
-                val result = frameFilter.check(arFrame)
+                val result = compoundFrameFilter.accepts(arFrame)
                 if (result.first == FMFrameFilterResult.ACCEPTED) {
                     fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
                     frameFailureThrottler.restart()
