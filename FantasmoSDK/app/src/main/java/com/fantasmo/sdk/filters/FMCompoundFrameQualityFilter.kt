@@ -17,7 +17,7 @@ class FMCompoundFrameQualityFilter(context: Context) {
     var timestampOfPreviousApprovedFrame: Long = 0L
 
     // number of seconds after which we force acceptance
-    var acceptanceThreshold = 6.0
+    var acceptanceThreshold = 3.0
 
     /**
      * List of filter rules to apply on frame received.
