@@ -10,62 +10,56 @@ class TotalDeviceRotationAccumulator {
 
     private val TAG = "TotalDeviceRotation"
 
-    // Current value of total rotation in radians, which is updated as more frames are passed via `update(`
-    private var totalRotation = 0f
+    // Minimum, Maximum and Spread values of rotation in each axis
+    // Being Min=[0], Max=[1] and Spread=[2]
+    // Roll is rotation on X axis
+    // Max and Min valid range is [−π,π], Roll spread ∈ [0,2π]
+    private var roll = floatArrayOf(0f, 0f, 0f)
 
-    // Minimum and Maximum values of rotation in each axis
-    // Being Min=[0] and Max=[1]
-    // Valid range is [−π,π]
-    private var minMaxYaw = floatArrayOf(0f, 0f)
-    private var spreadYaw = 0f
+    // Yaw is rotation on Y axis
+    // Max and Min valid range is [−π,π], Yaw spread ∈ [0,2π]
+    private var yaw = floatArrayOf(0f, 0f, 0f)
 
-    // Valid range is [−π/2,π/2]
-    private var minMaxPitch = floatArrayOf(0f, 0f)
-    private var spreadPitch = 0f
-
-    // Valid range is [−π,π]
-    private var minMaxRoll = floatArrayOf(0f, 0f)
-    private var spreadRoll = 0f
+    // Pitch is rotation on Z axis
+    // Valid range is [−π/2,π/2], Pitch spread ∈ [0,π]
+    private var pitch = floatArrayOf(0f, 0f, 0f)
 
     private var frameCounter: Int = 0
-    private var nextFrameToTake = 0
 
     fun update(arFrame: Frame) {
         val rotation = arFrame.androidSensorPose.rotationQuaternion
-        checkMinMaxDegrees(rotation!!)
+        updateRotationValues(rotation!!)
 
         Log.d(
-            TAG, "Yaw: (${minMaxYaw[0]},${minMaxYaw[1]});\n" +
-                    "Spread Yaw: $spreadYaw\n" +
-                    "Pitch: (${minMaxPitch[0]},${minMaxPitch[1]});\n" +
-                    "Spread Pitch: $spreadPitch\n" +
-                    "Roll: (${minMaxRoll[0]},${minMaxRoll[1]});\n" +
-                    "Spread Roll: $spreadRoll\n" +
-                    "Frames Visited: $frameCounter;"
+            TAG, "\nRotation: Min, Max, Spread\n" +
+                    "Yaw: [${yaw[0]},${yaw[1]},${yaw[2]}];\n" +
+                    "Pitch: [${pitch[0]},${pitch[1]},${pitch[2]}];\n" +
+                    "Roll: [${roll[0]},${roll[1]},${roll[2]}];\n" +
+                    "Frames Visited Rotation: $frameCounter;"
         )
         frameCounter += 1
     }
 
-    private fun checkMinMaxDegrees(rotation: FloatArray) {
+    private fun updateRotationValues(rotation: FloatArray) {
         val rads = convertQuaternionToEuler(rotation)
-        val yaw = rads[0]
-        val pitch = rads[1]
-        val roll = rads[2]
+        val yawCurrent = rads[0]
+        val pitchCurrent = rads[1]
+        val rollCurrent = rads[2]
 
         //Update Yaw values
-        minMaxYaw[0] = min(yaw, minMaxYaw[0])
-        minMaxYaw[1] = max(yaw, minMaxYaw[1])
-        spreadYaw = min(max(minMaxYaw[1] - minMaxYaw[0], 0f), 2 * Math.PI.toFloat())
+        yaw[0] = min(yawCurrent, yaw[0])
+        yaw[1] = max(yawCurrent, yaw[1])
+        yaw[2] = min(max(yaw[1] - yaw[0], 0f), 2 * Math.PI.toFloat())
 
         //Update Pitch values
-        minMaxPitch[0] = min(pitch, minMaxPitch[0])
-        minMaxPitch[1] = max(pitch, minMaxPitch[1])
-        spreadPitch = min(max(minMaxPitch[1] - minMaxPitch[0], 0f), 2 * Math.PI.toFloat())
+        pitch[0] = min(pitchCurrent, pitch[0])
+        pitch[1] = max(pitchCurrent, pitch[1])
+        pitch[2] = min(max(pitch[1] - pitch[0], 0f), 2 * Math.PI.toFloat())
 
         //Update Roll values
-        minMaxRoll[0] = min(roll, minMaxRoll[0])
-        minMaxRoll[1] = max(roll, minMaxRoll[1])
-        spreadRoll = min(max(minMaxRoll[1] - minMaxRoll[0], 0f), 2 * Math.PI.toFloat())
+        roll[0] = min(rollCurrent, roll[0])
+        roll[1] = max(rollCurrent, roll[1])
+        roll[2] = min(max(roll[1] - roll[0], 0f), 2 * Math.PI.toFloat())
     }
 
     /**
@@ -114,13 +108,8 @@ class TotalDeviceRotationAccumulator {
 
     fun reset() {
         frameCounter = 0
-        nextFrameToTake = 0
-        totalRotation = 0f
-        spreadYaw = 0f
-        spreadPitch = 0f
-        spreadRoll = 0f
-        minMaxYaw = floatArrayOf(0f, 0f)
-        minMaxPitch = floatArrayOf(0f, 0f)
-        minMaxRoll = floatArrayOf(0f, 0f)
+        yaw = floatArrayOf(0f, 0f, 0f)
+        pitch = floatArrayOf(0f, 0f, 0f)
+        roll = floatArrayOf(0f, 0f, 0f)
     }
 }
