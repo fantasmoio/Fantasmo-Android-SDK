@@ -14,10 +14,10 @@ class FMTrackingStateFilter:FMFrameFilter {
                 Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOFAST)
             }
             TrackingFailureReason.INSUFFICIENT_FEATURES -> {
-                Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOLITTLE)
+                Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.INSUFFICIENTFEATURES)
             }
             TrackingFailureReason.INSUFFICIENT_LIGHT -> {
-                Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOLITTLE)
+                Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.INSUFFICIENTFEATURES)
             }
             TrackingFailureReason.BAD_STATE -> {
                 Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOFAST)
