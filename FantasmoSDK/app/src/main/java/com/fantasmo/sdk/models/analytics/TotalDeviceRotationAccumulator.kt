@@ -10,6 +10,8 @@ class TotalDeviceRotationAccumulator {
 
     private val TAG = "TotalDeviceRotation"
 
+    // Euler Angles follow this rule:
+    // https://www.euclideanspace.com/maths/geometry/rotations/euler/index.htm
     // Minimum, Maximum and Spread values of rotation in each axis
     // Being Min=[0], Max=[1] and Spread=[2]
     // Roll is rotation on X axis

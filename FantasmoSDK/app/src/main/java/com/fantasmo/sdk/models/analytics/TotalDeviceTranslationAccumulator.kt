@@ -23,7 +23,6 @@ class TotalDeviceTranslationAccumulator(private val decimationFactor: Int) {
         }
         if (frameCounter >= nextFrameToTake) {
             if (arFrame.camera.trackingFailureReason == TrackingFailureReason.NONE) {
-                Log.d(TAG,"$totalTranslation; Frames Visited: $frameCounter; DecimationFactor: $decimationFactor")
                 val translation = arFrame.camera.pose.translation
                 totalTranslation += distance(translation!!, previousTranslation)
                 previousTranslation = translation
@@ -32,6 +31,7 @@ class TotalDeviceTranslationAccumulator(private val decimationFactor: Int) {
                 nextFrameToTake += 1
             }
         }
+        Log.d(TAG,"$totalTranslation; Frames Visited: $frameCounter; DecimationFactor: $decimationFactor")
         frameCounter += 1
     }
 
