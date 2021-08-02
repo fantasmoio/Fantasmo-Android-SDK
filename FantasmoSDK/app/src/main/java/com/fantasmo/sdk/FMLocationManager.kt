@@ -137,7 +137,7 @@ class FMLocationManager(private val context: Context) {
      * enabling FrameFiltering
      * @param filtersEnabled: flag that it enables frame filtering
      */
-    fun startUpdatingLocation(filtersEnabled : Boolean) {
+    private fun startUpdatingLocation(filtersEnabled : Boolean) {
         Log.d(TAG, "startUpdatingLocation")
 
         this.isConnected = true
