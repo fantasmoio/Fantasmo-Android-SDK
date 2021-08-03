@@ -10,42 +10,17 @@ import android.content.Context
 import android.util.Log
 import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterResult
 import com.fantasmo.sdk.frameSequenceFilter.FMFrameSequenceFilter
-import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
-import com.fantasmo.sdk.models.Location
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
+import com.fantasmo.sdk.utilities.LocationFuser
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
-import kotlinx.coroutines.*
-
-/**
- * The methods that you use to receive events from an associated
- * location manager object.
- */
-interface FMLocationListener {
-
-    /**
-     * Tells the listener that new location data is available.
-     * @param location: Location of the device (or anchor if set)
-     * @param zones: Semantic zone corresponding to the location
-     */
-    fun locationManager(location: Location, zones: List<FMZone>?)
-
-    /**
-     * Tells the listener that an error has occurred.
-     * @param error: The error reported.
-     * @param metadata: Metadata related to the error.
-     */
-    fun locationManager(error: ErrorResponse, metadata: Any?)
-
-    /**
-     * Tells the listener that a request behavior has occurred.
-     * @param didRequestBehavior: The behavior reported.
-     */
-    fun locationManager(didRequestBehavior: FMBehaviorRequest){}
-}
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class FMLocationManager(private val context: Context) {
     private val TAG = "FMLocationManager"
@@ -65,6 +40,8 @@ class FMLocationManager(private val context: Context) {
 
     var fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), context)
     var coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+
+    var locationFuser = LocationFuser()
 
     lateinit var fmApi: FMApi
 
@@ -144,6 +121,7 @@ class FMLocationManager(private val context: Context) {
         enableFilters = filtersEnabled
         this.frameFilter.prepareForNewFrameSequence()
         this.frameFailureThrottler.restart()
+        this.locationFuser.reset()
     }
 
     /**
@@ -164,6 +142,7 @@ class FMLocationManager(private val context: Context) {
         Log.d(TAG, "setAnchor")
 
         this.anchorFrame = arFrame
+        locationFuser.reset()
     }
 
     /**
@@ -194,9 +173,9 @@ class FMLocationManager(private val context: Context) {
                 arFrame,
                 { localizeResponse, fmZones ->
                     Log.d(TAG, "localize: $localizeResponse, Zones $fmZones")
+                    val result = locationFuser.fusedResult(localizeResponse, fmZones)
                     fmLocationListener?.locationManager(
-                        localizeResponse,
-                        fmZones
+                        result
                     )
 
                     updateStateAfterLocalization()
