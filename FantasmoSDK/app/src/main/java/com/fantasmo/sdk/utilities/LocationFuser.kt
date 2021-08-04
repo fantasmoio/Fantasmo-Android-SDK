@@ -7,36 +7,116 @@ import com.fantasmo.sdk.FMResultConfidence
 import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
-import java.util.*
 import kotlin.math.*
 
 class LocationFuser {
     private var TAG = "LocationFuser"
 
-    class InterimResult(
-        var location: Location,
-        var zones: List<FMZone>
-    )
-
-    private var results = mutableListOf<InterimResult>()
+    private var locations = mutableListOf<Location>()
 
     fun reset() {
-        results = mutableListOf()
+        locations = mutableListOf()
     }
 
-    private fun geometricMedian(results: List<InterimResult>): android.location.Location {
-        return android.location.Location("")
+    private fun geometricMean(locations: List<Location>): Location {
+        var x = 0.0
+        var y = 0.0
+
+        for(location in locations){
+            x += location.coordinate.latitude
+            y += location.coordinate.longitude
+        }
+        x /= locations.size
+        y /= locations.size
+
+        val coordinate = Coordinate(x,y)
+        return Location(0, coordinate, 0, 0, 0,0)
+
+    }
+
+    // Geometric Median Algorithm using Weiszfeld method
+    // https://stackoverflow.com/questions/30299267/geometric-median-of-multidimensional-points/30299705#30299705
+    private fun geometricMedian(locations: List<Location>): Location {
+        val maxIterations = 200
+        // prevent from throwing convergence error when there's no location
+        if(locations.isEmpty()){
+            Log.e(TAG,"Empty List")
+            val coordinate = Coordinate(Double.NaN,Double.NaN)
+            return Location(0, coordinate, 0, 0, 0,0)
+        }
+
+        // prevent from throwing convergence error when there's just one location
+        if(locations.size == 1){
+            val result = locations[0]
+            Log.d(TAG,"ResultFromGeometricMedian: $result")
+            return result
+        }
+
+        //Initialising 'median' to the centroid
+        val centroid = geometricMean(locations)
+
+        //If the init point is in the set of points, shift it
+        for(location in locations){
+            if(location.coordinate.latitude == centroid.coordinate.latitude &&
+                location.coordinate.longitude == centroid.coordinate.longitude){
+                centroid.coordinate.latitude += 0.1
+                centroid.coordinate.longitude += 0.1
+            }
+        }
+
+        // Boolean testing the convergence toward a global optimum
+        var convergence = false
+        // List recording the distance evolution
+        val distances = mutableListOf<Double>()
+        // Number of iterations
+        var iteration = 0
+        while(!convergence && iteration < maxIterations){
+            var x = 0.0
+            var y = 0.0
+            var denominator = 0.0
+            var d = 0.0
+            for(location in locations){
+                val distance = degreeDistance(location, centroid)
+                x += location.coordinate.latitude / distance
+                y += location.coordinate.longitude / distance
+                denominator += 1.0/distance
+                d += distance * distance
+            }
+            distances.add(d)
+
+            if(denominator == 0.0){
+                Log.d(TAG,"Couldn't compute a geometric median")
+                val coordinate = Coordinate(0.0,0.0)
+                return Location(0, coordinate, 0, 0, 0,0)
+            }
+            // Update to the new value of the median
+            centroid.coordinate.latitude = x / denominator
+            centroid.coordinate.longitude = y / denominator
+
+            // Test the convergence over three steps for stability
+            if(iteration>3){
+                convergence = abs(distances[iteration] - distances[iteration-2]) < 0.1
+            }
+            iteration++
+        }
+
+        // When convergence or iterations limit is reached we assume that we found the median.
+        if(iteration == maxIterations){
+            Log.e(TAG,"Median did not converge after $maxIterations iterations!")
+        }
+
+        Log.d(TAG,"ResultFromGeometricMedian: $centroid")
+        return centroid
     }
 
     private fun medianOfAbsoluteDistances(
-        results: List<InterimResult>,
-        median: android.location.Location
+        results: List<Location>,
+        median: Location
     ): Double {
         val distances = mutableListOf<Double>()
 
         for (result in results) {
-            val androidLocation = convertToAndroidLocation(result.location)
-            val distance = abs(androidLocation.distanceTo(median)).toDouble()
+            val distance = abs(degreeDistance(result,median))
             distances.add(distance)
         }
 
@@ -48,14 +128,22 @@ class LocationFuser {
         }
     }
 
-    private fun classifyInliers(results: List<InterimResult>): MutableList<InterimResult> {
-        val median = geometricMedian(results)
-        val mad = medianOfAbsoluteDistances(results, median)
+    private fun classifyInliers(locations: List<Location>): List<Location> {
+        if(locations.isEmpty()){
+            Log.e(TAG,"Empty List. Could not classify inliers")
+            return locations
+        }
 
-        val inliers = mutableListOf<InterimResult>()
-        for (result in results) {
-            val androidLocation = convertToAndroidLocation(result.location)
-            val distance = abs(androidLocation.distanceTo(median))
+        if(locations.size == 1){
+            return locations
+        }
+
+        val median = geometricMedian(locations)
+        val mad = medianOfAbsoluteDistances(locations, median)
+
+        val inliers = mutableListOf<Location>()
+        for (result in locations) {
+            val distance = abs(degreeDistance(result,median))
             if (0.6745 * distance / mad <= 3.5) {
                 inliers.add(result)
             }
@@ -63,7 +151,7 @@ class LocationFuser {
         return inliers
     }
 
-    private fun calculateConfidence(results: List<InterimResult>): FMResultConfidence {
+    private fun calculateConfidence(results: List<Location>): FMResultConfidence {
         return when (results.size) {
             1, 2 -> {
                 FMResultConfidence.LOW
@@ -78,28 +166,22 @@ class LocationFuser {
     }
 
     fun fusedResult(location: Location, zones: List<FMZone>): FMLocationResult{
-        results.add(InterimResult(location,zones))
+        locations.add(location)
 
-        val inliers = classifyInliers(results)
-        val median = convertToLocation(geometricMedian(inliers))
-        val confidence = calculateConfidence(results)
+        val inliers = classifyInliers(locations)
+        val median = geometricMedian(inliers)
+        val confidence = calculateConfidence(locations)
 
-        //return FMLocationResult(median, confidence, zones)
-        return FMLocationResult(location, FMResultConfidence.HIGH, zones)
+        return FMLocationResult(median, confidence, zones)
     }
 
 
-    //Utility functions
-    private fun convertToLocation(location: android.location.Location): Location {
-        val coordinate = Coordinate(location.latitude,location.longitude)
-        return Location(location.altitude, coordinate, 0, 0, 0,0)
-    }
-
-    private fun convertToAndroidLocation(location: Location): android.location.Location {
-        val androidLocation = android.location.Location("")
-        androidLocation.latitude = location.coordinate.latitude
-        androidLocation.longitude = location.coordinate.longitude
-        return androidLocation
+    // Utility functions
+    // Measure distance, treating lat and long as unitless Cartesian coordinates
+    private fun degreeDistance(to: Location, from: Location): Double {
+        val dLat = to.coordinate.latitude - from.coordinate.latitude
+        val dLon = to.coordinate.longitude - from.coordinate.longitude
+        return sqrt(dLat * dLat + dLon * dLon)
     }
 
     private fun median(distances: MutableList<Double>): Double {

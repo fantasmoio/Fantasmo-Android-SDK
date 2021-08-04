@@ -12,6 +12,6 @@ package com.fantasmo.sdk.models
  * @property longitude
  */
 data class Coordinate(
-    val latitude: Double,
-    val longitude: Double
+    var latitude: Double,
+    var longitude: Double
 )
