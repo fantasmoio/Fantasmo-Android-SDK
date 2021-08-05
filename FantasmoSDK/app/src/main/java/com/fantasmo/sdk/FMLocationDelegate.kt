@@ -10,10 +10,19 @@ enum class FMResultConfidence{
     HIGH
 }
 
+fun abbreviation(confidence: FMResultConfidence):String{
+    return when(confidence){
+        FMResultConfidence.LOW -> "L"
+        FMResultConfidence.MEDIUM -> "M"
+        FMResultConfidence.HIGH -> "H"
+    }
+}
+
 class FMLocationResult(
     var location: Location,
     var confidence: FMResultConfidence,
-    var zones: List<FMZone>)
+    var zones: List<FMZone>
+    )
 
 enum class FMBehaviorRequest(val displayName: String) {
     TILTUP("Tilt your device up"),
@@ -31,10 +40,9 @@ interface FMLocationListener {
 
     /**
      * Tells the listener that new location data is available.
-     * @param location: Location of the device (or anchor if set)
-     * @param zones: Semantic zone corresponding to the location
+     * @param result: Location of the device (or anchor if set)
      */
-    fun locationManager(location: FMLocationResult)
+    fun locationManager(result: FMLocationResult)
 
     /**
      * Tells the listener that an error has occurred.

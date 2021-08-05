@@ -59,24 +59,24 @@ class LocationFuser {
      */
     private fun geometricMedian(locations: List<Location>): Location {
         val maxIterations = 200
-        // prevent from throwing convergence error when there's no location
+        // Prevent from throwing convergence error when there's no location
         if (locations.isEmpty()) {
             Log.e(TAG, "Empty List")
             val coordinate = Coordinate(Double.NaN, Double.NaN)
             return Location(0, coordinate, 0, 0, 0, 0)
         }
 
-        // prevent from throwing convergence error when there's just one location
+        // Prevent from throwing convergence error when there's just one location
         if (locations.size == 1) {
             val result = locations[0]
             Log.d(TAG, "ResultFromGeometricMedian: $result")
             return result
         }
 
-        //Initialising 'median' to the centroid
+        // Initialising 'median' to the centroid
         val centroid = geometricMean(locations)
 
-        //If the init point is in the set of points, shift it
+        // If the init point is in the set of points, shift it
         for (location in locations) {
             if (location.coordinate.latitude == centroid.coordinate.latitude &&
                 location.coordinate.longitude == centroid.coordinate.longitude
@@ -203,6 +203,13 @@ class LocationFuser {
         }
     }
 
+    /**
+     * Method responsible to fuse locations in order to
+     * improve accuracy during localization session
+     * @param location: Location
+     * @param zones: List of FMZones
+     * @return FMLocationResult obtained from location fuse
+     */
     fun fusedResult(location: Location, zones: List<FMZone>): FMLocationResult {
         locations.add(location)
 
@@ -213,7 +220,7 @@ class LocationFuser {
         return FMLocationResult(median, confidence, zones)
     }
 
-    // Utility functions
+    // Utility function, responsible for getting the median from a list of doubles
     private fun median(distances: MutableList<Double>): Double {
         val size = distances.size
         if (size == 0) {
