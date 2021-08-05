@@ -6,6 +6,11 @@ import kotlin.math.atan2
 import kotlin.math.max
 import kotlin.math.min
 
+/**
+ * Class responsible for tracking total rotation movement during the session
+ * Calculates the spread rotation of a device based on the device rotation provided by the sequence of ARCore frames
+ * Also measures the maximum and minimum angles in radians in all axis (x,y,z)
+ * */
 class TotalDeviceRotationAccumulator {
 
     private val TAG = "TotalDeviceRotation"
@@ -28,6 +33,10 @@ class TotalDeviceRotationAccumulator {
 
     private var frameCounter: Int = 0
 
+    /**
+     * On every frame, update get the rotation from the current frame
+     * @param arFrame: Frame
+     */
     fun update(arFrame: Frame) {
         val rotation = arFrame.androidSensorPose.rotationQuaternion
         updateRotationValues(rotation!!)
@@ -42,6 +51,12 @@ class TotalDeviceRotationAccumulator {
         frameCounter += 1
     }
 
+    /**
+     * Method called by updated responsible for finding new maximum
+     * and minimum values from the rotation Quaternion of the frame
+     * Also updates the total amount of rotation on each axis
+     * @param rotation: FloatArray correspondent to the rotationQuaternion
+     */
     private fun updateRotationValues(rotation: FloatArray) {
         val rads = convertQuaternionToEuler(rotation)
         val yawCurrent = rads[0]
@@ -108,6 +123,9 @@ class TotalDeviceRotationAccumulator {
         return floatArrayOf(yaw, pitch, roll)
     }
 
+    /**
+     * Resets counters and each axis rotation array
+     */
     fun reset() {
         frameCounter = 0
         yaw = floatArrayOf(0f, 0f, 0f)
