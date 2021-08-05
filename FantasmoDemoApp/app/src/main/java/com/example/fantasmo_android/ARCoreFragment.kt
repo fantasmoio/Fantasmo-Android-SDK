@@ -254,7 +254,7 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
 
             @SuppressLint("SetTextI18n")
             override fun locationManager(location: FMLocationResult) {
-                Log.d(TAG, location.toString())
+                Log.d(TAG, location.location.toString())
                 activity?.runOnUiThread {
                     serverCoordinatesTv.text =
                         "Server Lat: ${location.location.coordinate.latitude}, Long: ${location.location.coordinate.longitude}"
