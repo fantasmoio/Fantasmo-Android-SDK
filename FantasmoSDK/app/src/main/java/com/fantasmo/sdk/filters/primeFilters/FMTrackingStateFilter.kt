@@ -3,10 +3,14 @@ package com.fantasmo.sdk.filters.primeFilters
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingFailureReason
 
-class FMTrackingStateFilter:FMFrameFilter {
+/**
+ * Class responsible for filtering frames due to ARCore tracking failures.
+ * Prevents from sending frames that were broken during ARSession
+ */
+class FMTrackingStateFilter : FMFrameFilter {
 
     override fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
-        return when(arFrame.camera.trackingFailureReason){
+        return when (arFrame.camera.trackingFailureReason) {
             TrackingFailureReason.CAMERA_UNAVAILABLE -> {
                 Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOLITTLE)
             }
