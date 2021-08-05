@@ -14,7 +14,7 @@ import com.fantasmo.sdk.filters.FMCompoundFrameQualityFilter
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
-import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatisticsAccumulator
+import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
@@ -91,7 +91,7 @@ class FMLocationManager(private val context: Context) {
     // Throttler for invalid frames.
     private lateinit var frameFailureThrottler: FrameFailureThrottler
 
-    private var frameRejectionStatisticsAccumulator = FrameFilterRejectionStatisticsAccumulator()
+    private var frameRejectionStatisticsAccumulator = FrameFilterRejectionStatistics()
 
     /**
      * Connect to the location service.

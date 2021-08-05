@@ -3,7 +3,10 @@ package com.fantasmo.sdk.models.analytics
 import android.util.Log
 import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
 
-class FrameFilterRejectionStatisticsAccumulator {
+/**
+ * Class responsible for gathering information about frame filtration rejection
+ */
+class FrameFilterRejectionStatistics {
 
     private val TAG = "FrameFilterStatistics"
 
@@ -12,6 +15,12 @@ class FrameFilterRejectionStatisticsAccumulator {
     private var excessiveBlurFrameCount = 0
     private var insufficientMotionFrameCount = 0
 
+    /**
+     * During shouldLocalize call, frames are filtered from rejected and accepted
+     * When a frame is rejected, this method gets the rejection failure and updates
+     * the information about the localization session regarding frame filtration
+     * @param result: FMFrameFilterFailure
+     */
     fun accumulate(result: FMFrameFilterFailure) {
         totalFrameCount += 1
         when (result) {
@@ -34,6 +43,9 @@ class FrameFilterRejectionStatisticsAccumulator {
                 "Total: $totalFrameCount")
     }
 
+    /**
+     * Resets counters on a new localization session
+     */
     fun reset() {
         totalFrameCount = 0
         excessiveTiltFrameCount = 0
