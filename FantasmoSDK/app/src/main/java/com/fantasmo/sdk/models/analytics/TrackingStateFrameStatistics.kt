@@ -3,6 +3,9 @@ package com.fantasmo.sdk.models.analytics
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingFailureReason
 
+/**
+ * Class responsible for creating statistics about frame events on ARCore position tracking
+ */
 class TrackingStateFrameStatistics {
 
     private var totalNumberOfFrames: Int = 0
@@ -16,6 +19,9 @@ class TrackingStateFrameStatistics {
     // Number of events where the loss of tracking callback is received from ARKit/ARCore
     private var lossOfTrackingEventCount: Int = 0
 
+    /**
+     * Resets counters on new startUpdatingLocation call
+     */
     fun reset() {
         totalNumberOfFrames = 0
         normalEventCount = 0
@@ -23,6 +29,11 @@ class TrackingStateFrameStatistics {
         lossOfTrackingEventCount = 0
     }
 
+    /**
+     * Receives a frame and updates the counter
+     * that best describes the tracking state event
+     * @param arFrame: frame to be evaluated
+     */
     fun update(arFrame: Frame) {
         totalNumberOfFrames += 1
 
