@@ -13,6 +13,7 @@ import com.fantasmo.sdk.frameSequenceFilter.FMFrameSequenceFilter
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
+import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
@@ -94,6 +95,7 @@ class FMLocationManager(private val context: Context) {
     private lateinit var localizationSessionId: String
     // App Session Id supplied by the SDK client
     private lateinit var appSessionId: String
+    private var accumulatedARCoreInfo = AccumulatedARCoreInfo()
 
     /**
      * Connect to the location service.
@@ -138,6 +140,7 @@ class FMLocationManager(private val context: Context) {
         this.isConnected = true
         this.state = State.LOCALIZING
         enableFilters = false
+        accumulatedARCoreInfo.reset()
     }
 
     /**
@@ -156,6 +159,7 @@ class FMLocationManager(private val context: Context) {
         enableFilters = filtersEnabled
         this.frameFilter.prepareForNewFrameSequence()
         this.frameFailureThrottler.restart()
+        accumulatedARCoreInfo.reset()
     }
 
     /**
@@ -236,6 +240,7 @@ class FMLocationManager(private val context: Context) {
      * @return true if it can localize the ARFrame and false otherwise.
      */
     fun shouldLocalize(arFrame: Frame): Boolean {
+        accumulatedARCoreInfo.update(arFrame)
         if (isConnected
             && currentLocation.latitude > 0.0
             && arFrame.camera.trackingState == TrackingState.TRACKING
