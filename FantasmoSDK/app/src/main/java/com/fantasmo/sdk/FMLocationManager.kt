@@ -13,13 +13,19 @@ import com.fantasmo.sdk.frameSequenceFilter.FMFrameSequenceFilter
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
+import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.network.FMApi
+import com.fantasmo.sdk.network.FMApi.FMFrameEvent
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
 
 /**
  * The methods that you use to receive events from an associated
@@ -91,6 +97,7 @@ class FMLocationManager(private val context: Context) {
     private lateinit var frameFailureThrottler: FrameFailureThrottler
 
     private var motionManager = MotionManager(context)
+    private var accumulatedARCoreInfo = AccumulatedARCoreInfo()
 
     /**
      * Connect to the location service.
@@ -133,6 +140,7 @@ class FMLocationManager(private val context: Context) {
         this.state = State.LOCALIZING
         enableFilters = false
         motionManager.restart()
+        accumulatedARCoreInfo.reset()
     }
 
     /**
@@ -149,6 +157,7 @@ class FMLocationManager(private val context: Context) {
         this.frameFilter.prepareForNewFrameSequence()
         this.frameFailureThrottler.restart()
         motionManager.restart()
+        accumulatedARCoreInfo.reset()
     }
 
     /**
@@ -194,7 +203,14 @@ class FMLocationManager(private val context: Context) {
         Log.d(TAG, "localize: isSimulation $isSimulation")
         coroutineScope.launch {
             state = State.UPLOADING
-
+            val frameEvents = FMFrameEvent(
+                0,
+                0,
+                accumulatedARCoreInfo.trackingStateFrameStatistics.excessiveMotionEventCount,
+                0,
+                accumulatedARCoreInfo.trackingStateFrameStatistics.lossOfTrackingEventCount,
+                accumulatedARCoreInfo.trackingStateFrameStatistics.totalNumberOfFrames
+            )
             fmApi.sendLocalizeRequest(
                 arFrame,
                 { localizeResponse, fmZones ->
@@ -229,6 +245,7 @@ class FMLocationManager(private val context: Context) {
      * @return true if it can localize the ARFrame and false otherwise.
      */
     fun shouldLocalize(arFrame: Frame): Boolean {
+        accumulatedARCoreInfo.update(arFrame)
         if (isConnected
             && currentLocation.latitude > 0.0
             && arFrame.camera.trackingState == TrackingState.TRACKING

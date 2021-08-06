@@ -1,12 +1,17 @@
 package com.fantasmo.sdk.network
 
 import android.content.Context
+import android.os.Build
 import android.provider.Settings.Secure
 import android.util.Log
 import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
-import com.fantasmo.sdk.models.*
+import com.fantasmo.sdk.fantasmosdk.BuildConfig
+import com.fantasmo.sdk.models.Coordinate
+import com.fantasmo.sdk.models.ErrorResponse
+import com.fantasmo.sdk.models.FMIntrinsics
+import com.fantasmo.sdk.models.FMZone
 import com.google.ar.core.Frame
 import com.google.gson.Gson
 import java.util.*
@@ -21,18 +26,30 @@ class FMApi(
     private val token: String,
 ) {
 
+    class FMFrameEvent(
+        var excessiveTilt: Int,
+        var excessiveBlur: Int,
+        var excessiveMotion: Int,
+        var insufficientFeatures: Int,
+        var lossOfTracking: Int,
+        var total: Int
+        )
 
     private val TAG = "FMApi"
+
+    private var deviceModel: String = ""
+    private var deviceOS: String = ""
+    private var fantasmoSdkVersion = ""
+
     /**
      * Method to build the Localize request.
      */
     fun sendLocalizeRequest(
         arFrame: Frame,
-        onCompletion: (Location, List<FMZone>) -> Unit,
+        onCompletion: (com.fantasmo.sdk.models.Location, List<FMZone>) -> Unit,
         onError: (ErrorResponse) -> Unit
     ) {
-        val androidId = Secure.getString(context.contentResolver,
-            Secure.ANDROID_ID)
+        val androidId = Secure.getString(context.contentResolver, Secure.ANDROID_ID)
         Log.d(TAG,"AndroidId: $androidId")
         try {
             fmNetworkManager.uploadImage(
@@ -158,5 +175,19 @@ class FMApi(
         return params
     }
 
+    /**
+     * Gathers Device information to send
+     * into the API request
+     * */
+    private fun gatherDeviceCharacteristics(): String {
+        val manufacturer = Build.MANUFACTURER // Samsung
+        val model = Build.MODEL  // SM-G780
+        deviceModel = "$manufacturer $model" // "Samsung SM-G780"
 
+        deviceOS = Build.VERSION.SDK_INT.toString() // "30" (Android 11)
+        fantasmoSdkVersion = BuildConfig.VERSION_NAME // "1.0.5"
+        val result = "DeviceModel: $deviceModel; DeviceOS: $deviceOS; FantasmoSdkVersion: $fantasmoSdkVersion"
+        Log.i(TAG, result)
+        return result
+    }
 }
