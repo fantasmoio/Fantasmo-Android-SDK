@@ -12,9 +12,34 @@ import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMIntrinsics
 import com.fantasmo.sdk.models.FMZone
+import com.fantasmo.sdk.models.analytics.MagneticField
 import com.google.ar.core.Frame
 import com.google.gson.Gson
 import java.util.*
+
+class FMFrameEvent(
+    var excessiveTilt: Int,
+    var excessiveBlur: Int,
+    var excessiveMotion: Int,
+    var insufficientFeatures: Int,
+    var lossOfTracking: Int,
+    var total: Int
+)
+
+class FMLocalizationAnalytics(
+    var appSessionId: String,
+    var localizationSessionId: String,
+    var frameEvents: FMFrameEvent,
+    var rotationSpread: FMRotationSpread,
+    var totalDistance: Float,
+    var magneticField: MagneticField
+)
+
+class FMRotationSpread(
+    var pitch: Float,
+    var yaw: Float,
+    var roll: Float
+)
 
 /**
  * Class to hold the necessary logic to communicate with Fantasmo API.
@@ -25,15 +50,6 @@ class FMApi(
     private val context: Context,
     private val token: String,
 ) {
-
-    class FMFrameEvent(
-        var excessiveTilt: Int,
-        var excessiveBlur: Int,
-        var excessiveMotion: Int,
-        var insufficientFeatures: Int,
-        var lossOfTracking: Int,
-        var total: Int
-        )
 
     private val TAG = "FMApi"
 

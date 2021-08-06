@@ -8,24 +8,33 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.util.Log
 
+class MagneticField(
+    var x : Float,
+    var y : Float,
+    var z : Float
+)
+
 class MotionManager(context: Context) : SensorEventListener {
 
+    lateinit var magneticField: MagneticField
     private var TAG = "MotionManager"
 
     private var sensorManager: SensorManager = context.getSystemService(SENSOR_SERVICE) as SensorManager
 
     private var magnetometer: Sensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
 
-    private var magnetometerReading = floatArrayOf()
-
     override fun onSensorChanged(event: SensorEvent?) {
         when(event?.sensor?.type) {
             //GET MAGNETIC VALUES
             Sensor.TYPE_MAGNETIC_FIELD -> {
-                magnetometerReading = event.values
-                Log.d(TAG, "Reading on x: ${magnetometerReading[0]};\n" +
-                        "Reading on y: ${magnetometerReading[1]};\n" +
-                        "Reading on z: ${magnetometerReading[2]}")
+                magneticField = MagneticField(
+                    event.values[0],
+                    event.values[1],
+                    event.values[2]
+                )
+                Log.d(TAG, "Reading on x: ${magneticField.x};" +
+                        "Reading on y: ${magneticField.y};" +
+                        "Reading on z: ${magneticField.z}")
             }
         }
     }
@@ -40,7 +49,7 @@ class MotionManager(context: Context) : SensorEventListener {
 
     fun stop(){
         Log.d(TAG, "Stop")
-        magnetometerReading = floatArrayOf()
+        magneticField = MagneticField(0f,0f,0f)
         sensorManager.unregisterListener(this,magnetometer)
     }
 }

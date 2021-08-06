@@ -16,7 +16,7 @@ import com.fantasmo.sdk.models.Location
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.network.FMApi
-import com.fantasmo.sdk.network.FMApi.FMFrameEvent
+import com.fantasmo.sdk.network.FMFrameEvent
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
 import com.google.ar.core.Frame
