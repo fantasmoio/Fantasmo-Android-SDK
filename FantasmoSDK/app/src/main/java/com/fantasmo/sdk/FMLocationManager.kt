@@ -13,6 +13,7 @@ import com.fantasmo.sdk.frameSequenceFilter.FMFrameSequenceFilter
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
+import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
@@ -89,6 +90,8 @@ class FMLocationManager(private val context: Context) {
     // Throttler for invalid frames.
     private lateinit var frameFailureThrottler: FrameFailureThrottler
 
+    private var motionManager = MotionManager(context)
+
     /**
      * Connect to the location service.
      *
@@ -129,6 +132,7 @@ class FMLocationManager(private val context: Context) {
         this.isConnected = true
         this.state = State.LOCALIZING
         enableFilters = false
+        motionManager.restart()
     }
 
     /**
@@ -144,6 +148,7 @@ class FMLocationManager(private val context: Context) {
         enableFilters = filtersEnabled
         this.frameFilter.prepareForNewFrameSequence()
         this.frameFailureThrottler.restart()
+        motionManager.restart()
     }
 
     /**
@@ -151,7 +156,7 @@ class FMLocationManager(private val context: Context) {
      */
     fun stopUpdatingLocation() {
         Log.d(TAG, "stopUpdatingLocation")
-
+        motionManager.stop()
         this.state = State.STOPPED
     }
 
