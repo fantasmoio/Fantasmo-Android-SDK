@@ -1,7 +1,7 @@
 package com.fantasmo.sdk.network
 
 import android.content.Context
-import android.location.Location
+import android.provider.Settings.Secure
 import android.util.Log
 import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.FMLocationManager
@@ -28,9 +28,12 @@ class FMApi(
      */
     fun sendLocalizeRequest(
         arFrame: Frame,
-        onCompletion: (com.fantasmo.sdk.models.Location, List<FMZone>) -> Unit,
+        onCompletion: (Location, List<FMZone>) -> Unit,
         onError: (ErrorResponse) -> Unit
     ) {
+        val androidId = Secure.getString(context.contentResolver,
+            Secure.ANDROID_ID)
+        Log.d(TAG,"AndroidId: $androidId")
         try {
             fmNetworkManager.uploadImage(
                 FMUtility.getImageDataFromARFrame(context, arFrame),
@@ -154,4 +157,6 @@ class FMApi(
         Log.i(TAG, "getZoneInRadiusParams: $params")
         return params
     }
+
+
 }
