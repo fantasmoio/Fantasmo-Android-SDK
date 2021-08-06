@@ -2,10 +2,12 @@ package com.fantasmo.sdk.network
 
 import android.content.Context
 import android.location.Location
+import android.os.Build
 import android.util.Log
 import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
+import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.models.*
 import com.google.ar.core.Frame
 import com.google.gson.Gson
@@ -23,6 +25,11 @@ class FMApi(
 
 
     private val TAG = "FMApi"
+
+    private var deviceModel: String = ""
+    private var deviceOS: String = ""
+    private var fantasmoSdkVersion = ""
+
     /**
      * Method to build the Localize request.
      */
@@ -153,5 +160,21 @@ class FMApi(
 
         Log.i(TAG, "getZoneInRadiusParams: $params")
         return params
+    }
+
+    /**
+     * Gathers Device information to send
+     * into the API request
+     * */
+    private fun gatherDeviceCharacteristics(): String {
+        val manufacturer = Build.MANUFACTURER // Samsung
+        val model = Build.MODEL  // SM-G780
+        deviceModel = "$manufacturer $model" // "Samsung SM-G780"
+
+        deviceOS = Build.VERSION.SDK_INT.toString() // "30" (Android 11)
+        fantasmoSdkVersion = BuildConfig.VERSION_NAME // "1.0.5"
+        val result = "DeviceModel: $deviceModel; DeviceOS: $deviceOS; FantasmoSdkVersion: $fantasmoSdkVersion"
+        Log.i(TAG, result)
+        return result
     }
 }
