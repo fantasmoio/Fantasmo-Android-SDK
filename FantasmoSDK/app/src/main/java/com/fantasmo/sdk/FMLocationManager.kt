@@ -14,13 +14,18 @@ import com.fantasmo.sdk.filters.FMCompoundFrameQualityFilter
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
+import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
 
 /**
  * The methods that you use to receive events from an associated
@@ -92,6 +97,7 @@ class FMLocationManager(private val context: Context) {
     private lateinit var frameFailureThrottler: FrameFailureThrottler
 
     private var frameRejectionStatisticsAccumulator = FrameFilterRejectionStatistics()
+    private var accumulatedARCoreInfo = AccumulatedARCoreInfo()
 
     /**
      * Connect to the location service.
@@ -133,6 +139,7 @@ class FMLocationManager(private val context: Context) {
         this.isConnected = true
         this.state = State.LOCALIZING
         enableFilters = false
+        accumulatedARCoreInfo.reset()
     }
 
     /**
@@ -149,6 +156,7 @@ class FMLocationManager(private val context: Context) {
         this.compoundFrameFilter.prepareForNewFrameSequence()
         this.frameFailureThrottler.restart()
         frameRejectionStatisticsAccumulator.reset()
+        accumulatedARCoreInfo.reset()
     }
 
     /**
@@ -229,6 +237,7 @@ class FMLocationManager(private val context: Context) {
      * @return true if it can localize the ARFrame and false otherwise.
      */
     fun shouldLocalize(arFrame: Frame): Boolean {
+        accumulatedARCoreInfo.update(arFrame)
         if (isConnected
             && currentLocation.latitude > 0.0
             && arFrame.camera.trackingState == TrackingState.TRACKING
