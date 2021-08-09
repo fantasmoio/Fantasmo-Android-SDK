@@ -1,4 +1,4 @@
-package com.fantasmo.sdk.frameSequenceFilter
+package com.fantasmo.sdk.filters.primeFilters
 
 import com.fantasmo.sdk.models.FMPosition
 import com.google.ar.core.Frame
@@ -8,7 +8,7 @@ import kotlin.math.abs
  * Class responsible for filtering frames due to the lack of movement.
  * Prevents from sending repeated values to the backend.
  */
-class FMMovementFilterRule : FMFrameSequenceFilterRule {
+class FMMovementFilter : FMFrameFilter {
     // Sideways movement threshold
     private val threshold = 0.02 //0.25
     // Previous frame translation
@@ -19,7 +19,7 @@ class FMMovementFilterRule : FMFrameSequenceFilterRule {
      * @param arFrame: Frame to be evaluated
      * @return Accepts frame or Rejects frame with MovingTooLittle failure
      */
-    override fun check(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
+    override fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
         return if (exceededThreshold(arFrame.camera.pose.translation)) {
             lastTransform = arFrame.camera.pose.translation
             Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)

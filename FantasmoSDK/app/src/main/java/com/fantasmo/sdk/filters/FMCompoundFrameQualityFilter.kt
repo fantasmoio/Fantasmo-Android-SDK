@@ -1,14 +1,15 @@
-package com.fantasmo.sdk.frameSequenceFilter
+package com.fantasmo.sdk.filters
 
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import com.fantasmo.sdk.filters.primeFilters.*
 import com.google.ar.core.Frame
 
 /**
  * Class responsible for filtering frames according the implemented filters
  */
-class FMFrameSequenceFilter(context: Context) {
+class FMCompoundFrameQualityFilter(context: Context) {
 
     private val TAG = "FMFrameSequenceFilter"
 
@@ -21,16 +22,16 @@ class FMFrameSequenceFilter(context: Context) {
     /**
      * List of filter rules to apply on frame received.
      */
-    var rules = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+    var filters = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
         listOf(
-                FMCameraPitchFilterRule(context),
-                FMMovementFilterRule(),
-                FMBlurFilterRule(context)
+                FMCameraPitchFilter(context),
+                FMMovementFilter(),
+                FMBlurFilter(context)
         )
     } else {
         listOf(
-            FMCameraPitchFilterRule(context),
-            FMMovementFilterRule(),
+            FMCameraPitchFilter(context),
+            FMMovementFilter(),
         )
     }
 
@@ -46,14 +47,14 @@ class FMFrameSequenceFilter(context: Context) {
      * @param arFrame: Frame for approval.
      * @return result: Pair<FMFrameFilterResult, FMFrameFilterFailure>
      */
-    fun check(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
+    fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
         if (shouldForceApprove(arFrame)) {
             timestampOfPreviousApprovedFrame = arFrame.timestamp
             Log.d(TAG, "shouldForceAccept True")
             return Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
         } else {
-            for (rule in rules) {
-                val result = rule.check(arFrame)
+            for (filter in filters) {
+                val result = filter.accepts(arFrame)
                 if (result.first != FMFrameFilterResult.ACCEPTED) {
                     Log.d(TAG, "RULE_CHECK: Frame not accepted $result")
                     return result

@@ -7,25 +7,22 @@
 package com.fantasmo.sdk
 
 import android.content.Context
-import android.os.Build
 import android.util.Log
-import com.fantasmo.sdk.fantasmosdk.BuildConfig
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterResult
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameSequenceFilter
+import com.fantasmo.sdk.filters.FMBehaviorRequest
+import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterResult
+import com.fantasmo.sdk.filters.FMCompoundFrameQualityFilter
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
+import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-
+import kotlinx.coroutines.*
+import java.util.*
 
 /**
  * The methods that you use to receive events from an associated
@@ -92,10 +89,15 @@ class FMLocationManager(private val context: Context) {
     private var enableFilters = false
 
     // Used to validate frame for sufficient quality before sending to API.
-    lateinit var frameFilter: FMFrameSequenceFilter
+    lateinit var compoundFrameFilter: FMCompoundFrameQualityFilter
     // Throttler for invalid frames.
     private lateinit var frameFailureThrottler: FrameFailureThrottler
 
+    // Localization Session Id generated on each startUpdatingLocation call
+    private lateinit var localizationSessionId: String
+    // App Session Id supplied by the SDK client
+    private lateinit var appSessionId: String
+    private var frameRejectionStatisticsAccumulator = FrameFilterRejectionStatistics()
     private var accumulatedARCoreInfo = AccumulatedARCoreInfo()
 
     /**
@@ -113,7 +115,7 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(fmNetworkManager, this, context, token)
-        frameFilter = FMFrameSequenceFilter(context)
+        compoundFrameFilter = FMCompoundFrameQualityFilter(context)
         frameFailureThrottler = FrameFailureThrottler()
     }
 
@@ -131,9 +133,12 @@ class FMLocationManager(private val context: Context) {
 
     /**
      * Starts the generation of updates that report the user’s current location.
+     * @param appSessionId: appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
      */
-    fun startUpdatingLocation() {
-        Log.d(TAG, "startUpdatingLocation")
+    fun startUpdatingLocation(appSessionId: String) {
+        localizationSessionId = UUID.randomUUID().toString()
+        this.appSessionId = appSessionId
+        Log.d(TAG, "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId")
 
         this.isConnected = true
         this.state = State.LOCALIZING
@@ -144,16 +149,20 @@ class FMLocationManager(private val context: Context) {
     /**
      * Starts the generation of updates that report the user’s current location
      * enabling FrameFiltering
+     * @param appSessionId: appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
      * @param filtersEnabled: flag that it enables frame filtering
      */
-    private fun startUpdatingLocation(filtersEnabled : Boolean) {
-        Log.d(TAG, "startUpdatingLocation")
+    private fun startUpdatingLocation(appSessionId: String, filtersEnabled : Boolean) {
+        localizationSessionId = UUID.randomUUID().toString()
+        this.appSessionId = appSessionId
+        Log.d(TAG, "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId")
 
         this.isConnected = true
         this.state = State.LOCALIZING
         enableFilters = filtersEnabled
-        this.frameFilter.prepareForNewFrameSequence()
+        this.compoundFrameFilter.prepareForNewFrameSequence()
         this.frameFailureThrottler.restart()
+        frameRejectionStatisticsAccumulator.reset()
         accumulatedARCoreInfo.reset()
     }
 
@@ -241,12 +250,13 @@ class FMLocationManager(private val context: Context) {
             && arFrame.camera.trackingState == TrackingState.TRACKING
         ) {
             return if(enableFilters){
-                val result = frameFilter.check(arFrame)
+                val result = compoundFrameFilter.accepts(arFrame)
                 if (result.first == FMFrameFilterResult.ACCEPTED) {
                     fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
                     frameFailureThrottler.restart()
                     true
                 } else {
+                    frameRejectionStatisticsAccumulator.accumulate(result.second)
                     frameFailureThrottler.onNext(result.second)
                     fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
                     false

@@ -1,6 +1,7 @@
 package com.fantasmo.sdk
 
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterFailure
+import com.fantasmo.sdk.filters.FMBehaviorRequest
+import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
 import org.junit.Assert.assertEquals
 import org.junit.Test

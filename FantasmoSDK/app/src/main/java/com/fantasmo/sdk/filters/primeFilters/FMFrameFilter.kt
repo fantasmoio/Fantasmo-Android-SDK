@@ -1,13 +1,13 @@
-package com.fantasmo.sdk.frameSequenceFilter
+package com.fantasmo.sdk.filters.primeFilters
 
-import com.fantasmo.sdk.FMBehaviorRequest
+import com.fantasmo.sdk.filters.FMBehaviorRequest
 import com.google.ar.core.Frame
 
 /**
  * Defines rules for the implemented filters.
  */
-interface FMFrameSequenceFilterRule {
-    fun check(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure>
+interface FMFrameFilter {
+    fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure>
 }
 
 enum class FMFrameFilterFailure {
