@@ -17,13 +17,10 @@ import com.google.ar.core.Frame
 import com.google.gson.Gson
 import java.util.*
 
-class FMFrameEvent(
-    var excessiveTilt: Int,
-    var excessiveBlur: Int,
-    var excessiveMotion: Int,
-    var insufficientFeatures: Int,
-    var lossOfTracking: Int,
-    var total: Int
+class FMLocalizationRequest(
+    var isSimulation: Boolean,
+    var simulationZone: FMZone.ZoneType,
+    var analytics: FMLocalizationAnalytics
 )
 
 class FMLocalizationAnalytics(
@@ -33,6 +30,15 @@ class FMLocalizationAnalytics(
     var rotationSpread: FMRotationSpread,
     var totalDistance: Float,
     var magneticField: MagneticField
+)
+
+class FMFrameEvent(
+    var excessiveTilt: Int,
+    var excessiveBlur: Int,
+    var excessiveMotion: Int,
+    var insufficientFeatures: Int,
+    var lossOfTracking: Int,
+    var total: Int
 )
 
 class FMRotationSpread(
