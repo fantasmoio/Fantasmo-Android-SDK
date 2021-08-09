@@ -1,14 +1,16 @@
 package com.fantasmo.sdk.network
 
 import android.content.Context
-import android.location.Location
 import android.os.Build
 import android.util.Log
 import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.fantasmosdk.BuildConfig
-import com.fantasmo.sdk.models.*
+import com.fantasmo.sdk.models.Coordinate
+import com.fantasmo.sdk.models.ErrorResponse
+import com.fantasmo.sdk.models.FMIntrinsics
+import com.fantasmo.sdk.models.FMZone
 import com.google.ar.core.Frame
 import com.google.gson.Gson
 import java.util.*

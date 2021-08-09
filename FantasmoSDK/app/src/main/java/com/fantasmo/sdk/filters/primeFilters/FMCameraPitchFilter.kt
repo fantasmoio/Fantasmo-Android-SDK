@@ -1,4 +1,4 @@
-package com.fantasmo.sdk.frameSequenceFilter
+package com.fantasmo.sdk.filters.primeFilters
 
 import android.content.Context
 import android.view.Display
@@ -12,7 +12,7 @@ import kotlin.math.abs
  * Prevents from sending ground and sky images which have no characteristics
  * to determine location
  */
-class FMCameraPitchFilterRule(private val context: Context) : FMFrameSequenceFilterRule {
+class FMCameraPitchFilter(private val context: Context) : FMFrameFilter {
     // Maximum value for tilting phone up or down
     private val radianThreshold = 0.16
 
@@ -21,7 +21,7 @@ class FMCameraPitchFilterRule(private val context: Context) : FMFrameSequenceFil
      * @param arFrame: Frame to be evaluated
      * @return Accepts frame or Rejects frame with PitchTooHigh or PitchTooLow failure
      */
-    override fun check(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
+    override fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
         // Angle of X-plane of virtual camera pose
         val xOrientedAngle = arFrame.camera.displayOrientedPose.rotationQuaternion[0]
         // Angle of X-plane of device sensor system

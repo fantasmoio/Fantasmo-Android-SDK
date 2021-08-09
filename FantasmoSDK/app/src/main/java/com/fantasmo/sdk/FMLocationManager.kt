@@ -8,12 +8,14 @@ package com.fantasmo.sdk
 
 import android.content.Context
 import android.util.Log
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameFilterResult
-import com.fantasmo.sdk.frameSequenceFilter.FMFrameSequenceFilter
+import com.fantasmo.sdk.filters.FMBehaviorRequest
+import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterResult
+import com.fantasmo.sdk.filters.FMCompoundFrameQualityFilter
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
+import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
@@ -87,7 +89,7 @@ class FMLocationManager(private val context: Context) {
     private var enableFilters = false
 
     // Used to validate frame for sufficient quality before sending to API.
-    lateinit var frameFilter: FMFrameSequenceFilter
+    lateinit var compoundFrameFilter: FMCompoundFrameQualityFilter
     // Throttler for invalid frames.
     private lateinit var frameFailureThrottler: FrameFailureThrottler
 
@@ -95,6 +97,7 @@ class FMLocationManager(private val context: Context) {
     private lateinit var localizationSessionId: String
     // App Session Id supplied by the SDK client
     private lateinit var appSessionId: String
+    private var frameRejectionStatisticsAccumulator = FrameFilterRejectionStatistics()
     private var accumulatedARCoreInfo = AccumulatedARCoreInfo()
 
     /**
@@ -112,7 +115,7 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(fmNetworkManager, this, context, token)
-        frameFilter = FMFrameSequenceFilter(context)
+        compoundFrameFilter = FMCompoundFrameQualityFilter(context)
         frameFailureThrottler = FrameFailureThrottler()
     }
 
@@ -157,8 +160,9 @@ class FMLocationManager(private val context: Context) {
         this.isConnected = true
         this.state = State.LOCALIZING
         enableFilters = filtersEnabled
-        this.frameFilter.prepareForNewFrameSequence()
+        this.compoundFrameFilter.prepareForNewFrameSequence()
         this.frameFailureThrottler.restart()
+        frameRejectionStatisticsAccumulator.reset()
         accumulatedARCoreInfo.reset()
     }
 
@@ -246,12 +250,13 @@ class FMLocationManager(private val context: Context) {
             && arFrame.camera.trackingState == TrackingState.TRACKING
         ) {
             return if(enableFilters){
-                val result = frameFilter.check(arFrame)
+                val result = compoundFrameFilter.accepts(arFrame)
                 if (result.first == FMFrameFilterResult.ACCEPTED) {
                     fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
                     frameFailureThrottler.restart()
                     true
                 } else {
+                    frameRejectionStatisticsAccumulator.accumulate(result.second)
                     frameFailureThrottler.onNext(result.second)
                     fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
                     false
