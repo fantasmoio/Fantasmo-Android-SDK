@@ -85,7 +85,7 @@ Try out the `FantasmoDemoApp` project or implement the code below.
     )
 
     // Start getting location updates
-    fmLocationManager.startUpdatingLocation()
+    fmLocationManager.startUpdatingLocation("AppSessionIdExample")
     
 ### Initialization
 
@@ -105,9 +105,9 @@ To have location updates, the client app must update the device GPS coordinates 
 
     fun setLocation(latitude: Double, longitude: Double)
     
-To start location updates:
+To start location updates, the client must also provide an `appSessionId`, which is an identifier that will be used for billing and tracking an entire parking session:
 
-    fmLocationManager.startUpdatingLocation() 
+    fmLocationManager.startUpdatingLocation(appSessionId) 
 
 Image frames will be continuously captured and sent to the server for localization.
 
@@ -129,6 +129,31 @@ Location events are provided through `FMLocationListener`.
                 // Handle location update
             }
         }
+
+### Behaviors
+
+To maximize localization quality, camera input is filtered against common problems. The designated FMLocationListener will be called with behavior requests intended to alleviate such problems
+
+    private val fmLocationListener: FMLocationListener = {
+        object : FMLocationListener {
+            fun locationManager(didRequestBehavior: FMBehaviorRequest){
+                // Handle behavior update
+            }
+        }
+    }
+
+
+The following behaviors are currently requested:
+
+    enum class FMBehaviorRequest(val displayName: String) {
+        TILTUP("Tilt your device up"),
+        TILTDOWN("Tilt your device down"),
+        PANAROUND("Pan around the scene"),
+        PANSLOWLY("Pan more slowly"),
+        ACCEPTED("Accepted");
+    }
+
+When notified, your application should prompt the user to undertake the remedial behavior. You may use our enum cases to map to your own verbiage or simply rely on our .rawValue strings.
 
 ### Anchors
 
