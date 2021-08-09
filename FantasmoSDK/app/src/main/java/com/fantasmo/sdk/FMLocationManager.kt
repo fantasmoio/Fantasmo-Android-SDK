@@ -21,11 +21,8 @@ import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-
+import kotlinx.coroutines.*
+import java.util.*
 
 /**
  * The methods that you use to receive events from an associated
@@ -96,6 +93,10 @@ class FMLocationManager(private val context: Context) {
     // Throttler for invalid frames.
     private lateinit var frameFailureThrottler: FrameFailureThrottler
 
+    // Localization Session Id generated on each startUpdatingLocation call
+    private lateinit var localizationSessionId: String
+    // App Session Id supplied by the SDK client
+    private lateinit var appSessionId: String
     private var frameRejectionStatisticsAccumulator = FrameFilterRejectionStatistics()
     private var accumulatedARCoreInfo = AccumulatedARCoreInfo()
 
@@ -132,9 +133,12 @@ class FMLocationManager(private val context: Context) {
 
     /**
      * Starts the generation of updates that report the user’s current location.
+     * @param appSessionId: appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
      */
-    fun startUpdatingLocation() {
-        Log.d(TAG, "startUpdatingLocation")
+    fun startUpdatingLocation(appSessionId: String) {
+        localizationSessionId = UUID.randomUUID().toString()
+        this.appSessionId = appSessionId
+        Log.d(TAG, "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId")
 
         this.isConnected = true
         this.state = State.LOCALIZING
@@ -145,10 +149,13 @@ class FMLocationManager(private val context: Context) {
     /**
      * Starts the generation of updates that report the user’s current location
      * enabling FrameFiltering
+     * @param appSessionId: appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
      * @param filtersEnabled: flag that it enables frame filtering
      */
-    private fun startUpdatingLocation(filtersEnabled : Boolean) {
-        Log.d(TAG, "startUpdatingLocation")
+    private fun startUpdatingLocation(appSessionId: String, filtersEnabled : Boolean) {
+        localizationSessionId = UUID.randomUUID().toString()
+        this.appSessionId = appSessionId
+        Log.d(TAG, "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId")
 
         this.isConnected = true
         this.state = State.LOCALIZING
