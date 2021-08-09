@@ -14,12 +14,15 @@ import com.fantasmo.sdk.filters.FMCompoundFrameQualityFilter
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
+import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
+import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
 import kotlinx.coroutines.*
+import java.util.*
 
 /**
  * The methods that you use to receive events from an associated
@@ -90,6 +93,13 @@ class FMLocationManager(private val context: Context) {
     // Throttler for invalid frames.
     private lateinit var frameFailureThrottler: FrameFailureThrottler
 
+    // Localization Session Id generated on each startUpdatingLocation call
+    private lateinit var localizationSessionId: String
+    // App Session Id supplied by the SDK client
+    private lateinit var appSessionId: String
+    private var frameRejectionStatisticsAccumulator = FrameFilterRejectionStatistics()
+    private var accumulatedARCoreInfo = AccumulatedARCoreInfo()
+
     /**
      * Connect to the location service.
      *
@@ -123,28 +133,37 @@ class FMLocationManager(private val context: Context) {
 
     /**
      * Starts the generation of updates that report the user’s current location.
+     * @param appSessionId: appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
      */
-    fun startUpdatingLocation() {
-        Log.d(TAG, "startUpdatingLocation")
+    fun startUpdatingLocation(appSessionId: String) {
+        localizationSessionId = UUID.randomUUID().toString()
+        this.appSessionId = appSessionId
+        Log.d(TAG, "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId")
 
         this.isConnected = true
         this.state = State.LOCALIZING
         enableFilters = false
+        accumulatedARCoreInfo.reset()
     }
 
     /**
      * Starts the generation of updates that report the user’s current location
      * enabling FrameFiltering
+     * @param appSessionId: appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
      * @param filtersEnabled: flag that it enables frame filtering
      */
-    private fun startUpdatingLocation(filtersEnabled : Boolean) {
-        Log.d(TAG, "startUpdatingLocation")
+    private fun startUpdatingLocation(appSessionId: String, filtersEnabled : Boolean) {
+        localizationSessionId = UUID.randomUUID().toString()
+        this.appSessionId = appSessionId
+        Log.d(TAG, "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId")
 
         this.isConnected = true
         this.state = State.LOCALIZING
         enableFilters = filtersEnabled
         this.compoundFrameFilter.prepareForNewFrameSequence()
         this.frameFailureThrottler.restart()
+        frameRejectionStatisticsAccumulator.reset()
+        accumulatedARCoreInfo.reset()
     }
 
     /**
@@ -225,6 +244,7 @@ class FMLocationManager(private val context: Context) {
      * @return true if it can localize the ARFrame and false otherwise.
      */
     fun shouldLocalize(arFrame: Frame): Boolean {
+        accumulatedARCoreInfo.update(arFrame)
         if (isConnected
             && currentLocation.latitude > 0.0
             && arFrame.camera.trackingState == TrackingState.TRACKING
@@ -236,6 +256,7 @@ class FMLocationManager(private val context: Context) {
                     frameFailureThrottler.restart()
                     true
                 } else {
+                    frameRejectionStatisticsAccumulator.accumulate(result.second)
                     frameFailureThrottler.onNext(result.second)
                     fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
                     false

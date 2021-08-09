@@ -363,6 +363,9 @@ class FMLocationManagerTest {
         fmLocationManager.isConnected = false
 
         val frame = mock(Frame::class.java)
+        val camera = mock(Camera::class.java)
+        `when`(frame.camera).thenReturn(camera)
+        `when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.NONE)
         fmLocationManager.localize(frame)
 
         assertEquals(FMLocationManager.State.STOPPED, fmLocationManager.state)

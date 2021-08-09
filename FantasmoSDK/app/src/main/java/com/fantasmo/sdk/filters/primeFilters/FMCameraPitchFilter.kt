@@ -1,12 +1,12 @@
 package com.fantasmo.sdk.filters.primeFilters
 
 import android.content.Context
-import android.util.Log
 import android.view.Display
 import android.view.Surface
 import android.view.WindowManager
 import com.google.ar.core.Frame
-import kotlin.math.*
+import kotlin.math.asin
+import kotlin.math.atan2
 
 /**
  * Class responsible for filtering frames due to critical angles.

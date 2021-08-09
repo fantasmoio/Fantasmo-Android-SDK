@@ -122,6 +122,7 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
     override fun onStart() {
         super.onStart()
         googleMapView.onStart()
+        val appSessionId = UUID.randomUUID().toString()
 
         try {
             arFragment = childFragmentManager.findFragmentById(R.id.ar_fragment) as ArFragment
@@ -173,7 +174,7 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
                     Log.d(TAG, "LocalizeToggle Enabled")
 
                     // Start getting location updates
-                    fmLocationManager.startUpdatingLocation()
+                    fmLocationManager.startUpdatingLocation(appSessionId)
                 } else {
                     Log.d(TAG, "LocalizeToggle Disabled")
 
