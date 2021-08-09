@@ -107,6 +107,10 @@ class FMApi(
             )
         }
 
+        val imageResolution = getImageResolution(frame)
+        val height = imageResolution.first
+        val width = imageResolution.second
+
         val focalLength = frame.camera.imageIntrinsics.focalLength
         val principalPoint = frame.camera.imageIntrinsics.principalPoint
         val intrinsics = FMIntrinsics(
@@ -178,5 +182,14 @@ class FMApi(
         val result = "DeviceModel: $deviceModel; DeviceOS: $deviceOS; FantasmoSdkVersion: $fantasmoSdkVersion"
         Log.i(TAG, result)
         return result
+    }
+
+    private fun getImageResolution(frame: Frame): Pair<Int,Int> {
+        val cameraImage = frame.acquireCameraImage()
+        val resolution = Pair(cameraImage.height, cameraImage.width)
+        Log.d(TAG, "Image Resolution: $resolution")
+        // Release the image
+        cameraImage.close()
+        return resolution
     }
 }
