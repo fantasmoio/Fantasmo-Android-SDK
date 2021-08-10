@@ -20,6 +20,7 @@ import java.util.*
 class FMLocalizationRequest(
     var isSimulation: Boolean,
     var simulationZone: FMZone.ZoneType,
+    var coordinate: Coordinate,
     var analytics: FMLocalizationAnalytics
 )
 
@@ -68,6 +69,7 @@ class FMApi(
      */
     fun sendLocalizeRequest(
         arFrame: Frame,
+        request: FMLocalizationRequest,
         onCompletion: (com.fantasmo.sdk.models.Location, List<FMZone>) -> Unit,
         onError: (ErrorResponse) -> Unit
     ) {
@@ -76,7 +78,7 @@ class FMApi(
         try {
             fmNetworkManager.uploadImage(
                 FMUtility.getImageDataFromARFrame(context, arFrame),
-                getLocalizeParams(arFrame),
+                getLocalizeParams(arFrame,request),
                 token,
                 {
                     val location = it.location
@@ -126,18 +128,16 @@ class FMApi(
      * @return an HashMap with all the localization parameters.
      */
     private fun getLocalizeParams(
-        frame: Frame
+        frame: Frame,
+        request: FMLocalizationRequest
     ): HashMap<String, String> {
         val pose = FMUtility.getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context, frame)
 
-        val coordinates = if (fmLocationManager.isSimulation) {
+        val coordinates = if (request.isSimulation) {
             val simulationLocation = FMConfiguration.getConfigLocation()
             Coordinate(simulationLocation.latitude, simulationLocation.longitude)
         } else {
-            Coordinate(
-                fmLocationManager.currentLocation.latitude,
-                fmLocationManager.currentLocation.longitude
-            )
+            request.coordinate
         }
 
         val focalLength = frame.camera.imageIntrinsics.focalLength
@@ -148,6 +148,15 @@ class FMApi(
             principalPoint.component2(),
             principalPoint.component1()
         )
+
+        val events = request.analytics.frameEvents
+        val frameEventCounts = hashMapOf<String,String>()
+        frameEventCounts["excessiveTilt"] = events.excessiveTilt.toString()
+        frameEventCounts["excessiveBlur"] = events.excessiveBlur.toString()
+        frameEventCounts["excessiveMotion"] = events.excessiveMotion.toString()
+        frameEventCounts["insufficientFeatures"] = events.insufficientFeatures.toString()
+        frameEventCounts["lossOfTracking"] = events.lossOfTracking.toString()
+        frameEventCounts["total"] = events.total.toString()
 
         val params = hashMapOf<String, String>()
         val gson = Gson()

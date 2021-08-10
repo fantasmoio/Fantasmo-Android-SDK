@@ -11,6 +11,7 @@ import android.util.Log
 import com.fantasmo.sdk.filters.FMBehaviorRequest
 import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterResult
 import com.fantasmo.sdk.filters.FMCompoundFrameQualityFilter
+import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
@@ -154,7 +155,7 @@ class FMLocationManager(private val context: Context) {
      * @param appSessionId: appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
      * @param filtersEnabled: flag that enables frame filtering
      */
-    private fun startUpdatingLocation(appSessionId: String, filtersEnabled : Boolean) {
+    fun startUpdatingLocation(appSessionId: String, filtersEnabled : Boolean) {
         localizationSessionId = UUID.randomUUID().toString()
         this.appSessionId = appSessionId
         Log.d(TAG, "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId")
@@ -233,8 +234,18 @@ class FMLocationManager(private val context: Context) {
                 accumulatedARCoreInfo.translationAccumulator.totalTranslation,
                 motionManager.magneticField
             )
+            val localizeRequest = FMLocalizationRequest(
+                isSimulation,
+                FMZone.ZoneType.PARKING,
+                Coordinate(
+                    currentLocation.latitude,
+                    currentLocation.longitude
+                ),
+                frameAnalytics
+            )
             fmApi.sendLocalizeRequest(
                 arFrame,
+                localizeRequest,
                 { localizeResponse, fmZones ->
                     Log.d(TAG, "localize: $localizeResponse, Zones $fmZones")
                     fmLocationListener?.locationManager(
