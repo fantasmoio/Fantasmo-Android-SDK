@@ -247,7 +247,6 @@ class FMLocationManager(private val context: Context) {
         accumulatedARCoreInfo.update(arFrame)
         if (isConnected
             && currentLocation.latitude > 0.0
-            && arFrame.camera.trackingState == TrackingState.TRACKING
         ) {
             return if(enableFilters){
                 val result = compoundFrameFilter.accepts(arFrame)
