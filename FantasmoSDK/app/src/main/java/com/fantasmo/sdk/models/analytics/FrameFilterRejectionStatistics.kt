@@ -11,9 +11,10 @@ class FrameFilterRejectionStatistics {
     private val TAG = "FrameFilterStatistics"
 
     private var totalFrameCount = 0
-    private var excessiveTiltFrameCount = 0
-    private var excessiveBlurFrameCount = 0
-    private var insufficientMotionFrameCount = 0
+    var excessiveTiltFrameCount = 0
+    var excessiveBlurFrameCount = 0
+    var insufficientMotionFrameCount = 0
+    var insufficientFeatures = 0
 
     /**
      * During shouldLocalize call, frames are filtered from rejected and accepted
@@ -36,10 +37,14 @@ class FrameFilterRejectionStatistics {
             FMFrameFilterFailure.PITCHTOOLOW -> {
                 excessiveTiltFrameCount += 1
             }
+            FMFrameFilterFailure.INSUFFICIENTFEATURES -> {
+                insufficientFeatures += 1
+            }
         }
         Log.d(TAG,"Tilt: $excessiveTiltFrameCount, " +
                 "Blur: $excessiveBlurFrameCount, " +
-                "Motion: $insufficientMotionFrameCount," +
+                "Motion: $insufficientMotionFrameCount, " +
+                "Insufficient Features: $insufficientFeatures, " +
                 "Total: $totalFrameCount")
     }
 
@@ -51,5 +56,6 @@ class FrameFilterRejectionStatistics {
         excessiveTiltFrameCount = 0
         excessiveBlurFrameCount = 0
         insufficientMotionFrameCount = 0
+        insufficientFeatures = 0
     }
 }

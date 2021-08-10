@@ -152,7 +152,7 @@ class FMLocationManager(private val context: Context) {
      * Starts the generation of updates that report the user’s current location
      * enabling FrameFiltering
      * @param appSessionId: appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
-     * @param filtersEnabled: flag that it enables frame filtering
+     * @param filtersEnabled: flag that enables frame filtering
      */
     private fun startUpdatingLocation(appSessionId: String, filtersEnabled : Boolean) {
         localizationSessionId = UUID.randomUUID().toString()
@@ -213,22 +213,24 @@ class FMLocationManager(private val context: Context) {
         coroutineScope.launch {
             state = State.UPLOADING
             val frameEvents = FMFrameEvent(
-                0,
-                0,
+                frameRejectionStatisticsAccumulator.excessiveTiltFrameCount,
+                frameRejectionStatisticsAccumulator.excessiveBlurFrameCount,
                 accumulatedARCoreInfo.trackingStateFrameStatistics.excessiveMotionEventCount,
-                0,
+                frameRejectionStatisticsAccumulator.insufficientFeatures,
                 accumulatedARCoreInfo.trackingStateFrameStatistics.lossOfTrackingEventCount,
                 accumulatedARCoreInfo.trackingStateFrameStatistics.totalNumberOfFrames
             )
             val rotationSpread = FMRotationSpread(
-                0f,0f,0f
+                accumulatedARCoreInfo.rotationAccumulator.pitch[2],
+                accumulatedARCoreInfo.rotationAccumulator.yaw[2],
+                accumulatedARCoreInfo.rotationAccumulator.roll[2]
             )
             val frameAnalytics = FMLocalizationAnalytics(
                 appSessionId,
                 localizationSessionId,
                 frameEvents,
                 rotationSpread,
-                0f,
+                accumulatedARCoreInfo.translationAccumulator.totalTranslation,
                 motionManager.magneticField
             )
             fmApi.sendLocalizeRequest(
@@ -268,7 +270,6 @@ class FMLocationManager(private val context: Context) {
         accumulatedARCoreInfo.update(arFrame)
         if (isConnected
             && currentLocation.latitude > 0.0
-            && arFrame.camera.trackingState == TrackingState.TRACKING
         ) {
             return if(enableFilters){
                 val result = compoundFrameFilter.accepts(arFrame)
