@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import com.fantasmo.sdk.filters.primeFilters.*
+import com.fantasmo.sdk.filters.primeFilters.FMCameraPitchFilter
 import com.google.ar.core.Frame
 
 /**
