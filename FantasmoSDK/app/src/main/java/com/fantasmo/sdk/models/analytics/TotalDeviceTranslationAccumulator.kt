@@ -1,10 +1,8 @@
 package com.fantasmo.sdk.models.analytics
 
-import android.util.Log
+import com.fantasmo.sdk.FMUtility.Companion.distance
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingFailureReason
-import kotlin.math.pow
-import kotlin.math.sqrt
 
 /**
  * Class responsible for tracking total translation movement during the session
@@ -15,7 +13,6 @@ import kotlin.math.sqrt
  */
 class TotalDeviceTranslationAccumulator(private val decimationFactor: Int) {
 
-    private val TAG = "TotalDeviceTranslation"
     // Current value of total translation in meters, which is updated as more frames are passed via `update(`
     var totalTranslation = 0f
 
@@ -42,7 +39,6 @@ class TotalDeviceTranslationAccumulator(private val decimationFactor: Int) {
                 nextFrameToTake += 1
             }
         }
-        Log.d(TAG,"$totalTranslation; Frames Visited: $frameCounter; DecimationFactor: $decimationFactor")
         frameCounter += 1
     }
 
@@ -54,14 +50,5 @@ class TotalDeviceTranslationAccumulator(private val decimationFactor: Int) {
         nextFrameToTake = 0
         previousTranslation = floatArrayOf()
         totalTranslation = 0f
-    }
-
-    // Euclidean distance https://en.wikipedia.org/wiki/Euclidean_distance
-    private fun distance(translation: FloatArray, previousTranslation: FloatArray): Float {
-        return sqrt(
-            (translation[0] - previousTranslation[0]).pow(2) +
-                    (translation[1] - previousTranslation[1]).pow(2) +
-                    (translation[2] - previousTranslation[2]).pow(2)
-        )
     }
 }

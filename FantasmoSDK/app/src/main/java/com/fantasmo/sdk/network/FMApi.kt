@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings.Secure
 import android.util.Log
+import android.view.Surface
 import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
@@ -60,10 +61,6 @@ class FMApi(
 
     private val TAG = "FMApi"
 
-    private var deviceModel: String = ""
-    private var deviceOS: String = ""
-    private var fantasmoSdkVersion = ""
-
     /**
      * Method to build the Localize request.
      */
@@ -73,8 +70,6 @@ class FMApi(
         onCompletion: (com.fantasmo.sdk.models.Location, List<FMZone>) -> Unit,
         onError: (ErrorResponse) -> Unit
     ) {
-        val androidId = Secure.getString(context.contentResolver, Secure.ANDROID_ID)
-        Log.d(TAG,"AndroidId: $androidId")
         try {
             fmNetworkManager.uploadImage(
                 FMUtility.getImageDataFromARFrame(context, arFrame),
@@ -158,6 +153,13 @@ class FMApi(
         frameEventCounts["lossOfTracking"] = events.lossOfTracking.toString()
         frameEventCounts["total"] = events.total.toString()
 
+        val androidId = Secure.getString(context.contentResolver, Secure.ANDROID_ID)
+        val manufacturer = Build.MANUFACTURER // Samsung
+        val model = Build.MODEL  // SM-G780
+        val deviceModel = "$manufacturer $model" // Samsung SM-G780
+        val deviceOsVersion = Build.VERSION.SDK_INT.toString() // "30" (Android 11)
+        val fantasmoSdkVersion = BuildConfig.VERSION_NAME // "1.0.5"
+
         val params = hashMapOf<String, String>()
         val gson = Gson()
         params["capturedAt"] = System.currentTimeMillis().toString()
@@ -165,6 +167,23 @@ class FMApi(
         params["uuid"] = UUID.randomUUID().toString()
         params["coordinate"] = gson.toJson(coordinates)
         params["intrinsics"] = gson.toJson(intrinsics)
+
+        // device characteristics
+        params["udid"] = androidId
+        params["deviceModel"] = deviceModel
+        params["deviceOs"] = "android"
+        params["deviceOsVersion"] = deviceOsVersion
+        params["sdkVersion"] = fantasmoSdkVersion
+
+        // session identifiers
+        params["appSessionId"] = request.analytics.appSessionId
+        params["localizationId"] = request.analytics.localizationSessionId
+
+        // other analytics
+        params["frameEventCounts"] = gson.toJson(frameEventCounts)
+        params["totalDistance"] = request.analytics.totalDistance.toString()
+        params["rotationSpread"] = gson.toJson(request.analytics.rotationSpread)
+        params["magneticData"] = gson.toJson(request.analytics.magneticField)
 
         // calculate and send reference frame if anchoring
         val anchorFrame = fmLocationManager.anchorFrame
@@ -204,21 +223,5 @@ class FMApi(
 
         Log.i(TAG, "getZoneInRadiusParams: $params")
         return params
-    }
-
-    /**
-     * Gathers Device information to send
-     * into the API request
-     * */
-    private fun gatherDeviceCharacteristics(): String {
-        val manufacturer = Build.MANUFACTURER // Samsung
-        val model = Build.MODEL  // SM-G780
-        deviceModel = "$manufacturer $model" // "Samsung SM-G780"
-
-        deviceOS = Build.VERSION.SDK_INT.toString() // "30" (Android 11)
-        fantasmoSdkVersion = BuildConfig.VERSION_NAME // "1.0.5"
-        val result = "DeviceModel: $deviceModel; DeviceOS: $deviceOS; FantasmoSdkVersion: $fantasmoSdkVersion"
-        Log.i(TAG, result)
-        return result
     }
 }

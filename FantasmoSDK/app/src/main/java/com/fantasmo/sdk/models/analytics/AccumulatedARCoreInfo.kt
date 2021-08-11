@@ -8,7 +8,6 @@ import com.google.ar.core.Frame
  */
 class AccumulatedARCoreInfo {
 
-
     var trackingStateFrameStatistics = TrackingStateFrameStatistics()
     var translationAccumulator = TotalDeviceTranslationAccumulator(10)
     var rotationAccumulator = TotalDeviceRotationAccumulator()

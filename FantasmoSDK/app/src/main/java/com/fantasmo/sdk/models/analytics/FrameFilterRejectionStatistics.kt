@@ -1,14 +1,11 @@
 package com.fantasmo.sdk.models.analytics
 
-import android.util.Log
 import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
 
 /**
  * Class responsible for gathering information about frame filtration rejection
  */
 class FrameFilterRejectionStatistics {
-
-    private val TAG = "FrameFilterStatistics"
 
     private var totalFrameCount = 0
     var excessiveTiltFrameCount = 0
@@ -41,11 +38,6 @@ class FrameFilterRejectionStatistics {
                 insufficientFeatures += 1
             }
         }
-        Log.d(TAG,"Tilt: $excessiveTiltFrameCount, " +
-                "Blur: $excessiveBlurFrameCount, " +
-                "Motion: $insufficientMotionFrameCount, " +
-                "Insufficient Features: $insufficientFeatures, " +
-                "Total: $totalFrameCount")
     }
 
     /**
