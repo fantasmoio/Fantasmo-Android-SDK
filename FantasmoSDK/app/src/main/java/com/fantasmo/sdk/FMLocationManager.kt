@@ -154,7 +154,7 @@ class FMLocationManager(private val context: Context) {
      * @param appSessionId: appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
      * @param filtersEnabled: flag that enables frame filtering
      */
-    fun startUpdatingLocation(appSessionId: String, filtersEnabled : Boolean) {
+    private fun startUpdatingLocation(appSessionId: String, filtersEnabled : Boolean) {
         localizationSessionId = UUID.randomUUID().toString()
         this.appSessionId = appSessionId
         Log.d(TAG, "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId")
