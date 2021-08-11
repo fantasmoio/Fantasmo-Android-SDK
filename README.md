@@ -107,7 +107,7 @@ To have location updates, the client app must update the device GPS coordinates 
     
 To start location updates, the client must also provide an `appSessionId`, which is an identifier that will be used for billing and tracking an entire parking session:
 
-    fmLocationManager.startUpdatingLocation(appSessionId) 
+    fmLocationManager.startUpdatingLocation(appSessionId: String) 
 
 Image frames will be continuously captured and sent to the server for localization.
 
