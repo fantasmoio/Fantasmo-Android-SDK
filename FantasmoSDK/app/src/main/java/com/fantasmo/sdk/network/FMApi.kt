@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings.Secure
 import android.util.Log
-import android.view.Surface
 import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
@@ -18,6 +17,9 @@ import com.google.ar.core.Frame
 import com.google.gson.Gson
 import java.util.*
 
+/**
+ * Class to hold a LocalizationRequest
+ */
 class FMLocalizationRequest(
     var isSimulation: Boolean,
     var simulationZone: FMZone.ZoneType,
@@ -25,6 +27,9 @@ class FMLocalizationRequest(
     var analytics: FMLocalizationAnalytics
 )
 
+/**
+ * Class to hold all the Localization Analytics
+ */
 class FMLocalizationAnalytics(
     var appSessionId: String,
     var localizationSessionId: String,
@@ -34,6 +39,9 @@ class FMLocalizationAnalytics(
     var magneticField: MagneticField
 )
 
+/**
+ * Class to hold all the frame events during a localization session
+ */
 class FMFrameEvent(
     var excessiveTilt: Int,
     var excessiveBlur: Int,
@@ -43,6 +51,9 @@ class FMFrameEvent(
     var total: Int
 )
 
+/**
+ * Class to hold rotation spread during a localization session
+ */
 class FMRotationSpread(
     var pitch: Float,
     var yaw: Float,

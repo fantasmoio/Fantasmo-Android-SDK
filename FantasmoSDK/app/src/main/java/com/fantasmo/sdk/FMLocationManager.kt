@@ -21,7 +21,6 @@ import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.*
 import com.fantasmo.sdk.utilities.FrameFailureThrottler
 import com.google.ar.core.Frame
-import com.google.ar.core.TrackingState
 import kotlinx.coroutines.*
 import java.util.*
 
@@ -213,36 +212,7 @@ class FMLocationManager(private val context: Context) {
         Log.d(TAG, "localize: isSimulation $isSimulation")
         coroutineScope.launch {
             state = State.UPLOADING
-            val frameEvents = FMFrameEvent(
-                frameRejectionStatisticsAccumulator.excessiveTiltFrameCount,
-                frameRejectionStatisticsAccumulator.excessiveBlurFrameCount,
-                accumulatedARCoreInfo.trackingStateFrameStatistics.excessiveMotionEventCount,
-                frameRejectionStatisticsAccumulator.insufficientFeatures,
-                accumulatedARCoreInfo.trackingStateFrameStatistics.lossOfTrackingEventCount,
-                accumulatedARCoreInfo.trackingStateFrameStatistics.totalNumberOfFrames
-            )
-            val rotationSpread = FMRotationSpread(
-                accumulatedARCoreInfo.rotationAccumulator.pitch[2],
-                accumulatedARCoreInfo.rotationAccumulator.yaw[2],
-                accumulatedARCoreInfo.rotationAccumulator.roll[2]
-            )
-            val frameAnalytics = FMLocalizationAnalytics(
-                appSessionId,
-                localizationSessionId,
-                frameEvents,
-                rotationSpread,
-                accumulatedARCoreInfo.translationAccumulator.totalTranslation,
-                motionManager.magneticField
-            )
-            val localizeRequest = FMLocalizationRequest(
-                isSimulation,
-                FMZone.ZoneType.PARKING,
-                Coordinate(
-                    currentLocation.latitude,
-                    currentLocation.longitude
-                ),
-                frameAnalytics
-            )
+            val localizeRequest = createLocalizationRequest()
             fmApi.sendLocalizeRequest(
                 arFrame,
                 localizeRequest,
@@ -262,6 +232,42 @@ class FMLocationManager(private val context: Context) {
                     updateStateAfterLocalization()
                 })
         }
+    }
+
+    /**
+     * Gather all the information needed to assemble a LocalizationRequest
+     */
+    private fun createLocalizationRequest(): FMLocalizationRequest {
+        val frameEvents = FMFrameEvent(
+            frameRejectionStatisticsAccumulator.excessiveTiltFrameCount,
+            frameRejectionStatisticsAccumulator.excessiveBlurFrameCount,
+            accumulatedARCoreInfo.trackingStateFrameStatistics.excessiveMotionEventCount,
+            frameRejectionStatisticsAccumulator.insufficientFeatures,
+            accumulatedARCoreInfo.trackingStateFrameStatistics.lossOfTrackingEventCount,
+            accumulatedARCoreInfo.trackingStateFrameStatistics.totalNumberOfFrames
+        )
+        val rotationSpread = FMRotationSpread(
+            accumulatedARCoreInfo.rotationAccumulator.pitch[2],
+            accumulatedARCoreInfo.rotationAccumulator.yaw[2],
+            accumulatedARCoreInfo.rotationAccumulator.roll[2]
+        )
+        val frameAnalytics = FMLocalizationAnalytics(
+            appSessionId,
+            localizationSessionId,
+            frameEvents,
+            rotationSpread,
+            accumulatedARCoreInfo.translationAccumulator.totalTranslation,
+            motionManager.magneticField
+        )
+        return FMLocalizationRequest(
+            isSimulation,
+            FMZone.ZoneType.PARKING,
+            Coordinate(
+                currentLocation.latitude,
+                currentLocation.longitude
+            ),
+            frameAnalytics
+        )
     }
 
     /**
