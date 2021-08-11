@@ -1,6 +1,7 @@
 package com.fantasmo.sdk.utilities
 
 
+import android.util.Log
 import com.fantasmo.sdk.FMLocationResult
 import com.fantasmo.sdk.FMResultConfidence
 import com.fantasmo.sdk.models.FMZone
@@ -9,6 +10,7 @@ import kotlin.math.sqrt
 
 class LocationFuser {
 
+    private val TAG = "LocationFuser"
     private var locations = mutableListOf<Location>()
 
     fun reset() {
@@ -25,12 +27,12 @@ class LocationFuser {
             val variance = LocationFuserExtension.populationVariance(locations)
 
             when (sqrt(variance)){
+                // within 15cm
                 in 0.0..0.15->{
-                    // within 15cm
                     FMResultConfidence.HIGH
                 }
+                // within 50cm
                 in 0.15..0.5->{
-                    // within 50cm
                     FMResultConfidence.MEDIUM
                 }
                 else -> FMResultConfidence.LOW
@@ -64,8 +66,8 @@ class LocationFuser {
     /**
      * Method responsible to fuse locations in order to
      * improve accuracy during localization session
-     * @param location: Location
-     * @param zones: List of FMZones
+     * @param location: New location to be combined with previous observations
+     * @param zones: List of FMZones at this Location
      * @return FMLocationResult obtained from location fuse
      */
     fun fusedResult(location: Location, zones: List<FMZone>): FMLocationResult {
@@ -74,6 +76,11 @@ class LocationFuser {
         val inliers = LocationFuserExtension.classifyInliers(locations)
         val median = LocationFuserExtension.geometricMedian(inliers)
         val confidence = confidence(locations)
+
+        if(median.coordinate.latitude.isNaN() || median.coordinate.longitude.isNaN()){
+            Log.e(TAG,"Image fusion error encountered!")
+            return FMLocationResult(location, confidence, zones)
+        }
 
         return FMLocationResult(median, confidence, zones)
     }

@@ -103,7 +103,7 @@ class LocationFuserExtension {
             while (!convergence && iteration < maxIterations) {
                 var x = 0.0
                 var y = 0.0
-                var denominator = 0.0
+                var denominator = 0.0 // Weiszfeld denominator
                 var sumSquareD = 0.0
                 for (location in locations) {
                     val distance = degreeDistance(location, centroid)
@@ -111,14 +111,19 @@ class LocationFuserExtension {
                     y += location.coordinate.longitude / distance
                     denominator += 1.0 / distance
                     sumSquareD += distance * distance
+
+                    if(distance.isNaN() || distance == 0.0 || denominator.isInfinite() || denominator.isNaN()){
+                        Log.e(TAG,"Could not compute median due to numerical instability!")
+                        return centroid
+                    }
                 }
                 distances.add(sumSquareD)
 
                 if (denominator == 0.0) {
-                    Log.d(TAG, "Couldn't compute a geometric median")
-                    val coordinate = Coordinate(0.0, 0.0)
-                    return Location(0, coordinate, 0, 0, 0, 0)
+                    Log.d(TAG, "Could not compute median due to denominator")
+                    return centroid
                 }
+
                 // Update to the new value of the median
                 centroid.coordinate.latitude = x / denominator
                 centroid.coordinate.longitude = y / denominator
@@ -133,6 +138,8 @@ class LocationFuserExtension {
             // When convergence or iterations limit is reached we assume that we found the median.
             if (iteration == maxIterations) {
                 Log.e(TAG, "Median did not converge after $maxIterations iterations!")
+                val coordinate = Coordinate(Double.NaN, Double.NaN)
+                return Location(0, coordinate, 0, 0, 0, 0)
             }
 
             Log.d(TAG, "ResultFromGeometricMedian: $centroid")
