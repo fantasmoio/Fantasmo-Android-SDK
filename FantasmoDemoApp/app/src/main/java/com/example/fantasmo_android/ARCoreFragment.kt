@@ -254,14 +254,14 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
             }
 
             @SuppressLint("SetTextI18n")
-            override fun locationManager(location: FMLocationResult) {
-                Log.d(TAG, location.location.toString())
+            override fun locationManager(result: FMLocationResult) {
+                Log.d(TAG, result.location.toString())
                 activity?.runOnUiThread {
                     serverCoordinatesTv.text =
-                        "Server Lat: ${location.location.coordinate.latitude}, Long: ${location.location.coordinate.longitude}"
+                        "Server Lat: ${result.location.coordinate.latitude}, Long: ${result.location.coordinate.longitude}"
                     addCorrespondingMarkersToMap(
-                        location.location.coordinate.latitude,
-                        location.location.coordinate.longitude
+                        result.location.coordinate.latitude,
+                        result.location.coordinate.longitude
                     )
                 }
             }
