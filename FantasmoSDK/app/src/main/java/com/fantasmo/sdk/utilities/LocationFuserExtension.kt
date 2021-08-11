@@ -54,7 +54,7 @@ class LocationFuserExtension {
             val average = geometricMean(locations)
             val numerator = reduce(locations, average)
 
-            return numerator / size
+            return numerator / (size.toDouble())
         }
 
         /**
@@ -67,7 +67,7 @@ class LocationFuserExtension {
             val maxIterations = 200
             // Prevent from throwing convergence error when there's no location
             if (locations.isEmpty()) {
-                Log.e(TAG, "Empty List")
+                Log.e(TAG, "Empty List. Could not compute median!")
                 val coordinate = Coordinate(Double.NaN, Double.NaN)
                 return Location(0, coordinate, 0, 0, 0, 0)
             }
@@ -84,23 +84,21 @@ class LocationFuserExtension {
 
             val perturbation = 0.1
             // If the init point is in the set of points, shift it
-            for (location in locations) {
-                if (location.coordinate.latitude == centroid.coordinate.latitude &&
-                    location.coordinate.longitude == centroid.coordinate.longitude
-                ) {
-                    centroid.coordinate.latitude += perturbation
-                    centroid.coordinate.longitude += perturbation
-                }
+            val locationsFiltered = locations.filter { it.coordinate.latitude == centroid.coordinate.latitude
+                    && it.coordinate.longitude == centroid.coordinate.longitude}
+            for (location in locationsFiltered) {
+                centroid.coordinate.latitude += perturbation
+                centroid.coordinate.longitude += perturbation
             }
 
             // Boolean testing the convergence toward a global optimum
-            var convergence = false
+            var converged = false
             // List recording the distance evolution
             val distances = mutableListOf<Double>()
             // Number of iterations
             var iteration = 0
             val epsilon = 0.000001 // ≈ 0.11 m, used for convergence test
-            while (!convergence && iteration < maxIterations) {
+            while (!converged && iteration < maxIterations) {
                 var x = 0.0
                 var y = 0.0
                 var denominator = 0.0 // Weiszfeld denominator
@@ -130,7 +128,7 @@ class LocationFuserExtension {
 
                 // Test the convergence over three steps for stability
                 if (iteration > 3) {
-                    convergence = abs(distances[iteration] - distances[iteration - 2]) < epsilon
+                    converged = abs(distances[iteration] - distances[iteration - 2]) < epsilon
                 }
                 iteration++
             }
@@ -163,12 +161,7 @@ class LocationFuserExtension {
                 distances.add(distance)
             }
 
-            val distanceMedian = median(distances)
-            return if (distanceMedian != 0.0) {
-                distanceMedian
-            } else {
-                Double.NaN
-            }
+            return median(distances)
         }
 
         /**
