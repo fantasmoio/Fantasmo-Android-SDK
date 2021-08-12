@@ -22,13 +22,15 @@ class FMCameraPitchTest {
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
-                (-0.982).toFloat(),
-                (-0.93).toFloat(),
+                -0.982F,
+                -0.93F,
                 0.6F
             ),
             floatArrayOf(
-                0.15F, 0.03F, 0.5F,
-                (-0.005).toFloat()
+                -0.024842054F,
+                0.0032415544F,
+                0.004167135F,
+                0.9996774F,
             )
         )
         val pose2 = Mockito.mock(Pose::class.java)
