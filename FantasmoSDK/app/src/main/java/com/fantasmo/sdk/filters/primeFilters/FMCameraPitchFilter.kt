@@ -4,8 +4,9 @@ import android.content.Context
 import android.view.Display
 import android.view.Surface
 import android.view.WindowManager
+import com.fantasmo.sdk.FMUtility.Companion.convertQuaternionToEuler
+import com.fantasmo.sdk.FMUtility.Companion.convertToDegrees
 import com.google.ar.core.Frame
-import kotlin.math.abs
 
 /**
  * Class responsible for filtering frames due to critical angles.
@@ -13,8 +14,10 @@ import kotlin.math.abs
  * to determine location
  */
 class FMCameraPitchFilter(private val context: Context) : FMFrameFilter {
-    // Maximum value for tilting phone up or down
-    private val radianThreshold = 0.16
+
+    // Maximum values for tilting phone up or down
+    private val lookDownThreshold = -65.0 // In degrees
+    private val lookUpThreshold = 30.0 // In degrees
 
     /**
      * Check frame acceptance.
@@ -22,10 +25,10 @@ class FMCameraPitchFilter(private val context: Context) : FMFrameFilter {
      * @return Accepts frame or Rejects frame with PitchTooHigh or PitchTooLow failure
      */
     override fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
-        // Angle of X-plane of virtual camera pose
-        val xOrientedAngle = arFrame.camera.displayOrientedPose.rotationQuaternion[0]
-        // Angle of X-plane of device sensor system
-        val xSensorAngle = arFrame.androidSensorPose.rotationQuaternion[0]
+        // RotationQuaternion virtual camera pose
+        val orientedQuaternion = arFrame.camera.displayOrientedPose.rotationQuaternion
+        // RotationQuaternion from device sensor system
+        val sensorQuaternion = arFrame.androidSensorPose.rotationQuaternion
 
         val rotation: Int = try {
             context.display?.rotation!!
@@ -38,19 +41,19 @@ class FMCameraPitchFilter(private val context: Context) : FMFrameFilter {
         return when (rotation) {
             // SCREEN_ORIENTATION_REVERSE_LANDSCAPE
             Surface.ROTATION_270 -> {
-                return checkTilt(xOrientedAngle,1)
+                return checkTilt(orientedQuaternion, 1)
             }
             // SCREEN_ORIENTATION_LANDSCAPE
             Surface.ROTATION_90 -> {
-                return checkTilt(xOrientedAngle,1)
+                return checkTilt(orientedQuaternion, 1)
             }
             // SCREEN_ORIENTATION_PORTRAIT
             Surface.ROTATION_0 -> {
-                return checkTilt(xSensorAngle,-1)
+                return checkTilt(sensorQuaternion, -1)
             }
             // SCREEN_ORIENTATION_REVERSE_PORTRAIT
             Surface.ROTATION_180 -> {
-                return checkTilt(xSensorAngle,-1)
+                return checkTilt(sensorQuaternion, -1)
             }
             else -> {
                 Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
@@ -60,18 +63,25 @@ class FMCameraPitchFilter(private val context: Context) : FMFrameFilter {
 
     /**
      * Verifies if tilt angle is acceptable, high or low
-     * @param xAngle: tilt angle value
+     * @param rotationQuaternion: rotation quaternion correspondent to rotation of the device
      * @param orientationSign: device orientation
      * @return Pair<FMFrameFilterResult, FMFrameFilterFailure>
      * */
-    private fun checkTilt(xAngle: Float, orientationSign: Int): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
+    private fun checkTilt(
+        rotationQuaternion: FloatArray,
+        orientationSign: Int
+    ): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
+        val eulerAngles = convertToDegrees(convertQuaternionToEuler(rotationQuaternion))
         return when {
-            abs(xAngle) <= radianThreshold -> {
+            // If it's looking Up or Down and it's in threshold
+            (eulerAngles[2] in lookDownThreshold..lookUpThreshold) -> {
                 Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
             }
-            xAngle * orientationSign < 0 -> {
+            // If it's looking Up
+            rotationQuaternion[0] * orientationSign < 0 -> {
                 Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.PITCHTOOHIGH)
             }
+            // Else it's looking Down
             else -> {
                 Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.PITCHTOOLOW)
             }

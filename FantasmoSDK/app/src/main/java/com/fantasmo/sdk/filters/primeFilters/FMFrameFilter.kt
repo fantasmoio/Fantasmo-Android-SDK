@@ -15,6 +15,7 @@ enum class FMFrameFilterFailure {
     PITCHTOOHIGH,
     MOVINGTOOFAST,
     MOVINGTOOLITTLE,
+    INSUFFICIENTFEATURES,
     ACCEPTED
 }
 
@@ -34,6 +35,7 @@ fun mapToBehaviourRequest(rejection: FMFrameFilterFailure): FMBehaviorRequest {
         FMFrameFilterFailure.PITCHTOOHIGH -> FMBehaviorRequest.TILTDOWN
         FMFrameFilterFailure.MOVINGTOOFAST -> FMBehaviorRequest.PANSLOWLY
         FMFrameFilterFailure.MOVINGTOOLITTLE -> FMBehaviorRequest.PANAROUND
+        FMFrameFilterFailure.INSUFFICIENTFEATURES -> FMBehaviorRequest.PANAROUND
         else -> FMBehaviorRequest.ACCEPTED
     }
 }

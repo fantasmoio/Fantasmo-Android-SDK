@@ -154,6 +154,65 @@ class FMUtility {
             )
             return byteArrayOutputStream.toByteArray()
         }
+
+        /**
+         * Converts Quaternion to Euler Angles
+         * Source: https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
+         * @param rotationQuaternion: rotation quaternion correspondent to rotation of the device
+         * */
+        fun convertQuaternionToEuler(rotationQuaternion: FloatArray): FloatArray {
+            val qw = rotationQuaternion[3]
+            val qx = rotationQuaternion[0]
+            val qy = rotationQuaternion[1]
+            val qz = rotationQuaternion[2]
+
+            val yaw: Float
+            val pitch: Float
+            val roll: Float
+
+            val sqw = qw * qw
+            val sqx = qx * qx
+            val sqy = qy * qy
+            val sqz = qz * qz
+
+            val unit = sqx + sqy + sqz + sqw // if normalised is one, otherwise is correction factor
+            val test = qx * qy + qz * qw
+            if (test > 0.499 * unit) { // singularity at north pole
+                yaw = (2 * atan2(qx, qw))
+                pitch = (Math.PI / 2).toFloat()
+                roll = 0f
+                return floatArrayOf(yaw, pitch, roll)
+            }
+            if (test < -0.499 * unit) { // singularity at south pole
+                yaw = (-2 * atan2(qx, qw))
+                pitch = (-Math.PI / 2).toFloat()
+                roll = 0f
+                return floatArrayOf(yaw, pitch, roll)
+            }
+
+            //Values are in radians
+            yaw = atan2(2 * qy * qw - 2 * qx * qz, sqx - sqy - sqz + sqw)
+            pitch = kotlin.math.asin(2 * test / unit)
+            roll = atan2(2 * qx * qw - 2 * qy * qz, -sqx + sqy - sqz + sqw)
+
+            return floatArrayOf(yaw, pitch, roll)
+        }
+
+        fun convertToDegrees(eulerAngles: FloatArray): FloatArray {
+            eulerAngles[0] = Math.toDegrees(eulerAngles[0].toDouble()).toFloat()
+            eulerAngles[1] = Math.toDegrees(eulerAngles[1].toDouble()).toFloat()
+            eulerAngles[2] = Math.toDegrees(eulerAngles[2].toDouble()).toFloat()
+            return eulerAngles
+        }
+
+        // Euclidean distance https://en.wikipedia.org/wiki/Euclidean_distance
+        fun distance(translation: FloatArray, previousTranslation: FloatArray): Float {
+            return sqrt(
+                (translation[0] - previousTranslation[0]).pow(2) +
+                        (translation[1] - previousTranslation[1]).pow(2) +
+                        (translation[2] - previousTranslation[2]).pow(2)
+            )
+        }
     }
 
     object Constants {
