@@ -132,7 +132,7 @@ Location events are provided through `FMLocationListener`.
 
 ### Behaviors
 
-To maximize localization quality, camera input is filtered against common problems. The designated FMLocationListener will be called with behavior requests intended to alleviate such problems
+To maximize localization quality, camera input is filtered against common problems. The designated `FMLocationListener` will be called with behavior requests intended to alleviate such problems.
 
     private val fmLocationListener: FMLocationListener = {
         object : FMLocationListener {
