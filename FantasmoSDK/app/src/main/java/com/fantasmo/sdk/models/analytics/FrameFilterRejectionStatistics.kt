@@ -1,6 +1,5 @@
 package com.fantasmo.sdk.models.analytics
 
-import android.util.Log
 import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
 
 /**
@@ -8,13 +7,11 @@ import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
  */
 class FrameFilterRejectionStatistics {
 
-    private val TAG = "FrameFilterStatistics"
-
     private var totalFrameCount = 0
-    private var excessiveTiltFrameCount = 0
-    private var excessiveBlurFrameCount = 0
-    private var insufficientMotionFrameCount = 0
-    private var insufficientFeatures = 0
+    var excessiveTiltFrameCount = 0
+    var excessiveBlurFrameCount = 0
+    var insufficientMotionFrameCount = 0
+    var insufficientFeatures = 0
 
     /**
      * During shouldLocalize call, frames are filtered from rejected and accepted
@@ -41,11 +38,6 @@ class FrameFilterRejectionStatistics {
                 insufficientFeatures += 1
             }
         }
-        Log.d(TAG,"Tilt: $excessiveTiltFrameCount, " +
-                "Blur: $excessiveBlurFrameCount, " +
-                "Motion: $insufficientMotionFrameCount, " +
-                "Insufficient Features: $insufficientFeatures, " +
-                "Total: $totalFrameCount")
     }
 
     /**

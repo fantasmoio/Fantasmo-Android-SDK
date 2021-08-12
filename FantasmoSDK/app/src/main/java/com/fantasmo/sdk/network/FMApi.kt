@@ -2,6 +2,7 @@ package com.fantasmo.sdk.network
 
 import android.content.Context
 import android.os.Build
+import android.provider.Settings.Secure
 import android.util.Log
 import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.FMLocationManager
@@ -11,9 +12,53 @@ import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMIntrinsics
 import com.fantasmo.sdk.models.FMZone
+import com.fantasmo.sdk.models.analytics.MagneticField
 import com.google.ar.core.Frame
 import com.google.gson.Gson
 import java.util.*
+
+/**
+ * Class to hold a LocalizationRequest
+ */
+class FMLocalizationRequest(
+    var isSimulation: Boolean,
+    var simulationZone: FMZone.ZoneType,
+    var coordinate: Coordinate,
+    var analytics: FMLocalizationAnalytics
+)
+
+/**
+ * Class to hold all the Localization Analytics
+ */
+class FMLocalizationAnalytics(
+    var appSessionId: String,
+    var localizationSessionId: String,
+    var frameEvents: FMFrameEvent,
+    var rotationSpread: FMRotationSpread,
+    var totalDistance: Float,
+    var magneticField: MagneticField
+)
+
+/**
+ * Class to hold all the frame events during a localization session
+ */
+class FMFrameEvent(
+    var excessiveTilt: Int,
+    var excessiveBlur: Int,
+    var excessiveMotion: Int,
+    var insufficientFeatures: Int,
+    var lossOfTracking: Int,
+    var total: Int
+)
+
+/**
+ * Class to hold rotation spread during a localization session
+ */
+class FMRotationSpread(
+    var pitch: Float,
+    var yaw: Float,
+    var roll: Float
+)
 
 /**
  * Class to hold the necessary logic to communicate with Fantasmo API.
@@ -25,25 +70,21 @@ class FMApi(
     private val token: String,
 ) {
 
-
     private val TAG = "FMApi"
-
-    private var deviceModel: String = ""
-    private var deviceOS: String = ""
-    private var fantasmoSdkVersion = ""
 
     /**
      * Method to build the Localize request.
      */
     fun sendLocalizeRequest(
         arFrame: Frame,
+        request: FMLocalizationRequest,
         onCompletion: (com.fantasmo.sdk.models.Location, List<FMZone>) -> Unit,
         onError: (ErrorResponse) -> Unit
     ) {
         try {
             fmNetworkManager.uploadImage(
                 FMUtility.getImageDataFromARFrame(context, arFrame),
-                getLocalizeParams(arFrame),
+                getLocalizeParams(arFrame,request),
                 token,
                 {
                     val location = it.location
@@ -93,18 +134,16 @@ class FMApi(
      * @return an HashMap with all the localization parameters.
      */
     private fun getLocalizeParams(
-        frame: Frame
+        frame: Frame,
+        request: FMLocalizationRequest
     ): HashMap<String, String> {
         val pose = FMUtility.getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context, frame)
 
-        val coordinates = if (fmLocationManager.isSimulation) {
+        val coordinates = if (request.isSimulation) {
             val simulationLocation = FMConfiguration.getConfigLocation()
             Coordinate(simulationLocation.latitude, simulationLocation.longitude)
         } else {
-            Coordinate(
-                fmLocationManager.currentLocation.latitude,
-                fmLocationManager.currentLocation.longitude
-            )
+            request.coordinate
         }
 
         val focalLength = frame.camera.imageIntrinsics.focalLength
@@ -116,6 +155,22 @@ class FMApi(
             principalPoint.component1()
         )
 
+        val events = request.analytics.frameEvents
+        val frameEventCounts = hashMapOf<String,String>()
+        frameEventCounts["excessiveTilt"] = events.excessiveTilt.toString()
+        frameEventCounts["excessiveBlur"] = events.excessiveBlur.toString()
+        frameEventCounts["excessiveMotion"] = events.excessiveMotion.toString()
+        frameEventCounts["insufficientFeatures"] = events.insufficientFeatures.toString()
+        frameEventCounts["lossOfTracking"] = events.lossOfTracking.toString()
+        frameEventCounts["total"] = events.total.toString()
+
+        val androidId = Secure.getString(context.contentResolver, Secure.ANDROID_ID)
+        val manufacturer = Build.MANUFACTURER // Samsung
+        val model = Build.MODEL  // SM-G780
+        val deviceModel = "$manufacturer $model" // Samsung SM-G780
+        val deviceOsVersion = Build.VERSION.SDK_INT.toString() // "30" (Android 11)
+        val fantasmoSdkVersion = BuildConfig.VERSION_NAME // "1.0.5"
+
         val params = hashMapOf<String, String>()
         val gson = Gson()
         params["capturedAt"] = System.currentTimeMillis().toString()
@@ -123,6 +178,23 @@ class FMApi(
         params["uuid"] = UUID.randomUUID().toString()
         params["coordinate"] = gson.toJson(coordinates)
         params["intrinsics"] = gson.toJson(intrinsics)
+
+        // device characteristics
+        params["udid"] = androidId
+        params["deviceModel"] = deviceModel
+        params["deviceOs"] = "android"
+        params["deviceOsVersion"] = deviceOsVersion
+        params["sdkVersion"] = fantasmoSdkVersion
+
+        // session identifiers
+        params["appSessionId"] = request.analytics.appSessionId
+        params["localizationId"] = request.analytics.localizationSessionId
+
+        // other analytics
+        params["frameEventCounts"] = gson.toJson(frameEventCounts)
+        params["totalDistance"] = request.analytics.totalDistance.toString()
+        params["rotationSpread"] = gson.toJson(request.analytics.rotationSpread)
+        params["magneticData"] = gson.toJson(request.analytics.magneticField)
 
         // calculate and send reference frame if anchoring
         val anchorFrame = fmLocationManager.anchorFrame
@@ -162,21 +234,5 @@ class FMApi(
 
         Log.i(TAG, "getZoneInRadiusParams: $params")
         return params
-    }
-
-    /**
-     * Gathers Device information to send
-     * into the API request
-     * */
-    private fun gatherDeviceCharacteristics(): String {
-        val manufacturer = Build.MANUFACTURER // Samsung
-        val model = Build.MODEL  // SM-G780
-        deviceModel = "$manufacturer $model" // "Samsung SM-G780"
-
-        deviceOS = Build.VERSION.SDK_INT.toString() // "30" (Android 11)
-        fantasmoSdkVersion = BuildConfig.VERSION_NAME // "1.0.5"
-        val result = "DeviceModel: $deviceModel; DeviceOS: $deviceOS; FantasmoSdkVersion: $fantasmoSdkVersion"
-        Log.i(TAG, result)
-        return result
     }
 }

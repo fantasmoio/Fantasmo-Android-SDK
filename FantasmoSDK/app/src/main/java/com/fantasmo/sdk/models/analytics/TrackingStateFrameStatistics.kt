@@ -1,6 +1,5 @@
 package com.fantasmo.sdk.models.analytics
 
-import android.util.Log
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingFailureReason
 
@@ -9,18 +8,16 @@ import com.google.ar.core.TrackingFailureReason
  */
 class TrackingStateFrameStatistics {
 
-    private val TAG = "TrackingStateFrameStats"
-
-    private var totalNumberOfFrames: Int = 0
+    var totalNumberOfFrames: Int = 0
 
     // Number of events where the frames captured have a normal tracking state
-    private var normalEventCount: Int = 0
+    var normalEventCount: Int = 0
 
     // Number of events where the excessive motion callback is received from ARKit/ARCore.
-    private var excessiveMotionEventCount: Int = 0
+    var excessiveMotionEventCount: Int = 0
 
     // Number of events where the loss of tracking callback is received from ARKit/ARCore
-    private var lossOfTrackingEventCount: Int = 0
+    var lossOfTrackingEventCount: Int = 0
 
     /**
      * Resets counters on new startUpdatingLocation call
@@ -66,11 +63,5 @@ class TrackingStateFrameStatistics {
                 normalEventCount += 1
             }
         }
-        Log.d(
-            TAG, "ExcessiveMotion: $excessiveMotionEventCount\n" +
-                    "LossOfTracking: $lossOfTrackingEventCount\n" +
-                    "NormalEvent: $normalEventCount\n" +
-                    "TotalFrames: $totalNumberOfFrames"
-        )
     }
 }
