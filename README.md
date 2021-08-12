@@ -73,7 +73,7 @@ Try out the `FantasmoDemoApp` project or implement the code below.
                 // Handle error
             }
 
-            override fun locationManager(location: Location, zones: List<FMZone>?) {
+            override fun locationManager(result: FMLocationResult) {
                 // Handle location update
             }
         }
