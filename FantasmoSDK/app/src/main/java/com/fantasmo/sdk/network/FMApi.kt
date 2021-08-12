@@ -150,6 +150,9 @@ class FMApi(
 
         val height = frame.camera.imageIntrinsics.imageDimensions[0]
         val width = frame.camera.imageIntrinsics.imageDimensions[1]
+        val resolution = hashMapOf<String,Int>()
+        resolution["height"] = height
+        resolution["width"] = width
 
         val focalLength = frame.camera.imageIntrinsics.focalLength
         val principalPoint = frame.camera.imageIntrinsics.principalPoint
@@ -158,18 +161,6 @@ class FMApi(
             focalLength.component2(),
             principalPoint.component2(),
             principalPoint.component1()
-        )
-
-        val intrinsics2 = FMIntrinsics(
-            arrayOf(
-                arrayOf(focalLength.component1(),focalLength.component2()),
-                arrayOf(principalPoint.component2(),principalPoint.component1())
-            ),
-            FMUtility.Constants.ImageScaleFactor.toFloat(),
-            getDeviceOrientation(),
-            0,
-            width,
-            height,
         )
 
         val events = request.analytics.frameEvents
@@ -195,6 +186,7 @@ class FMApi(
         params["uuid"] = UUID.randomUUID().toString()
         params["coordinate"] = gson.toJson(coordinates)
         params["intrinsics"] = gson.toJson(intrinsics)
+        params["imageResolution"] = gson.toJson(resolution)
 
         // device characteristics
         params["udid"] = androidId
@@ -251,15 +243,5 @@ class FMApi(
 
         Log.i(TAG, "getZoneInRadiusParams: $params")
         return params
-    }
-
-    private fun getDeviceOrientation(): Int {
-        return try {
-            context.display?.rotation!!
-        } catch (exception: UnsupportedOperationException) {
-            val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-            val display: Display = wm.defaultDisplay
-            display.rotation
-        }
     }
 }
