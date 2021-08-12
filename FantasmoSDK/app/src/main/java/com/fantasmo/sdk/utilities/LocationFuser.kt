@@ -35,6 +35,7 @@ class LocationFuser {
                 in 0.15..0.5->{
                     FMResultConfidence.MEDIUM
                 }
+                // more than 50 cm
                 else -> FMResultConfidence.LOW
             }
         }else FMResultConfidence.LOW
