@@ -142,6 +142,37 @@ Location events are provided through `FMLocationListener`. Confidence in the loc
             }
         }
 
+### Behaviors
+
+To maximize localization quality, camera input is filtered against common problems. Camera input filtering, tests each frame against ARCore tracking issues, extreme camera tilt angles, blurred images and fast and slow motion by the user. In order to enable this feature, you should start localizing using the following call. By entering `true` value on `filtersEnabled` it will enable the behaviors described below. 
+
+    // Start getting location updates
+    fmLocationManager.startUpdatingLocation(appSessionId: String, filtersEnabled: Boolean)
+
+
+The designated `FMLocationListener` will be called with behavior requests intended to alleviate such problems.
+
+    private val fmLocationListener: FMLocationListener = {
+        object : FMLocationListener {
+            fun locationManager(didRequestBehavior: FMBehaviorRequest){
+                // Handle behavior update
+            }
+        }
+    }
+
+
+The following behaviors are currently requested:
+
+    enum class FMBehaviorRequest(val displayName: String) {
+        TILTUP("Tilt your device up"),
+        TILTDOWN("Tilt your device down"),
+        PANAROUND("Pan around the scene"),
+        PANSLOWLY("Pan more slowly"),
+        ACCEPTED("Accepted");
+    }
+
+When notified, your application should prompt the user to undertake the remedial behavior. You may use our enum cases to map to your own verbiage or simply rely on our `.rawValue` strings.
+
 ### Anchors
 
 In order to get location updates for an anchor, set the anchor before

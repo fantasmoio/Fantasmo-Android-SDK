@@ -69,7 +69,7 @@ class FMLocationManager(private val context: Context) {
     // Throttler for invalid frames.
     private lateinit var frameFailureThrottler: FrameFailureThrottler
 
-    private var motionManager = MotionManager(context)
+    var motionManager = MotionManager(context)
     // Localization Session Id generated on each startUpdatingLocation call
     private lateinit var localizationSessionId: String
     // App Session Id supplied by the SDK client
@@ -128,9 +128,9 @@ class FMLocationManager(private val context: Context) {
      * Starts the generation of updates that report the user’s current location
      * enabling FrameFiltering
      * @param appSessionId: appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
-     * @param filtersEnabled: flag that enables frame filtering
+     * @param filtersEnabled: flag that enables/disables frame filtering
      */
-    private fun startUpdatingLocation(appSessionId: String, filtersEnabled : Boolean) {
+    fun startUpdatingLocation(appSessionId: String, filtersEnabled : Boolean) {
         localizationSessionId = UUID.randomUUID().toString()
         this.appSessionId = appSessionId
         Log.d(TAG, "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId")
@@ -138,12 +138,13 @@ class FMLocationManager(private val context: Context) {
         this.isConnected = true
         this.state = State.LOCALIZING
         enableFilters = filtersEnabled
+        motionManager.restart()
+        accumulatedARCoreInfo.reset()
         this.compoundFrameFilter.prepareForNewFrameSequence()
         this.frameFailureThrottler.restart()
         this.locationFuser.reset()
         motionManager.restart()
         frameRejectionStatisticsAccumulator.reset()
-        accumulatedARCoreInfo.reset()
     }
 
     /**

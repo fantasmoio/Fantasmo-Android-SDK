@@ -19,6 +19,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.PermissionChecker
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMLocationListener
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
@@ -52,6 +53,7 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
     private lateinit var arSession: Session
     private lateinit var currentView: View
 
+    private lateinit var filterRejectionTv: TextView
     private lateinit var anchorDeltaTv: TextView
     private lateinit var cameraTranslationTv: TextView
     private lateinit var cameraAnglesTv: TextView
@@ -90,6 +92,7 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
 
         currentView = inflater.inflate(R.layout.arcore_fragment, container, false)
 
+        filterRejectionTv = currentView.findViewById(R.id.filterRejectionText)
         googleMapView = currentView.findViewById(R.id.mapView)
         anchorDeltaTv = currentView.findViewById(R.id.anchorDeltaText)
         cameraTranslationTv = currentView.findViewById(R.id.cameraTranslation)
@@ -174,12 +177,14 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
                     Log.d(TAG, "LocalizeToggle Enabled")
 
                     // Start getting location updates
-                    fmLocationManager.startUpdatingLocation(appSessionId)
+                    fmLocationManager.startUpdatingLocation(appSessionId,true)
+                    filterRejectionTv.visibility = View.VISIBLE
                 } else {
                     Log.d(TAG, "LocalizeToggle Disabled")
 
                     // Stop getting location updates
                     fmLocationManager.stopUpdatingLocation()
+                    filterRejectionTv.visibility = View.GONE
                 }
             }
 
@@ -265,6 +270,11 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
                         result.location.coordinate.longitude
                     )
                 }
+            }
+            @SuppressLint("SetTextI18n")
+            override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
+                Log.d(TAG, "FrameFilterResult " + didRequestBehavior.displayName)
+                activity?.runOnUiThread { filterRejectionTv.text = "FrameFilterResult: ${didRequestBehavior.displayName}" }
             }
         }
 

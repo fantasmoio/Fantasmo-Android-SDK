@@ -15,11 +15,13 @@ class MagneticField(
 
 class MotionManager(context: Context) : SensorEventListener {
 
+    private var disabledSensor = false
+
     lateinit var magneticField: MagneticField
 
     private var sensorManager: SensorManager = context.getSystemService(SENSOR_SERVICE) as SensorManager
 
-    private var magnetometer: Sensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+    private lateinit var magnetometer: Sensor
 
     override fun onSensorChanged(event: SensorEvent?) {
         when(event?.sensor?.type) {
@@ -38,13 +40,28 @@ class MotionManager(context: Context) : SensorEventListener {
     }
 
     fun restart(){
-        magneticField = MagneticField(0f,0f,0f)
-        sensorManager.registerListener(this,magnetometer,SensorManager.SENSOR_DELAY_NORMAL)
+        if(!disabledSensor){
+            magneticField = MagneticField(0f,0f,0f)
+            magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+            sensorManager.registerListener(this,magnetometer,SensorManager.SENSOR_DELAY_NORMAL)
+        }else{
+            magneticField = MagneticField(0f,0f,0f)
+        }
+
     }
 
     fun stop(){
-        magneticField = MagneticField(0f,0f,0f)
-        sensorManager.unregisterListener(this,magnetometer)
+        if(!disabledSensor){
+            magneticField = MagneticField(0f,0f,0f)
+            sensorManager.unregisterListener(this,magnetometer)
+        }
+        else{
+            magneticField = MagneticField(0f,0f,0f)
+        }
+    }
+
+    private fun disableSensor(){
+        disabledSensor = true
     }
 }
 

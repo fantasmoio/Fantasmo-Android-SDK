@@ -122,12 +122,12 @@ Create the listener for location updates:
     * Listener for the Fantasmo SDK Location results.
     */
     private val fmLocationListener: FMLocationListener =
-    object : FMLocationListener {
-        override fun locationManager(error: ErrorResponse, metadata: Any?) {
-        }
+        object : FMLocationListener {
+            override fun locationManager(error: ErrorResponse, metadata: Any?) {
+            }
 
-        override fun locationManager(result: FMLocationResult) {
-        }
+            override fun locationManager(result: FMLocationResult) {
+            }
     }
     
     
@@ -137,7 +137,35 @@ And localize the ARFrames (done in the onUpdate on the sample app):
     if (fmLocationManager.state == FMLocationManager.State.LOCALIZING) {
         arFrame?.let { fmLocationManager.localize(it) }
     }
-        
+
+### Behaviors
+
+To maximize localization quality, camera input is filtered against common problems. In order to enable camera input filtering, you should start localizing using the following call. By entering `true` value on `filtersEnabled` it will enable the behaviors described below. 
+
+    // Start getting location updates
+    fmLocationManager.startUpdatingLocation(appSessionId: String, filtersEnabled: Boolean)
+
+The following listener will be called with behavior requests enabled and it's intended to alleviate such problems.
+
+    private val fmLocationListener: FMLocationListener = {
+        object : FMLocationListener {
+            fun locationManager(didRequestBehavior: FMBehaviorRequest){
+            }
+        }
+    }
+
+The following behaviors are currently requested:
+
+    enum class FMBehaviorRequest(val displayName: String) {
+        TILTUP("Tilt your device up"),
+        TILTDOWN("Tilt your device down"),
+        PANAROUND("Pan around the scene"),
+        PANSLOWLY("Pan more slowly"),
+        ACCEPTED("Accepted");
+    }
+
+When notified, it should prompt the user to undertake the remedial behavior.
+
 ## Anchoring
 
 Use the `Anchor` toggle to activate anchoring mode. The anchor position, i.e. the phone's position when anchoring is activated and sent to the SDK to be processed.
