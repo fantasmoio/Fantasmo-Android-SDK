@@ -18,7 +18,7 @@ import com.fantasmo.sdk.FMLocationListener
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
-import com.fantasmo.sdk.models.Location
+import com.fantasmo.sdk.FMLocationResult
 import com.google.android.gms.location.*
 
 class NoARCoreFragment : Fragment() {
@@ -94,7 +94,7 @@ class NoARCoreFragment : Fragment() {
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
             }
 
-            override fun locationManager(location: Location, zones: List<FMZone>?) {
+            override fun locationManager(location: FMLocationResult) {
             }
         }
 

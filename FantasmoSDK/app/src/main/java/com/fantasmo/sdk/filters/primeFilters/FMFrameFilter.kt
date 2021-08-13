@@ -1,6 +1,6 @@
 package com.fantasmo.sdk.filters.primeFilters
 
-import com.fantasmo.sdk.filters.FMBehaviorRequest
+import com.fantasmo.sdk.FMBehaviorRequest
 import com.google.ar.core.Frame
 
 /**
