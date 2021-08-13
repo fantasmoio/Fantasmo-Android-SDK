@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings.Secure
 import android.util.Log
+import android.view.Display
+import android.view.WindowManager
 import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
@@ -146,6 +148,12 @@ class FMApi(
             request.coordinate
         }
 
+        val height = frame.camera.imageIntrinsics.imageDimensions[0]
+        val width = frame.camera.imageIntrinsics.imageDimensions[1]
+        val resolution = hashMapOf<String,Int>()
+        resolution["height"] = height
+        resolution["width"] = width
+
         val focalLength = frame.camera.imageIntrinsics.focalLength
         val principalPoint = frame.camera.imageIntrinsics.principalPoint
         val intrinsics = FMIntrinsics(
@@ -178,6 +186,7 @@ class FMApi(
         params["uuid"] = UUID.randomUUID().toString()
         params["coordinate"] = gson.toJson(coordinates)
         params["intrinsics"] = gson.toJson(intrinsics)
+        params["imageResolution"] = gson.toJson(resolution)
 
         // device characteristics
         params["udid"] = androidId
