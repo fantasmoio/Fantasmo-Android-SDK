@@ -742,7 +742,7 @@ class FMLocationManagerTest {
             override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
             }
 
-            override fun locationManager(location: Location, zones: List<FMZone>?) {
+            override fun locationManager(result: FMLocationResult) {
             }
         }
 }

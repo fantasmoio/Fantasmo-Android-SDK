@@ -1,6 +1,6 @@
 package com.fantasmo.sdk.utilities
 
-import com.fantasmo.sdk.filters.FMBehaviorRequest
+import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
 import com.fantasmo.sdk.filters.primeFilters.mapToBehaviourRequest
 import java.util.*

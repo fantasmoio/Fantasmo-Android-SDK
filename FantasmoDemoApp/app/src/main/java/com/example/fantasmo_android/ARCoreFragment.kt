@@ -24,7 +24,7 @@ import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
-import com.fantasmo.sdk.models.Location
+import com.fantasmo.sdk.FMLocationResult
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -254,14 +254,15 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
             }
 
             @SuppressLint("SetTextI18n")
-            override fun locationManager(location: Location, zones: List<FMZone>?) {
-                Log.d(TAG, location.toString())
+            override fun locationManager(result: FMLocationResult) {
+                Log.d(TAG, result.confidence.toString())
+                Log.d(TAG, result.location.toString())
                 activity?.runOnUiThread {
                     serverCoordinatesTv.text =
-                        "Server Lat: ${location.coordinate.latitude}, Long: ${location.coordinate.longitude}"
+                        "Server Lat: ${result.location.coordinate.latitude}, Long: ${result.location.coordinate.longitude}"
                     addCorrespondingMarkersToMap(
-                        location.coordinate.latitude,
-                        location.coordinate.longitude
+                        result.location.coordinate.latitude,
+                        result.location.coordinate.longitude
                     )
                 }
             }
