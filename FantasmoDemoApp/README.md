@@ -126,8 +126,8 @@ Create the listener for location updates:
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
             }
 
-        override fun locationManager(result: FMLocationResult) {
-        }
+            override fun locationManager(result: FMLocationResult) {
+            }
     }
     
     
@@ -140,7 +140,12 @@ And localize the ARFrames (done in the onUpdate on the sample app):
 
 ### Behaviors
 
-To maximize localization quality, camera input is filtered against common problems. The listener will be called with behavior requests intended to alleviate such problems.
+To maximize localization quality, camera input is filtered against common problems. In order to enable camera input filtering, you should start localizing using the following call. By entering `true` value on `filtersEnabled` it will enable the behaviors described below. 
+
+    // Start getting location updates
+    fmLocationManager.startUpdatingLocation(appSessionId: String, filtersEnabled: Boolean)
+
+The following listener will be called with behavior requests enabled and it's intended to alleviate such problems.
 
     private val fmLocationListener: FMLocationListener = {
         object : FMLocationListener {
@@ -148,7 +153,6 @@ To maximize localization quality, camera input is filtered against common proble
             }
         }
     }
-
 
 The following behaviors are currently requested:
 
