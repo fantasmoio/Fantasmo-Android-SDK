@@ -66,7 +66,11 @@ class FMLocationManagerTest {
         fmLocationManager.coroutineScope = testScope
 
         spyMotionManager = MotionManager(instrumentationContext)
-        spyMotionManager.setTesting()
+        // Get access to private method disableSensor in order to not get 
+        val method = spyMotionManager.javaClass.getDeclaredMethod("disableSensor")
+        method.isAccessible = true
+        method.invoke(spyMotionManager)
+
         fmLocationManager.motionManager = spyMotionManager
         spyFMLocationManager = spy(fmLocationManager)
 
@@ -415,7 +419,11 @@ class FMLocationManagerTest {
         val fmLocationManager = FMLocationManager(instrumentationContext)
         fmLocationManager.connect(token, fmLocationListener)
         val motionManager = MotionManager(instrumentationContext)
-        motionManager.setTesting()
+        //motionManager.setTesting()
+        val method = motionManager.javaClass.getDeclaredMethod("disableSensor")
+        method.isAccessible = true
+        method.invoke(motionManager)
+
         fmLocationManager.motionManager = motionManager
 
         fmLocationManager.startUpdatingLocation("AppSessionIdExample",true)
@@ -502,7 +510,10 @@ class FMLocationManagerTest {
         val fmLocationManager = FMLocationManager(instrumentationContext2)
         fmLocationManager.connect(token, fmLocationListener)
         val motionManager = MotionManager(instrumentationContext)
-        motionManager.setTesting()
+        //motionManager.setTesting()
+        val method = motionManager.javaClass.getDeclaredMethod("disableSensor")
+        method.isAccessible = true
+        method.invoke(motionManager)
         fmLocationManager.motionManager = motionManager
 
         fmLocationManager.startUpdatingLocation("AppSessionIdExample",true)
@@ -600,7 +611,9 @@ class FMLocationManagerTest {
         val fmLocationManager = FMLocationManager(instrumentationContext3)
         fmLocationManager.connect(token, fmLocationListener)
         val motionManager = MotionManager(instrumentationContext)
-        motionManager.setTesting()
+        val method = motionManager.javaClass.getDeclaredMethod("disableSensor")
+        method.isAccessible = true
+        method.invoke(motionManager)
         fmLocationManager.motionManager = motionManager
 
         fmLocationManager.startUpdatingLocation("AppSessionIdExample",true)

@@ -15,7 +15,7 @@ class MagneticField(
 
 class MotionManager(context: Context) : SensorEventListener {
 
-    private var isTesting = false
+    private var disabledSensor = false
 
     lateinit var magneticField: MagneticField
 
@@ -39,12 +39,8 @@ class MotionManager(context: Context) : SensorEventListener {
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
     }
 
-    fun setTesting(){
-        isTesting = true
-    }
-
     fun restart(){
-        if(!isTesting){
+        if(!disabledSensor){
             magneticField = MagneticField(0f,0f,0f)
             magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
             sensorManager.registerListener(this,magnetometer,SensorManager.SENSOR_DELAY_NORMAL)
@@ -55,13 +51,17 @@ class MotionManager(context: Context) : SensorEventListener {
     }
 
     fun stop(){
-        if(!isTesting){
+        if(!disabledSensor){
             magneticField = MagneticField(0f,0f,0f)
             sensorManager.unregisterListener(this,magnetometer)
         }
         else{
             magneticField = MagneticField(0f,0f,0f)
         }
+    }
+
+    private fun disableSensor(){
+        disabledSensor = true
     }
 }
 
