@@ -53,7 +53,7 @@ class FMIntrinsics() {
             Surface.ROTATION_0 -> {
                 fx = intrinsics[1][1]
                 fy = intrinsics[0][0]
-                cx = intrinsics[2][2]
+                cx = intrinsics[2][1]
                 cy = intrinsics[2][0]
             }
             // SCREEN_ORIENTATION_REVERSE_PORTRAIT
