@@ -41,5 +41,10 @@ class FMFrameFilterTest {
             FMBehaviorRequest.ACCEPTED
         )
 
+        rejection = FMFrameFilterFailure.INSUFFICIENTFEATURES
+        assertEquals(
+            mapToBehaviourRequest(rejection),
+            FMBehaviorRequest.PANAROUND
+        )
     }
 }

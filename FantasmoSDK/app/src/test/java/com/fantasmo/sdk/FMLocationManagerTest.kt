@@ -2,19 +2,16 @@ package com.fantasmo.sdk
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.hardware.Sensor
-import android.hardware.SensorManager
 import android.media.Image
 import android.os.Build
 import android.view.Display
 import android.view.Surface
 import androidx.test.platform.app.InstrumentationRegistry
-import com.fantasmo.sdk.filters.*
+import com.fantasmo.sdk.filters.FMCompoundFrameQualityFilter
 import com.fantasmo.sdk.filters.primeFilters.FMBlurFilter
 import com.fantasmo.sdk.filters.primeFilters.FMCameraPitchFilter
 import com.fantasmo.sdk.filters.primeFilters.FMMovementFilter
 import com.fantasmo.sdk.models.*
-import com.fantasmo.sdk.models.analytics.MagneticField
 import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager

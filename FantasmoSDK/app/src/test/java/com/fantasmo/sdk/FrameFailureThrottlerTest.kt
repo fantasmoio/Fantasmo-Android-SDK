@@ -40,6 +40,12 @@ class FrameFailureThrottlerTest {
             frameFailure.handler(failure),
             FMBehaviorRequest.ACCEPTED
         )
+
+        failure = FMFrameFilterFailure.INSUFFICIENTFEATURES
+        assertEquals(
+            frameFailure.handler(failure),
+            FMBehaviorRequest.PANAROUND
+        )
     }
 
     @Test
