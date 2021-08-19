@@ -22,7 +22,7 @@ class LocationFuser {
      * @param locations: list of Locations
      * @return FMResultConfidence
      */
-    private fun standardDeviationConfidence(locations: List<Location>): FMResultConfidence{
+    fun standardDeviationConfidence(locations: List<Location>): FMResultConfidence{
         return if(locations.size>1){
             val variance = LocationFuserExtension.populationVariance(locations)
 
@@ -48,7 +48,7 @@ class LocationFuser {
      * @param locations: list of Locations
      * @return FMResultConfidence
      */
-    private fun confidence(locations: List<Location>): FMResultConfidence {
+    fun confidence(locations: List<Location>): FMResultConfidence {
         val standardDeviationConfidence = standardDeviationConfidence(locations)
 
         return when (locations.size) {
