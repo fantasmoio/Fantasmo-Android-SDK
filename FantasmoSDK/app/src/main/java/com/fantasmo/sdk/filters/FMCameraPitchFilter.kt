@@ -1,4 +1,4 @@
-package com.fantasmo.sdk.filters.primeFilters
+package com.fantasmo.sdk.filters
 
 import android.content.Context
 import android.view.Display
