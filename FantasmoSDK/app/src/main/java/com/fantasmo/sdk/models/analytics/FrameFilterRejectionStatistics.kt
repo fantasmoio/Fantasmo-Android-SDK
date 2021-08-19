@@ -7,7 +7,7 @@ import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
  */
 class FrameFilterRejectionStatistics {
 
-    private var totalFrameCount = 0
+    var totalFrameCount = 0
     var excessiveTiltFrameCount = 0
     var excessiveBlurFrameCount = 0
     var insufficientMotionFrameCount = 0
