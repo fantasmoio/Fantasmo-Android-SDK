@@ -1,6 +1,7 @@
 package com.fantasmo.sdk.utilities
 
 import com.fantasmo.sdk.FMBehaviorRequest
+import com.fantasmo.sdk.FMUtility.Companion.n2s
 import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
 import com.fantasmo.sdk.filters.primeFilters.mapToBehaviourRequest
 import java.util.*
@@ -17,7 +18,7 @@ class FrameFailureThrottler {
     private var incidenceThreshold = 30
 
     // The last time of triggering.
-    var lastErrorTime = System.currentTimeMillis()
+    var lastErrorTime = System.nanoTime()
 
     /**
      * Maps failure to display in app side
@@ -29,26 +30,34 @@ class FrameFailureThrottler {
     }
 
     // Dictionary of failure events with corresponding incidence
-    var validationErrorToCountDict: MutableMap<FMFrameFilterFailure, Int> = EnumMap(
+    var rejectionCounts: MutableMap<FMFrameFilterFailure, Int> = EnumMap(
         FMFrameFilterFailure::class.java
     )
 
     /**
-     * On new failure, onNext is invoked to update validationErrorToCountDict.
+     * On new failure, onNext is invoked to update rejectionCounts.
      * @param failure: PITCHTOOLOW, PITCHTOOHIGH, MOVINGTOOFAST, MOVINGTOOLITTLE, ACCEPTED
      */
     fun onNext(failure: FMFrameFilterFailure) {
-        var count = 0
-        if (validationErrorToCountDict.containsKey(failure)) {
-            count = validationErrorToCountDict[failure]!!
+        if(failure == FMFrameFilterFailure.ACCEPTED){
+            return
         }
+        else{
+            var count = 0
+            if (rejectionCounts.containsKey(failure)) {
+                count = rejectionCounts[failure]!!
+            }
+            count += 1
 
-        val elapsed = System.currentTimeMillis() - lastErrorTime
-
-        if (elapsed > throttleThreshold && count >= incidenceThreshold) {
-            startNewCycle()
-        } else {
-            validationErrorToCountDict[failure] = count + 1
+            if (count > incidenceThreshold) {
+                val elapsed = (System.nanoTime() - lastErrorTime) / n2s
+                if (elapsed > throttleThreshold) {
+                    // handler(failure)
+                    restart()
+                }
+            } else {
+                rejectionCounts[failure] = count
+            }
         }
     }
 
@@ -56,14 +65,7 @@ class FrameFailureThrottler {
      * Restart Counting Failure Process after a sequence.
      */
     fun restart() {
-        startNewCycle()
-    }
-
-    /**
-     * Creates a new for frame sequence acceptance.
-     */
-    private fun startNewCycle() {
-        lastErrorTime = System.currentTimeMillis()
-        validationErrorToCountDict.clear()
+        lastErrorTime = System.nanoTime()
+        rejectionCounts.clear()
     }
 }

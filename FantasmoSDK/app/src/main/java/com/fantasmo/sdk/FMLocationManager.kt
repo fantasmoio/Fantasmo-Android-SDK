@@ -8,6 +8,7 @@ package com.fantasmo.sdk
 
 import android.content.Context
 import android.util.Log
+import com.fantasmo.sdk.FMUtility.Companion.n2s
 import com.fantasmo.sdk.filters.FMCompoundFrameQualityFilter
 import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterResult
 import com.fantasmo.sdk.models.Coordinate
@@ -140,7 +141,7 @@ class FMLocationManager(private val context: Context) {
         enableFilters = filtersEnabled
         motionManager.restart()
         accumulatedARCoreInfo.reset()
-        this.compoundFrameFilter.prepareForNewFrameSequence()
+        this.compoundFrameFilter.restart()
         this.frameFailureThrottler.restart()
         this.locationFuser.reset()
         motionManager.restart()
@@ -294,15 +295,15 @@ class FMLocationManager(private val context: Context) {
      */
     fun isZoneInRadius(zone: FMZone.ZoneType, radius: Int, onCompletion: (Boolean) -> Unit) {
         Log.d(TAG, "isZoneInRadius")
-        val timeOut = 10000
+        val timeOut = 10
         coroutineScope.launch {
             // If it's not in simulation mode
             if (!isSimulation) {
                 // Wait on First Location Update if it isn't already available
-                val start = System.currentTimeMillis()
+                val start = System.nanoTime()
                 while (currentLocation.latitude == 0.0) {
                     delay(locationInterval)
-                    if (System.currentTimeMillis() - start > timeOut) {
+                    if ((System.nanoTime() - start)/n2s > timeOut) {
                         // When timeout is reached, isZoneInRadius sends empty coordinates field
                         Log.d(TAG, "isZoneInRadius Timeout Reached")
                         break
