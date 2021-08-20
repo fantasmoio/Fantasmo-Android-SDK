@@ -19,7 +19,7 @@ import kotlin.math.*
 class FMUtility {
 
     companion object {
-        const val n2s = 1_000_000_000
+        const val n2s = 1_000_000_000.0
         /**
          * Method to get the the AR Frame camera image data.
          * @param arFrame the AR Frame to localize.

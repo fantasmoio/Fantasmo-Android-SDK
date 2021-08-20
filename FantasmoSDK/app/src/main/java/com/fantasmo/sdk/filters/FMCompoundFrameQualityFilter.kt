@@ -77,7 +77,6 @@ class FMCompoundFrameQualityFilter(context: Context) {
      */
     private fun shouldForceAccept(): Boolean {
         val elapsed = (System.nanoTime() - lastAcceptTime) / n2s
-        Log.d(TAG,"Elapsed: $elapsed; LastAcceptTime: $lastAcceptTime")
         return (elapsed > acceptanceThreshold)
     }
 
