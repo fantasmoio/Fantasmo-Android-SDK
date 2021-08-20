@@ -17,7 +17,7 @@ import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.*
-import com.fantasmo.sdk.utilities.FrameFailureThrottler
+import com.fantasmo.sdk.filters.BehaviorRequester
 import com.fantasmo.sdk.utilities.LocationFuser
 import com.google.ar.core.Frame
 import kotlinx.coroutines.CoroutineScope
@@ -68,7 +68,7 @@ class FMLocationManager(private val context: Context) {
     // Used to validate frame for sufficient quality before sending to API.
     lateinit var compoundFrameFilter: FMCompoundFrameQualityFilter
     // Throttler for invalid frames.
-    private lateinit var frameFailureThrottler: FrameFailureThrottler
+    private lateinit var behaviorRequester: BehaviorRequester
 
     var motionManager = MotionManager(context)
     // Localization Session Id generated on each startUpdatingLocation call
@@ -94,7 +94,7 @@ class FMLocationManager(private val context: Context) {
         this.fmLocationListener = callback
         fmApi = FMApi(fmNetworkManager, this, context, token)
         compoundFrameFilter = FMCompoundFrameQualityFilter(context)
-        frameFailureThrottler = FrameFailureThrottler()
+        behaviorRequester = BehaviorRequester()
     }
 
     /**
@@ -142,7 +142,7 @@ class FMLocationManager(private val context: Context) {
         motionManager.restart()
         accumulatedARCoreInfo.reset()
         this.compoundFrameFilter.restart()
-        this.frameFailureThrottler.restart()
+        this.behaviorRequester.restart()
         this.locationFuser.reset()
         motionManager.restart()
         frameRejectionStatisticsAccumulator.reset()
@@ -270,14 +270,12 @@ class FMLocationManager(private val context: Context) {
         ) {
             return if(enableFilters){
                 val result = compoundFrameFilter.accepts(arFrame)
+                behaviorRequester.processResult(result.second)
+                fmLocationListener?.locationManager(behaviorRequester.handler(result.second))
                 if (result.first == FMFrameFilterResult.ACCEPTED) {
-                    fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
-                    frameFailureThrottler.restart()
                     true
                 } else {
                     frameRejectionStatisticsAccumulator.accumulate(result.second)
-                    frameFailureThrottler.onNext(result.second)
-                    fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
                     false
                 }
             }else{

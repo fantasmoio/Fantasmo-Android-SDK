@@ -1,4 +1,4 @@
-package com.fantasmo.sdk.utilities
+package com.fantasmo.sdk.filters
 
 import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMUtility.Companion.n2s
@@ -9,7 +9,7 @@ import java.util.*
 /**
  * Throttler for frame validation failure events each of which occurs when a frame turns out to be not acceptable for determining location.
  */
-class FrameFailureThrottler {
+class BehaviorRequester {
 
     // Minimum number of seconds that must elapse between triggering.
     private var throttleThreshold = 2.0
@@ -38,7 +38,7 @@ class FrameFailureThrottler {
      * On new failure, onNext is invoked to update rejectionCounts.
      * @param failure: PITCHTOOLOW, PITCHTOOHIGH, MOVINGTOOFAST, MOVINGTOOLITTLE, ACCEPTED
      */
-    fun onNext(failure: FMFrameFilterFailure) {
+    fun processResult(failure: FMFrameFilterFailure) {
         if(failure == FMFrameFilterFailure.ACCEPTED){
             return
         }
@@ -52,7 +52,6 @@ class FrameFailureThrottler {
             if (count > incidenceThreshold) {
                 val elapsed = (System.nanoTime() - lastErrorTime) / n2s
                 if (elapsed > throttleThreshold) {
-                    // handler(failure)
                     restart()
                 }
             } else {

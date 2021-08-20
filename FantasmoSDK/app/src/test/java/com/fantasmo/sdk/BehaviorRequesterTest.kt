@@ -1,16 +1,16 @@
 package com.fantasmo.sdk
 
 import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
-import com.fantasmo.sdk.utilities.FrameFailureThrottler
+import com.fantasmo.sdk.filters.BehaviorRequester
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class FrameFailureThrottlerTest {
+class BehaviorRequesterTest {
 
     @Test
     fun testHandler() {
         var failure = FMFrameFilterFailure.PITCHTOOLOW
-        val frameFailure = FrameFailureThrottler()
+        val frameFailure = BehaviorRequester()
 
         assertEquals(
             frameFailure.handler(failure),
@@ -45,9 +45,9 @@ class FrameFailureThrottlerTest {
     @Test
     fun testOnNext() {
         val failure = FMFrameFilterFailure.PITCHTOOLOW
-        val frameFailure = FrameFailureThrottler()
+        val frameFailure = BehaviorRequester()
 
-        frameFailure.onNext(failure)
+        frameFailure.processResult(failure)
 
         assertEquals(
             frameFailure.rejectionCounts.isEmpty(),
@@ -63,11 +63,11 @@ class FrameFailureThrottlerTest {
     @Test
     fun testOnNextWithFailure() {
         val failure = FMFrameFilterFailure.PITCHTOOLOW
-        val frameFailure = FrameFailureThrottler()
+        val frameFailure = BehaviorRequester()
 
         frameFailure.rejectionCounts[failure] = 2
 
-        frameFailure.onNext(failure)
+        frameFailure.processResult(failure)
 
         assertEquals(
             frameFailure.rejectionCounts.isEmpty(),
@@ -83,12 +83,12 @@ class FrameFailureThrottlerTest {
     @Test
     fun testOnNextStartNewCycle() {
         val failure = FMFrameFilterFailure.PITCHTOOLOW
-        val frameFailure = FrameFailureThrottler()
+        val frameFailure = BehaviorRequester()
 
         frameFailure.rejectionCounts[failure] = 30
         frameFailure.lastErrorTime = 1619184130499
 
-        frameFailure.onNext(failure)
+        frameFailure.processResult(failure)
 
         assertEquals(
             frameFailure.rejectionCounts.isEmpty(),
