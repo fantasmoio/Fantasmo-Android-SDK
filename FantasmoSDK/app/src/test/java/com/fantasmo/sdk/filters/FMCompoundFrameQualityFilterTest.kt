@@ -28,9 +28,7 @@ class FMCompoundFrameQualityFilterTest {
         val filter = FMCompoundFrameQualityFilter(context)
         val frame = Mockito.mock(Frame::class.java)
 
-        filter.timestampOfPreviousApprovedFrame = 1L
-        val timestamp = 80000000000
-        Mockito.`when`(frame.timestamp).thenReturn(timestamp)
+        filter.lastAcceptTime = 1L
 
         assertEquals(
             Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED),
@@ -54,9 +52,6 @@ class FMCompoundFrameQualityFilterTest {
                 (-0.01).toFloat()
             )
         )
-        filter.timestampOfPreviousApprovedFrame = 0L
-        val timestamp = 80000000000
-        Mockito.`when`(frame.timestamp).thenReturn(timestamp)
         val camera = Mockito.mock(Camera::class.java)
         val pose2 = Mockito.mock(Pose::class.java)
         Mockito.`when`(frame.camera).thenReturn(camera)
@@ -104,9 +99,7 @@ class FMCompoundFrameQualityFilterTest {
                 (-0.005).toFloat()
             )
         )
-        filter.timestampOfPreviousApprovedFrame = 1L
-        val timestamp = 6000000000
-        Mockito.`when`(frame.timestamp).thenReturn(timestamp)
+        filter.lastAcceptTime = 1L
         val camera = Mockito.mock(Camera::class.java)
         val pose2 = Mockito.mock(Pose::class.java)
         Mockito.`when`(frame.camera).thenReturn(camera)

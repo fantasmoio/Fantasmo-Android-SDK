@@ -50,12 +50,12 @@ class FrameFailureThrottlerTest {
         frameFailure.onNext(failure)
 
         assertEquals(
-            frameFailure.validationErrorToCountDict.isEmpty(),
+            frameFailure.rejectionCounts.isEmpty(),
             false
         )
 
         assertEquals(
-            frameFailure.validationErrorToCountDict[failure],
+            frameFailure.rejectionCounts[failure],
             1
         )
     }
@@ -65,17 +65,17 @@ class FrameFailureThrottlerTest {
         val failure = FMFrameFilterFailure.PITCHTOOLOW
         val frameFailure = FrameFailureThrottler()
 
-        frameFailure.validationErrorToCountDict[failure] = 2
+        frameFailure.rejectionCounts[failure] = 2
 
         frameFailure.onNext(failure)
 
         assertEquals(
-            frameFailure.validationErrorToCountDict.isEmpty(),
+            frameFailure.rejectionCounts.isEmpty(),
             false
         )
 
         assertEquals(
-            frameFailure.validationErrorToCountDict[failure],
+            frameFailure.rejectionCounts[failure],
             3
         )
     }
@@ -85,13 +85,13 @@ class FrameFailureThrottlerTest {
         val failure = FMFrameFilterFailure.PITCHTOOLOW
         val frameFailure = FrameFailureThrottler()
 
-        frameFailure.validationErrorToCountDict[failure] = 30
+        frameFailure.rejectionCounts[failure] = 30
         frameFailure.lastErrorTime = 1619184130499
 
         frameFailure.onNext(failure)
 
         assertEquals(
-            frameFailure.validationErrorToCountDict.isEmpty(),
+            frameFailure.rejectionCounts.isEmpty(),
             true
         )
     }

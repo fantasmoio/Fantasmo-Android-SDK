@@ -6,6 +6,7 @@ import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.media.Image
 import android.os.Build
+import android.os.SystemClock
 import android.view.Display
 import android.view.Surface
 import androidx.test.platform.app.InstrumentationRegistry
@@ -232,16 +233,16 @@ class FMLocationManagerTest {
 
         val radius = 20
         var returnValue = false
-        val start = System.currentTimeMillis()
+        val start = System.nanoTime()
         testScope.runBlockingTest {
             fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius) {
                 returnValue = it
             }
         }
-        val stop = System.currentTimeMillis()
+        val stop = System.nanoTime()
         val delta = stop-start
 
-        assertTrue(delta >= 10000)
+        assertTrue(delta >= 10_000_000_000)
         assertEquals(false, returnValue)
     }
 
