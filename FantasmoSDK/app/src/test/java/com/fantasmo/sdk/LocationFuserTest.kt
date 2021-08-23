@@ -1,4 +1,4 @@
-package com.fantasmo.sdk.utils
+package com.fantasmo.sdk
 
 import android.os.Build
 import com.fantasmo.sdk.FMLocationResult
@@ -408,5 +408,17 @@ class LocationFuserTest {
         val location10 = Location(0, coordinate, 0, 0, 0, 0)
         locations.add(location10)
         assertEquals(LocationFuser().confidence(locations), FMResultConfidence.HIGH)
+    }
+
+    @Test
+    fun testAbbreviation(){
+        var confidence = FMResultConfidence.LOW
+        assertEquals("L",abbreviation(confidence))
+
+        confidence = FMResultConfidence.MEDIUM
+        assertEquals("M",abbreviation(confidence))
+
+        confidence = FMResultConfidence.HIGH
+        assertEquals("H",abbreviation(confidence))
     }
 }
