@@ -74,7 +74,7 @@ class FMLocationManager(private val context: Context) {
     private lateinit var localizationSessionId: String
     // App Session Id supplied by the SDK client
     private lateinit var appSessionId: String
-    private var frameRejectionStatisticsAccumulator = FrameFilterRejectionStatistics()
+    private var frameEventAccumulator = FrameFilterRejectionStatistics()
     private var accumulatedARCoreInfo = AccumulatedARCoreInfo()
 
     /**
@@ -144,7 +144,7 @@ class FMLocationManager(private val context: Context) {
         this.frameFailureThrottler.restart()
         this.locationFuser.reset()
         motionManager.restart()
-        frameRejectionStatisticsAccumulator.reset()
+        frameEventAccumulator.reset()
     }
 
     /**
@@ -218,11 +218,13 @@ class FMLocationManager(private val context: Context) {
      */
     private fun createLocalizationRequest(): FMLocalizationRequest {
         val frameEvents = FMFrameEvent(
-            frameRejectionStatisticsAccumulator.excessiveTiltFrameCount,
-            frameRejectionStatisticsAccumulator.excessiveBlurFrameCount,
-            accumulatedARCoreInfo.trackingStateFrameStatistics.excessiveMotionEventCount,
-            frameRejectionStatisticsAccumulator.insufficientFeatures,
-            accumulatedARCoreInfo.trackingStateFrameStatistics.lossOfTrackingEventCount,
+            frameEventAccumulator.excessiveTiltFrameCount,
+            frameEventAccumulator.excessiveBlurFrameCount,
+            frameEventAccumulator.excessiveMotionFrameCount,
+            frameEventAccumulator.insufficientFeatures,
+            (accumulatedARCoreInfo.trackingStateFrameStatistics.framesWithLimitedTrackingState
+                    + accumulatedARCoreInfo.trackingStateFrameStatistics.framesWithNotAvailableTracking
+                    ),
             accumulatedARCoreInfo.trackingStateFrameStatistics.totalNumberOfFrames
         )
         val rotationSpread = FMRotationSpread(
@@ -274,7 +276,7 @@ class FMLocationManager(private val context: Context) {
                     frameFailureThrottler.restart()
                     true
                 } else {
-                    frameRejectionStatisticsAccumulator.accumulate(result.second)
+                    frameEventAccumulator.accumulate(result.second)
                     frameFailureThrottler.onNext(result.second)
                     fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
                     false
