@@ -3,6 +3,7 @@ package com.fantasmo.sdk.models.analytics
 import android.util.Log
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingFailureReason
+import com.google.ar.core.TrackingState
 import java.util.*
 
 /**
@@ -46,27 +47,39 @@ class TrackingStateFrameStatistics {
      * @param arFrame: frame to be evaluated
      */
     fun update(arFrame: Frame) {
-        when (val reason = arFrame.camera.trackingFailureReason) {
+        val reason = arFrame.camera.trackingFailureReason
+        val trackingState = arFrame.camera.trackingState
+
+        when (reason) {
             //Loss of tracking due to Camera Unavailable
             TrackingFailureReason.CAMERA_UNAVAILABLE -> {
                 framesWithNotAvailableTracking += 1
             }
-            //Normal ARCore behavior and initialization behavior
             TrackingFailureReason.NONE -> {
-                framesWithNormalTrackingState += 1
-                Log.d("NORMAL","None TrackingState: $framesWithNormalTrackingState")
+                if(trackingState == TrackingState.TRACKING){
+                    //Normal ARCore behavior
+                    framesWithNormalTrackingState += 1
+                }
+                else{
+                    //Initialization behavior is declared as Limited Tracking
+                    updateFramesWithLimitedTracking(reason)
+                }
             }
             else -> {
                 // Frame with Limited Tracking State
-                if(framesWithLimitedTrackingStateByReason.containsKey(reason)){
-                    val count = framesWithLimitedTrackingStateByReason[reason]!!
-                    framesWithLimitedTrackingStateByReason[reason] = count + 1
-                }else{
-                    framesWithLimitedTrackingStateByReason[reason] = 0
-                }
-                framesWithLimitedTrackingState += 1
+                updateFramesWithLimitedTracking(reason)
             }
         }
         totalNumberOfFrames += 1
+    }
+
+    private fun updateFramesWithLimitedTracking(reason: TrackingFailureReason) {
+        if(framesWithLimitedTrackingStateByReason.containsKey(reason)){
+            val count = framesWithLimitedTrackingStateByReason[reason]!!
+            framesWithLimitedTrackingStateByReason[reason] = count + 1
+        }else{
+            framesWithLimitedTrackingStateByReason[reason] = 0
+        }
+        framesWithLimitedTrackingState += 1
     }
 }

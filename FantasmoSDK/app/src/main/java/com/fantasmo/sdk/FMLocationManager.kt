@@ -265,10 +265,10 @@ class FMLocationManager(private val context: Context) {
      * @return true if it can localize the ARFrame and false otherwise.
      */
     fun shouldLocalize(arFrame: Frame): Boolean {
-        accumulatedARCoreInfo.update(arFrame)
         if (isConnected
             && currentLocation.latitude > 0.0
         ) {
+            accumulatedARCoreInfo.update(arFrame)
             return if(enableFilters){
                 val result = frameFilter.accepts(arFrame)
                 fmLocationListener?.locationManager(result.second.mapToBehaviourRequest())
