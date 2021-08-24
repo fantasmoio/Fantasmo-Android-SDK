@@ -1,6 +1,6 @@
 package com.fantasmo.sdk.models.analytics
 
-import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
+import com.fantasmo.sdk.filters.FMFrameFilterFailure
 
 /**
  * Class responsible for gathering information about frame filtration rejection

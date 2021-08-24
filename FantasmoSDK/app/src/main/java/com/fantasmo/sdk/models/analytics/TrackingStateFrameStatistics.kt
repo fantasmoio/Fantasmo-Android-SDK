@@ -15,17 +15,19 @@ class TrackingStateFrameStatistics {
     // Number of events where the frames captured have a normal tracking state
     var framesWithNormalTrackingState: Int = 0
 
-    // Number of events where the excessive motion callback is received from ARKit/ARCore.
-    var excessiveMotionEventCount: Int = 0
-
     // Number of events where the loss of tracking callback is received from ARKit/ARCore
     var framesWithLimitedTrackingState: Int = 0
 
-    // Number of frames captured at the moment when tracking state was `ARFrame.camera.trackingState == CAMERA_UNAVAILABLE`
-    var framesWithNotAvailableTracking: Int = 0
+    // Excessive Motion;
+    // Bad internal state;
+    // Insufficient Features;
+    // Insufficient Light;
     private var framesWithLimitedTrackingStateByReason : MutableMap<TrackingFailureReason,Int> = EnumMap(
         TrackingFailureReason::class.java
     )
+
+    // Number of frames captured at the moment when tracking state was `ARFrame.camera.trackingState == CAMERA_UNAVAILABLE`
+    var framesWithNotAvailableTracking: Int = 0
 
     /**
      * Resets counters on new startUpdatingLocation call
@@ -33,17 +35,10 @@ class TrackingStateFrameStatistics {
     fun reset() {
         totalNumberOfFrames = 0
         framesWithNormalTrackingState = 0
-        excessiveMotionEventCount = 0
         framesWithLimitedTrackingState = 0
         framesWithNotAvailableTracking = 0
         framesWithLimitedTrackingStateByReason.clear()
     }
-
-        /**
-     * Receives a frame and updates the counter
-     * that best describes the tracking state event
-     * @param arFrame: frame to be evaluated
-     */
 
     /**
      * Receives a frame and updates the counter
@@ -56,16 +51,13 @@ class TrackingStateFrameStatistics {
             TrackingFailureReason.CAMERA_UNAVAILABLE -> {
                 framesWithNotAvailableTracking += 1
             }
+            //Normal ARCore behavior and initialization behavior
             TrackingFailureReason.NONE -> {
-                //Normal ARCore behavior
                 framesWithNormalTrackingState += 1
                 Log.d("NORMAL","None TrackingState: $framesWithNormalTrackingState")
             }
             else -> {
-                //Excessive Motion Event
-                //Loss of tracking due to bad internal state
-                //Loss of tracking due to Insufficient Features
-                //Loss of tracking due to Insufficient Light
+                // Frame with Limited Tracking State
                 if(framesWithLimitedTrackingStateByReason.containsKey(reason)){
                     val count = framesWithLimitedTrackingStateByReason[reason]!!
                     framesWithLimitedTrackingStateByReason[reason] = count + 1

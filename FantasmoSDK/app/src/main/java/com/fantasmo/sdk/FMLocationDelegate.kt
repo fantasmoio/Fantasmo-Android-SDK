@@ -7,14 +7,14 @@ import com.fantasmo.sdk.models.Location
 enum class FMResultConfidence{
     LOW,
     MEDIUM,
-    HIGH
-}
+    HIGH;
 
-fun abbreviation(confidence: FMResultConfidence):String{
-    return when(confidence){
-        FMResultConfidence.LOW -> "L"
-        FMResultConfidence.MEDIUM -> "M"
-        FMResultConfidence.HIGH -> "H"
+    fun abbreviation():String{
+        return when(this){
+            LOW -> "L"
+            MEDIUM -> "M"
+            HIGH -> "H"
+        }
     }
 }
 
