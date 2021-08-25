@@ -8,15 +8,15 @@ package com.fantasmo.sdk
 
 import android.content.Context
 import android.util.Log
-import com.fantasmo.sdk.filters.FMCompoundFrameQualityFilter
-import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterResult
+import com.fantasmo.sdk.filters.FMInputQualityFilter
+import com.fantasmo.sdk.filters.FMFrameFilterResult
 import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.*
-import com.fantasmo.sdk.utilities.FrameFailureThrottler
+import com.fantasmo.sdk.filters.BehaviorRequester
 import com.fantasmo.sdk.utilities.LocationFuser
 import com.google.ar.core.Frame
 import kotlinx.coroutines.CoroutineScope
@@ -65,16 +65,16 @@ class FMLocationManager(private val context: Context) {
     private var enableFilters = false
 
     // Used to validate frame for sufficient quality before sending to API.
-    lateinit var compoundFrameFilter: FMCompoundFrameQualityFilter
+    lateinit var frameFilter: FMInputQualityFilter
     // Throttler for invalid frames.
-    private lateinit var frameFailureThrottler: FrameFailureThrottler
+    private lateinit var behaviorRequester: BehaviorRequester
 
     var motionManager = MotionManager(context)
     // Localization Session Id generated on each startUpdatingLocation call
     private lateinit var localizationSessionId: String
     // App Session Id supplied by the SDK client
     private lateinit var appSessionId: String
-    private var frameRejectionStatisticsAccumulator = FrameFilterRejectionStatistics()
+    private var frameEventAccumulator = FrameFilterRejectionStatistics()
     private var accumulatedARCoreInfo = AccumulatedARCoreInfo()
 
     /**
@@ -92,8 +92,8 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(fmNetworkManager, this, context, token)
-        compoundFrameFilter = FMCompoundFrameQualityFilter(context)
-        frameFailureThrottler = FrameFailureThrottler()
+        frameFilter = FMInputQualityFilter(context)
+        behaviorRequester = BehaviorRequester()
     }
 
     /**
@@ -140,11 +140,11 @@ class FMLocationManager(private val context: Context) {
         enableFilters = filtersEnabled
         motionManager.restart()
         accumulatedARCoreInfo.reset()
-        this.compoundFrameFilter.prepareForNewFrameSequence()
-        this.frameFailureThrottler.restart()
+        this.frameFilter.restart()
+        this.behaviorRequester.restart()
         this.locationFuser.reset()
         motionManager.restart()
-        frameRejectionStatisticsAccumulator.reset()
+        frameEventAccumulator.reset()
     }
 
     /**
@@ -218,12 +218,14 @@ class FMLocationManager(private val context: Context) {
      */
     private fun createLocalizationRequest(): FMLocalizationRequest {
         val frameEvents = FMFrameEvent(
-            frameRejectionStatisticsAccumulator.excessiveTiltFrameCount,
-            frameRejectionStatisticsAccumulator.excessiveBlurFrameCount,
-            accumulatedARCoreInfo.trackingStateFrameStatistics.excessiveMotionEventCount,
-            frameRejectionStatisticsAccumulator.insufficientFeatures,
-            accumulatedARCoreInfo.trackingStateFrameStatistics.lossOfTrackingEventCount,
-            accumulatedARCoreInfo.trackingStateFrameStatistics.totalNumberOfFrames
+            frameEventAccumulator.excessiveTiltFrameCount,
+            frameEventAccumulator.excessiveBlurFrameCount,
+            frameEventAccumulator.excessiveMotionFrameCount,
+            frameEventAccumulator.insufficientFeatures,
+            (accumulatedARCoreInfo.trackingStateFrameStatistics.framesWithLimitedTrackingState
+                    + accumulatedARCoreInfo.trackingStateFrameStatistics.framesWithNotAvailableTracking
+                    ),
+            accumulatedARCoreInfo.elapsedFrames
         )
         val rotationSpread = FMRotationSpread(
             accumulatedARCoreInfo.rotationAccumulator.pitch[2],
@@ -263,20 +265,19 @@ class FMLocationManager(private val context: Context) {
      * @return true if it can localize the ARFrame and false otherwise.
      */
     fun shouldLocalize(arFrame: Frame): Boolean {
-        accumulatedARCoreInfo.update(arFrame)
         if (isConnected
             && currentLocation.latitude > 0.0
         ) {
+            accumulatedARCoreInfo.update(arFrame)
             return if(enableFilters){
-                val result = compoundFrameFilter.accepts(arFrame)
+                val result = frameFilter.accepts(arFrame)
+                fmLocationListener?.locationManager(result.second.mapToBehaviourRequest())
                 if (result.first == FMFrameFilterResult.ACCEPTED) {
-                    fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
-                    frameFailureThrottler.restart()
+                    behaviorRequester.restart()
                     true
                 } else {
-                    frameRejectionStatisticsAccumulator.accumulate(result.second)
-                    frameFailureThrottler.onNext(result.second)
-                    fmLocationListener?.locationManager(frameFailureThrottler.handler(result.second))
+                    behaviorRequester.processResult(result.second)
+                    frameEventAccumulator.accumulate(result.second)
                     false
                 }
             }else{
