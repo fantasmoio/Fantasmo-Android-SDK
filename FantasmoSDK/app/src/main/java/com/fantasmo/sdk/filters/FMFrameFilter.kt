@@ -13,6 +13,7 @@ interface FMFrameFilter {
 enum class FMFrameFilterFailure {
     PITCHTOOLOW,
     PITCHTOOHIGH,
+    IMAGETOOBLURRY,
     MOVINGTOOFAST,
     MOVINGTOOLITTLE,
     INSUFFICIENTFEATURES,
@@ -27,6 +28,7 @@ enum class FMFrameFilterFailure {
             PITCHTOOLOW -> FMBehaviorRequest.TILTUP
             PITCHTOOHIGH -> FMBehaviorRequest.TILTDOWN
             MOVINGTOOFAST -> FMBehaviorRequest.PANSLOWLY
+            IMAGETOOBLURRY -> FMBehaviorRequest.PANSLOWLY
             MOVINGTOOLITTLE -> FMBehaviorRequest.PANAROUND
             INSUFFICIENTFEATURES -> FMBehaviorRequest.PANAROUND
             else -> FMBehaviorRequest.ACCEPTED

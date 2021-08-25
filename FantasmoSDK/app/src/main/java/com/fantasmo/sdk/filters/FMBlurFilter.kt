@@ -68,7 +68,7 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
         }
 
         return if (isBlurry) {
-            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOFAST)
+            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.IMAGETOOBLURRY)
         } else {
             Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
         }
