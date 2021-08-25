@@ -1,7 +1,7 @@
 package com.fantasmo.sdk
 
-import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
 import com.fantasmo.sdk.filters.BehaviorRequester
+import com.fantasmo.sdk.filters.FMFrameFilterFailure
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

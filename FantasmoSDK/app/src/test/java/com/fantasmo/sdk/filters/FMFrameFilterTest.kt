@@ -1,8 +1,6 @@
 package com.fantasmo.sdk.filters
 
 import com.fantasmo.sdk.FMBehaviorRequest
-import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
-import com.fantasmo.sdk.filters.primeFilters.mapToBehaviourRequest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -13,31 +11,31 @@ class FMFrameFilterTest {
         var rejection = FMFrameFilterFailure.PITCHTOOLOW
 
         assertEquals(
-            mapToBehaviourRequest(rejection),
+            rejection.mapToBehaviourRequest(),
             FMBehaviorRequest.TILTUP
         )
 
         rejection = FMFrameFilterFailure.PITCHTOOHIGH
         assertEquals(
-            mapToBehaviourRequest(rejection),
+            rejection.mapToBehaviourRequest(),
             FMBehaviorRequest.TILTDOWN
         )
 
         rejection = FMFrameFilterFailure.MOVINGTOOLITTLE
         assertEquals(
-            mapToBehaviourRequest(rejection),
+            rejection.mapToBehaviourRequest(),
             FMBehaviorRequest.PANAROUND
         )
 
         rejection = FMFrameFilterFailure.MOVINGTOOFAST
         assertEquals(
-            mapToBehaviourRequest(rejection),
+            rejection.mapToBehaviourRequest(),
             FMBehaviorRequest.PANSLOWLY
         )
 
         rejection = FMFrameFilterFailure.ACCEPTED
         assertEquals(
-            mapToBehaviourRequest(rejection),
+            rejection.mapToBehaviourRequest(),
             FMBehaviorRequest.ACCEPTED
         )
 

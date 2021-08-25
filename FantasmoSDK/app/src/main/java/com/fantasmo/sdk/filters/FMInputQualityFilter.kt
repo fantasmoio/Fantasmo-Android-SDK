@@ -4,14 +4,12 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import com.fantasmo.sdk.FMUtility.Companion.n2s
-import com.fantasmo.sdk.filters.primeFilters.*
-import com.fantasmo.sdk.filters.primeFilters.FMCameraPitchFilter
 import com.google.ar.core.Frame
 
 /**
  * Class responsible for filtering frames according the implemented filters
  */
-class FMCompoundFrameQualityFilter(context: Context) {
+class FMInputQualityFilter(context: Context) {
 
     private val TAG = "FMFrameSequenceFilter"
 
@@ -26,10 +24,10 @@ class FMCompoundFrameQualityFilter(context: Context) {
      */
     var filters = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
         listOf(
-                FMTrackingStateFilter(),
-                FMCameraPitchFilter(context),
-                FMMovementFilter(),
-                FMBlurFilter(context)
+            FMTrackingStateFilter(),
+            FMCameraPitchFilter(context),
+            FMMovementFilter(),
+            FMBlurFilter(context)
         )
     } else {
         listOf(

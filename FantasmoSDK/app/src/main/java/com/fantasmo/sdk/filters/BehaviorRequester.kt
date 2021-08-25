@@ -2,8 +2,6 @@ package com.fantasmo.sdk.filters
 
 import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMUtility.Companion.n2s
-import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
-import com.fantasmo.sdk.filters.primeFilters.mapToBehaviourRequest
 import java.util.*
 
 /**
@@ -26,7 +24,7 @@ class BehaviorRequester {
      * @return FMBehaviorRequest
      */
     fun handler(failure: FMFrameFilterFailure): FMBehaviorRequest {
-        return mapToBehaviourRequest(failure)
+        return failure.mapToBehaviourRequest()
     }
 
     // Dictionary of failure events with corresponding incidence
