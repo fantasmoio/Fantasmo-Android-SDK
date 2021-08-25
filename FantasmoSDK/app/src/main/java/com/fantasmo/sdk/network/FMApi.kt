@@ -197,7 +197,7 @@ class FMApi(
 
         // session identifiers
         params["appSessionId"] = request.analytics.appSessionId
-        params["localizationSessionId"] = request.analytics.localizationSessionId
+        params["localizationId"] = request.analytics.localizationSessionId
 
         // other analytics
         params["frameEventCounts"] = gson.toJson(frameEventCounts)
