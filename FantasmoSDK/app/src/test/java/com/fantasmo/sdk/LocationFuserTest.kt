@@ -413,12 +413,12 @@ class LocationFuserTest {
     @Test
     fun testAbbreviation(){
         var confidence = FMResultConfidence.LOW
-        assertEquals("L",abbreviation(confidence))
+        assertEquals("L",confidence.abbreviation())
 
         confidence = FMResultConfidence.MEDIUM
-        assertEquals("M",abbreviation(confidence))
+        assertEquals("M",confidence.abbreviation())
 
         confidence = FMResultConfidence.HIGH
-        assertEquals("H",abbreviation(confidence))
+        assertEquals("H",confidence.abbreviation())
     }
 }

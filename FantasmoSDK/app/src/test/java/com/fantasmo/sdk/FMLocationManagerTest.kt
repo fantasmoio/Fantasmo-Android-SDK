@@ -7,10 +7,10 @@ import android.os.Build
 import android.view.Display
 import android.view.Surface
 import androidx.test.platform.app.InstrumentationRegistry
-import com.fantasmo.sdk.filters.FMCompoundFrameQualityFilter
-import com.fantasmo.sdk.filters.primeFilters.FMBlurFilter
-import com.fantasmo.sdk.filters.primeFilters.FMCameraPitchFilter
-import com.fantasmo.sdk.filters.primeFilters.FMMovementFilter
+import com.fantasmo.sdk.filters.*
+import com.fantasmo.sdk.filters.FMBlurFilter
+import com.fantasmo.sdk.filters.FMCameraPitchFilter
+import com.fantasmo.sdk.filters.FMMovementFilter
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.network.FMApi
@@ -255,6 +255,7 @@ class FMLocationManagerTest {
         val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
+        `when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.NONE)
 
         val cameraPose = getAcceptedPose()
         `when`(frame.camera.pose).thenReturn(cameraPose)
@@ -271,9 +272,9 @@ class FMLocationManagerTest {
         fmLocationManager.setLocation(latitude, longitude)
 
         val instrumentationContext = InstrumentationRegistry.getInstrumentation().context
-        val filter = FMCompoundFrameQualityFilter(instrumentationContext)
+        val filter = FMInputQualityFilter(instrumentationContext)
         val fmBlurFilterRule = FMBlurFilter(instrumentationContext)
-        fmLocationManager.compoundFrameFilter = filter
+        fmLocationManager.frameFilter = filter
 
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
 
@@ -288,6 +289,7 @@ class FMLocationManagerTest {
         val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
+        `when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.NONE)
 
         val cameraPose = getAcceptedPose()
         val pose2 = mock(Pose::class.java)
@@ -322,6 +324,7 @@ class FMLocationManagerTest {
         val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
+        `when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.NONE)
 
         val cameraPose = getRejectedPose()
         val pose2 = mock(Pose::class.java)
@@ -442,7 +445,7 @@ class FMLocationManagerTest {
         val fmBlurFilterRule = FMBlurFilter(instrumentationContext)
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
         val context = mock(Context::class.java)
-        fmLocationManager.compoundFrameFilter.filters = listOf(
+        fmLocationManager.frameFilter.filters = listOf(
             FMMovementFilter(), FMCameraPitchFilter(
                 context
             ), spyFMBlurFilterRule
@@ -473,6 +476,7 @@ class FMLocationManagerTest {
         val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
+        `when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.NONE)
 
         val cameraPose = getAcceptedPose()
         val pose2 = mock(Pose::class.java)
@@ -531,7 +535,7 @@ class FMLocationManagerTest {
 
         val fmBlurFilterRule = FMBlurFilter(instrumentationContext2)
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
-        fmLocationManager.compoundFrameFilter.filters = listOf(
+        fmLocationManager.frameFilter.filters = listOf(
             FMMovementFilter(), FMCameraPitchFilter(
                 context
             ), spyFMBlurFilterRule
@@ -541,6 +545,7 @@ class FMLocationManagerTest {
         val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
+        `when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.NONE)
 
         val cameraPose = getAcceptedPose()
 
@@ -630,7 +635,7 @@ class FMLocationManagerTest {
 
         val fmBlurFilterRule = FMBlurFilter(instrumentationContext3)
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
-        fmLocationManager.compoundFrameFilter.filters = listOf(
+        fmLocationManager.frameFilter.filters = listOf(
             FMMovementFilter(), FMCameraPitchFilter(
                 context
             ), spyFMBlurFilterRule
@@ -640,6 +645,7 @@ class FMLocationManagerTest {
         val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
+        `when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.NONE)
 
         val cameraPose = getAcceptedPose()
 

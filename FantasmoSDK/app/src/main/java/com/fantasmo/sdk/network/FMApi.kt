@@ -4,8 +4,6 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings.Secure
 import android.util.Log
-import android.view.Display
-import android.view.WindowManager
 import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
@@ -197,7 +195,7 @@ class FMApi(
 
         // session identifiers
         params["appSessionId"] = request.analytics.appSessionId
-        params["localizationId"] = request.analytics.localizationSessionId
+        params["localizationSessionId"] = request.analytics.localizationSessionId
 
         // other analytics
         params["frameEventCounts"] = gson.toJson(frameEventCounts)

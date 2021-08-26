@@ -1,4 +1,4 @@
-package com.fantasmo.sdk.filters.primeFilters
+package com.fantasmo.sdk.filters
 
 import com.fantasmo.sdk.models.FMPosition
 import com.google.ar.core.Frame

@@ -1,7 +1,10 @@
 package com.fantasmo.sdk.models.analytics
 
+import android.util.Log
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingFailureReason
+import com.google.ar.core.TrackingState
+import java.util.*
 
 /**
  * Class responsible for creating statistics about frame events on ARCore position tracking
@@ -11,22 +14,31 @@ class TrackingStateFrameStatistics {
     var totalNumberOfFrames: Int = 0
 
     // Number of events where the frames captured have a normal tracking state
-    var normalEventCount: Int = 0
-
-    // Number of events where the excessive motion callback is received from ARKit/ARCore.
-    var excessiveMotionEventCount: Int = 0
+    var framesWithNormalTrackingState: Int = 0
 
     // Number of events where the loss of tracking callback is received from ARKit/ARCore
-    var lossOfTrackingEventCount: Int = 0
+    var framesWithLimitedTrackingState: Int = 0
+
+    // Excessive Motion;
+    // Bad internal state;
+    // Insufficient Features;
+    // Insufficient Light;
+    private var framesWithLimitedTrackingStateByReason : MutableMap<TrackingFailureReason,Int> = EnumMap(
+        TrackingFailureReason::class.java
+    )
+
+    // Number of frames captured at the moment when tracking state was `ARFrame.camera.trackingState == CAMERA_UNAVAILABLE`
+    var framesWithNotAvailableTracking: Int = 0
 
     /**
      * Resets counters on new startUpdatingLocation call
      */
     fun reset() {
         totalNumberOfFrames = 0
-        normalEventCount = 0
-        excessiveMotionEventCount = 0
-        lossOfTrackingEventCount = 0
+        framesWithNormalTrackingState = 0
+        framesWithLimitedTrackingState = 0
+        framesWithNotAvailableTracking = 0
+        framesWithLimitedTrackingStateByReason.clear()
     }
 
     /**
@@ -35,33 +47,39 @@ class TrackingStateFrameStatistics {
      * @param arFrame: frame to be evaluated
      */
     fun update(arFrame: Frame) {
-        totalNumberOfFrames += 1
+        val reason = arFrame.camera.trackingFailureReason
+        val trackingState = arFrame.camera.trackingState
 
-        when (arFrame.camera.trackingFailureReason) {
-            //Excessive Motion Event
-            TrackingFailureReason.EXCESSIVE_MOTION -> {
-                excessiveMotionEventCount += 1
-            }
-            //Loss of tracking due to bad internal state
-            TrackingFailureReason.BAD_STATE -> {
-                lossOfTrackingEventCount += 1
-            }
-            //Loss of tracking due to Insufficient Features
-            TrackingFailureReason.INSUFFICIENT_FEATURES -> {
-                lossOfTrackingEventCount += 1
-            }
-            //Loss of tracking due to Insufficient Light
-            TrackingFailureReason.INSUFFICIENT_LIGHT -> {
-                lossOfTrackingEventCount += 1
-            }
+        when (reason) {
             //Loss of tracking due to Camera Unavailable
             TrackingFailureReason.CAMERA_UNAVAILABLE -> {
-                lossOfTrackingEventCount += 1
+                framesWithNotAvailableTracking += 1
+            }
+            TrackingFailureReason.NONE -> {
+                if(trackingState == TrackingState.TRACKING){
+                    //Normal ARCore behavior
+                    framesWithNormalTrackingState += 1
+                }
+                else{
+                    //Initialization behavior is declared as Limited Tracking
+                    updateFramesWithLimitedTracking(reason)
+                }
             }
             else -> {
-                //Normal ARCore behavior
-                normalEventCount += 1
+                // Frame with Limited Tracking State
+                updateFramesWithLimitedTracking(reason)
             }
         }
+        totalNumberOfFrames += 1
+    }
+
+    private fun updateFramesWithLimitedTracking(reason: TrackingFailureReason) {
+        if(framesWithLimitedTrackingStateByReason.containsKey(reason)){
+            val count = framesWithLimitedTrackingStateByReason[reason]!!
+            framesWithLimitedTrackingStateByReason[reason] = count + 1
+        }else{
+            framesWithLimitedTrackingStateByReason[reason] = 0
+        }
+        framesWithLimitedTrackingState += 1
     }
 }

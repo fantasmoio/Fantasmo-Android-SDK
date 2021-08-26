@@ -1,6 +1,6 @@
 package com.fantasmo.sdk.analytics
 
-import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
+import com.fantasmo.sdk.filters.FMFrameFilterFailure
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -10,7 +10,7 @@ class FrameFilterRejectionStatsTest {
 
     @Test
     fun testAccumulate(){
-        var result = FMFrameFilterFailure.MOVINGTOOFAST
+        var result = FMFrameFilterFailure.IMAGETOOBLURRY
         frameFilterStats.accumulate(result)
         assertEquals(1,frameFilterStats.excessiveBlurFrameCount)
 

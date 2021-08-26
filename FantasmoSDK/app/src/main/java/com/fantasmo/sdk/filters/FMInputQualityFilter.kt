@@ -3,19 +3,17 @@ package com.fantasmo.sdk.filters
 import android.content.Context
 import android.os.Build
 import android.util.Log
-import com.fantasmo.sdk.filters.primeFilters.*
-import com.fantasmo.sdk.filters.primeFilters.FMCameraPitchFilter
 import com.google.ar.core.Frame
 
 /**
  * Class responsible for filtering frames according the implemented filters
  */
-class FMCompoundFrameQualityFilter(context: Context) {
+class FMInputQualityFilter(context: Context) {
 
     private val TAG = "FMFrameSequenceFilter"
 
     // the last time a frame was accepted
-    var timestampOfPreviousApprovedFrame: Long = 0L
+    var lastAcceptTime: Long = 0L
 
     // number of seconds after which we force acceptance
     var acceptanceThreshold = 3.0
@@ -25,10 +23,10 @@ class FMCompoundFrameQualityFilter(context: Context) {
      */
     var filters = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
         listOf(
-                FMTrackingStateFilter(),
-                FMCameraPitchFilter(context),
-                FMMovementFilter(),
-                FMBlurFilter(context)
+            FMTrackingStateFilter(),
+            FMCameraPitchFilter(context),
+            FMMovementFilter(),
+            FMBlurFilter(context)
         )
     } else {
         listOf(
@@ -41,8 +39,8 @@ class FMCompoundFrameQualityFilter(context: Context) {
     /**
      * Init a new Sequence of frames
      */
-    fun prepareForNewFrameSequence() {
-        timestampOfPreviousApprovedFrame = 0L
+    fun restart() {
+        lastAcceptTime = 0L
     }
 
     /**
@@ -51,8 +49,8 @@ class FMCompoundFrameQualityFilter(context: Context) {
      * @return result: Pair<FMFrameFilterResult, FMFrameFilterFailure>
      */
     fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
-        if (shouldForceApprove(arFrame)) {
-            timestampOfPreviousApprovedFrame = arFrame.timestamp
+        if (shouldForceAccept(arFrame)) {
+            lastAcceptTime = arFrame.timestamp
             Log.d(TAG, "shouldForceAccept True")
             return Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
         } else {
@@ -64,7 +62,7 @@ class FMCompoundFrameQualityFilter(context: Context) {
                 }
             }
         }
-        timestampOfPreviousApprovedFrame = arFrame.timestamp
+        lastAcceptTime = arFrame.timestamp
         return Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
     }
 
@@ -74,10 +72,10 @@ class FMCompoundFrameQualityFilter(context: Context) {
      * of every frame in that period was refused
      * @param arFrame: Frame for approval
      */
-    private fun shouldForceApprove(arFrame: Frame): Boolean {
-        if (timestampOfPreviousApprovedFrame != 0L) {
+    private fun shouldForceAccept(arFrame: Frame): Boolean {
+        if (lastAcceptTime != 0L) {
             //convert to seconds (Frame timestamp is in nanoseconds)
-            val elapsed = (arFrame.timestamp - timestampOfPreviousApprovedFrame) / 1000000000
+            val elapsed = (arFrame.timestamp - lastAcceptTime) / 1000000000
             return elapsed > acceptanceThreshold
         }
         return false

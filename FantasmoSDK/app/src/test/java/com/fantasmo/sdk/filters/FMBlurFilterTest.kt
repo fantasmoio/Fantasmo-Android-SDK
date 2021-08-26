@@ -3,9 +3,6 @@ package com.fantasmo.sdk.filters
 import android.content.Context
 import android.os.Build
 import androidx.test.platform.app.InstrumentationRegistry
-import com.fantasmo.sdk.filters.primeFilters.FMBlurFilter
-import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
-import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterResult
 import com.google.ar.core.Frame
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Assert
@@ -51,7 +48,7 @@ class FMBlurFilterTest {
         doReturn(250.0).`when`(spyFMBlurFilter).calculateVariance(frame)
 
         Assert.assertEquals(
-            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOFAST),
+            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.IMAGETOOBLURRY),
             spyFMBlurFilter.accepts(frame)
         )
     }

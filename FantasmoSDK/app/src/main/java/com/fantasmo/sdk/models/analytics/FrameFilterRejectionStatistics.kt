@@ -1,17 +1,18 @@
 package com.fantasmo.sdk.models.analytics
 
-import com.fantasmo.sdk.filters.primeFilters.FMFrameFilterFailure
+import com.fantasmo.sdk.filters.FMFrameFilterFailure
 
 /**
  * Class responsible for gathering information about frame filtration rejection
  */
 class FrameFilterRejectionStatistics {
 
-    var totalFrameCount = 0
+    private var totalFrameCount = 0
     var excessiveTiltFrameCount = 0
     var excessiveBlurFrameCount = 0
     var insufficientMotionFrameCount = 0
     var insufficientFeatures = 0
+    var excessiveMotionFrameCount = 0
 
     /**
      * During shouldLocalize call, frames are filtered from rejected and accepted
@@ -23,6 +24,9 @@ class FrameFilterRejectionStatistics {
         totalFrameCount += 1
         when (result) {
             FMFrameFilterFailure.MOVINGTOOFAST -> {
+                excessiveMotionFrameCount += 1
+            }
+            FMFrameFilterFailure.IMAGETOOBLURRY -> {
                 excessiveBlurFrameCount += 1
             }
             FMFrameFilterFailure.MOVINGTOOLITTLE -> {
