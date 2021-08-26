@@ -33,6 +33,9 @@ class FrameFilterRejectionStatsTest {
         frameFilterStats.accumulate(result)
         assertEquals(1,frameFilterStats.insufficientFeatures)
 
-        assertEquals(6,frameFilterStats.totalFrameCount)
+        val field = frameFilterStats.javaClass.getDeclaredField("totalFrameCount")
+        field.isAccessible = true
+        val fieldValue = field.get(frameFilterStats)
+        assertEquals(6,fieldValue)
     }
 }

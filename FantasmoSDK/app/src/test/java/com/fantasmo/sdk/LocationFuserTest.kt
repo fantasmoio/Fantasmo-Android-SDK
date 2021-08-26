@@ -1,8 +1,6 @@
 package com.fantasmo.sdk
 
 import android.os.Build
-import com.fantasmo.sdk.FMLocationResult
-import com.fantasmo.sdk.FMResultConfidence
 import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.Location
 import com.fantasmo.sdk.utilities.LocationFuser
@@ -357,18 +355,23 @@ class LocationFuserTest {
     @Test
     fun testConfidence(){
         val locations = mutableListOf<Location>()
+        val method = LocationFuser().javaClass.getDeclaredMethod("standardDeviationConfidence",List::class.java)
+        method.isAccessible = true
+
+        val method2 = LocationFuser().javaClass.getDeclaredMethod("confidence",List::class.java)
+        method2.isAccessible = true
 
         val coordinate = Coordinate(10.0, 10.0)
         val location = Location(0, coordinate, 0, 0, 0, 0)
         locations.add(location)
-        assertEquals(LocationFuser().standardDeviationConfidence(locations), FMResultConfidence.LOW)
-        assertEquals(LocationFuser().confidence(locations), FMResultConfidence.LOW)
+        assertEquals(method.invoke(LocationFuser(),locations), FMResultConfidence.LOW)
+        assertEquals(method2.invoke(LocationFuser(),locations), FMResultConfidence.LOW)
 
         val coordinate1 = Coordinate(10.0, 10.0000001)
         val locations1 = Location(0, coordinate1, 0, 0, 0, 0)
         locations.add(locations1)
-        assertEquals(LocationFuser().standardDeviationConfidence(locations), FMResultConfidence.HIGH)
-        assertEquals(LocationFuser().confidence(locations), FMResultConfidence.HIGH)
+        assertEquals(method.invoke(LocationFuser(),locations), FMResultConfidence.HIGH)
+        assertEquals(method2.invoke(LocationFuser(),locations), FMResultConfidence.HIGH)
 
         locations.clear()
         val coordinate3 = Coordinate(10.0, 10.0000002)
@@ -376,8 +379,8 @@ class LocationFuserTest {
         locations.add(location2)
         val locations3 = Location(0, coordinate3, 0, 0, 0, 0)
         locations.add(locations3)
-        assertEquals(LocationFuser().standardDeviationConfidence(locations), FMResultConfidence.HIGH)
-        assertEquals(LocationFuser().confidence(locations), FMResultConfidence.HIGH)
+        assertEquals(method.invoke(LocationFuser(),locations), FMResultConfidence.HIGH)
+        assertEquals(method2.invoke(LocationFuser(),locations), FMResultConfidence.HIGH)
 
         locations.clear()
         val location4 = Location(0, coordinate, 0, 0, 0, 0)
@@ -385,8 +388,8 @@ class LocationFuserTest {
         val coordinate5 = Coordinate(10.0, 10.000004)
         val locations5 = Location(0, coordinate5, 0, 0, 0, 0)
         locations.add(locations5)
-        assertEquals(LocationFuser().standardDeviationConfidence(locations), FMResultConfidence.MEDIUM)
-        assertEquals(LocationFuser().confidence(locations), FMResultConfidence.MEDIUM)
+        assertEquals(method.invoke(LocationFuser(),locations), FMResultConfidence.MEDIUM)
+        assertEquals(method2.invoke(LocationFuser(),locations), FMResultConfidence.MEDIUM)
 
         locations.clear()
         val location6 = Location(0, coordinate, 0, 0, 0, 0)
@@ -394,20 +397,20 @@ class LocationFuserTest {
         val coordinate7 = Coordinate(10.0, 10.000010)
         val locations7 = Location(0, coordinate7, 0, 0, 0, 0)
         locations.add(locations7)
-        assertEquals(LocationFuser().standardDeviationConfidence(locations), FMResultConfidence.LOW)
-        assertEquals(LocationFuser().confidence(locations), FMResultConfidence.LOW)
+        assertEquals(method.invoke(LocationFuser(),locations), FMResultConfidence.LOW)
+        assertEquals(method2.invoke(LocationFuser(),locations), FMResultConfidence.LOW)
 
         val location8 = Location(0, coordinate, 0, 0, 0, 0)
         locations.add(location8)
-        assertEquals(LocationFuser().confidence(locations), FMResultConfidence.MEDIUM)
+        assertEquals(method2.invoke(LocationFuser(),locations), FMResultConfidence.MEDIUM)
 
         val location9 = Location(0, coordinate, 0, 0, 0, 0)
         locations.add(location9)
-        assertEquals(LocationFuser().confidence(locations), FMResultConfidence.MEDIUM)
+        assertEquals(method2.invoke(LocationFuser(),locations), FMResultConfidence.MEDIUM)
 
         val location10 = Location(0, coordinate, 0, 0, 0, 0)
         locations.add(location10)
-        assertEquals(LocationFuser().confidence(locations), FMResultConfidence.HIGH)
+        assertEquals(method2.invoke(LocationFuser(),locations), FMResultConfidence.HIGH)
     }
 
     @Test
