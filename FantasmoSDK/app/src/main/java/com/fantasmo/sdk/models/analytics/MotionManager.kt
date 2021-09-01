@@ -53,7 +53,9 @@ class MotionManager(context: Context) : SensorEventListener {
     fun stop(){
         if(!disabledSensor){
             magneticField = MagneticField(0f,0f,0f)
-            sensorManager.unregisterListener(this,magnetometer)
+            if(this::magnetometer.isInitialized){
+                sensorManager.unregisterListener(this,magnetometer)
+            }
         }
         else{
             magneticField = MagneticField(0f,0f,0f)
