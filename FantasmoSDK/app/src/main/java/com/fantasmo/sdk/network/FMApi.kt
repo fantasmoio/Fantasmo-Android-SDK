@@ -64,11 +64,11 @@ class FMRotationSpread(
  * Class to hold the necessary logic to communicate with Fantasmo API.
  */
 class FMApi(
-    private val fmNetworkManager: FMNetworkManager,
     private val fmLocationManager: FMLocationManager,
     private val context: Context,
     private val token: String,
 ) {
+    var fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), context)
 
     private val TAG = "FMApi"
 

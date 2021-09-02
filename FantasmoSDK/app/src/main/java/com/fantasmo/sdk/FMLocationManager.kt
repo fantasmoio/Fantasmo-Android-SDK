@@ -41,7 +41,6 @@ class FMLocationManager(private val context: Context) {
         UPLOADING
     }
 
-    var fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), context)
     private var coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
     private var locationFuser = LocationFuser()
@@ -91,7 +90,7 @@ class FMLocationManager(private val context: Context) {
 
         this.token = accessToken
         this.fmLocationListener = callback
-        fmApi = FMApi(fmNetworkManager, this, context, token)
+        fmApi = FMApi(this, context, token)
         frameFilter = FMInputQualityFilter(context)
         behaviorRequester = BehaviorRequester()
     }
