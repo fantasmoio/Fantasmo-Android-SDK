@@ -40,58 +40,79 @@ class BehaviorRequesterTest {
             frameFailure.handler(failure),
             FMBehaviorRequest.ACCEPTED
         )
+
+        failure = FMFrameFilterFailure.INSUFFICIENTFEATURES
+        assertEquals(
+            frameFailure.handler(failure),
+            FMBehaviorRequest.PANAROUND
+        )
     }
 
     @Test
-    fun testOnNext() {
+    fun testProcessResult() {
         val failure = FMFrameFilterFailure.PITCHTOOLOW
         val frameFailure = BehaviorRequester()
 
         frameFailure.processResult(failure)
 
+        val fieldRejectionCounts = frameFailure.javaClass.getDeclaredField("rejectionCounts")
+        fieldRejectionCounts.isAccessible = true
+        val result = fieldRejectionCounts.get(frameFailure) as MutableMap<*, *>
+
         assertEquals(
-            frameFailure.rejectionCounts.isEmpty(),
+            result.isEmpty(),
             false
         )
 
         assertEquals(
-            frameFailure.rejectionCounts[failure],
+            result[failure],
             1
         )
     }
 
     @Test
-    fun testOnNextWithFailure() {
+    fun testProcessResultWithFailure() {
         val failure = FMFrameFilterFailure.PITCHTOOLOW
         val frameFailure = BehaviorRequester()
 
-        frameFailure.rejectionCounts[failure] = 2
+        val fieldRejectionCounts = frameFailure.javaClass.getDeclaredField("rejectionCounts")
+        fieldRejectionCounts.isAccessible = true
+        val result : MutableMap<FMFrameFilterFailure, Int> = fieldRejectionCounts.get(frameFailure) as MutableMap<FMFrameFilterFailure, Int>
+
+        result[failure] = 2
 
         frameFailure.processResult(failure)
 
         assertEquals(
-            frameFailure.rejectionCounts.isEmpty(),
+            result.isEmpty(),
             false
         )
 
         assertEquals(
-            frameFailure.rejectionCounts[failure],
+            result[failure],
             3
         )
     }
 
     @Test
-    fun testOnNextStartNewCycle() {
+    fun testProcessResultStartNewCycle() {
         val failure = FMFrameFilterFailure.PITCHTOOLOW
         val frameFailure = BehaviorRequester()
 
-        frameFailure.rejectionCounts[failure] = 30
-        frameFailure.lastTriggerTime = 1619184130499
+        val fieldRejectionCounts = frameFailure.javaClass.getDeclaredField("rejectionCounts")
+        fieldRejectionCounts.isAccessible = true
+        val result : MutableMap<FMFrameFilterFailure, Int> = fieldRejectionCounts.get(frameFailure) as MutableMap<FMFrameFilterFailure, Int>
+
+        result[failure] = 30
+
+        val fieldLastTriggerTime = frameFailure.javaClass.getDeclaredField("lastTriggerTime")
+        fieldLastTriggerTime.isAccessible = true
+        fieldLastTriggerTime.set(frameFailure,1619184130499)
 
         frameFailure.processResult(failure)
 
         assertEquals(
-            frameFailure.rejectionCounts.isEmpty(),
+            result.isEmpty(),
             true
         )
     }

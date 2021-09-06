@@ -48,7 +48,7 @@ class FMBlurFilterTest {
         doReturn(250.0).`when`(spyFMBlurFilter).calculateVariance(frame)
 
         Assert.assertEquals(
-            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOFAST),
+            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.IMAGETOOBLURRY),
             spyFMBlurFilter.accepts(frame)
         )
     }

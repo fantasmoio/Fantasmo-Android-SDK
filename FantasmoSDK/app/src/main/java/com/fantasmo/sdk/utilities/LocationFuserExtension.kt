@@ -19,7 +19,7 @@ class LocationFuserExtension {
          * @param pointB: Ending Location point
          * @return distance between the two points
          */
-        private fun degreeDistance(pointA: Location, pointB: Location): Double {
+        fun degreeDistance(pointA: Location, pointB: Location): Double {
             val dLat = pointA.coordinate.latitude - pointB.coordinate.latitude
             val dLon = pointA.coordinate.longitude - pointB.coordinate.longitude
             return sqrt(dLat * dLat + dLon * dLon)

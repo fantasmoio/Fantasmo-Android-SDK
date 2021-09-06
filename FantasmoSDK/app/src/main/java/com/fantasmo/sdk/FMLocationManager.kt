@@ -41,10 +41,9 @@ class FMLocationManager(private val context: Context) {
         UPLOADING
     }
 
-    var fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), context)
-    var coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private var coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
-    var locationFuser = LocationFuser()
+    private var locationFuser = LocationFuser()
 
     lateinit var fmApi: FMApi
 
@@ -60,16 +59,16 @@ class FMLocationManager(private val context: Context) {
     /// This mode is useful for implementation and debugging.
     var isSimulation = false
 
-    var isConnected = false
+    private var isConnected = false
 
     private var enableFilters = false
 
     // Used to validate frame for sufficient quality before sending to API.
-    lateinit var frameFilter: FMInputQualityFilter
+    private lateinit var frameFilter: FMInputQualityFilter
     // Throttler for invalid frames.
     private lateinit var behaviorRequester: BehaviorRequester
 
-    var motionManager = MotionManager(context)
+    private var motionManager = MotionManager(context)
     // Localization Session Id generated on each startUpdatingLocation call
     private lateinit var localizationSessionId: String
     // App Session Id supplied by the SDK client
@@ -91,7 +90,7 @@ class FMLocationManager(private val context: Context) {
 
         this.token = accessToken
         this.fmLocationListener = callback
-        fmApi = FMApi(fmNetworkManager, this, context, token)
+        fmApi = FMApi(this, context, token)
         frameFilter = FMInputQualityFilter(context)
         behaviorRequester = BehaviorRequester()
     }
