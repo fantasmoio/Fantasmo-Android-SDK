@@ -8,9 +8,6 @@ import android.view.Display
 import android.view.Surface
 import androidx.test.platform.app.InstrumentationRegistry
 import com.fantasmo.sdk.filters.*
-import com.fantasmo.sdk.filters.FMBlurFilter
-import com.fantasmo.sdk.filters.FMCameraPitchFilter
-import com.fantasmo.sdk.filters.FMMovementFilter
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.network.FMApi
@@ -516,6 +513,14 @@ class FMLocationManagerTest {
 
         doReturn(300.0).`when`(spyFMBlurFilterRule).calculateVariance(frame)
 
+        val intrinsics = mock(CameraIntrinsics::class.java)
+        `when`(frame.camera.imageIntrinsics).thenReturn(intrinsics)
+        val imageDimensions = intArrayOf(height,width)
+        `when`(frame.camera.imageIntrinsics.imageDimensions).thenReturn(imageDimensions)
+
+        `when`(frame.camera.imageIntrinsics.focalLength).thenReturn(focalLength)
+        `when`(frame.camera.imageIntrinsics.principalPoint).thenReturn(principalPoint)
+
         testScope.runBlockingTest {
             spyFMLocationManager.localize(frame)
         }
@@ -606,6 +611,9 @@ class FMLocationManagerTest {
 
         doReturn(300.0).`when`(spyFMBlurFilterRule).calculateVariance(frame)
 
+        val imageDimensions = intArrayOf(height,width)
+        `when`(frame.camera.imageIntrinsics.imageDimensions).thenReturn(imageDimensions)
+
         testScope.runBlockingTest {
             spyFMLocationManager.localize(frame)
         }
@@ -613,6 +621,7 @@ class FMLocationManagerTest {
         verify(spyFMLocationManager, times(1)).localize(frame)
         verify(spyFMLocationManager, times(1)).shouldLocalize(frame)
         verify(spyFMLocationManager, times(2)).fmApi
+        verify(spyFMApi2, times(1)).fmNetworkManager
     }
 
     @Test
@@ -694,6 +703,9 @@ class FMLocationManagerTest {
         `when`(frame.camera.imageIntrinsics.principalPoint).thenReturn(principalPoint)
 
         doReturn(300.0).`when`(spyFMBlurFilterRule).calculateVariance(frame)
+
+        val imageDimensions = intArrayOf(height,width)
+        `when`(frame.camera.imageIntrinsics.imageDimensions).thenReturn(imageDimensions)
 
         testScope.runBlockingTest {
             spyFMLocationManager.localize(frame)
