@@ -4,8 +4,6 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings.Secure
 import android.util.Log
-import android.view.Display
-import android.view.WindowManager
 import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
@@ -66,11 +64,11 @@ class FMRotationSpread(
  * Class to hold the necessary logic to communicate with Fantasmo API.
  */
 class FMApi(
-    private val fmNetworkManager: FMNetworkManager,
     private val fmLocationManager: FMLocationManager,
     private val context: Context,
     private val token: String,
 ) {
+    var fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), context)
 
     private val TAG = "FMApi"
 

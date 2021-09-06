@@ -39,5 +39,16 @@ class FMFrameFilterTest {
             FMBehaviorRequest.ACCEPTED
         )
 
+        rejection = FMFrameFilterFailure.INSUFFICIENTFEATURES
+        assertEquals(
+            rejection.mapToBehaviourRequest(),
+            FMBehaviorRequest.PANAROUND
+        )
+
+        rejection = FMFrameFilterFailure.IMAGETOOBLURRY
+        assertEquals(
+            rejection.mapToBehaviourRequest(),
+            FMBehaviorRequest.PANSLOWLY
+        )
     }
 }

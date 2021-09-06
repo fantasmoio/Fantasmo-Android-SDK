@@ -16,7 +16,7 @@ class BehaviorRequester {
     private var incidenceThreshold = 30
 
     // The last time of triggering.
-    var lastErrorTime = System.nanoTime()
+    private var lastErrorTime = System.nanoTime()
 
     /**
      * Maps failure to display in app side
@@ -28,7 +28,7 @@ class BehaviorRequester {
     }
 
     // Dictionary of failure events with corresponding incidence
-    var rejectionCounts: MutableMap<FMFrameFilterFailure, Int> = EnumMap(
+    private var rejectionCounts: MutableMap<FMFrameFilterFailure, Int> = EnumMap(
         FMFrameFilterFailure::class.java
     )
 
