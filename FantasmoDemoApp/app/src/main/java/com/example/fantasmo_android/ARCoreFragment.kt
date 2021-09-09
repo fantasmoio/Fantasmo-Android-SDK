@@ -8,6 +8,7 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
+import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -39,6 +40,8 @@ import com.google.ar.core.*
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.ux.ArFragment
 import java.util.*
+import com.google.ar.core.CameraConfig
+import com.google.ar.core.CameraConfigFilter
 
 
 /**
@@ -242,6 +245,24 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
         config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
         config.planeFindingMode = Config.PlaneFindingMode.DISABLED
 
+        var selectedSize = Size(0, 0)
+        var selectedCameraConfig = 0
+
+        val filter = CameraConfigFilter(arSession)
+        val cameraConfigsList: List<CameraConfig> = arSession.getSupportedCameraConfigs(filter)
+        for (currentCameraConfig in cameraConfigsList) {
+            val cpuImageSize: Size = currentCameraConfig.imageSize
+            val gpuTextureSize: Size = currentCameraConfig.textureSize
+            Log.d(
+                TAG,
+                "CurrentCameraConfig CPU image size:$cpuImageSize GPU texture size:$gpuTextureSize"
+            )
+            if (cpuImageSize.width > selectedSize.width) {
+                selectedSize = cpuImageSize
+                selectedCameraConfig = cameraConfigsList.indexOf(currentCameraConfig)
+            }
+        }
+        arSession.cameraConfig = cameraConfigsList[selectedCameraConfig]
         arSession.configure(config)
         arSceneView.setupSession(arSession)
 
