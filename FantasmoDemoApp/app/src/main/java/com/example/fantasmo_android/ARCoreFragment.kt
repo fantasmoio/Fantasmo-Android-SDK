@@ -257,7 +257,7 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
                 TAG,
                 "CurrentCameraConfig CPU image size:$cpuImageSize GPU texture size:$gpuTextureSize"
             )
-            if (cpuImageSize.width > selectedSize.width) {
+            if (cpuImageSize.width > selectedSize.width && cpuImageSize.height <= 1080) {
                 selectedSize = cpuImageSize
                 selectedCameraConfig = cameraConfigsList.indexOf(currentCameraConfig)
             }

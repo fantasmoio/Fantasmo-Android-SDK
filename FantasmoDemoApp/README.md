@@ -73,7 +73,7 @@ Then configuring the ARSession.
         Log.d(TAG, arSceneView.session?.config.toString())
     }
 
-ARCore defaults it's resolution to 640x480. In order to improve image quality, the following piece of code should be added before the `arSession.configure(config)` line. This will find the largest resolution and use it during the ARSession.
+ARCore defaults it's resolution to 640x480. In order to improve image quality, the following piece of code should be added before the `arSession.configure(config)` line. This will find the largest resolution and use it during the ARSession. We've locked maximum resolution at 1080p resolution as we don’t recommend using more than that.
 
     var selectedSize = Size(0, 0)
     var selectedCameraConfig = 0
@@ -84,7 +84,7 @@ ARCore defaults it's resolution to 640x480. In order to improve image quality, t
         val cpuImageSize: Size = currentCameraConfig.imageSize
         val gpuTextureSize: Size = currentCameraConfig.textureSize
 
-        if (cpuImageSize.width > selectedSize.width) {
+        if (cpuImageSize.width > selectedSize.width && cpuImageSize.height <= 1080) {
             selectedSize = cpuImageSize
             selectedCameraConfig = cameraConfigsList.indexOf(currentCameraConfig)
         }
