@@ -73,7 +73,7 @@ Then configuring the ARSession.
         Log.d(TAG, arSceneView.session?.config.toString())
     }
 
-In order to order to improve image quality, the following piece of code should be added before the `arSession.configure(config)` line. This will find the largest resolution and use it during the arSession.
+ARCore defaults it's resolution to 640x480. In order to improve image quality, the following piece of code should be added before the `arSession.configure(config)` line. This will find the largest resolution and use it during the ARSession.
 
     var selectedSize = Size(0, 0)
     var selectedCameraConfig = 0
@@ -88,7 +88,8 @@ In order to order to improve image quality, the following piece of code should b
             selectedSize = cpuImageSize
             selectedCameraConfig = cameraConfigsList.indexOf(currentCameraConfig)
         }
-        arSession.cameraConfig = cameraConfigsList[selectedCameraConfig]
+    }
+    arSession.cameraConfig = cameraConfigsList[selectedCameraConfig]
     
 
 And set the onUpdateListener to localize the ARFrames.
