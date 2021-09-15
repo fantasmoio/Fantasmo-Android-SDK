@@ -266,6 +266,7 @@ class FMLocationManager(private val context: Context) {
     fun shouldLocalize(arFrame: Frame): Boolean {
         if (isConnected
             && currentLocation.latitude > 0.0
+            && state == State.LOCALIZING
         ) {
             accumulatedARCoreInfo.update(arFrame)
             return if(enableFilters){
