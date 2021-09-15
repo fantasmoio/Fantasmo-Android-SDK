@@ -72,7 +72,25 @@ Then configuring the ARSession.
         arSceneView.setupSession(arSession)
         Log.d(TAG, arSceneView.session?.config.toString())
     }
+
+In order to order to improve image quality, the following piece of code should be added before the `arSession.configure(config)` line. This will find the largest resolution and use it during the arSession.
+
+    var selectedSize = Size(0, 0)
+    var selectedCameraConfig = 0
+
+    val filter = CameraConfigFilter(arSession)
+    val cameraConfigsList: List<CameraConfig> = arSession.getSupportedCameraConfigs(filter)
+    for (currentCameraConfig in cameraConfigsList) {
+        val cpuImageSize: Size = currentCameraConfig.imageSize
+        val gpuTextureSize: Size = currentCameraConfig.textureSize
+
+        if (cpuImageSize.width > selectedSize.width) {
+            selectedSize = cpuImageSize
+            selectedCameraConfig = cameraConfigsList.indexOf(currentCameraConfig)
+        }
+        arSession.cameraConfig = cameraConfigsList[selectedCameraConfig]
     
+
 And set the onUpdateListener to localize the ARFrames.
 
     val scene = arSceneView.scene
