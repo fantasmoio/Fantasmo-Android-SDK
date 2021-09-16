@@ -12,6 +12,10 @@ import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.utilities.MovingAverage
 import com.google.ar.core.Frame
 import com.google.ar.core.exceptions.NotYetAvailableException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -39,13 +43,16 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
 
     private var throughputAverager = MovingAverage(8)
     private var averageThroughput: Double = throughputAverager.average
+
     /**
      * Check frame acceptance.
      * @param arFrame: Frame to be evaluated
      * @return Accepts frame or Rejects frame with MovingTooFast failure
      */
     override fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
-        variance = calculateVariance(arFrame)
+        GlobalScope.launch(Dispatchers.IO) { // launches coroutine in io thread
+            variance = calculateVariance(arFrame)
+        }
         varianceAverager.addSample(variance)
 
         val isLowVariance: Boolean
@@ -82,80 +89,96 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
      * @param arFrame: frame to be measure the variance
      * @return variance: blurriness value
      * */
-    fun calculateVariance(arFrame: Frame): Double {
-        try{
+    suspend fun calculateVariance(arFrame: Frame): Double {
+        try {
+            val stdDev = GlobalScope.async {
 
-            val cameraImage = arFrame.acquireCameraImage()
+                val cameraImage = arFrame.acquireCameraImage()
 
-            val baOutputStream = FMUtility.createByteArrayOutputStream(cameraImage)
+                val baOutputStream = FMUtility.createByteArrayOutputStream(cameraImage)
 
-            // Release the image
-            cameraImage.close()
+                // Release the image
+                cameraImage.close()
 
-            val imageBytes: ByteArray = baOutputStream.toByteArray()
-            val imageBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-            val rs = RenderScript.create(context)
+                val imageBytes: ByteArray = baOutputStream.toByteArray()
+                val imageBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                val rs = RenderScript.create(context)
 
-            // Greyscale so we're only dealing with white <--> black pixels,
-            // this is so we only need to detect pixel luminosity
-            val greyscaleBitmap = Bitmap.createBitmap(imageBitmap.width,
-                imageBitmap.height,
-                imageBitmap.config
-            )
-            val smootherInput = Allocation.createFromBitmap(rs,
-                imageBitmap,
-                Allocation.MipmapControl.MIPMAP_NONE,
-                Allocation.USAGE_SHARED
-            )
-            val greyscaleTargetAllocation = Allocation.createFromBitmap(rs,
-                greyscaleBitmap,
-                Allocation.MipmapControl.MIPMAP_NONE,
-                Allocation.USAGE_SHARED
-            )
+                // Greyscale so we're only dealing with white <--> black pixels,
+                // this is so we only need to detect pixel luminosity
+                val greyscaleBitmap = Bitmap.createBitmap(
+                    imageBitmap.width,
+                    imageBitmap.height,
+                    imageBitmap.config
+                )
+                val smootherInput = Allocation.createFromBitmap(
+                    rs,
+                    imageBitmap,
+                    Allocation.MipmapControl.MIPMAP_NONE,
+                    Allocation.USAGE_SHARED
+                )
+                val greyscaleTargetAllocation = Allocation.createFromBitmap(
+                    rs,
+                    greyscaleBitmap,
+                    Allocation.MipmapControl.MIPMAP_NONE,
+                    Allocation.USAGE_SHARED
+                )
 
-            // Inverts and greyscales the image
-            val colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
-            colorIntrinsic.setGreyscale()
-            colorIntrinsic.forEach(smootherInput, greyscaleTargetAllocation)
-            greyscaleTargetAllocation.copyTo(greyscaleBitmap)
+                // Inverts and greyscales the image
+                val colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
+                colorIntrinsic.setGreyscale()
+                colorIntrinsic.forEach(smootherInput, greyscaleTargetAllocation)
+                greyscaleTargetAllocation.copyTo(greyscaleBitmap)
 
-            // Run edge detection algorithm using a laplacian matrix convolution
-            // Apply 3x3 convolution to detect edges
-            val edgesBitmap = Bitmap.createBitmap(imageBitmap.width,
-                imageBitmap.height,
-                imageBitmap.config
-            )
-            val greyscaleInput = Allocation.createFromBitmap(rs,
-                greyscaleBitmap,
-                Allocation.MipmapControl.MIPMAP_NONE,
-                Allocation.USAGE_SHARED
-            )
-            val edgesTargetAllocation = Allocation.createFromBitmap(rs,
-                edgesBitmap,
-                Allocation.MipmapControl.MIPMAP_NONE,
-                Allocation.USAGE_SHARED
-            )
+                // Run edge detection algorithm using a laplacian matrix convolution
+                // Apply 3x3 convolution to detect edges
+                val edgesBitmap = Bitmap.createBitmap(
+                    imageBitmap.width,
+                    imageBitmap.height,
+                    imageBitmap.config
+                )
+                val greyscaleInput = Allocation.createFromBitmap(
+                    rs,
+                    greyscaleBitmap,
+                    Allocation.MipmapControl.MIPMAP_NONE,
+                    Allocation.USAGE_SHARED
+                )
+                val edgesTargetAllocation = Allocation.createFromBitmap(
+                    rs,
+                    edgesBitmap,
+                    Allocation.MipmapControl.MIPMAP_NONE,
+                    Allocation.USAGE_SHARED
+                )
 
-            val convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
-            convolve.setInput(greyscaleInput)
-            convolve.setCoefficients(laplacianMatrix)
-            convolve.forEach(edgesTargetAllocation)
-            edgesTargetAllocation.copyTo(edgesBitmap)
+                val convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
+                convolve.setInput(greyscaleInput)
+                convolve.setCoefficients(laplacianMatrix)
+                convolve.forEach(edgesTargetAllocation)
+                edgesTargetAllocation.copyTo(edgesBitmap)
 
-            // This is important to be false, otherwise image will be blank
-            edgesBitmap.setHasAlpha(false)
-            val pixels = IntArray(edgesBitmap.height * edgesBitmap.width)
-            edgesBitmap.getPixels(pixels, 0, edgesBitmap.width, 0, 0, edgesBitmap.width, edgesBitmap.height)
+                // This is important to be false, otherwise image will be blank
+                edgesBitmap.setHasAlpha(false)
+                val pixels = IntArray(edgesBitmap.height * edgesBitmap.width)
+                edgesBitmap.getPixels(
+                    pixels,
+                    0,
+                    edgesBitmap.width,
+                    0,
+                    0,
+                    edgesBitmap.width,
+                    edgesBitmap.height
+                )
 
-            // Get standard deviation from meanStdDev
-            val stdDev = meanStdDev(edgesBitmap)
+                // Get standard deviation from meanStdDev
+                meanStdDev(edgesBitmap)
+            }
 
-            Log.i(TAG,"calculateVariance: $stdDev")
+            Log.i(TAG, "calculateVariance: ${stdDev.await()}")
 
-            return stdDev
+            return stdDev.await()
 
-        }catch(e:NotYetAvailableException){
-            Log.e(TAG,"FrameNotAvailable")
+        } catch (e: NotYetAvailableException) {
+            Log.e(TAG, "FrameNotAvailable")
         }
         return 0.0
     }
