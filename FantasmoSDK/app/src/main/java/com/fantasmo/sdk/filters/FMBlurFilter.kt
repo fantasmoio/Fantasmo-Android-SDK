@@ -168,7 +168,6 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
                     edgesBitmap.width,
                     edgesBitmap.height
                 )
-                Log.d(TAG, "Stopped Variance")
 
                 // Get standard deviation from meanStdDev
                 meanStdDev(edgesBitmap)
