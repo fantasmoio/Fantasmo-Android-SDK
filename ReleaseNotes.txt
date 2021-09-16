@@ -28,3 +28,25 @@ Version 1.0.5:
 - Improved anchor delta calculation
 - Improved stability
 - Increased testing coverage 
+
+Version 2.0.0:
+- MW-196 FrameEventCount implementation is broken 
+- MW173 Enable filtering and behaviour request
+- MW127 Image fusion
+- MW169 Add image resolution to cps request
+- MW162 Post analytics to api
+- MW125 Add filters for ArCameraTrackingState
+- MW124 Update tilt filter with new thresholds
+- MW122 Monitor and accumulate device motion
+- MW126 Add rideid parameter to start updating location
+- MW123 Add filter rejection counts to analytics
+- MW121 Monitor and accumulate ar problems
+- MW120 gather device characteristics
+- Remove default icons from SDK resources
+- Add map view to demo app
+- Increased SDK compatibility
+
+Version 2.0.1
+- MW-249 Fix uninitialized magnetometer crash
+- MW-250 Improve image resolution
+- MW-196 FrameEventCount implementation is broken (fixed localize requests)
