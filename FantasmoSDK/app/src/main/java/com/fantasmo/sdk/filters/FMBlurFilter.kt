@@ -11,11 +11,13 @@ import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.utilities.MovingAverage
 import com.google.ar.core.Frame
+import com.google.ar.core.exceptions.DeadlineExceededException
 import com.google.ar.core.exceptions.NotYetAvailableException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -50,8 +52,9 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
      * @return Accepts frame or Rejects frame with MovingTooFast failure
      */
     override fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
+        val baOutputStream = acquireFrameImage(arFrame)
         GlobalScope.launch(Dispatchers.IO) { // launches coroutine in io thread
-            variance = calculateVariance(arFrame)
+            variance = calculateVariance(baOutputStream)
         }
         varianceAverager.addSample(variance)
 
@@ -89,16 +92,11 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
      * @param arFrame: frame to be measure the variance
      * @return variance: blurriness value
      * */
-    suspend fun calculateVariance(arFrame: Frame): Double {
-        try {
+    suspend fun calculateVariance(baOutputStream: ByteArrayOutputStream?): Double {
+        if (baOutputStream == null) {
+            return 0.0
+        } else {
             val stdDev = GlobalScope.async {
-
-                val cameraImage = arFrame.acquireCameraImage()
-
-                val baOutputStream = FMUtility.createByteArrayOutputStream(cameraImage)
-
-                // Release the image
-                cameraImage.close()
 
                 val imageBytes: ByteArray = baOutputStream.toByteArray()
                 val imageBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
@@ -172,15 +170,9 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
                 // Get standard deviation from meanStdDev
                 meanStdDev(edgesBitmap)
             }
-
             Log.i(TAG, "calculateVariance: ${stdDev.await()}")
-
             return stdDev.await()
-
-        } catch (e: NotYetAvailableException) {
-            Log.e(TAG, "FrameNotAvailable")
         }
-        return 0.0
     }
 
     /**
@@ -216,5 +208,28 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
         }
 
         return sqrt(stdDevR / pixels.size) * 100
+    }
+
+    /**
+     * Acquires the image from the ARCore frame catching all
+     * exceptions that could happen during localizing session
+     * @param arFrame: Frame
+     * @return ByteArrayOutputStream or null in case of exception
+     */
+    private fun acquireFrameImage(arFrame: Frame): ByteArrayOutputStream? {
+        try {
+            val cameraImage = arFrame.acquireCameraImage()
+            arFrame.acquireCameraImage().close()
+
+            val baOutputStream = FMUtility.createByteArrayOutputStream(cameraImage)
+            // Release the image
+            cameraImage.close()
+            return baOutputStream
+        } catch (e: NotYetAvailableException) {
+            Log.d(TAG, "FrameNotYetAvailable")
+        } catch (e: DeadlineExceededException) {
+            Log.d(TAG, "DeadlineExceededException")
+        }
+        return null
     }
 }
