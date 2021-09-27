@@ -53,7 +53,7 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
      */
     override fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
         val baOutputStream = acquireFrameImage(arFrame)
-        GlobalScope.launch(Dispatchers.IO) { // launches coroutine in io thread
+        GlobalScope.launch(Dispatchers.Default) { // launches coroutine in cpu thread
             variance = calculateVariance(baOutputStream)
         }
         varianceAverager.addSample(variance)
