@@ -121,6 +121,7 @@ class FMLocationManager(private val context: Context) {
         enableFilters = false
         motionManager.restart()
         accumulatedARCoreInfo.reset()
+        this.locationFuser.reset()
     }
 
     /**
@@ -142,7 +143,6 @@ class FMLocationManager(private val context: Context) {
         this.frameFilter.restart()
         this.behaviorRequester.restart()
         this.locationFuser.reset()
-        motionManager.restart()
         frameEventAccumulator.reset()
     }
 

@@ -22,8 +22,7 @@ class MotionManager(val context: Context) : SensorEventListener {
 
     lateinit var magneticField: MagneticField
 
-    private var sensorManager: SensorManager =
-        context.getSystemService(SENSOR_SERVICE) as SensorManager
+    private lateinit var sensorManager: SensorManager
     private lateinit var magnetometer: Sensor
 
     override fun onSensorChanged(event: SensorEvent?) {
@@ -45,6 +44,7 @@ class MotionManager(val context: Context) : SensorEventListener {
     fun restart() {
         magneticField = MagneticField(0f, 0f, 0f)
         if (!disabledSensor) {
+            sensorManager = context.getSystemService(SENSOR_SERVICE) as SensorManager
             // Verifying if Sensor Magnetic_Field exists
             if (sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD) != null) {
                 //In positive case register it
