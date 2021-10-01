@@ -50,3 +50,7 @@ Version 2.0.1
 - MW-249 Fix uninitialized magnetometer crash
 - MW-250 Improve image resolution
 - MW-196 FrameEventCount implementation is broken (fixed localize requests)
+
+Version 2.0.2
+- MW-277 Fix Android SDK crash with blur filter
+- MW-284 Fix Android NullPointerException crash
