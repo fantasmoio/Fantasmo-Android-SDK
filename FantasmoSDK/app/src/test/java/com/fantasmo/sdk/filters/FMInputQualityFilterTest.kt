@@ -34,7 +34,7 @@ class FMInputQualityFilterTest {
         Mockito.`when`(frame.timestamp).thenReturn(timestamp)
 
         assertEquals(
-            Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED),
+            FMFrameFilterResult.Accepted,
             filter.accepts(frame)
         )
     }
@@ -76,8 +76,8 @@ class FMInputQualityFilterTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_0)
 
         assertEquals(
-            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOFAST),
-            filter.accepts(frame)
+            FMFilterRejectionReason.MOVINGTOOFAST,
+            filter.accepts(frame).getRejectedReason()
         )
     }
 
@@ -91,7 +91,8 @@ class FMInputQualityFilterTest {
 
         filter.filters = listOf(
             FMMovementFilter(),
-            FMCameraPitchFilter(instrumentationContext),spyFMBlurFilterRule)
+            FMCameraPitchFilter(instrumentationContext)
+        )
 
         val frame = Mockito.mock(Frame::class.java)
         val pose = getAcceptedPose()
@@ -117,10 +118,8 @@ class FMInputQualityFilterTest {
         Mockito.`when`(context.display).thenReturn(display)
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_0)
 
-        Mockito.doReturn(300.0).`when`(spyFMBlurFilterRule).calculateVariance(frame)
-
         assertEquals(
-            Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED),
+            FMFrameFilterResult.Accepted,
             filter.accepts(frame)
         )
     }

@@ -8,44 +8,38 @@ class FMFrameFilterTest {
 
     @Test
     fun testMapRequestBehavior() {
-        var rejection = FMFrameFilterFailure.PITCHTOOLOW
+        var rejection = FMFilterRejectionReason.PITCHTOOLOW
 
         assertEquals(
             rejection.mapToBehaviourRequest(),
             FMBehaviorRequest.TILTUP
         )
 
-        rejection = FMFrameFilterFailure.PITCHTOOHIGH
+        rejection = FMFilterRejectionReason.PITCHTOOHIGH
         assertEquals(
             rejection.mapToBehaviourRequest(),
             FMBehaviorRequest.TILTDOWN
         )
 
-        rejection = FMFrameFilterFailure.MOVINGTOOLITTLE
+        rejection = FMFilterRejectionReason.MOVINGTOOLITTLE
         assertEquals(
             rejection.mapToBehaviourRequest(),
             FMBehaviorRequest.PANAROUND
         )
 
-        rejection = FMFrameFilterFailure.MOVINGTOOFAST
+        rejection = FMFilterRejectionReason.MOVINGTOOFAST
         assertEquals(
             rejection.mapToBehaviourRequest(),
             FMBehaviorRequest.PANSLOWLY
         )
 
-        rejection = FMFrameFilterFailure.ACCEPTED
-        assertEquals(
-            rejection.mapToBehaviourRequest(),
-            FMBehaviorRequest.ACCEPTED
-        )
-
-        rejection = FMFrameFilterFailure.INSUFFICIENTFEATURES
+        rejection = FMFilterRejectionReason.INSUFFICIENTFEATURES
         assertEquals(
             rejection.mapToBehaviourRequest(),
             FMBehaviorRequest.PANAROUND
         )
 
-        rejection = FMFrameFilterFailure.IMAGETOOBLURRY
+        rejection = FMFilterRejectionReason.IMAGETOOBLURRY
         assertEquals(
             rejection.mapToBehaviourRequest(),
             FMBehaviorRequest.PANSLOWLY
