@@ -179,8 +179,7 @@ The following behaviors are currently requested:
         TILTUP("Tilt your device up"),
         TILTDOWN("Tilt your device down"),
         PANAROUND("Pan around the scene"),
-        PANSLOWLY("Pan more slowly"),
-        ACCEPTED("Accepted");
+        PANSLOWLY("Pan more slowly");
     }
 
 When notified, it should prompt the user to undertake the remedial behavior.
