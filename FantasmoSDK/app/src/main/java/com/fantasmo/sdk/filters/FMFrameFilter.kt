@@ -3,21 +3,13 @@ package com.fantasmo.sdk.filters
 import com.fantasmo.sdk.FMBehaviorRequest
 import com.google.ar.core.Frame
 
-/**
- * Defines rules for the implemented filters.
- */
-interface FMFrameFilter {
-    fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure>
-}
-
-enum class FMFrameFilterFailure {
+enum class FMFilterRejectionReason {
     PITCHTOOLOW,
     PITCHTOOHIGH,
     IMAGETOOBLURRY,
     MOVINGTOOFAST,
     MOVINGTOOLITTLE,
-    INSUFFICIENTFEATURES,
-    ACCEPTED;
+    INSUFFICIENTFEATURES;
 
     /**
      * Method responsible for mapping a FrameFilterFailure to the end user.
@@ -31,14 +23,25 @@ enum class FMFrameFilterFailure {
             IMAGETOOBLURRY -> FMBehaviorRequest.PANSLOWLY
             MOVINGTOOLITTLE -> FMBehaviorRequest.PANAROUND
             INSUFFICIENTFEATURES -> FMBehaviorRequest.PANAROUND
-            else -> FMBehaviorRequest.ACCEPTED
         }
     }
 }
 
-enum class FMFrameFilterResult {
-    ACCEPTED,
-    REJECTED;
+sealed class FMFrameFilterResult {
+    object Accepted : FMFrameFilterResult()
+    class Rejected(val reason: FMFilterRejectionReason): FMFrameFilterResult()
+
+    fun getRejectedReason(): FMFilterRejectionReason? {
+        return when (this){
+            is Rejected -> reason
+            else -> null
+        }
+    }
 }
 
-
+/**
+ * Prime filters are original blocks for a compound frame filter or can be used alone as a standalone filter.
+ */
+interface FMFrameFilter {
+    fun accepts(arFrame: Frame): FMFrameFilterResult
+}

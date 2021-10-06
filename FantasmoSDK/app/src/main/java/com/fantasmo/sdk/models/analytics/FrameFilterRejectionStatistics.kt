@@ -1,6 +1,6 @@
 package com.fantasmo.sdk.models.analytics
 
-import com.fantasmo.sdk.filters.FMFrameFilterFailure
+import com.fantasmo.sdk.filters.FMFilterRejectionReason
 
 /**
  * Class responsible for gathering information about frame filtration rejection
@@ -20,25 +20,25 @@ class FrameFilterRejectionStatistics {
      * the information about the localization session regarding frame filtration
      * @param result: FMFrameFilterFailure
      */
-    fun accumulate(result: FMFrameFilterFailure) {
+    fun accumulate(result: FMFilterRejectionReason) {
         totalFrameCount += 1
         when (result) {
-            FMFrameFilterFailure.MOVINGTOOFAST -> {
+            FMFilterRejectionReason.MOVINGTOOFAST -> {
                 excessiveMotionFrameCount += 1
             }
-            FMFrameFilterFailure.IMAGETOOBLURRY -> {
+            FMFilterRejectionReason.IMAGETOOBLURRY -> {
                 excessiveBlurFrameCount += 1
             }
-            FMFrameFilterFailure.MOVINGTOOLITTLE -> {
+            FMFilterRejectionReason.MOVINGTOOLITTLE -> {
                 insufficientMotionFrameCount += 1
             }
-            FMFrameFilterFailure.PITCHTOOHIGH -> {
+            FMFilterRejectionReason.PITCHTOOHIGH -> {
                 excessiveTiltFrameCount += 1
             }
-            FMFrameFilterFailure.PITCHTOOLOW -> {
+            FMFilterRejectionReason.PITCHTOOLOW -> {
                 excessiveTiltFrameCount += 1
             }
-            FMFrameFilterFailure.INSUFFICIENTFEATURES -> {
+            FMFilterRejectionReason.INSUFFICIENTFEATURES -> {
                 insufficientFeatures += 1
             }
         }

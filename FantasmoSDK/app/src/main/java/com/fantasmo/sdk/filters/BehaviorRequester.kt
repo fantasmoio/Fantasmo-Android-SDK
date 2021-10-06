@@ -1,12 +1,15 @@
 package com.fantasmo.sdk.filters
 
 import com.fantasmo.sdk.FMBehaviorRequest
+import com.fantasmo.sdk.FMLocationListener
 import java.util.*
 
 /**
  * Throttler for frame validation failure events each of which occurs when a frame turns out to be not acceptable for determining location.
  */
-class BehaviorRequester {
+class BehaviorRequester(handler: (FMBehaviorRequest) -> Unit) {
+
+    private val n2s: Double = 1_000_000_000.0
 
     // Minimum number of seconds that must elapse between triggering.
     private var throttleThreshold = 2.0
@@ -15,53 +18,48 @@ class BehaviorRequester {
     private var incidenceThreshold = 30
 
     // The last time of triggering.
-    private var lastTriggerTime = System.currentTimeMillis()
+    private var lastTriggerTime = System.nanoTime()
 
-    /**
-     * Maps failure to display in app side
-     * @param failure: Failure to be mapped to end user
-     * @return FMBehaviorRequest
-     */
-    fun handler(failure: FMFrameFilterFailure): FMBehaviorRequest {
-        return failure.mapToBehaviourRequest()
-    }
+    private var requestHandler: ((FMBehaviorRequest) -> Unit) = handler
 
     // Dictionary of failure events with corresponding incidence
-    private var rejectionCounts: MutableMap<FMFrameFilterFailure, Int> = EnumMap(
-        FMFrameFilterFailure::class.java
+    private var rejectionCounts: MutableMap<FMFilterRejectionReason, Int> = EnumMap(
+        FMFilterRejectionReason::class.java
     )
 
     /**
      * On new failure, onNext is invoked to update validationErrorToCountDict.
-     * @param failure: PITCHTOOLOW, PITCHTOOHIGH, MOVINGTOOFAST, MOVINGTOOLITTLE, ACCEPTED
+     * @param frameFilterResult: FMFrameFilterResult
      */
-    fun processResult(failure: FMFrameFilterFailure) {
-        var count = 0
-        if (rejectionCounts.containsKey(failure)) {
-            count = rejectionCounts[failure]!!
-        }
+    fun processResult(frameFilterResult: FMFrameFilterResult) {
+        when (frameFilterResult) {
+            FMFrameFilterResult.Accepted -> return
+            else -> {
+                val rejectionReason = frameFilterResult.getRejectedReason()!!
+                var count = 0
+                if (rejectionCounts.containsKey(rejectionReason)) {
+                    count = rejectionCounts[rejectionReason]!!
+                }
+                count += 1
 
-        val elapsed = System.currentTimeMillis() - lastTriggerTime
-
-        if (elapsed > throttleThreshold && count >= incidenceThreshold) {
-            startNewCycle()
-        } else {
-            rejectionCounts[failure] = count + 1
+                if (count > incidenceThreshold) {
+                    val elapsed = (System.nanoTime() - lastTriggerTime) / n2s
+                    if (elapsed > throttleThreshold) {
+                        requestHandler(rejectionReason.mapToBehaviourRequest())
+                        restart()
+                    }
+                } else {
+                    rejectionCounts[rejectionReason] = count
+                }
+            }
         }
     }
 
     /**
-     * Restart Counting Failure Process after a sequence.
+     * Restart Counting Failure Process when creating a new localization session.
      */
     fun restart() {
-        startNewCycle()
-    }
-
-    /**
-     * Creates a new for frame sequence acceptance.
-     */
-    private fun startNewCycle() {
-        lastTriggerTime = System.currentTimeMillis()
+        lastTriggerTime = System.nanoTime()
         rejectionCounts.clear()
     }
 }

@@ -66,7 +66,9 @@ class FMLocationManager(private val context: Context) {
     // Used to validate frame for sufficient quality before sending to API.
     private lateinit var frameFilter: FMInputQualityFilter
     // Throttler for invalid frames.
-    private lateinit var behaviorRequester: BehaviorRequester
+    private var behaviorRequester = BehaviorRequester {
+        fmLocationListener?.locationManager(didRequestBehavior = it)
+    }
 
     private var motionManager = MotionManager(context)
     // Localization Session Id generated on each startUpdatingLocation call
@@ -92,7 +94,6 @@ class FMLocationManager(private val context: Context) {
         this.fmLocationListener = callback
         fmApi = FMApi(this, context, token)
         frameFilter = FMInputQualityFilter(context)
-        behaviorRequester = BehaviorRequester()
     }
 
     /**
@@ -270,14 +271,12 @@ class FMLocationManager(private val context: Context) {
         ) {
             accumulatedARCoreInfo.update(arFrame)
             return if(enableFilters){
-                val result = frameFilter.accepts(arFrame)
-                fmLocationListener?.locationManager(result.second.mapToBehaviourRequest())
-                if (result.first == FMFrameFilterResult.ACCEPTED) {
-                    behaviorRequester.restart()
+                val filterResult = frameFilter.accepts(arFrame)
+                behaviorRequester.processResult(filterResult)
+                if (filterResult == FMFrameFilterResult.Accepted) {
                     true
                 } else {
-                    behaviorRequester.processResult(result.second)
-                    frameEventAccumulator.accumulate(result.second)
+                    frameEventAccumulator.accumulate(filterResult.getRejectedReason()!!)
                     false
                 }
             }else{

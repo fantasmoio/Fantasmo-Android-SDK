@@ -24,7 +24,7 @@ class FMCameraPitchFilter(private val context: Context) : FMFrameFilter {
      * @param arFrame: Frame to be evaluated
      * @return Accepts frame or Rejects frame with PitchTooHigh or PitchTooLow failure
      */
-    override fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
+    override fun accepts(arFrame: Frame): FMFrameFilterResult {
         // RotationQuaternion virtual camera pose
         val orientedQuaternion = arFrame.camera.displayOrientedPose.rotationQuaternion
         // RotationQuaternion from device sensor system
@@ -56,7 +56,7 @@ class FMCameraPitchFilter(private val context: Context) : FMFrameFilter {
                 return checkTilt(sensorQuaternion, -1)
             }
             else -> {
-                Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
+                FMFrameFilterResult.Accepted
             }
         }
     }
@@ -70,20 +70,20 @@ class FMCameraPitchFilter(private val context: Context) : FMFrameFilter {
     private fun checkTilt(
         rotationQuaternion: FloatArray,
         orientationSign: Int
-    ): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
+    ): FMFrameFilterResult {
         val eulerAngles = convertToDegrees(convertQuaternionToEuler(rotationQuaternion))
         return when {
             // If it's looking Up or Down and it's in threshold
             (eulerAngles[2] in lookDownThreshold..lookUpThreshold) -> {
-                Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
+                FMFrameFilterResult.Accepted
             }
             // If it's looking Up
             rotationQuaternion[0] * orientationSign < 0 -> {
-                Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.PITCHTOOHIGH)
+                FMFrameFilterResult.Rejected(FMFilterRejectionReason.PITCHTOOHIGH)
             }
             // Else it's looking Down
             else -> {
-                Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.PITCHTOOLOW)
+                FMFrameFilterResult.Rejected(FMFilterRejectionReason.PITCHTOOLOW)
             }
         }
     }
