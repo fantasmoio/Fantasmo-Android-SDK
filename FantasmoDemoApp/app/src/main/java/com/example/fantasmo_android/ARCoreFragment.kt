@@ -42,6 +42,9 @@ import com.google.ar.sceneform.ux.ArFragment
 import java.util.*
 import com.google.ar.core.CameraConfig
 import com.google.ar.core.CameraConfigFilter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 
 /**
@@ -88,6 +91,12 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
 
     private val locationInterval = 300L
 
+    private lateinit var qrReader: QRCodeReader
+    private lateinit var urlView: TextView
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
+    private lateinit var qrEnabler: Switch
+    private var qrReaderEnabled = false
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -113,7 +122,11 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
         initGoogleMap(savedInstanceState)
         localizeMarkers = LinkedList()
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+        qrEnabler = currentView.findViewById(R.id.qrEnabler)
+        urlView = currentView.findViewById(R.id.qrResultView)
+        qrReader = QRCodeReader(urlView)
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             getLocation()
         } else {
@@ -215,6 +228,16 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
                     anchorDeltaTv.visibility = View.GONE
                     fmLocationManager.unsetAnchor()
                     unsetAnchor()
+                }
+            }
+
+            qrEnabler.setOnCheckedChangeListener { _, isChecked ->
+                qrReaderEnabled = if(isChecked){
+                    Log.d(TAG,"QR Reader Enabled")
+                    true
+                }else{
+                    Log.d(TAG,"QR Reader Disabled")
+                    false
                 }
             }
 
@@ -435,6 +458,10 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
         if (fmLocationManager.state == FMLocationManager.State.LOCALIZING) {
             arFrame?.let { fmLocationManager.localize(it) }
         }
+
+        if(qrReaderEnabled && !qrReader.qrReading){
+            arFrame?.let { qrReader.processImage(it) }
+        }
     }
 
     /**
@@ -497,7 +524,7 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
             fusedLocationClient.requestLocationUpdates(
                 locationRequest,
                 locationCallback,
-                Looper.myLooper()
+                Looper.myLooper()!!
             )
         }
     }

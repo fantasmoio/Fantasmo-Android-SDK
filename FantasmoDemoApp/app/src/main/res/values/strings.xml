@@ -18,5 +18,7 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="map">Map</string>
+    <string name="qrresult">QRResult</string>
+    <string name="qr">QR</string>
 
 </resources>

@@ -34,6 +34,19 @@
             app:layout_constraintTop_toBottomOf="@+id/mapViewLayout"
             app:layout_constraintVertical_bias="0.98">
 
+            <TextView
+                android:id="@+id/qrResultView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#FFFFFF"
+                android:text="@string/qrresult"
+                android:textColor="#000000"
+                android:textSize="16sp"
+                app:layout_constraintBottom_toTopOf="@+id/anchorToggle"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/localizeToggle"
+                app:layout_constraintTop_toTopOf="@+id/localizeToggle" />
+
             <Button
                 android:id="@+id/checkParkingButton"
                 android:layout_width="wrap_content"
@@ -48,12 +61,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="#FFFFFF"
+                android:minHeight="48dp"
                 android:text="@string/anchor"
                 android:textColor="#000000"
                 android:textSize="18sp"
-                app:theme="@style/ColorAnchorSwitchStyle"
                 app:layout_constraintBottom_toTopOf="@+id/checkParkingButton"
                 app:layout_constraintStart_toStartOf="@+id/localizeToggle"
+                app:theme="@style/ColorAnchorSwitchStyle"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
 
             <Switch
@@ -61,12 +75,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="#FFFFFF"
+                android:minHeight="48dp"
                 android:text="@string/localize"
                 android:textColor="#000000"
                 android:textSize="18sp"
-                app:theme="@style/ColorLocalizeSwitchStyle"
                 app:layout_constraintBottom_toTopOf="@+id/anchorToggle"
                 app:layout_constraintStart_toStartOf="parent"
+                app:theme="@style/ColorLocalizeSwitchStyle"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
 
             <TextView
@@ -152,6 +167,21 @@
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toEndOf="@+id/checkParkingButton"
                 app:layout_constraintTop_toTopOf="@+id/checkParkingButton" />
+
+            <Switch
+                android:id="@+id/qrEnabler"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:background="#FFFFFF"
+                android:text="@string/qr"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toBottomOf="@+id/anchorToggle"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/anchorToggle"
+                app:layout_constraintTop_toTopOf="@+id/anchorToggle" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
