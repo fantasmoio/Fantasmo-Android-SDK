@@ -5,7 +5,6 @@ import android.graphics.BitmapFactory
 import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
-import android.media.Image
 import android.util.Log
 import android.widget.TextView
 import com.google.ar.core.Frame
@@ -20,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
+import java.nio.ByteBuffer
 
 /**
  * QRCodeReader - class responsible for getting a frame form ARCore and check
@@ -30,7 +30,8 @@ class QRCodeReader(
 ) {
     var qrReading = false
     private val TAG = QRCodeReader::class.java.simpleName
-
+    private var imageWidth = 0
+    private var imageHeight = 0
     /**
      * Gets a frame from ARCore and converts it to bitmap and proceeds with
      * the mlKit barcode scanner analysis
@@ -51,11 +52,12 @@ class QRCodeReader(
             .build()
         val barcodeScanner: BarcodeScanner = BarcodeScanning.getClient(options)
 
-        val baOutputStream = acquireFrameImage(arFrame)
+        val byteBuffers = acquireFrameImage(arFrame)
         GlobalScope.launch(Dispatchers.Default){
-            if(baOutputStream == null){
+            if(byteBuffers == null){
                 qrReading = false
             }else{
+                val baOutputStream = createByteArrayOutputStream(byteBuffers[0],byteBuffers[1],byteBuffers[2])
                 val imageBytes: ByteArray = baOutputStream.toByteArray()
                 val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                 val inputImage =
@@ -82,14 +84,12 @@ class QRCodeReader(
         }
     }
 
-    private fun createByteArrayOutputStream(cameraImage: Image): ByteArrayOutputStream {
-        //The camera image received is in YUV YCbCr Format. Get buffers for each of the planes and use
-        // them to create a new byte array defined by the size of all three buffers combined
-        val cameraPlaneY = cameraImage.planes[0].buffer
-        val cameraPlaneU = cameraImage.planes[1].buffer
-        val cameraPlaneV = cameraImage.planes[2].buffer
+    private fun createByteArrayOutputStream(
+        cameraPlaneY: ByteBuffer,
+        cameraPlaneU: ByteBuffer,
+        cameraPlaneV: ByteBuffer
+    ): ByteArrayOutputStream {
 
-        //Use the buffers to create a new byteArray that
         val compositeByteArray =
             ByteArray(cameraPlaneY.capacity() + cameraPlaneU.capacity() + cameraPlaneV.capacity())
 
@@ -105,12 +105,12 @@ class QRCodeReader(
         val yuvImage = YuvImage(
             compositeByteArray,
             ImageFormat.NV21,
-            cameraImage.width,
-            cameraImage.height,
+            imageWidth,
+            imageHeight,
             null
         )
         yuvImage.compressToJpeg(
-            Rect(0, 0, cameraImage.width, cameraImage.height),
+            Rect(0, 0, imageWidth, imageHeight),
             100,
             baOutputStream
         )
@@ -123,15 +123,20 @@ class QRCodeReader(
      * @param arFrame: Frame
      * @return ByteArrayOutputStream or null in case of exception
      */
-    private fun acquireFrameImage(arFrame: Frame): ByteArrayOutputStream? {
+    private fun acquireFrameImage(arFrame: Frame): Array<ByteBuffer>? {
         try {
             val cameraImage = arFrame.acquireCameraImage()
             arFrame.acquireCameraImage().close()
-
-            val baOutputStream = createByteArrayOutputStream(cameraImage)
+            //The camera image received is in YUV YCbCr Format. Get buffers for each of the planes and use
+            // them to create a new byte array defined by the size of all three buffers combined
+            val cameraPlaneY = cameraImage.planes[0].buffer
+            val cameraPlaneU = cameraImage.planes[1].buffer
+            val cameraPlaneV = cameraImage.planes[2].buffer
+            imageWidth = cameraImage.width
+            imageHeight = cameraImage.height
             // Release the image
             cameraImage.close()
-            return baOutputStream
+            return arrayOf(cameraPlaneY,cameraPlaneU,cameraPlaneV)
         } catch (e: NotYetAvailableException) {
             Log.d(TAG, "FrameNotYetAvailable")
         } catch (e: DeadlineExceededException) {

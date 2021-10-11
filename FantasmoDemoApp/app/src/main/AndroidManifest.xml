@@ -19,9 +19,6 @@
             android:name="com.google.ar.core"
             android:value="optional" />
         <meta-data
-            android:name="com.google.mlkit.vision.DEPENDENCIES"
-            android:value="barcode" />
-        <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key"/>
         <activity
