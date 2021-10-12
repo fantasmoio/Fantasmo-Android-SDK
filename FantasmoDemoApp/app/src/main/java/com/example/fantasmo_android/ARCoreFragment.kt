@@ -16,35 +16,18 @@ import android.widget.Button
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
 import androidx.core.content.PermissionChecker
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import com.fantasmo.sdk.FMBehaviorRequest
-import com.fantasmo.sdk.FMLocationListener
-import com.fantasmo.sdk.FMLocationManager
-import com.fantasmo.sdk.FMUtility
+import com.fantasmo.sdk.*
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
-import com.fantasmo.sdk.FMLocationResult
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.ar.core.*
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.ux.ArFragment
 import java.util.*
-import com.google.ar.core.CameraConfig
-import com.google.ar.core.CameraConfigFilter
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 
 
 /**
@@ -359,24 +342,17 @@ class ARCoreFragment : Fragment() {
             arFrame?.let { fmLocationManager.localize(it) }
         }
 
+        // Only read frame if the qrCodeReader is enabled and only if qrCodeReader is in reading mode
         if (qrReaderEnabled && !qrReader.qrReading) {
             arFrame?.let { qrReader.processImage(it) }
         }
 
+        // After a second, clear behavior message displayed
         val currentTime = System.nanoTime()
         if ((currentTime - behaviorReceived) / n2s > behaviorThreshold) {
             val clearText = "FrameFilterResult"
             filterRejectionTv.text = clearText
         }
-    }
-
-    /**
-     * Method to simplify task of creating a String to be shown in the screen
-     * */
-    private fun createStringDisplay(s: String, cameraAttr: FloatArray?): String {
-        return s + String.format("%.2f", cameraAttr?.get(0)) + ", " +
-                String.format("%.2f", cameraAttr?.get(1)) + ", " +
-                String.format("%.2f", cameraAttr?.get(2))
     }
 
     /**
@@ -424,6 +400,15 @@ class ARCoreFragment : Fragment() {
                 Looper.myLooper()!!
             )
         }
+    }
+
+    /**
+     * Method to simplify task of creating a String to be shown in the screen
+     * */
+    private fun createStringDisplay(s: String, cameraAttr: FloatArray?): String {
+        return s + String.format("%.2f", cameraAttr?.get(0)) + ", " +
+                String.format("%.2f", cameraAttr?.get(1)) + ", " +
+                String.format("%.2f", cameraAttr?.get(2))
     }
 
     /**

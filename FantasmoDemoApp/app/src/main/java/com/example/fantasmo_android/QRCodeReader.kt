@@ -28,10 +28,12 @@ import java.nio.ByteBuffer
 class QRCodeReader(
     private val urlView: TextView
 ) {
+    // This prevents the qrCodeReader to be overflowed with frames to analyze
     var qrReading = false
     private val TAG = QRCodeReader::class.java.simpleName
     private var imageWidth = 0
     private var imageHeight = 0
+
     /**
      * Gets a frame from ARCore and converts it to bitmap and proceeds with
      * the mlKit barcode scanner analysis
