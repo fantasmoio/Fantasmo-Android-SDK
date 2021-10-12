@@ -19,7 +19,7 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
 
         Assert.assertEquals(
-            Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED),
+            FMFrameFilterResult.Accepted,
             filter.accepts(frame)
         )
     }
@@ -33,8 +33,8 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.BAD_STATE)
 
         Assert.assertEquals(
-            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOFAST),
-            filter.accepts(frame)
+            FMFilterRejectionReason.MOVINGTOOFAST,
+            filter.accepts(frame).getRejectedReason()
         )
     }
 
@@ -47,8 +47,8 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.EXCESSIVE_MOTION)
 
         Assert.assertEquals(
-            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOFAST),
-            filter.accepts(frame)
+            FMFilterRejectionReason.MOVINGTOOFAST,
+            filter.accepts(frame).getRejectedReason()
         )
     }
 
@@ -61,8 +61,8 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.CAMERA_UNAVAILABLE)
 
         Assert.assertEquals(
-            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOLITTLE),
-            filter.accepts(frame)
+            FMFilterRejectionReason.MOVINGTOOLITTLE,
+            filter.accepts(frame).getRejectedReason()
         )
     }
 
@@ -75,8 +75,8 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.INSUFFICIENT_LIGHT)
 
         Assert.assertEquals(
-            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.INSUFFICIENTFEATURES),
-            filter.accepts(frame)
+            FMFilterRejectionReason.INSUFFICIENTFEATURES,
+            filter.accepts(frame).getRejectedReason()
         )
     }
 
@@ -89,8 +89,8 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.INSUFFICIENT_FEATURES)
 
         Assert.assertEquals(
-            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.INSUFFICIENTFEATURES),
-            filter.accepts(frame)
+            FMFilterRejectionReason.INSUFFICIENTFEATURES,
+            filter.accepts(frame).getRejectedReason()
         )
     }
 
@@ -104,8 +104,8 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.NONE)
 
         Assert.assertEquals(
-            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOLITTLE),
-            filter.accepts(frame)
+            FMFilterRejectionReason.MOVINGTOOLITTLE,
+            filter.accepts(frame).getRejectedReason()
         )
     }
 }

@@ -10,7 +10,7 @@ import com.google.ar.core.Frame
  */
 class FMInputQualityFilter(context: Context) {
 
-    private val TAG = "FMFrameSequenceFilter"
+    private val TAG = "FMInputQualityFilter"
 
     // the last time a frame was accepted
     var lastAcceptTime: Long = 0L
@@ -48,22 +48,22 @@ class FMInputQualityFilter(context: Context) {
      * @param arFrame: Frame for approval.
      * @return result: Pair<FMFrameFilterResult, FMFrameFilterFailure>
      */
-    fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
+    fun accepts(arFrame: Frame): FMFrameFilterResult {
         if (shouldForceAccept(arFrame)) {
             lastAcceptTime = arFrame.timestamp
             Log.d(TAG, "shouldForceAccept True")
-            return Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
+            return FMFrameFilterResult.Accepted
         } else {
             for (filter in filters) {
                 val result = filter.accepts(arFrame)
-                if (result.first != FMFrameFilterResult.ACCEPTED) {
-                    Log.d(TAG, "RULE_CHECK: Frame not accepted $result")
+                if (result != FMFrameFilterResult.Accepted) {
+                    Log.d(TAG, "RULE_CHECK: Frame not accepted ${result.getRejectedReason()}")
                     return result
                 }
             }
         }
         lastAcceptTime = arFrame.timestamp
-        return Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
+        return FMFrameFilterResult.Accepted
     }
 
 

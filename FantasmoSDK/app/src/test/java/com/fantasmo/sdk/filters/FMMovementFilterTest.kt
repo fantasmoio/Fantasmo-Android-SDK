@@ -32,7 +32,7 @@ class FMMovementFilterTest {
         `when`(frame.camera.pose.translation).thenReturn(pose.translation)
 
         assertEquals(
-            Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED),
+            FMFrameFilterResult.Accepted,
             filter.accepts(frame)
         )
     }
@@ -59,8 +59,8 @@ class FMMovementFilterTest {
         `when`(frame.camera.pose.translation).thenReturn(pose.translation)
 
         assertEquals(
-            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOLITTLE),
-            filter.accepts(frame)
+            FMFilterRejectionReason.MOVINGTOOLITTLE,
+            filter.accepts(frame).getRejectedReason()
         )
     }
 }

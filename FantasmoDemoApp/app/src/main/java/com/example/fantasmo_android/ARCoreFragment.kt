@@ -97,6 +97,10 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
     private lateinit var qrEnabler: Switch
     private var qrReaderEnabled = false
 
+    private var behaviorReceived = 0L
+    private var n2s = 1_000_000_000L
+    private val behaviorThreshold = 1L
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -317,6 +321,7 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
             }
             @SuppressLint("SetTextI18n")
             override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
+                behaviorReceived = System.nanoTime()
                 Log.d(TAG, "FrameFilterResult " + didRequestBehavior.displayName)
                 activity?.runOnUiThread { filterRejectionTv.text = "FrameFilterResult: ${didRequestBehavior.displayName}" }
             }
@@ -461,6 +466,12 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
 
         if(qrReaderEnabled && !qrReader.qrReading){
             arFrame?.let { qrReader.processImage(it) }
+        }
+
+        val currentTime = System.nanoTime()
+        if((currentTime-behaviorReceived)/n2s > behaviorThreshold){
+            val clearText = "FrameFilterResult"
+            filterRejectionTv.text = clearText
         }
     }
 

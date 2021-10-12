@@ -46,7 +46,7 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_0)
 
         assertEquals(
-            Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED),
+            FMFrameFilterResult.Accepted,
             filter.accepts(frame)
         )
     }
@@ -83,10 +83,8 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_0)
 
         assertEquals(
-            Pair(
-                FMFrameFilterResult.REJECTED,
-                FMFrameFilterFailure.PITCHTOOHIGH
-            ), filter.accepts(frame)
+            FMFilterRejectionReason.PITCHTOOHIGH,
+            filter.accepts(frame).getRejectedReason()
         )
     }
 
@@ -122,10 +120,8 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_0)
 
         assertEquals(
-            Pair(
-                FMFrameFilterResult.REJECTED,
-                FMFrameFilterFailure.PITCHTOOLOW
-            ), filter.accepts(frame)
+            FMFilterRejectionReason.PITCHTOOLOW,
+            filter.accepts(frame).getRejectedReason()
         )
     }
 
@@ -161,10 +157,8 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_180)
 
         assertEquals(
-            Pair(
-                FMFrameFilterResult.REJECTED,
-                FMFrameFilterFailure.PITCHTOOHIGH
-            ), filter.accepts(frame)
+            FMFilterRejectionReason.PITCHTOOHIGH,
+            filter.accepts(frame).getRejectedReason()
         )
     }
 
@@ -200,10 +194,8 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_180)
 
         assertEquals(
-            Pair(
-                FMFrameFilterResult.REJECTED,
-                FMFrameFilterFailure.PITCHTOOLOW
-            ), filter.accepts(frame)
+            FMFilterRejectionReason.PITCHTOOLOW,
+            filter.accepts(frame).getRejectedReason()
         )
     }
 
@@ -239,10 +231,8 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_90)
 
         assertEquals(
-            Pair(
-                FMFrameFilterResult.REJECTED,
-                FMFrameFilterFailure.PITCHTOOHIGH
-            ), filter.accepts(frame)
+            FMFilterRejectionReason.PITCHTOOHIGH,
+            filter.accepts(frame).getRejectedReason()
         )
     }
 
@@ -277,11 +267,9 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display).thenReturn(display)
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_90)
 
-        assertEquals(
-            Pair(
-                FMFrameFilterResult.REJECTED,
-                FMFrameFilterFailure.PITCHTOOLOW
-            ), filter.accepts(frame)
+         assertEquals(
+             FMFilterRejectionReason.PITCHTOOLOW,
+             filter.accepts(frame).getRejectedReason()
         )
     }
 
@@ -317,10 +305,8 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_270)
 
         assertEquals(
-            Pair(
-                FMFrameFilterResult.REJECTED,
-                FMFrameFilterFailure.PITCHTOOHIGH
-            ), filter.accepts(frame)
+            FMFilterRejectionReason.PITCHTOOHIGH,
+            filter.accepts(frame).getRejectedReason()
         )
     }
 
@@ -356,10 +342,8 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_270)
 
         assertEquals(
-            Pair(
-                FMFrameFilterResult.REJECTED,
-                FMFrameFilterFailure.PITCHTOOLOW
-            ), filter.accepts(frame)
+            FMFilterRejectionReason.PITCHTOOLOW,
+            filter.accepts(frame).getRejectedReason()
         )
     }
 }

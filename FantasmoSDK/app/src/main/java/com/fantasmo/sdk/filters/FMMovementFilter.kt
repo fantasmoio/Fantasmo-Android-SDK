@@ -19,12 +19,12 @@ class FMMovementFilter : FMFrameFilter {
      * @param arFrame: Frame to be evaluated
      * @return Accepts frame or Rejects frame with MovingTooLittle failure
      */
-    override fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
+    override fun accepts(arFrame: Frame): FMFrameFilterResult {
         return if (exceededThreshold(arFrame.camera.pose.translation)) {
             lastTransform = arFrame.camera.pose.translation
-            Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
+            FMFrameFilterResult.Accepted
         } else {
-            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.MOVINGTOOLITTLE)
+            FMFrameFilterResult.Rejected(FMFilterRejectionReason.MOVINGTOOLITTLE)
         }
     }
 
