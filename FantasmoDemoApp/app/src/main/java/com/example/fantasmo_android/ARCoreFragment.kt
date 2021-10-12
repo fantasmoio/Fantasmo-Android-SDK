@@ -50,7 +50,7 @@ import kotlinx.coroutines.launch
 /**
  * Fragment to show AR camera image and make use of the Fantasmo SDK localization feature.
  */
-class ARCoreFragment : Fragment(), OnMapReadyCallback {
+class ARCoreFragment : Fragment() {
 
     private val TAG = "ARCoreFragment"
 
@@ -68,12 +68,7 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var mapButton: Button
     private lateinit var googleMapView: MapView
-    private lateinit var googleMap: GoogleMap
-    private val MAPVIEW_BUNDLE_KEY = "MapViewBundleKey"
-
-    private lateinit var localizeMarkers: Queue<Marker>
-    private lateinit var anchor: Marker
-    private lateinit var anchorRelativePosition: Marker
+    private lateinit var googleMapsManager: GoogleMapsManager
 
     private lateinit var checkParkingButton: Button
 
@@ -93,6 +88,7 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var qrReader: QRCodeReader
     private lateinit var urlView: TextView
+
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var qrEnabler: Switch
     private var qrReaderEnabled = false
@@ -109,7 +105,6 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
         currentView = inflater.inflate(R.layout.arcore_fragment, container, false)
 
         filterRejectionTv = currentView.findViewById(R.id.filterRejectionText)
-        googleMapView = currentView.findViewById(R.id.mapView)
         anchorDeltaTv = currentView.findViewById(R.id.anchorDeltaText)
         cameraTranslationTv = currentView.findViewById(R.id.cameraTranslation)
         cameraAnglesTv = currentView.findViewById(R.id.cameraAnglesText)
@@ -118,13 +113,14 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
         trackingFailureTv = currentView.findViewById(R.id.trackingFailureText)
         localizeToggleButton = currentView.findViewById(R.id.localizeToggle)
         anchorToggleButton = currentView.findViewById(R.id.anchorToggle)
-        mapButton = currentView.findViewById(R.id.mapButton)
 
         fmLocationManager = context?.let { FMLocationManager(it.applicationContext) }!!
         locationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        initGoogleMap(savedInstanceState)
-        localizeMarkers = LinkedList()
+        googleMapView = currentView.findViewById(R.id.mapView)
+        mapButton = currentView.findViewById(R.id.mapButton)
+        googleMapsManager = GoogleMapsManager(requireActivity(), googleMapView)
+        googleMapsManager.initGoogleMap(savedInstanceState)
 
         qrEnabler = currentView.findViewById(R.id.qrEnabler)
         urlView = currentView.findViewById(R.id.qrResultView)
@@ -197,7 +193,7 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
                     Log.d(TAG, "LocalizeToggle Enabled")
 
                     // Start getting location updates
-                    fmLocationManager.startUpdatingLocation(appSessionId,true)
+                    fmLocationManager.startUpdatingLocation(appSessionId, true)
                     filterRejectionTv.visibility = View.VISIBLE
                 } else {
                     Log.d(TAG, "LocalizeToggle Disabled")
@@ -209,6 +205,7 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
             }
 
             anchorToggleButton.setOnCheckedChangeListener { _, isChecked ->
+                googleMapsManager.updateAnchor(isChecked)
                 if (isChecked) {
                     Log.d(TAG, "AnchorToggle Enabled")
 
@@ -231,32 +228,22 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
 
                     anchorDeltaTv.visibility = View.GONE
                     fmLocationManager.unsetAnchor()
-                    unsetAnchor()
+                    googleMapsManager.unsetAnchor()
                 }
             }
 
             qrEnabler.setOnCheckedChangeListener { _, isChecked ->
-                qrReaderEnabled = if(isChecked){
-                    Log.d(TAG,"QR Reader Enabled")
+                qrReaderEnabled = if (isChecked) {
+                    Log.d(TAG, "QR Reader Enabled")
                     true
-                }else{
-                    Log.d(TAG,"QR Reader Disabled")
+                } else {
+                    Log.d(TAG, "QR Reader Disabled")
                     false
                 }
             }
 
         } catch (e: Exception) {
             Log.d(TAG, "ArFragment Null")
-        }
-    }
-
-    private fun unsetAnchor() {
-        if (this::anchor.isInitialized) {
-            anchor.remove()
-            anchor.tag = "AnchorDisabled"
-        }
-        if (this::anchorRelativePosition.isInitialized) {
-            anchorRelativePosition.remove()
         }
     }
 
@@ -313,114 +300,22 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
                 activity?.runOnUiThread {
                     serverCoordinatesTv.text =
                         "Server Lat: ${result.location.coordinate.latitude}, Long: ${result.location.coordinate.longitude}"
-                    addCorrespondingMarkersToMap(
+                    googleMapsManager.addCorrespondingMarkersToMap(
                         result.location.coordinate.latitude,
                         result.location.coordinate.longitude
                     )
                 }
             }
+
             @SuppressLint("SetTextI18n")
             override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
                 behaviorReceived = System.nanoTime()
                 Log.d(TAG, "FrameFilterResult " + didRequestBehavior.displayName)
-                activity?.runOnUiThread { filterRejectionTv.text = "FrameFilterResult: ${didRequestBehavior.displayName}" }
-            }
-        }
-
-    /**
-     * Receives Coordinates from the server and
-     * marks the mapView with the correspondent marker
-     * Red - Localize or Update Anchor Methods
-     * Blue - Anchor
-     * @param latitude
-     * @param longitude
-     * */
-    private fun addCorrespondingMarkersToMap(latitude: Double, longitude: Double) {
-        if (anchorToggleButton.isChecked) {
-            if(!this::anchor.isInitialized || anchor.tag == "AnchorDisabled"){
-                addAnchorToMap(latitude, longitude)
-                if (localizeMarkers.isNotEmpty()) {
-                    localizeMarkers.forEach { it.remove() }
+                activity?.runOnUiThread {
+                    filterRejectionTv.text = "FrameFilterResult: ${didRequestBehavior.displayName}"
                 }
-            }else{
-                updateAnchorRelativePosition(latitude, longitude)
             }
-        } else {
-            addLocalizeMarker(latitude, longitude)
         }
-    }
-
-    /**
-     * Receives Coordinates from the server and marks the mapView with
-     * a red marker meaning it's a localize request response from the server
-     * Also zooms in the map according to the coordinates received
-     * @param latitude
-     * @param longitude
-     * */
-    private fun addLocalizeMarker(latitude: Double, longitude: Double) {
-        val marker = googleMap.addMarker(
-            MarkerOptions()
-                .position(
-                    LatLng(
-                        latitude,
-                        longitude
-                    )
-                )
-                .title("Server Location")
-        )
-        localizeMarkers.add(marker)
-        val latLong = LatLng(latitude, longitude)
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLong, 50F))
-
-        if (localizeMarkers.size == 10) {
-            val markerR = localizeMarkers.poll()
-            markerR!!.remove()
-        }
-    }
-
-    /**
-     * When an anchor is set, it receives the latest coordinates from the server and marks
-     * those coordinates in the mapView with a blue marker zooming in to that position
-     * @param latitude
-     * @param longitude
-     * */
-    private fun addAnchorToMap(latitude: Double, longitude: Double) {
-        anchor = googleMap.addMarker(
-            MarkerOptions()
-                .position(
-                    LatLng(
-                        latitude,
-                        longitude
-                    )
-                )
-                .title("Anchor")
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
-        )!!
-        val latLong = LatLng(latitude, longitude)
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLong, 50F))
-    }
-
-    /**
-     * When an anchor is set, it receives Coordinates from the server
-     * and marks that position in the mapView with a red marker
-     * @param latitude
-     * @param longitude
-     * */
-    private fun updateAnchorRelativePosition(latitude: Double, longitude: Double) {
-        if (this::anchorRelativePosition.isInitialized) {
-            anchorRelativePosition.remove()
-        }
-        anchorRelativePosition = googleMap.addMarker(
-            MarkerOptions()
-                .position(
-                    LatLng(
-                        latitude,
-                        longitude
-                    )
-                )
-                .title("Position Relative to Anchor")
-        )!!
-    }
 
     /**
      * On any changes to the scene call onUpdate method to get arFrames and get the camera data
@@ -464,12 +359,12 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
             arFrame?.let { fmLocationManager.localize(it) }
         }
 
-        if(qrReaderEnabled && !qrReader.qrReading){
+        if (qrReaderEnabled && !qrReader.qrReading) {
             arFrame?.let { qrReader.processImage(it) }
         }
 
         val currentTime = System.nanoTime()
-        if((currentTime-behaviorReceived)/n2s > behaviorThreshold){
+        if ((currentTime - behaviorReceived) / n2s > behaviorThreshold) {
             val clearText = "FrameFilterResult"
             filterRejectionTv.text = clearText
         }
@@ -482,15 +377,6 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
         return s + String.format("%.2f", cameraAttr?.get(0)) + ", " +
                 String.format("%.2f", cameraAttr?.get(1)) + ", " +
                 String.format("%.2f", cameraAttr?.get(2))
-    }
-
-    /**
-     * Release heap allocation of the AR session
-     * */
-    override fun onDestroy() {
-        arSession.close()
-        googleMapView.onDestroy()
-        super.onDestroy()
     }
 
     /**
@@ -541,33 +427,17 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
     }
 
     /**
-     * Initiates GoogleMap display on UI from savedInstanceState from onCreateView method
+     * Release heap allocation of the AR session
      * */
-    private fun initGoogleMap(savedInstanceState: Bundle?) {
-        // *** IMPORTANT ***
-        // MapView requires that the Bundle you pass contain _ONLY_ MapView SDK
-        // objects or sub-Bundles.
-        var mapViewBundle: Bundle? = null
-        if (savedInstanceState != null) {
-            mapViewBundle = savedInstanceState.getBundle(MAPVIEW_BUNDLE_KEY)
-        }
-        googleMapView.onCreate(mapViewBundle)
-        googleMapView.getMapAsync(this)
+    override fun onDestroy() {
+        arSession.close()
+        googleMapView.onDestroy()
+        super.onDestroy()
     }
 
     override fun onResume() {
         super.onResume()
         googleMapView.onResume()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        var mapViewBundle = outState.getBundle(MAPVIEW_BUNDLE_KEY)
-        if (mapViewBundle == null) {
-            mapViewBundle = Bundle()
-            outState.putBundle(MAPVIEW_BUNDLE_KEY, mapViewBundle)
-        }
-        googleMapView.onSaveInstanceState(mapViewBundle)
     }
 
     override fun onStop() {
@@ -583,23 +453,5 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback {
     override fun onLowMemory() {
         super.onLowMemory()
         googleMapView.onLowMemory()
-    }
-
-    override fun onMapReady(map: GoogleMap) {
-        if (ActivityCompat.checkSelfPermission(
-                requireActivity(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-            != PackageManager.PERMISSION_GRANTED
-            && ActivityCompat.checkSelfPermission(
-                requireActivity(),
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-        googleMap = map
-        googleMap.isMyLocationEnabled = true
     }
 }
