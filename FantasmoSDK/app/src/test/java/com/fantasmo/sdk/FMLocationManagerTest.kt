@@ -299,8 +299,7 @@ class FMLocationManagerTest {
         val frameFilter = FMInputQualityFilter(instrumentationContext)
         frameFilter.filters = listOf(
             FMMovementFilter(),
-            FMCameraPitchFilter(context),
-            spyFMBlurFilterRule
+            FMCameraPitchFilter(context)
         )
         val fieldFrameFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
         fieldFrameFilter.isAccessible = true
@@ -328,8 +327,6 @@ class FMLocationManagerTest {
 
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
-
-        doReturn(300.0).`when`(spyFMBlurFilterRule).calculateVariance(frame)
 
         assertEquals(true, fmLocationManager.shouldLocalize(frame))
     }
@@ -462,8 +459,7 @@ class FMLocationManagerTest {
         val filter2 = FMInputQualityFilter(instrumentationContext)
         filter2.filters = listOf(
             FMMovementFilter(),
-            FMCameraPitchFilter(context),
-            spyFMBlurFilterRule
+            FMCameraPitchFilter(context)
         )
         val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
         testFilter.isAccessible = true
@@ -510,8 +506,6 @@ class FMLocationManagerTest {
         val display = mock(Display::class.java)
         `when`(context.display).thenReturn(display)
         `when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_0)
-
-        doReturn(300.0).`when`(spyFMBlurFilterRule).calculateVariance(frame)
 
         val intrinsics = mock(CameraIntrinsics::class.java)
         `when`(frame.camera.imageIntrinsics).thenReturn(intrinsics)
@@ -560,8 +554,7 @@ class FMLocationManagerTest {
         val filter2 = FMInputQualityFilter(instrumentationContext)
         filter2.filters = listOf(
             FMMovementFilter(),
-            FMCameraPitchFilter(context),
-            spyFMBlurFilterRule
+            FMCameraPitchFilter(context)
         )
         val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
         testFilter.isAccessible = true
@@ -608,8 +601,6 @@ class FMLocationManagerTest {
         `when`(frame.camera.imageIntrinsics).thenReturn(imageIntrinsics)
         `when`(frame.camera.imageIntrinsics.focalLength).thenReturn(focalLength)
         `when`(frame.camera.imageIntrinsics.principalPoint).thenReturn(principalPoint)
-
-        doReturn(300.0).`when`(spyFMBlurFilterRule).calculateVariance(frame)
 
         val imageDimensions = intArrayOf(height,width)
         `when`(frame.camera.imageIntrinsics.imageDimensions).thenReturn(imageDimensions)
@@ -653,8 +644,7 @@ class FMLocationManagerTest {
         val filter2 = FMInputQualityFilter(instrumentationContext)
         filter2.filters = listOf(
             FMMovementFilter(),
-            FMCameraPitchFilter(context),
-            spyFMBlurFilterRule
+            FMCameraPitchFilter(context)
         )
         val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
         testFilter.isAccessible = true
@@ -701,8 +691,6 @@ class FMLocationManagerTest {
         `when`(frame.camera.imageIntrinsics).thenReturn(imageIntrinsics)
         `when`(frame.camera.imageIntrinsics.focalLength).thenReturn(focalLength)
         `when`(frame.camera.imageIntrinsics.principalPoint).thenReturn(principalPoint)
-
-        doReturn(300.0).`when`(spyFMBlurFilterRule).calculateVariance(frame)
 
         val imageDimensions = intArrayOf(height,width)
         `when`(frame.camera.imageIntrinsics.imageDimensions).thenReturn(imageDimensions)

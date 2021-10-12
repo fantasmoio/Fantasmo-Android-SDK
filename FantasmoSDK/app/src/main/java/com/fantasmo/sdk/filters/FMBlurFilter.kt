@@ -51,7 +51,7 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
      * @param arFrame: Frame to be evaluated
      * @return Accepts frame or Rejects frame with MovingTooFast failure
      */
-    override fun accepts(arFrame: Frame): Pair<FMFrameFilterResult, FMFrameFilterFailure> {
+    override fun accepts(arFrame: Frame): FMFrameFilterResult {
         val baOutputStream = acquireFrameImage(arFrame)
         GlobalScope.launch(Dispatchers.Default) { // launches coroutine in cpu thread
             variance = calculateVariance(baOutputStream)
@@ -78,9 +78,9 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
         }
 
         return if (isBlurry) {
-            Pair(FMFrameFilterResult.REJECTED, FMFrameFilterFailure.IMAGETOOBLURRY)
+            FMFrameFilterResult.Rejected(FMFilterRejectionReason.IMAGETOOBLURRY)
         } else {
-            Pair(FMFrameFilterResult.ACCEPTED, FMFrameFilterFailure.ACCEPTED)
+            FMFrameFilterResult.Accepted
         }
     }
 
