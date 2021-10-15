@@ -1,3 +1,23 @@
 <resources>
     <string name="app_name">FantasmoSDK</string>
+    <string name="textview_demo_text">Demo</string>
+    <string name="button_start_text">Start</string>
+
+    <!-- Camera Fragment TextViews -->
+    <string name="camera_translation">Camera Translation</string>
+    <string name="camera_angles">Camera Angles</string>
+    <string name="device_coordinates">Device Coordinates</string>
+    <string name="localize">Localize</string>
+    <string name="anchor">Anchor</string>
+    <string name="check_parking">Check Parking</string>
+    <string name="server_coordinates">Server Coordinates</string>
+    <string name="fm_location_listener">FMLocationListener</string>
+    <string name="anchor_delta">Anchor Delta</string>
+    <string name="requestBehavior">FrameFilterResult</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="map">Map</string>
+    <string name="playback">Playback</string>
+    <string name="record">Record</string>
 </resources>

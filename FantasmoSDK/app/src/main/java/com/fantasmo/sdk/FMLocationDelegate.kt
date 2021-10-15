@@ -3,6 +3,9 @@ package com.fantasmo.sdk
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
+import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
+import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
+import com.google.ar.core.Frame
 
 enum class FMResultConfidence{
     LOW,
@@ -55,4 +58,8 @@ interface FMLocationListener {
      * @param didRequestBehavior: The behavior reported.
      */
     fun locationManager(didRequestBehavior: FMBehaviorRequest){}
+
+    fun locationManager(didChangeState: FMLocationManager.State){}
+
+    fun locationManager(didUpdateFrame: Frame, info: AccumulatedARCoreInfo, rejections: FrameFilterRejectionStatistics) {}
 }

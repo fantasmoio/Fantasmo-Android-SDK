@@ -38,7 +38,10 @@ class FMLocationManager(private val context: Context) {
         LOCALIZING,
 
         // uploading image while localizing
-        UPLOADING
+        UPLOADING,
+
+        // paused
+        PAUSED
     }
 
     private var coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
