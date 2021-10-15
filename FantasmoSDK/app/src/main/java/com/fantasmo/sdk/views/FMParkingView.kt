@@ -6,7 +6,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.widget.LinearLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import com.fantasmo.sdk.FMARCoreManager2
+import com.fantasmo.sdk.FMARCoreManager
 import com.fantasmo.sdk.fantasmosdk.R
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
@@ -26,15 +26,15 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     }
 
-    private lateinit var fmARCoreManager2: FMARCoreManager2
+    private lateinit var fmARCoreManager: FMARCoreManager
 
     private fun setUpAREnvironmentOpenGL(inflater: LayoutInflater) {
         inflater.inflate(R.layout.fmparkingview, this, true)
         arLayout = getChildAt(0) as CoordinatorLayout
-        fmARCoreManager2 = FMARCoreManager2(arLayout, context)
+        fmARCoreManager = FMARCoreManager(arLayout, context)
         googleMapsManager = GoogleMapsManager()
-        fmARCoreManager2.googleMapsManager = googleMapsManager
-        fmARCoreManager2.setupARSession()
+        fmARCoreManager.googleMapsManager = googleMapsManager
+        fmARCoreManager.setupARSession()
     }
 
     fun setGoogleMap(googleMap: GoogleMap){
@@ -42,18 +42,18 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
     }
 
     fun getGoogleMapsView(): MapView {
-        return fmARCoreManager2.googleMapView
+        return fmARCoreManager.googleMapView
     }
 
     fun onResume() {
-        fmARCoreManager2.onResume()
+        fmARCoreManager.onResume()
     }
 
     fun onPause() {
-        fmARCoreManager2.onPause()
+        fmARCoreManager.onPause()
     }
 
     fun onDestroy(){
-        fmARCoreManager2.onDestroy()
+        fmARCoreManager.onDestroy()
     }
 }

@@ -31,8 +31,9 @@ import com.google.android.gms.maps.MapView
 import com.google.ar.core.*
 import com.google.ar.core.exceptions.CameraNotAvailableException
 import java.io.IOException
+import java.util.*
 
-class FMARCoreManager2(private val arLayout: CoordinatorLayout, val context: Context) :
+class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Context) :
     SampleRender.Renderer {
 
     private val TAG = "FMARCoreManager2"
@@ -81,6 +82,10 @@ class FMARCoreManager2(private val arLayout: CoordinatorLayout, val context: Con
     private var anchorIsChecked = false
     private var anchored = false
 
+    private var behaviorReceived = 0L
+    private var n2s = 1_000_000_000L
+    private val behaviorThreshold = 1L
+
     private fun helloWorld() {
         Log.d(TAG, "HELLO WORLD")
     }
@@ -99,6 +104,7 @@ class FMARCoreManager2(private val arLayout: CoordinatorLayout, val context: Con
     }
 
     private fun setupFantasmoEnvironment() {
+        val appSessionId = UUID.randomUUID().toString()
         locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -114,7 +120,7 @@ class FMARCoreManager2(private val arLayout: CoordinatorLayout, val context: Con
             Log.d(TAG, "LocationListener is null")
         } else {
             fmLocationManager.connect(
-                "8e785284ca284c01bd84116c0d18e8fd",
+                "API_KEY",
                 fmLocationListener
             )
         }
@@ -132,7 +138,7 @@ class FMARCoreManager2(private val arLayout: CoordinatorLayout, val context: Con
                 Log.d(TAG, "LocalizeToggle Enabled")
 
                 // Start getting location updates
-                fmLocationManager.startUpdatingLocation("appSessionId",true)
+                fmLocationManager.startUpdatingLocation(appSessionId,true)
                 filterRejectionTv.visibility = View.VISIBLE
             } else {
                 Log.d(TAG, "LocalizeToggle Disabled")
@@ -183,7 +189,7 @@ class FMARCoreManager2(private val arLayout: CoordinatorLayout, val context: Con
 
     /**
      * Android Lifecycle events
-     * */
+     */
     //@OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
     fun onResume() {
         if (arSession == null) {
@@ -302,7 +308,7 @@ class FMARCoreManager2(private val arLayout: CoordinatorLayout, val context: Con
                 }
             }
             override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
-                //behaviorReceived = System.nanoTime()
+                behaviorReceived = System.nanoTime()
                 Log.d(TAG, "FrameFilterResult " + didRequestBehavior.displayName)
                 val stringResult = "FrameFilterResult: ${didRequestBehavior.displayName}"
                 (context as Activity).runOnUiThread { filterRejectionTv.text = stringResult }
@@ -440,6 +446,12 @@ class FMARCoreManager2(private val arLayout: CoordinatorLayout, val context: Con
         // Localize current frame if not already localizing
         if (fmLocationManager.state == FMLocationManager.State.LOCALIZING) {
             fmLocationManager.localize(frame)
+        }
+
+        val currentTime = System.nanoTime()
+        if((currentTime-behaviorReceived)/n2s > behaviorThreshold){
+            val clearText = "FrameFilterResult"
+            filterRejectionTv.text = clearText
         }
 
     }
