@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/status"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/statusTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/statusText"
+        app:layout_constraintStart_toEndOf="@+id/statusText"
+        app:layout_constraintTop_toTopOf="@+id/statusText" />
+
+    <TextView
+        android:id="@+id/lastResultText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="#BFFFFFFF"
+        android:text="@string/last_result"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/statusText"
+        app:layout_constraintTop_toBottomOf="@+id/statusText" />
+
+    <TextView
+        android:id="@+id/lastResultTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0"
+        android:textColor="#000000"
+        app:layout_constraintStart_toEndOf="@+id/lastResultText"
+        app:layout_constraintTop_toTopOf="@+id/lastResultText" />
+
+    <TextView
+        android:id="@+id/localizeTimeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="#BFFFFFFF"
+        android:text="@string/localize_time"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/lastResultText"
+        app:layout_constraintTop_toBottomOf="@+id/lastResultTextView" />
+
+    <TextView
+        android:id="@+id/localizeTimeTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0_0s"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/localizeTimeText"
+        app:layout_constraintStart_toEndOf="@+id/localizeTimeText"
+        app:layout_constraintTop_toTopOf="@+id/localizeTimeText"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/uploadTimeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/upload_time"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/localizeTimeTextView"
+        app:layout_constraintStart_toEndOf="@+id/localizeTimeTextView"
+        app:layout_constraintTop_toTopOf="@+id/localizeTimeTextView"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <TextView
+        android:id="@+id/uploadTimeTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0_0s"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/uploadTimeText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/uploadTimeText"
+        app:layout_constraintTop_toTopOf="@+id/uploadTimeText"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/translationText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="#BFFFFFFF"
+        android:text="@string/translation"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/localizeTimeText"
+        app:layout_constraintTop_toBottomOf="@+id/localizeTimeText" />
+
+    <TextView
+        android:id="@+id/translationTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/translationText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/translationText"
+        app:layout_constraintTop_toTopOf="@+id/translationText"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/distanceTravelledText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="#BFFFFFFF"
+        android:text="@string/distance_traveled"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/translationText"
+        app:layout_constraintTop_toBottomOf="@+id/translationText" />
+
+    <TextView
+        android:id="@+id/distanceTravelledTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/distanceTravelledText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.006"
+        app:layout_constraintStart_toEndOf="@+id/distanceTravelledText"
+        app:layout_constraintTop_toTopOf="@+id/distanceTravelledText"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <TextView
+        android:id="@+id/cameraAnglesText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="#BFFFFFFF"
+        android:text="@string/camera_angles"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/distanceTravelledText"
+        app:layout_constraintTop_toBottomOf="@+id/distanceTravelledText" />
+
+    <TextView
+        android:id="@+id/cameraAnglesTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/cameraAnglesText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/cameraAnglesText"
+        app:layout_constraintTop_toTopOf="@+id/cameraAnglesText"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <TextView
+        android:id="@+id/cameraAnglesSpreadText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="#BFFFFFFF"
+        android:text="@string/camera_angles_spread"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/cameraAnglesText"
+        app:layout_constraintTop_toBottomOf="@+id/cameraAnglesText" />
+
+    <TextView
+        android:id="@+id/cameraAnglesSpreadTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/cameraAnglesSpreadText"
+        app:layout_constraintTop_toBottomOf="@+id/cameraAnglesSpreadText" />
+
+    <TextView
+        android:id="@+id/normalText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="#BFFFFFFF"
+        android:text="@string/normal"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/cameraAnglesSpreadTextView"
+        app:layout_constraintTop_toBottomOf="@+id/cameraAnglesSpreadTextView" />
+
+    <TextView
+        android:id="@+id/normalTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/normalText"
+        app:layout_constraintStart_toEndOf="@+id/normalText"
+        app:layout_constraintTop_toTopOf="@+id/normalText" />
+
+    <TextView
+        android:id="@+id/limitedText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/limited"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/normalTextView"
+        app:layout_constraintStart_toEndOf="@+id/normalTextView"
+        app:layout_constraintTop_toTopOf="@+id/normalTextView"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/limitedTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/limitedText"
+        app:layout_constraintStart_toEndOf="@+id/limitedText"
+        app:layout_constraintTop_toTopOf="@+id/limitedText" />
+
+    <TextView
+        android:id="@+id/notAvailableText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/not_available"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/limitedTextView"
+        app:layout_constraintStart_toEndOf="@+id/limitedTextView"
+        app:layout_constraintTop_toTopOf="@+id/limitedTextView"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/notAvailableTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/notAvailableText"
+        app:layout_constraintStart_toEndOf="@+id/notAvailableText"
+        app:layout_constraintTop_toTopOf="@+id/notAvailableText" />
+
+    <TextView
+        android:id="@+id/excessiveMotionText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="#BFFFFFFF"
+        android:text="@string/excessivemotion"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/normalText"
+        app:layout_constraintTop_toBottomOf="@+id/normalText" />
+
+    <TextView
+        android:id="@+id/excessiveMotionTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/excessiveMotionText"
+        app:layout_constraintStart_toEndOf="@+id/excessiveMotionText"
+        app:layout_constraintTop_toTopOf="@+id/excessiveMotionText" />
+
+    <TextView
+        android:id="@+id/insufficientFeaturesText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/insufficient_features"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/excessiveMotionTextView"
+        app:layout_constraintEnd_toStartOf="@+id/insufficientFeaturesTextView"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/excessiveMotionTextView"
+        app:layout_constraintTop_toTopOf="@+id/excessiveMotionTextView"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/insufficientFeaturesTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/insufficientFeaturesText"
+        app:layout_constraintStart_toEndOf="@+id/insufficientFeaturesText"
+        app:layout_constraintTop_toTopOf="@+id/insufficientFeaturesText" />
+
+    <TextView
+        android:id="@+id/pitchLowText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="#BFFFFFFF"
+        android:text="@string/pitch_low"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/excessiveMotionText"
+        app:layout_constraintTop_toBottomOf="@+id/excessiveMotionText" />
+
+    <TextView
+        android:id="@+id/pitchLowTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/pitchLowText"
+        app:layout_constraintStart_toEndOf="@+id/pitchLowText"
+        app:layout_constraintTop_toTopOf="@+id/pitchLowText" />
+
+    <TextView
+        android:id="@+id/pitchHighText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/pitch_high"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/pitchLowTextView"
+        app:layout_constraintStart_toEndOf="@+id/pitchLowTextView"
+        app:layout_constraintTop_toTopOf="@+id/pitchLowTextView" />
+
+    <TextView
+        android:id="@+id/pitchHighTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/pitchHighText"
+        app:layout_constraintStart_toEndOf="@+id/pitchHighText"
+        app:layout_constraintTop_toTopOf="@+id/pitchHighText" />
+
+    <TextView
+        android:id="@+id/blurryText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/blurry"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/pitchHighTextView"
+        app:layout_constraintStart_toEndOf="@+id/pitchHighTextView"
+        app:layout_constraintTop_toTopOf="@+id/pitchHighTextView" />
+
+    <TextView
+        android:id="@+id/blurryTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/blurryText"
+        app:layout_constraintStart_toEndOf="@+id/blurryText"
+        app:layout_constraintTop_toTopOf="@+id/blurryText" />
+
+    <TextView
+        android:id="@+id/tooFastText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="#BFFFFFFF"
+        android:text="@string/too_fast"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="@+id/pitchLowText"
+        app:layout_constraintTop_toBottomOf="@+id/pitchLowText" />
+
+    <TextView
+        android:id="@+id/tooFastTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/tooFastText"
+        app:layout_constraintStart_toEndOf="@+id/tooFastText"
+        app:layout_constraintTop_toTopOf="@+id/tooFastText" />
+
+    <TextView
+        android:id="@+id/tooLittleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/too_little"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/tooFastTextView"
+        app:layout_constraintStart_toEndOf="@+id/tooFastTextView"
+        app:layout_constraintTop_toTopOf="@+id/tooFastTextView" />
+
+    <TextView
+        android:id="@+id/tooLittleTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/tooLittleText"
+        app:layout_constraintStart_toEndOf="@+id/tooLittleText"
+        app:layout_constraintTop_toTopOf="@+id/tooLittleText" />
+
+    <TextView
+        android:id="@+id/featuresText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/features"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/tooLittleTextView"
+        app:layout_constraintStart_toEndOf="@+id/tooLittleTextView"
+        app:layout_constraintTop_toTopOf="@+id/tooLittleTextView" />
+
+    <TextView
+        android:id="@+id/featuresTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#BFFFFFFF"
+        android:text="@string/_0"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/featuresText"
+        app:layout_constraintStart_toEndOf="@+id/featuresText"
+        app:layout_constraintTop_toTopOf="@+id/featuresText" />
+</androidx.constraintlayout.widget.ConstraintLayout>

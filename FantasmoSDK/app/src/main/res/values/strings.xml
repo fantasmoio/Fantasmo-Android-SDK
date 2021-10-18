@@ -5,7 +5,7 @@
 
     <!-- Camera Fragment TextViews -->
     <string name="camera_translation">Camera Translation</string>
-    <string name="camera_angles">Camera Angles</string>
+    <string name="camera_angles">Camera Angles:</string>
     <string name="device_coordinates">Device Coordinates</string>
     <string name="localize">Localize</string>
     <string name="anchor">Anchor</string>
@@ -15,9 +15,29 @@
     <string name="anchor_delta">Anchor Delta</string>
     <string name="requestBehavior">FrameFilterResult</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="map">Map</string>
     <string name="playback">Playback</string>
     <string name="record">Record</string>
+    <string name="status">Status:</string>
+    <string name="localize_time">Localize Time:</string>
+    <string name="translation">Translation:</string>
+    <string name="distance_traveled">Distance travelled:</string>
+    <string name="_0_0s">0,0s</string>
+    <string name="camera_angles_spread">Camera Angles Spread:</string>
+    <string name="normal">Normal:</string>
+    <string name="limited">; Limited:</string>
+    <string name="excessivemotion">ExcessiveMotion:</string>
+    <string name="not_available">; Not Available:</string>
+    <string name="insufficient_features">; Insufficient Features:</string>
+    <string name="pitch_low">Pitch Low:</string>
+    <string name="pitch_high">; Pitch High:</string>
+    <string name="blurry">; Blurry:</string>
+    <string name="_0">0</string>
+    <string name="too_fast">Too Fast:</string>
+    <string name="too_little">; Too Little:</string>
+    <string name="features">; Features:</string>
+    <string name="upload_time">; Upload Time:</string>
+    <string name="last_result">Last Result:</string>
+    <string name="filterresult">FilterResult</string>
 </resources>
