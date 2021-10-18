@@ -1,20 +1,30 @@
 package com.fantasmo.sdk.views
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Bundle
+import androidx.core.app.ActivityCompat
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import java.util.*
 
-class GoogleMapsManager {
+class GoogleMapsManager(val context: Context) : OnMapReadyCallback {
 
     private var anchorToggleButton: Boolean = false
-    lateinit var googleMap: GoogleMap
     private var localizeMarkers: Queue<Marker> = LinkedList()
     private lateinit var anchor: Marker
     private lateinit var anchorRelativePosition: Marker
+
+    lateinit var googleMapView: MapView
+    private lateinit var googleMap: GoogleMap
+    private val MAPVIEW_BUNDLE_KEY = "MapViewBundleKey"
 
     /**
      * Receives Coordinates from the server and
@@ -123,5 +133,65 @@ class GoogleMapsManager {
 
     fun updateAnchor(anchorIsChecked: Boolean) {
         anchorToggleButton = anchorIsChecked
+    }
+
+    fun initGoogleMap(savedInstanceState: Bundle?) {
+        // *** IMPORTANT ***
+        // MapView requires that the Bundle you pass contain _ONLY_ MapView SDK
+        // objects or sub-Bundles.
+        var mapViewBundle: Bundle? = null
+        if (savedInstanceState != null) {
+            mapViewBundle = savedInstanceState.getBundle(MAPVIEW_BUNDLE_KEY)
+        }
+        googleMapView.onCreate(mapViewBundle)
+        googleMapView.getMapAsync(this)
+    }
+
+    override fun onMapReady(map: GoogleMap) {
+        googleMap = map
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        googleMap.isMyLocationEnabled = true
+    }
+
+    fun onSaveInstanceState(outState: Bundle){
+        var mapViewBundle = outState.getBundle(MAPVIEW_BUNDLE_KEY)
+        if (mapViewBundle == null) {
+            mapViewBundle = Bundle()
+            outState.putBundle(MAPVIEW_BUNDLE_KEY, mapViewBundle)
+        }
+        googleMapView.onSaveInstanceState(mapViewBundle)
+    }
+
+    fun onStart() {
+        googleMapView.onStart()
+    }
+
+    fun onDestroy(){
+        googleMapView.onDestroy()
+    }
+
+    fun onStop() {
+        googleMapView.onStop()
+    }
+
+    fun onResume() {
+        googleMapView.onResume()
+    }
+
+    fun onPause() {
+        googleMapView.onPause()
+    }
+
+    fun onLowMemory(){
+        googleMapView.onLowMemory()
     }
 }

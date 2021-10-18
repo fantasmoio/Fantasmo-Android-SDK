@@ -1,4 +1,4 @@
-package com.fantasmo.sdk
+package com.fantasmo.sdk.views
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -19,10 +19,10 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.PermissionChecker
 import androidx.core.view.isVisible
+import com.fantasmo.sdk.*
 import com.fantasmo.sdk.fantasmosdk.R
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
-import com.fantasmo.sdk.views.GoogleMapsManager
 import com.fantasmo.sdk.views.common.helpers.DisplayRotationHelper
 import com.fantasmo.sdk.views.common.helpers.TrackingStateHelper
 import com.fantasmo.sdk.views.common.samplerender.SampleRender
@@ -88,7 +88,7 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
     private val behaviorThreshold = 1L
 
     private fun helloWorld() {
-        Log.d(TAG, "HELLO WORLD")
+        Log.d(TAG, "Setting ARCore Session")
     }
 
     fun setupARSession() {
@@ -105,11 +105,11 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
 
     fun setupFantasmoEnvironment(
         accessToken: String,
+        appSessionId: String,
         showStatistics: Boolean,
         isSimulation: Boolean,
         usesInternalLocationManager: Boolean
     ) {
-        val appSessionId = UUID.randomUUID().toString()
         if(usesInternalLocationManager){
             locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
@@ -176,6 +176,7 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
         }
 
         googleMapView = arLayout.findViewById(R.id.mapView)
+        googleMapsManager.googleMapView = googleMapView
         mapButton = arLayout.findViewById(R.id.mapButton)
         mapButton.setOnClickListener {
             if (googleMapView.visibility == View.VISIBLE) {
@@ -202,7 +203,6 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
     /**
      * Android Lifecycle events
      */
-    //@OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
     fun onResume() {
         if (arSession == null) {
             try {
@@ -490,12 +490,6 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
                     it,
                     Manifest.permission.ACCESS_FINE_LOCATION
                 )
-            } != PackageManager.PERMISSION_GRANTED) &&
-            (context.let {
-                PermissionChecker.checkSelfPermission(
-                    it,
-                    Manifest.permission.CAMERA
-                )
             } != PackageManager.PERMISSION_GRANTED)) {
             Log.e(TAG, "Location permission needs to be granted.")
         } else {
@@ -523,7 +517,6 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
                 Looper.myLooper()!!
             )
         }
-
     }
 
     fun updateLocation(latitude: Double, longitude: Double) {
