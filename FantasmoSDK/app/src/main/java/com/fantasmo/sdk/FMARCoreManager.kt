@@ -106,15 +106,18 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
     fun setupFantasmoEnvironment(
         accessToken: String,
         showStatistics: Boolean,
-        isSimulation: Boolean
+        isSimulation: Boolean,
+        usesInternalLocationManager: Boolean
     ) {
         val appSessionId = UUID.randomUUID().toString()
-        locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            getLocation()
-        } else {
-            Log.e(TAG, "Your GPS seems to be disabled")
+        if(usesInternalLocationManager){
+            locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                getLocation()
+            } else {
+                Log.e(TAG, "Your GPS seems to be disabled")
+            }
         }
         fmLocationManager = FMLocationManager(context)
         fmLocationManager.isSimulation = isSimulation
@@ -130,9 +133,9 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
         }
 
         val statistics = arLayout.findViewWithTag<ConstraintLayout>("StatisticsView")
-        if(showStatistics){
+        if (showStatistics) {
             statistics.visibility = View.VISIBLE
-        }else{
+        } else {
             statistics.visibility = View.GONE
         }
         anchorDeltaTv = arLayout.findViewById(R.id.anchorDeltaText)
@@ -148,7 +151,7 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
                 Log.d(TAG, "LocalizeToggle Enabled")
 
                 // Start getting location updates
-                fmLocationManager.startUpdatingLocation(appSessionId,true)
+                fmLocationManager.startUpdatingLocation(appSessionId, true)
                 filterRejectionTv.visibility = View.VISIBLE
             } else {
                 Log.d(TAG, "LocalizeToggle Disabled")
@@ -194,7 +197,6 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
                 googleMapsManager.unsetAnchor()
             }
         }
-
     }
 
     /**
@@ -302,10 +304,12 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
                     serverCoordinatesTv.text = error.message.toString()
                 }
             }
+
             override fun locationManager(result: FMLocationResult) {
                 Log.d(TAG, result.confidence.toString())
                 Log.d(TAG, result.location.toString())
-                val stringResult  = "Server Lat: ${result.location.coordinate.latitude}, Long: ${result.location.coordinate.longitude}"
+                val stringResult =
+                    "Server Lat: ${result.location.coordinate.latitude}, Long: ${result.location.coordinate.longitude}"
                 (context as Activity).runOnUiThread {
                     serverCoordinatesTv.text = stringResult
 
@@ -315,6 +319,7 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
                     )
                 }
             }
+
             override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
                 behaviorReceived = System.nanoTime()
                 Log.d(TAG, "FrameFilterResult " + didRequestBehavior.displayName)
@@ -457,7 +462,7 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
         }
 
         val currentTime = System.nanoTime()
-        if((currentTime-behaviorReceived)/n2s > behaviorThreshold){
+        if ((currentTime - behaviorReceived) / n2s > behaviorThreshold) {
             val clearText = "FrameFilterResult"
             filterRejectionTv.text = clearText
         }
@@ -516,6 +521,23 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
                 locationRequest,
                 locationCallback,
                 Looper.myLooper()!!
+            )
+        }
+
+    }
+
+    fun updateLocation(latitude: Double, longitude: Double) {
+        // Prevents fmLocationManager lateinit property not initialized
+        if (this::fmLocationManager.isInitialized) {
+            //Set SDK Location
+            fmLocationManager.setLocation(
+                latitude,
+                longitude
+            )
+        } else {
+            Log.e(
+                TAG,
+                "FMLocationManager not initialized: Please make sure connect() was invoked before updateLocation"
             )
         }
     }

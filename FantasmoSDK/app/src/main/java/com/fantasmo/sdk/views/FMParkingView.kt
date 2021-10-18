@@ -23,12 +23,12 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
         val inflater = context
             .getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         setUpAREnvironmentOpenGL(inflater)
-
     }
 
     private lateinit var fmARCoreManager: FMARCoreManager
     var showStatistics = false
     var isSimulation = false
+    var usesInternalLocationManager = false
 
     private fun setUpAREnvironmentOpenGL(inflater: LayoutInflater) {
         inflater.inflate(R.layout.fmparkingview, this, true)
@@ -39,11 +39,16 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
         fmARCoreManager.setupARSession()
     }
 
-    fun fmConnectToAPI(accessToken: String){
-        fmARCoreManager.setupFantasmoEnvironment(accessToken, showStatistics, isSimulation)
+    fun connect(accessToken: String) {
+        fmARCoreManager.setupFantasmoEnvironment(
+            accessToken,
+            showStatistics,
+            isSimulation,
+            usesInternalLocationManager
+        )
     }
 
-    fun setGoogleMap(googleMap: GoogleMap){
+    fun setGoogleMap(googleMap: GoogleMap) {
         googleMapsManager.googleMap = googleMap
     }
 
@@ -59,7 +64,11 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
         fmARCoreManager.onPause()
     }
 
-    fun onDestroy(){
+    fun onDestroy() {
         fmARCoreManager.onDestroy()
+    }
+
+    fun updateLocation(latitude: Double, longitude: Double){
+        fmARCoreManager.updateLocation(latitude,longitude)
     }
 }
