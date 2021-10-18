@@ -37,6 +37,10 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
         fmARCoreManager.setupARSession()
     }
 
+    fun fmConnectToAPI(accessToken: String){
+        fmARCoreManager.setupFantasmoEnvironment(accessToken)
+    }
+
     fun setGoogleMap(googleMap: GoogleMap){
         googleMapsManager.googleMap = googleMap
     }

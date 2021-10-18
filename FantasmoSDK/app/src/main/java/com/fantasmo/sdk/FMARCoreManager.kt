@@ -100,10 +100,9 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
         // Set up renderer.
         render = SampleRender(surfaceView, this, context.assets)
         onResume()
-        setupFantasmoEnvironment()
     }
 
-    private fun setupFantasmoEnvironment() {
+    fun setupFantasmoEnvironment(accessToken: String) {
         val appSessionId = UUID.randomUUID().toString()
         locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
@@ -120,7 +119,7 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
             Log.d(TAG, "LocationListener is null")
         } else {
             fmLocationManager.connect(
-                "API_KEY",
+                accessToken,
                 fmLocationListener
             )
         }

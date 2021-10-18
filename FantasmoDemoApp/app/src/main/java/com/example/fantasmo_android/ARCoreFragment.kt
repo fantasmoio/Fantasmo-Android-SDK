@@ -30,7 +30,6 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback
     private lateinit var googleMap: GoogleMap
     private val MAPVIEW_BUNDLE_KEY = "MapViewBundleKey"
 
-
     private lateinit var fmParkingView: FMParkingView
 
     override fun onCreateView(
@@ -42,7 +41,7 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback
         currentView = inflater.inflate(R.layout.arcore_fragment, container, false)
 
         fmParkingView = currentView.findViewById(R.id.fmView)
-
+        fmParkingView.fmConnectToAPI("API_KEY")
         googleMapView = fmParkingView.getGoogleMapsView()
         initGoogleMap(savedInstanceState)
 
