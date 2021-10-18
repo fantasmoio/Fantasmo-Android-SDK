@@ -41,6 +41,8 @@ class ARCoreFragment : Fragment(), OnMapReadyCallback
         currentView = inflater.inflate(R.layout.arcore_fragment, container, false)
 
         fmParkingView = currentView.findViewById(R.id.fmView)
+        fmParkingView.showStatistics = true
+        fmParkingView.isSimulation = true
         fmParkingView.fmConnectToAPI("API_KEY")
         googleMapView = fmParkingView.getGoogleMapsView()
         initGoogleMap(savedInstanceState)

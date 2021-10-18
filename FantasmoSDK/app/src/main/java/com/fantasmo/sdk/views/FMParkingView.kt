@@ -27,6 +27,8 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
     }
 
     private lateinit var fmARCoreManager: FMARCoreManager
+    var showStatistics = false
+    var isSimulation = false
 
     private fun setUpAREnvironmentOpenGL(inflater: LayoutInflater) {
         inflater.inflate(R.layout.fmparkingview, this, true)
@@ -38,7 +40,7 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
     }
 
     fun fmConnectToAPI(accessToken: String){
-        fmARCoreManager.setupFantasmoEnvironment(accessToken)
+        fmARCoreManager.setupFantasmoEnvironment(accessToken, showStatistics, isSimulation)
     }
 
     fun setGoogleMap(googleMap: GoogleMap){

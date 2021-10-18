@@ -15,6 +15,7 @@ import android.widget.Button
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.PermissionChecker
 import androidx.core.view.isVisible
@@ -36,7 +37,7 @@ import java.util.*
 class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Context) :
     SampleRender.Renderer {
 
-    private val TAG = "FMARCoreManager2"
+    private val TAG = "FMARCoreManager"
 
     private var arSession: Session? = null
     private lateinit var fmLocationManager: FMLocationManager
@@ -102,7 +103,11 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
         onResume()
     }
 
-    fun setupFantasmoEnvironment(accessToken: String) {
+    fun setupFantasmoEnvironment(
+        accessToken: String,
+        showStatistics: Boolean,
+        isSimulation: Boolean
+    ) {
         val appSessionId = UUID.randomUUID().toString()
         locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
@@ -112,7 +117,7 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
             Log.e(TAG, "Your GPS seems to be disabled")
         }
         fmLocationManager = FMLocationManager(context)
-        fmLocationManager.isSimulation = true
+        fmLocationManager.isSimulation = isSimulation
 
         // Connect the FMLocationManager from Fantasmo SDK
         if (fmLocationListener == null) {
@@ -124,6 +129,12 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
             )
         }
 
+        val statistics = arLayout.findViewWithTag<ConstraintLayout>("StatisticsView")
+        if(showStatistics){
+            statistics.visibility = View.VISIBLE
+        }else{
+            statistics.visibility = View.GONE
+        }
         anchorDeltaTv = arLayout.findViewById(R.id.anchorDeltaText)
         cameraTranslationTv = arLayout.findViewById(R.id.cameraTranslation)
         cameraAnglesTv = arLayout.findViewById(R.id.cameraAnglesText)
@@ -288,9 +299,7 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
                 Log.d(TAG, error.message.toString())
                 (context as Activity).runOnUiThread {
-                    if(error.message != null){
-                        serverCoordinatesTv.text = error.message.toString()
-                    }
+                    serverCoordinatesTv.text = error.message.toString()
                 }
             }
             override fun locationManager(result: FMLocationResult) {
