@@ -28,6 +28,7 @@ class FMLocationResult(
     )
 
 enum class FMBehaviorRequest(val displayName: String) {
+    POINTATBUILDINGS("Point at stores, signs and buildings around you to get a precise location"),
     TILTUP("Tilt your device up"),
     TILTDOWN("Tilt your device down"),
     PANAROUND("Pan around the scene"),

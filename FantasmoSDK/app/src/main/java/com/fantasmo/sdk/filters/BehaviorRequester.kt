@@ -1,13 +1,15 @@
 package com.fantasmo.sdk.filters
 
 import com.fantasmo.sdk.FMBehaviorRequest
-import com.fantasmo.sdk.FMLocationListener
 import java.util.*
 
 /**
  * Throttler for frame validation failure events each of which occurs when a frame turns out to be not acceptable for determining location.
  */
 class BehaviorRequester(handler: (FMBehaviorRequest) -> Unit) {
+
+    private val defaultBehavior = FMBehaviorRequest.POINTATBUILDINGS
+    private var didRequestInitialDefaultBehavior = false
 
     private val n2s: Double = 1_000_000_000.0
 
@@ -19,6 +21,7 @@ class BehaviorRequester(handler: (FMBehaviorRequest) -> Unit) {
 
     // The last time of triggering.
     private var lastTriggerTime = System.nanoTime()
+    private var lastTriggerBehavior: FMBehaviorRequest? = null
 
     private var requestHandler: ((FMBehaviorRequest) -> Unit) = handler
 
@@ -45,11 +48,22 @@ class BehaviorRequester(handler: (FMBehaviorRequest) -> Unit) {
                 if (count > incidenceThreshold) {
                     val elapsed = (System.nanoTime() - lastTriggerTime) / n2s
                     if (elapsed > throttleThreshold) {
-                        requestHandler(rejectionReason.mapToBehaviourRequest())
-                        restart()
+                        val newBehavior = rejectionReason.mapToBehaviorRequest()
+                        val behaviorRequest = if(newBehavior != lastTriggerBehavior){
+                            newBehavior
+                        } else defaultBehavior
+                        requestHandler(behaviorRequest)
+                        lastTriggerBehavior = behaviorRequest
+                        lastTriggerTime = System.nanoTime()
+                        rejectionCounts.clear()
                     }
                 } else {
                     rejectionCounts[rejectionReason] = count
+                }
+
+                if (!didRequestInitialDefaultBehavior) {
+                    didRequestInitialDefaultBehavior = true
+                    requestHandler(defaultBehavior)
                 }
             }
         }
@@ -61,5 +75,6 @@ class BehaviorRequester(handler: (FMBehaviorRequest) -> Unit) {
     fun restart() {
         lastTriggerTime = System.nanoTime()
         rejectionCounts.clear()
+        didRequestInitialDefaultBehavior = false
     }
 }

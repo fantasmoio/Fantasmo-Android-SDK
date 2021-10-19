@@ -15,7 +15,7 @@ enum class FMFilterRejectionReason {
      * Method responsible for mapping a FrameFilterFailure to the end user.
      * @return: FMBehaviorRequest corresponding to and instruction to the end-user
      */
-    fun mapToBehaviourRequest(): FMBehaviorRequest {
+    fun mapToBehaviorRequest(): FMBehaviorRequest {
         return when (this) {
             PITCHTOOLOW -> FMBehaviorRequest.TILTUP
             PITCHTOOHIGH -> FMBehaviorRequest.TILTDOWN
