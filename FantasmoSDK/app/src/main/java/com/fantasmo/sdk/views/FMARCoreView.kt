@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.LocationManager
 import android.opengl.GLSurfaceView
 import android.os.Looper
@@ -367,6 +368,17 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
 
             override fun locationManager(didChangeState: FMLocationManager.State) {
                 (context as Activity).runOnUiThread {
+                    when (didChangeState) {
+                        FMLocationManager.State.LOCALIZING -> {
+                            statusTv.setTextColor(Color.GREEN)
+                        }
+                        FMLocationManager.State.UPLOADING -> {
+                            statusTv.setTextColor(Color.RED)
+                        }
+                        else -> {
+                            statusTv.setTextColor(Color.BLACK)
+                        }
+                    }
                     statusTv.text = didChangeState.toString()
                 }
             }
