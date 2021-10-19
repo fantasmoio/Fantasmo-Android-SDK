@@ -68,14 +68,17 @@ class FMLocationManager(private val context: Context) {
 
     // Used to validate frame for sufficient quality before sending to API.
     private lateinit var frameFilter: FMInputQualityFilter
+
     // Throttler for invalid frames.
     private var behaviorRequester = BehaviorRequester {
         fmLocationListener?.locationManager(didRequestBehavior = it)
     }
 
     private var motionManager = MotionManager(context)
+
     // Localization Session Id generated on each startUpdatingLocation call
     private lateinit var localizationSessionId: String
+
     // App Session Id supplied by the SDK client
     private lateinit var appSessionId: String
     private var frameEventAccumulator = FrameFilterRejectionStatistics()
@@ -97,6 +100,7 @@ class FMLocationManager(private val context: Context) {
         this.fmLocationListener = callback
         fmApi = FMApi(this, context, token)
         frameFilter = FMInputQualityFilter(context)
+        fmLocationListener?.locationManager(state)
     }
 
     /**
@@ -118,10 +122,14 @@ class FMLocationManager(private val context: Context) {
     fun startUpdatingLocation(appSessionId: String) {
         localizationSessionId = UUID.randomUUID().toString()
         this.appSessionId = appSessionId
-        Log.d(TAG, "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId")
+        Log.d(
+            TAG,
+            "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId"
+        )
 
         this.isConnected = true
         this.state = State.LOCALIZING
+        fmLocationListener?.locationManager(state)
         enableFilters = false
         motionManager.restart()
         accumulatedARCoreInfo.reset()
@@ -134,13 +142,17 @@ class FMLocationManager(private val context: Context) {
      * @param appSessionId: appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
      * @param filtersEnabled: flag that enables/disables frame filtering
      */
-    fun startUpdatingLocation(appSessionId: String, filtersEnabled : Boolean) {
+    fun startUpdatingLocation(appSessionId: String, filtersEnabled: Boolean) {
         localizationSessionId = UUID.randomUUID().toString()
         this.appSessionId = appSessionId
-        Log.d(TAG, "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId")
+        Log.d(
+            TAG,
+            "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId"
+        )
 
         this.isConnected = true
         this.state = State.LOCALIZING
+        fmLocationListener?.locationManager(state)
         enableFilters = filtersEnabled
         motionManager.restart()
         accumulatedARCoreInfo.reset()
@@ -157,6 +169,7 @@ class FMLocationManager(private val context: Context) {
         Log.d(TAG, "stopUpdatingLocation")
         motionManager.stop()
         this.state = State.STOPPED
+        fmLocationListener?.locationManager(state)
     }
 
     /**
@@ -194,6 +207,7 @@ class FMLocationManager(private val context: Context) {
         Log.d(TAG, "localize: isSimulation $isSimulation")
         coroutineScope.launch {
             state = State.UPLOADING
+            fmLocationListener?.locationManager(state)
             val localizeRequest = createLocalizationRequest()
             fmApi.sendLocalizeRequest(
                 arFrame,
@@ -221,7 +235,7 @@ class FMLocationManager(private val context: Context) {
      */
     private fun createLocalizationRequest(): FMLocalizationRequest {
         val frameEvents = FMFrameEvent(
-            frameEventAccumulator.excessiveTiltFrameCount,
+            frameEventAccumulator.excessiveTiltFrameCount + frameEventAccumulator.insufficientTiltFrameCount,
             frameEventAccumulator.excessiveBlurFrameCount,
             frameEventAccumulator.excessiveMotionFrameCount,
             frameEventAccumulator.insufficientFeatures,
@@ -260,6 +274,7 @@ class FMLocationManager(private val context: Context) {
     private fun updateStateAfterLocalization() {
         if (state != State.STOPPED) {
             state = State.LOCALIZING
+            fmLocationListener?.locationManager(state)
         }
     }
 
@@ -268,12 +283,13 @@ class FMLocationManager(private val context: Context) {
      * @return true if it can localize the ARFrame and false otherwise.
      */
     fun shouldLocalize(arFrame: Frame): Boolean {
+        var result = false
         if (isConnected
             && currentLocation.latitude > 0.0
             && state == State.LOCALIZING
         ) {
             accumulatedARCoreInfo.update(arFrame)
-            return if(enableFilters){
+            result = if (enableFilters) {
                 val filterResult = frameFilter.accepts(arFrame)
                 behaviorRequester.processResult(filterResult)
                 if (filterResult == FMFrameFilterResult.Accepted) {
@@ -282,11 +298,12 @@ class FMLocationManager(private val context: Context) {
                     frameEventAccumulator.accumulate(filterResult.getRejectedReason()!!)
                     false
                 }
-            }else{
+            } else {
                 true
             }
         }
-        return false
+        fmLocationListener?.locationManager(arFrame, accumulatedARCoreInfo, frameEventAccumulator)
+        return result
     }
 
     /**

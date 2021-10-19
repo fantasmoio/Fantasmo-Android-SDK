@@ -10,6 +10,7 @@ import android.opengl.GLSurfaceView
 import android.os.Looper
 import android.util.Log
 import android.util.Size
+import android.view.Gravity
 import android.view.View
 import android.widget.Button
 import android.widget.Switch
@@ -18,11 +19,12 @@ import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.PermissionChecker
-import androidx.core.view.isVisible
 import com.fantasmo.sdk.*
 import com.fantasmo.sdk.fantasmosdk.R
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
+import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
+import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.views.common.helpers.DisplayRotationHelper
 import com.fantasmo.sdk.views.common.helpers.TrackingStateHelper
 import com.fantasmo.sdk.views.common.samplerender.SampleRender
@@ -34,7 +36,7 @@ import com.google.ar.core.exceptions.CameraNotAvailableException
 import java.io.IOException
 import java.util.*
 
-class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Context) :
+class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context) :
     SampleRender.Renderer {
 
     private val TAG = "FMARCoreManager"
@@ -58,13 +60,29 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
     private lateinit var anchorDeltaTv: TextView
     private lateinit var cameraTranslationTv: TextView
     private lateinit var cameraAnglesTv: TextView
-    private lateinit var serverCoordinatesTv: TextView
-    private lateinit var trackingFailureTv: TextView
+    private lateinit var lastResultTv: TextView
+
+    private lateinit var statusTv: TextView
+    private lateinit var localizeTv: TextView
+    private lateinit var uploadTv: TextView
+    private lateinit var distanceTravelledTv: TextView
+    private lateinit var cameraAnglesSpreadTv: TextView
+    private lateinit var normalTv: TextView
+    private lateinit var limitedTv: TextView
+    private lateinit var notAvailableTv: TextView
+    private lateinit var excessiveMotionTv: TextView
+    private lateinit var insufficientFeaturesTv: TextView
+    private lateinit var pitchLowTv: TextView
+    private lateinit var pitchHighTv: TextView
+    private lateinit var blurryTv: TextView
+    private lateinit var tooFastTv: TextView
+    private lateinit var tooLittleTv: TextView
+    private lateinit var featuresTv: TextView
 
     private lateinit var mapButton: Button
 
     lateinit var googleMapView: MapView
-    lateinit var googleMapsManager: GoogleMapsManager
+    lateinit var googleMapsManager: GoogleMapsView
 
     private lateinit var checkParkingButton: Button
 
@@ -110,7 +128,7 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
         isSimulation: Boolean,
         usesInternalLocationManager: Boolean
     ) {
-        if(usesInternalLocationManager){
+        if (usesInternalLocationManager) {
             locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -119,6 +137,7 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
                 Log.e(TAG, "Your GPS seems to be disabled")
             }
         }
+        statusTv = arLayout.findViewById(R.id.statusTextView)
         fmLocationManager = FMLocationManager(context)
         fmLocationManager.isSimulation = isSimulation
 
@@ -138,13 +157,29 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
         } else {
             statistics.visibility = View.GONE
         }
-        anchorDeltaTv = arLayout.findViewById(R.id.anchorDeltaText)
-        cameraTranslationTv = arLayout.findViewById(R.id.cameraTranslation)
-        cameraAnglesTv = arLayout.findViewById(R.id.cameraAnglesText)
-        serverCoordinatesTv = arLayout.findViewById(R.id.serverCoordsText)
-        trackingFailureTv = arLayout.findViewById(R.id.trackingFailureText)
 
-        filterRejectionTv = arLayout.findViewById(R.id.filterRejectionText)
+        //anchorDeltaTv = arLayout.findViewById(R.id.anchorDeltaText)
+        cameraTranslationTv = arLayout.findViewById(R.id.translationTextView)
+        cameraAnglesTv = arLayout.findViewById(R.id.cameraAnglesTextView)
+        lastResultTv = arLayout.findViewById(R.id.lastResultTextView)
+
+        localizeTv = arLayout.findViewById(R.id.localizeTimeTextView)
+        uploadTv = arLayout.findViewById(R.id.uploadTimeTextView)
+        distanceTravelledTv = arLayout.findViewById(R.id.distanceTravelledTextView)
+        cameraAnglesSpreadTv = arLayout.findViewById(R.id.cameraAnglesSpreadTextView)
+        normalTv = arLayout.findViewById(R.id.normalTextView)
+        limitedTv = arLayout.findViewById(R.id.limitedTextView)
+        notAvailableTv = arLayout.findViewById(R.id.notAvailableTextView)
+        excessiveMotionTv = arLayout.findViewById(R.id.excessiveMotionTextView)
+        insufficientFeaturesTv = arLayout.findViewById(R.id.insufficientFeaturesTextView)
+        pitchLowTv = arLayout.findViewById(R.id.pitchLowTextView)
+        pitchHighTv = arLayout.findViewById(R.id.pitchHighTextView)
+        blurryTv = arLayout.findViewById(R.id.blurryTextView)
+        tooFastTv = arLayout.findViewById(R.id.tooFastTextView)
+        tooLittleTv = arLayout.findViewById(R.id.tooLittleTextView)
+        featuresTv = arLayout.findViewById(R.id.featuresTextView)
+
+        filterRejectionTv = arLayout.findViewById(R.id.filterRejectionTextView)
         localizeToggleButton = arLayout.findViewById(R.id.localizeToggle)
         localizeToggleButton.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -152,13 +187,11 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
 
                 // Start getting location updates
                 fmLocationManager.startUpdatingLocation(appSessionId, true)
-                filterRejectionTv.visibility = View.VISIBLE
             } else {
                 Log.d(TAG, "LocalizeToggle Disabled")
 
                 // Stop getting location updates
                 fmLocationManager.stopUpdatingLocation()
-                filterRejectionTv.visibility = View.GONE
             }
         }
 
@@ -193,7 +226,7 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
             if (!isChecked) {
                 anchored = false
                 Log.d(TAG, "AnchorToggle Disabled")
-                anchorDeltaTv.visibility = View.GONE
+                //anchorDeltaTv.visibility = View.GONE
                 fmLocationManager.unsetAnchor()
                 googleMapsManager.unsetAnchor()
             }
@@ -301,7 +334,7 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
                 Log.d(TAG, error.message.toString())
                 (context as Activity).runOnUiThread {
-                    serverCoordinatesTv.text = error.message.toString()
+                    lastResultTv.text = error.message.toString()
                 }
             }
 
@@ -309,9 +342,9 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
                 Log.d(TAG, result.confidence.toString())
                 Log.d(TAG, result.location.toString())
                 val stringResult =
-                    "Server Lat: ${result.location.coordinate.latitude}, Long: ${result.location.coordinate.longitude}"
+                    "${result.location.coordinate.latitude},\n${result.location.coordinate.longitude} (${result.confidence})"
                 (context as Activity).runOnUiThread {
-                    serverCoordinatesTv.text = stringResult
+                    lastResultTv.text = stringResult
 
                     googleMapsManager.addCorrespondingMarkersToMap(
                         result.location.coordinate.latitude,
@@ -323,8 +356,49 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
             override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
                 behaviorReceived = System.nanoTime()
                 Log.d(TAG, "FrameFilterResult " + didRequestBehavior.displayName)
-                val stringResult = "FrameFilterResult: ${didRequestBehavior.displayName}"
-                (context as Activity).runOnUiThread { filterRejectionTv.text = stringResult }
+                val stringResult = didRequestBehavior.displayName
+                (context as Activity).runOnUiThread {
+                    filterRejectionTv.text = stringResult
+                    if(filterRejectionTv.visibility == View.GONE){
+                        filterRejectionTv.visibility = View.VISIBLE
+                    }
+                }
+            }
+
+            override fun locationManager(didChangeState: FMLocationManager.State) {
+                (context as Activity).runOnUiThread {
+                    statusTv.text = didChangeState.toString()
+                }
+            }
+
+            override fun locationManager(
+                didUpdateFrame: Frame,
+                info: AccumulatedARCoreInfo,
+                rejections: FrameFilterRejectionStatistics
+            ) {
+                (context as Activity).runOnUiThread {
+                    normalTv.text =
+                        info.trackingStateFrameStatistics.framesWithNormalTrackingState.toString()
+                    limitedTv.text =
+                        info.trackingStateFrameStatistics.framesWithLimitedTrackingState.toString()
+                    notAvailableTv.text =
+                        info.trackingStateFrameStatistics.framesWithNotAvailableTracking.toString()
+                    excessiveMotionTv.text = rejections.excessiveMotionFrameCount.toString()
+                    insufficientFeaturesTv.text = rejections.insufficientFeatures.toString()
+                    pitchLowTv.text = rejections.excessiveTiltFrameCount.toString()
+                    pitchHighTv.text = rejections.insufficientTiltFrameCount.toString()
+                    blurryTv.text = rejections.excessiveBlurFrameCount.toString()
+                    //tooFastTv.text = rejections.excessiveMotionFrameCount.toString()
+                    tooLittleTv.text = rejections.insufficientMotionFrameCount.toString()
+                    //featuresTv.text = rejections.insufficientFeatures.toString()
+                    val stringDistance = String.format("%.2f", info.translationAccumulator.totalTranslation) + " m"
+                    distanceTravelledTv.text = stringDistance
+                    val stringSpread =
+                        "[${info.rotationAccumulator.yaw[0]},${info.rotationAccumulator.yaw[1]}],${info.rotationAccumulator.yaw[2]}\n" +
+                                "[${info.rotationAccumulator.pitch[0]},${info.rotationAccumulator.pitch[1]}],${info.rotationAccumulator.pitch[2]}\n" +
+                                "[${info.rotationAccumulator.roll[0]},${info.rotationAccumulator.roll[1]}],${info.rotationAccumulator.roll[2]}"
+                    cameraAnglesSpreadTv.text = stringSpread
+                }
             }
         }
 
@@ -400,7 +474,7 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
 
                 currentArFrame.let {
                     if (currentArFrame.camera.trackingState == TrackingState.TRACKING) {
-                        anchorDeltaTv.visibility = View.VISIBLE
+                        //anchorDeltaTv.visibility = View.VISIBLE
                         fmLocationManager.setAnchor(it)
                     } else {
                         Toast.makeText(
@@ -423,10 +497,10 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
     private fun onUpdate(frame: Frame) {
         val cameraTranslation = frame.androidSensorPose?.translation
         cameraTranslationTv.text =
-            createStringDisplay("Camera Translation: ", cameraTranslation)
+            createStringDisplay(cameraTranslation)
 
         val cameraRotation = frame.androidSensorPose?.rotationQuaternion
-        cameraAnglesTv.text = createStringDisplay("Camera Angles: ", cameraRotation)
+        cameraAnglesTv.text = createStringDisplay(cameraRotation)
 
         val anchorDelta = frame.let { frame2 ->
             fmLocationManager.anchorFrame?.let { anchorFrame ->
@@ -437,23 +511,15 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
             }
         }
 
-        if (anchorDeltaTv.isVisible && anchorDelta != null) {
+        if (//anchorDeltaTv.isVisible &&
+            anchorDelta != null) {
             val position =
                 floatArrayOf(
                     anchorDelta.position.x,
                     anchorDelta.position.y,
                     anchorDelta.position.z
                 )
-            anchorDeltaTv.text = createStringDisplay("Anchor Delta: ", position)
-        }
-
-        // Show the TrackingFailureReason if the Tracking stops
-        if (frame.camera?.trackingState != TrackingState.TRACKING) {
-            val errorText = "Tracking error: ${frame.camera?.trackingFailureReason.toString()}"
-            trackingFailureTv.text = errorText
-            trackingFailureTv.visibility = View.VISIBLE
-        } else {
-            trackingFailureTv.visibility = View.GONE
+            //anchorDeltaTv.text = createStringDisplay("Anchor Delta: ", position)
         }
 
         // Localize current frame if not already localizing
@@ -465,6 +531,7 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
         if ((currentTime - behaviorReceived) / n2s > behaviorThreshold) {
             val clearText = "FrameFilterResult"
             filterRejectionTv.text = clearText
+            filterRejectionTv.visibility = View.GONE
         }
 
     }
@@ -472,8 +539,8 @@ class FMARCoreManager(private val arLayout: CoordinatorLayout, val context: Cont
     /**
      * Method to simplify task of creating a String to be shown in the screen
      * */
-    private fun createStringDisplay(s: String, cameraAttr: FloatArray?): String {
-        return s + String.format("%.2f", cameraAttr?.get(0)) + ", " +
+    private fun createStringDisplay(cameraAttr: FloatArray?): String {
+        return String.format("%.2f", cameraAttr?.get(0)) + ", " +
                 String.format("%.2f", cameraAttr?.get(1)) + ", " +
                 String.format("%.2f", cameraAttr?.get(2))
     }

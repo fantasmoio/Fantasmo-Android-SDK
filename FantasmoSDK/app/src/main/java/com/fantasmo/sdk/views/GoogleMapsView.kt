@@ -15,7 +15,7 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import java.util.*
 
-class GoogleMapsManager(val context: Context) : OnMapReadyCallback {
+class GoogleMapsView(val context: Context) : OnMapReadyCallback {
 
     private var anchorToggleButton: Boolean = false
     private var localizeMarkers: Queue<Marker> = LinkedList()

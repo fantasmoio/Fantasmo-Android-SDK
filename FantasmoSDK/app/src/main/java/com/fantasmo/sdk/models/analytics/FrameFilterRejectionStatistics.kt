@@ -9,6 +9,7 @@ class FrameFilterRejectionStatistics {
 
     private var totalFrameCount = 0
     var excessiveTiltFrameCount = 0
+    var insufficientTiltFrameCount = 0
     var excessiveBlurFrameCount = 0
     var insufficientMotionFrameCount = 0
     var insufficientFeatures = 0
@@ -33,7 +34,7 @@ class FrameFilterRejectionStatistics {
                 insufficientMotionFrameCount += 1
             }
             FMFilterRejectionReason.PITCHTOOHIGH -> {
-                excessiveTiltFrameCount += 1
+                insufficientTiltFrameCount += 1
             }
             FMFilterRejectionReason.PITCHTOOLOW -> {
                 excessiveTiltFrameCount += 1
@@ -51,6 +52,7 @@ class FrameFilterRejectionStatistics {
         totalFrameCount = 0
         excessiveTiltFrameCount = 0
         excessiveBlurFrameCount = 0
+        insufficientTiltFrameCount = 0
         insufficientMotionFrameCount = 0
         insufficientFeatures = 0
     }

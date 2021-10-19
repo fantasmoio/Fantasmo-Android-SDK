@@ -13,8 +13,8 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
     LinearLayout(context, attrs) {
     private val TAG = "FMParkingView"
     private lateinit var arLayout: CoordinatorLayout
-    private lateinit var googleMapsManager: GoogleMapsManager
-    private lateinit var fmARCoreManager: FMARCoreManager
+    private lateinit var googleMapsView: GoogleMapsView
+    private lateinit var fmARCoreView: FMARCoreView
     var showStatistics = false
     var isSimulation = false
     var usesInternalLocationManager = false
@@ -30,14 +30,14 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
     private fun setUpAREnvironmentOpenGL(inflater: LayoutInflater) {
         inflater.inflate(R.layout.fmparkingview, this, true)
         arLayout = getChildAt(0) as CoordinatorLayout
-        fmARCoreManager = FMARCoreManager(arLayout, context)
-        fmARCoreManager.setupARSession()
+        fmARCoreView = FMARCoreView(arLayout, context)
+        fmARCoreView.setupARSession()
     }
 
     fun connect(accessToken: String, appSessionId: String) {
-        googleMapsManager = GoogleMapsManager(context)
-        fmARCoreManager.googleMapsManager = googleMapsManager
-        fmARCoreManager.setupFantasmoEnvironment(
+        googleMapsView = GoogleMapsView(context)
+        fmARCoreView.googleMapsManager = googleMapsView
+        fmARCoreView.setupFantasmoEnvironment(
             accessToken,
             appSessionId,
             showStatistics,
@@ -47,41 +47,41 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
     }
 
     fun onResume() {
-        fmARCoreManager.onResume()
-        googleMapsManager.onResume()
+        fmARCoreView.onResume()
+        googleMapsView.onResume()
     }
 
     fun onPause() {
-        googleMapsManager.onPause()
-        fmARCoreManager.onPause()
+        googleMapsView.onPause()
+        fmARCoreView.onPause()
     }
 
     fun onDestroy() {
-        fmARCoreManager.onDestroy()
-        googleMapsManager.onDestroy()
+        fmARCoreView.onDestroy()
+        googleMapsView.onDestroy()
     }
 
     fun onStart() {
-        googleMapsManager.onStart()
+        googleMapsView.onStart()
     }
 
     fun onStop() {
-        googleMapsManager.onStop()
+        googleMapsView.onStop()
     }
 
     fun onLowMemory() {
-        googleMapsManager.onLowMemory()
+        googleMapsView.onLowMemory()
     }
 
     fun updateLocation(latitude: Double, longitude: Double){
-        fmARCoreManager.updateLocation(latitude,longitude)
+        fmARCoreView.updateLocation(latitude,longitude)
     }
 
     fun initGoogleMap(savedInstanceState: Bundle?){
-        googleMapsManager.initGoogleMap(savedInstanceState)
+        googleMapsView.initGoogleMap(savedInstanceState)
     }
 
     fun onSaveInstanceStateApp(outState: Bundle){
-        googleMapsManager.onSaveInstanceState(outState)
+        googleMapsView.onSaveInstanceState(outState)
     }
 }
