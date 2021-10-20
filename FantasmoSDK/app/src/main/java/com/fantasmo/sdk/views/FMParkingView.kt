@@ -18,6 +18,7 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
     var showStatistics = false
     var isSimulation = false
     var usesInternalLocationManager = false
+    private var connected = false
 
     init {
         orientation = HORIZONTAL
@@ -44,11 +45,21 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
             isSimulation,
             usesInternalLocationManager
         )
+        connected = true
+    }
+
+    fun disconnect() {
+        if(connected){
+            fmARCoreView.disconnect()
+            connected = false
+        }
     }
 
     fun onResume() {
         fmARCoreView.onResume()
-        googleMapsView.onResume()
+        if(connected){
+            googleMapsView.onResume()
+        }
     }
 
     fun onPause() {
@@ -79,6 +90,7 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
 
     fun initGoogleMap(savedInstanceState: Bundle?){
         googleMapsView.initGoogleMap(savedInstanceState)
+        googleMapsView.onStart()
     }
 
     fun onSaveInstanceStateApp(outState: Bundle){

@@ -106,6 +106,9 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
     private var n2s = 1_000_000_000L
     private val behaviorThreshold = 1L
 
+    private var localizing = false
+    private var connected = false
+
     private fun helloWorld() {
         Log.d(TAG, "Setting ARCore Session")
     }
@@ -129,6 +132,7 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
         isSimulation: Boolean,
         usesInternalLocationManager: Boolean
     ) {
+        connected = true
         if (usesInternalLocationManager) {
             locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
@@ -185,12 +189,12 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
         localizeToggleButton.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 Log.d(TAG, "LocalizeToggle Enabled")
-
+                localizing = true
                 // Start getting location updates
                 fmLocationManager.startUpdatingLocation(appSessionId, true)
             } else {
                 Log.d(TAG, "LocalizeToggle Disabled")
-
+                localizing = false
                 // Stop getting location updates
                 fmLocationManager.stopUpdatingLocation()
             }
@@ -531,6 +535,7 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
                     anchorDelta.position.y,
                     anchorDelta.position.z
                 )
+            Log.d(TAG,"Anchor Delta: ${createStringDisplay(position)}")
             //anchorDeltaTv.text = createStringDisplay("Anchor Delta: ", position)
         }
 
@@ -590,11 +595,13 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
                 }
             }
 
-            fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                Looper.myLooper()!!
-            )
+            if(connected){
+                fusedLocationClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    Looper.myLooper()!!
+                )
+            }
         }
     }
 
@@ -611,6 +618,21 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
                 TAG,
                 "FMLocationManager not initialized: Please make sure connect() was invoked before updateLocation"
             )
+        }
+    }
+
+    fun disconnect() {
+        if(connected){
+            connected = false
+            if(localizing){
+                localizeToggleButton.isChecked = false
+                fmLocationManager.stopUpdatingLocation()
+            }
+            if(anchored){
+                anchorToggleButton.isChecked = false
+                googleMapsManager.unsetAnchor()
+                fmLocationManager.unsetAnchor()
+            }
         }
     }
 }
