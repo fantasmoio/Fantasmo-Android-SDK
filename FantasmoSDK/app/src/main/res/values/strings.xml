@@ -41,4 +41,5 @@
     <string name="last_result">Last Result:</string>
     <string name="filterresult">FilterResult</string>
     <string name="qr">QR</string>
+    <string name="device_location">Device Location:</string>
 </resources>

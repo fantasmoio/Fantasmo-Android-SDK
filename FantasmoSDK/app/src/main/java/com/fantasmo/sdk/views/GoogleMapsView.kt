@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.core.app.ActivityCompat
+import com.fantasmo.sdk.FMLocationResult
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
@@ -34,7 +35,9 @@ class GoogleMapsView(val context: Context) : OnMapReadyCallback {
      * @param latitude
      * @param longitude
      * */
-    fun addCorrespondingMarkersToMap(latitude: Double, longitude: Double) {
+    fun addCorrespondingMarkersToMap(result: FMLocationResult) {
+        val latitude = result.location.coordinate.latitude
+        val longitude = result.location.coordinate.longitude
         if (anchorToggleButton) {
             if (!this::anchor.isInitialized || anchor.tag == "AnchorDisabled") {
                 addAnchorToMap(latitude, longitude)

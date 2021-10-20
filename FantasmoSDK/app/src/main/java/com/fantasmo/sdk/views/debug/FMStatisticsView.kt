@@ -34,6 +34,7 @@ class FMStatisticsView(arLayout: CoordinatorLayout) {
     private var tooFastTv: TextView = arLayout.findViewById(R.id.tooFastTextView)
     private var tooLittleTv: TextView = arLayout.findViewById(R.id.tooLittleTextView)
     private var featuresTv: TextView = arLayout.findViewById(R.id.featuresTextView)
+    private var deviceLocationTv: TextView = arLayout.findViewById(R.id.deviceLocationTextView)
 
     fun updateStats(frame: Frame, info: AccumulatedARCoreInfo, rejections: FrameFilterRejectionStatistics) {
         val cameraTranslation = frame.androidSensorPose?.translation
@@ -85,7 +86,11 @@ class FMStatisticsView(arLayout: CoordinatorLayout) {
         val stringResult =
             "${result.location.coordinate.latitude},\n${result.location.coordinate.longitude} (${result.confidence})"
         lastResultTv.text = stringResult
+    }
 
+    fun updateLocation(latitude: Double, longitude: Double) {
+        val stringResult = "$latitude,$longitude"
+        deviceLocationTv.text = stringResult
     }
 
     /**
@@ -96,5 +101,4 @@ class FMStatisticsView(arLayout: CoordinatorLayout) {
                 String.format("%.2f", cameraAttr?.get(1)) + ", " +
                 String.format("%.2f", cameraAttr?.get(2))
     }
-
 }

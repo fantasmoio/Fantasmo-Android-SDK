@@ -1,38 +1,26 @@
 package com.fantasmo.sdk.views
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
-import android.content.pm.PackageManager
-import android.graphics.Color
-import android.location.LocationManager
 import android.opengl.GLSurfaceView
-import android.os.Looper
 import android.util.Log
 import android.util.Size
 import android.view.View
-import android.widget.*
-import androidx.constraintlayout.widget.ConstraintLayout
+import android.widget.Switch
+import android.widget.TextView
+import android.widget.Toast
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.content.PermissionChecker
-import com.fantasmo.sdk.*
-import com.fantasmo.sdk.fantasmosdk.R
-import com.fantasmo.sdk.models.ErrorResponse
-import com.fantasmo.sdk.models.FMZone
-import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
-import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
+import com.fantasmo.sdk.FMLocationManager
+import com.fantasmo.sdk.FMUtility
+import com.fantasmo.sdk.utilities.QRCodeScanner
 import com.fantasmo.sdk.views.common.helpers.DisplayRotationHelper
 import com.fantasmo.sdk.views.common.helpers.TrackingStateHelper
 import com.fantasmo.sdk.views.common.samplerender.SampleRender
 import com.fantasmo.sdk.views.common.samplerender.arcore.BackgroundRenderer
-import com.fantasmo.sdk.views.debug.FMStatisticsView
-import com.google.android.gms.location.*
-import com.google.android.gms.maps.MapView
 import com.google.ar.core.*
 import com.google.ar.core.exceptions.CameraNotAvailableException
 import java.io.IOException
-import java.util.*
 
 class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context) :
     SampleRender.Renderer {
@@ -40,7 +28,7 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
     private val TAG = "FMARCoreManager"
 
     private var arSession: Session? = null
-    private lateinit var fmLocationManager: FMLocationManager
+    lateinit var fmLocationManager: FMLocationManager
 
     // Rendering. The Renderers are created here, and initialized when the GL surface is created.
     // This is important because ARCore needs a GL context even when it doesn't need to render
@@ -54,45 +42,22 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
     private lateinit var displayRotationHelper: DisplayRotationHelper
     private lateinit var trackingStateHelper: TrackingStateHelper
 
-    private lateinit var filterRejectionTv: TextView
+    lateinit var filterRejectionTv: TextView
     private lateinit var anchorDeltaTv: TextView
-
-    private lateinit var mapButton: Button
-
-    lateinit var googleMapView: MapView
-    lateinit var googleMapsManager: GoogleMapsView
-
-    private lateinit var checkParkingButton: Button
-
-    @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var localizeToggleButton: Switch
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var anchorToggleButton: Switch
 
-    @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var qrToggleButton: Switch
-
-    private lateinit var locationManager: LocationManager
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private var currentLocation: android.location.Location = android.location.Location("")
-
-    private val locationInterval = 300L
-
-    private var anchorIsChecked = false
-    private var anchored = false
+    var anchorIsChecked = false
+    var anchored = false
 
     private var behaviorReceived = 0L
     private var n2s = 1_000_000_000L
     private val behaviorThreshold = 1L
 
-    lateinit var qrCodeReader: FMQRScanningView
-    private var qrCodeReaderEnabled = false
-
-    private var localizing = false
-    private var connected = false
-
-    lateinit var fmStatisticsView: FMStatisticsView
+    lateinit var qrCodeReader: QRCodeScanner
+    var qrCodeReaderEnabled = false
+    var localizing = false
 
     private fun helloWorld() {
         Log.d(TAG, "Setting ARCore Session")
@@ -108,113 +73,6 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
         // Set up renderer.
         render = SampleRender(surfaceView, this, context.assets)
         onResume()
-    }
-
-    fun setupFantasmoEnvironment(
-        accessToken: String,
-        appSessionId: String,
-        showStatistics: Boolean,
-        isSimulation: Boolean,
-        usesInternalLocationManager: Boolean
-    ) {
-        connected = true
-        if (usesInternalLocationManager) {
-            locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                getLocation()
-            } else {
-                Log.e(TAG, "Your GPS seems to be disabled")
-            }
-        }
-        fmLocationManager = FMLocationManager(context)
-        fmLocationManager.isSimulation = isSimulation
-
-        // Connect the FMLocationManager from Fantasmo SDK
-        if (fmLocationListener == null) {
-            Log.d(TAG, "LocationListener is null")
-        } else {
-            fmLocationManager.connect(
-                accessToken,
-                fmLocationListener
-            )
-        }
-
-        val statistics = arLayout.findViewWithTag<ConstraintLayout>("StatisticsView")
-        if (showStatistics) {
-            statistics.visibility = View.VISIBLE
-        } else {
-            statistics.visibility = View.GONE
-        }
-
-        //anchorDeltaTv = arLayout.findViewById(R.id.anchorDeltaText)
-
-        filterRejectionTv = arLayout.findViewById(R.id.filterRejectionTextView)
-        localizeToggleButton = arLayout.findViewById(R.id.localizeToggle)
-        localizeToggleButton.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                Log.d(TAG, "LocalizeToggle Enabled")
-                localizing = true
-                // Start getting location updates
-                fmLocationManager.startUpdatingLocation(appSessionId, true)
-            } else {
-                Log.d(TAG, "LocalizeToggle Disabled")
-                localizing = false
-                // Stop getting location updates
-                fmLocationManager.stopUpdatingLocation()
-            }
-        }
-
-        checkParkingButton = arLayout.findViewById(R.id.checkParkingButton)
-        checkParkingButton.setOnClickListener {
-            Log.d(TAG, "CheckPark Pressed")
-
-            fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, 10) {
-                Toast.makeText(
-                    context.applicationContext,
-                    "Is Zone In Radius Response: $it",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        }
-
-        googleMapView = arLayout.findViewById(R.id.mapView)
-        googleMapsManager.googleMapView = googleMapView
-        mapButton = arLayout.findViewById(R.id.mapButton)
-        mapButton.setOnClickListener {
-            if (googleMapView.visibility == View.VISIBLE) {
-                googleMapView.visibility = View.GONE
-            } else {
-                googleMapView.visibility = View.VISIBLE
-            }
-        }
-
-        anchorToggleButton = arLayout.findViewById(R.id.anchorToggle)
-        anchorToggleButton.setOnCheckedChangeListener { _, isChecked ->
-            anchorIsChecked = isChecked
-            googleMapsManager.updateAnchor(anchorIsChecked)
-            if (!isChecked) {
-                anchored = false
-                Log.d(TAG, "AnchorToggle Disabled")
-                //anchorDeltaTv.visibility = View.GONE
-                fmLocationManager.unsetAnchor()
-                googleMapsManager.unsetAnchor()
-            }
-        }
-
-        qrToggleButton = arLayout.findViewById(R.id.qrToggle)
-        qrToggleButton.setOnClickListener {
-            val qrOverlay = arLayout.findViewById(R.id.qrOverlay) as ConstraintLayout
-            if(qrOverlay.visibility == View.GONE){
-                qrCodeReaderEnabled = true
-                Log.d(TAG, "QR Code Reader Enabled")
-                qrOverlay.visibility = View.VISIBLE
-            }else{
-                qrCodeReaderEnabled = false
-                Log.d(TAG, "QR Code Reader Disabled")
-                qrOverlay.visibility = View.GONE
-            }
-        }
     }
 
     /**
@@ -309,62 +167,6 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
         arSession!!.cameraConfig = cameraConfigsList[selectedCameraConfig]
         arSession!!.configure(config)
     }
-
-    /**
-     * Listener for the Fantasmo SDK Location results.
-     */
-    private val fmLocationListener: FMLocationListener =
-        object : FMLocationListener {
-            override fun locationManager(error: ErrorResponse, metadata: Any?) {
-                Log.d(TAG, error.message.toString())
-                /*
-                (context as Activity).runOnUiThread {
-                    lastResultTv.text = error.message.toString()
-                }
-                 */
-            }
-
-            override fun locationManager(result: FMLocationResult) {
-                Log.d(TAG, result.confidence.toString())
-                Log.d(TAG, result.location.toString())
-                (context as Activity).runOnUiThread {
-                    fmStatisticsView.updateResult(result)
-
-                    googleMapsManager.addCorrespondingMarkersToMap(
-                        result.location.coordinate.latitude,
-                        result.location.coordinate.longitude
-                    )
-                }
-            }
-
-            override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
-                behaviorReceived = System.nanoTime()
-                Log.d(TAG, "FrameFilterResult " + didRequestBehavior.displayName)
-                val stringResult = didRequestBehavior.displayName
-                (context as Activity).runOnUiThread {
-                    filterRejectionTv.text = stringResult
-                    if(filterRejectionTv.visibility == View.GONE){
-                        filterRejectionTv.visibility = View.VISIBLE
-                    }
-                }
-            }
-
-            override fun locationManager(didChangeState: FMLocationManager.State) {
-                (context as Activity).runOnUiThread {
-                    fmStatisticsView.updateState(didChangeState)
-                }
-            }
-
-            override fun locationManager(
-                didUpdateFrame: Frame,
-                info: AccumulatedARCoreInfo,
-                rejections: FrameFilterRejectionStatistics
-            ) {
-                (context as Activity).runOnUiThread {
-                    fmStatisticsView.updateStats(didUpdateFrame, info, rejections)
-                }
-            }
-        }
 
     /**
      * GL SurfaceView Methods
@@ -493,10 +295,9 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
         }
 
         // Only read frame if the qrCodeReader is enabled and only if qrCodeReader is in reading mode
-        if (qrCodeReaderEnabled && qrCodeReader.state != FMQRScanningView.State.QRSCANNING) {
+        if (qrCodeReaderEnabled && qrCodeReader.state != QRCodeScanner.State.QRSCANNING) {
             frame.let { qrCodeReader.processImage(it) }
         }
-
     }
 
     /**
@@ -506,79 +307,5 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
         return String.format("%.2f", cameraAttr?.get(0)) + ", " +
                 String.format("%.2f", cameraAttr?.get(1)) + ", " +
                 String.format("%.2f", cameraAttr?.get(2))
-    }
-
-    /**
-     * Gets system location through the app context
-     * Then checks if it has permission to ACCESS_FINE_LOCATION
-     * Also includes Callback for Location updates.
-     * Sets the [fmLocationManager.currentLocation] coordinates used to localize.
-     */
-    private fun getLocation() {
-        if ((context.let {
-                PermissionChecker.checkSelfPermission(
-                    it,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                )
-            } != PackageManager.PERMISSION_GRANTED)) {
-            Log.e(TAG, "Location permission needs to be granted.")
-        } else {
-            val locationRequest = LocationRequest.create()
-            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-            locationRequest.smallestDisplacement = 1f
-            locationRequest.fastestInterval = locationInterval
-            locationRequest.interval = locationInterval
-
-            val locationCallback = object : LocationCallback() {
-                override fun onLocationResult(locationResult: LocationResult) {
-                    currentLocation = locationResult.lastLocation
-                    //Set SDK Location
-                    fmLocationManager.setLocation(
-                        currentLocation.latitude,
-                        currentLocation.longitude
-                    )
-                    Log.d(TAG, "onLocationResult: ${locationResult.lastLocation}")
-                }
-            }
-
-            if(connected){
-                fusedLocationClient.requestLocationUpdates(
-                    locationRequest,
-                    locationCallback,
-                    Looper.myLooper()!!
-                )
-            }
-        }
-    }
-
-    fun updateLocation(latitude: Double, longitude: Double) {
-        // Prevents fmLocationManager lateinit property not initialized
-        if (this::fmLocationManager.isInitialized) {
-            //Set SDK Location
-            fmLocationManager.setLocation(
-                latitude,
-                longitude
-            )
-        } else {
-            Log.e(
-                TAG,
-                "FMLocationManager not initialized: Please make sure connect() was invoked before updateLocation"
-            )
-        }
-    }
-
-    fun disconnect() {
-        if(connected){
-            connected = false
-            if(localizing){
-                localizeToggleButton.isChecked = false
-                fmLocationManager.stopUpdatingLocation()
-            }
-            if(anchored){
-                anchorToggleButton.isChecked = false
-                googleMapsManager.unsetAnchor()
-                fmLocationManager.unsetAnchor()
-            }
-        }
     }
 }

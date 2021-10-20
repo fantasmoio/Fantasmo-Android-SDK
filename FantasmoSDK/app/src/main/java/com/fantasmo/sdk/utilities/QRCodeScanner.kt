@@ -1,4 +1,4 @@
-package com.fantasmo.sdk.views
+package com.fantasmo.sdk.utilities
 
 import android.annotation.SuppressLint
 import android.graphics.BitmapFactory
@@ -24,14 +24,15 @@ import java.nio.ByteBuffer
  * QRCodeReader - class responsible for getting a frame form ARCore and check
  * if there's a QRCode.
  */
-class FMQRScanningView{
+class QRCodeScanner{
     // This prevents the qrCodeReader to be overflowed with frames to analyze
     enum class State{
+        QRCODEDETECTED,
         QRSCANNING,
         IDLE
     }
     var state = State.IDLE
-    private val TAG = FMQRScanningView::class.java.simpleName
+    private val TAG = QRCodeScanner::class.java.simpleName
     private var imageWidth = 0
     private var imageHeight = 0
     lateinit var qrCodeResult: String
@@ -73,7 +74,7 @@ class FMQRScanningView{
                             val value = it.rawValue!!
                             Log.d(TAG, value)
                             qrCodeResult = value
-                            state = State.IDLE
+                            state = State.QRCODEDETECTED
                         }
                     }
                     .addOnFailureListener {
