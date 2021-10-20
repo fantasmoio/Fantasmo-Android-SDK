@@ -24,14 +24,14 @@ import java.nio.ByteBuffer
  * QRCodeReader - class responsible for getting a frame form ARCore and check
  * if there's a QRCode.
  */
-class QRCodeReader{
+class FMQRScanningView{
     // This prevents the qrCodeReader to be overflowed with frames to analyze
     enum class State{
         QRSCANNING,
         IDLE
     }
     var state = State.IDLE
-    private val TAG = QRCodeReader::class.java.simpleName
+    private val TAG = FMQRScanningView::class.java.simpleName
     private var imageWidth = 0
     private var imageHeight = 0
     lateinit var qrCodeResult: String

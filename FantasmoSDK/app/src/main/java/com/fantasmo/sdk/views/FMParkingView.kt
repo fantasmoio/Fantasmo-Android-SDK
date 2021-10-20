@@ -7,6 +7,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.widget.LinearLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.fantasmosdk.R
 
 class FMParkingView @JvmOverloads constructor(
@@ -18,10 +19,19 @@ class FMParkingView @JvmOverloads constructor(
     private lateinit var arLayout: CoordinatorLayout
     private lateinit var googleMapsView: GoogleMapsView
     private lateinit var fmARCoreView: FMARCoreView
-    private var qrCodeReader = QRCodeReader()
+    private var qrCodeReader = FMQRScanningView()
     var showStatistics = false
     var isSimulation = false
     var usesInternalLocationManager = false
+    private var connected = false
+
+    private lateinit var fmLocationManager: FMLocationManager
+
+    enum class State {
+        IDLE,
+        QRSCANNING,
+        LOCALIZING
+    }
 
     init {
         orientation = HORIZONTAL
@@ -49,11 +59,21 @@ class FMParkingView @JvmOverloads constructor(
             isSimulation,
             usesInternalLocationManager
         )
+        connected = true
+    }
+
+    fun disconnect() {
+        if(connected){
+            fmARCoreView.disconnect()
+            connected = false
+        }
     }
 
     fun onResume() {
         fmARCoreView.onResume()
-        googleMapsView.onResume()
+        if(connected){
+            googleMapsView.onResume()
+        }
     }
 
     fun onPause() {
@@ -84,6 +104,7 @@ class FMParkingView @JvmOverloads constructor(
 
     fun initGoogleMap(savedInstanceState: Bundle?) {
         googleMapsView.initGoogleMap(savedInstanceState)
+        googleMapsView.onStart()
     }
 
     fun onSaveInstanceStateApp(outState: Bundle) {

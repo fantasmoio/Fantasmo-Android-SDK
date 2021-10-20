@@ -11,7 +11,6 @@ import android.opengl.GLSurfaceView
 import android.os.Looper
 import android.util.Log
 import android.util.Size
-import android.view.Gravity
 import android.view.View
 import android.widget.*
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -27,6 +26,7 @@ import com.fantasmo.sdk.views.common.helpers.DisplayRotationHelper
 import com.fantasmo.sdk.views.common.helpers.TrackingStateHelper
 import com.fantasmo.sdk.views.common.samplerender.SampleRender
 import com.fantasmo.sdk.views.common.samplerender.arcore.BackgroundRenderer
+import com.fantasmo.sdk.views.debug.FMStatisticsView
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.MapView
 import com.google.ar.core.*
@@ -56,26 +56,6 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
 
     private lateinit var filterRejectionTv: TextView
     private lateinit var anchorDeltaTv: TextView
-    private lateinit var cameraTranslationTv: TextView
-    private lateinit var cameraAnglesTv: TextView
-    private lateinit var lastResultTv: TextView
-
-    private lateinit var statusTv: TextView
-    private lateinit var localizeTv: TextView
-    private lateinit var uploadTv: TextView
-    private lateinit var distanceTravelledTv: TextView
-    private lateinit var cameraAnglesSpreadTv: TextView
-    private lateinit var normalTv: TextView
-    private lateinit var limitedTv: TextView
-    private lateinit var notAvailableTv: TextView
-    private lateinit var excessiveMotionTv: TextView
-    private lateinit var insufficientFeaturesTv: TextView
-    private lateinit var pitchLowTv: TextView
-    private lateinit var pitchHighTv: TextView
-    private lateinit var blurryTv: TextView
-    private lateinit var tooFastTv: TextView
-    private lateinit var tooLittleTv: TextView
-    private lateinit var featuresTv: TextView
 
     private lateinit var mapButton: Button
 
@@ -106,8 +86,13 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
     private var n2s = 1_000_000_000L
     private val behaviorThreshold = 1L
 
-    lateinit var qrCodeReader: QRCodeReader
+    lateinit var qrCodeReader: FMQRScanningView
     private var qrCodeReaderEnabled = false
+
+    private var localizing = false
+    private var connected = false
+
+    lateinit var fmStatisticsView: FMStatisticsView
 
     private fun helloWorld() {
         Log.d(TAG, "Setting ARCore Session")
@@ -132,6 +117,7 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
         isSimulation: Boolean,
         usesInternalLocationManager: Boolean
     ) {
+        connected = true
         if (usesInternalLocationManager) {
             locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
@@ -141,7 +127,6 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
                 Log.e(TAG, "Your GPS seems to be disabled")
             }
         }
-        statusTv = arLayout.findViewById(R.id.statusTextView)
         fmLocationManager = FMLocationManager(context)
         fmLocationManager.isSimulation = isSimulation
 
@@ -163,37 +148,18 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
         }
 
         //anchorDeltaTv = arLayout.findViewById(R.id.anchorDeltaText)
-        cameraTranslationTv = arLayout.findViewById(R.id.translationTextView)
-        cameraAnglesTv = arLayout.findViewById(R.id.cameraAnglesTextView)
-        lastResultTv = arLayout.findViewById(R.id.lastResultTextView)
-
-        localizeTv = arLayout.findViewById(R.id.localizeTimeTextView)
-        uploadTv = arLayout.findViewById(R.id.uploadTimeTextView)
-        distanceTravelledTv = arLayout.findViewById(R.id.distanceTravelledTextView)
-        cameraAnglesSpreadTv = arLayout.findViewById(R.id.cameraAnglesSpreadTextView)
-        normalTv = arLayout.findViewById(R.id.normalTextView)
-        limitedTv = arLayout.findViewById(R.id.limitedTextView)
-        notAvailableTv = arLayout.findViewById(R.id.notAvailableTextView)
-        excessiveMotionTv = arLayout.findViewById(R.id.excessiveMotionTextView)
-        insufficientFeaturesTv = arLayout.findViewById(R.id.insufficientFeaturesTextView)
-        pitchLowTv = arLayout.findViewById(R.id.pitchLowTextView)
-        pitchHighTv = arLayout.findViewById(R.id.pitchHighTextView)
-        blurryTv = arLayout.findViewById(R.id.blurryTextView)
-        tooFastTv = arLayout.findViewById(R.id.tooFastTextView)
-        tooLittleTv = arLayout.findViewById(R.id.tooLittleTextView)
-        featuresTv = arLayout.findViewById(R.id.featuresTextView)
 
         filterRejectionTv = arLayout.findViewById(R.id.filterRejectionTextView)
         localizeToggleButton = arLayout.findViewById(R.id.localizeToggle)
         localizeToggleButton.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 Log.d(TAG, "LocalizeToggle Enabled")
-
+                localizing = true
                 // Start getting location updates
                 fmLocationManager.startUpdatingLocation(appSessionId, true)
             } else {
                 Log.d(TAG, "LocalizeToggle Disabled")
-
+                localizing = false
                 // Stop getting location updates
                 fmLocationManager.stopUpdatingLocation()
             }
@@ -351,18 +317,18 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
         object : FMLocationListener {
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
                 Log.d(TAG, error.message.toString())
+                /*
                 (context as Activity).runOnUiThread {
                     lastResultTv.text = error.message.toString()
                 }
+                 */
             }
 
             override fun locationManager(result: FMLocationResult) {
                 Log.d(TAG, result.confidence.toString())
                 Log.d(TAG, result.location.toString())
-                val stringResult =
-                    "${result.location.coordinate.latitude},\n${result.location.coordinate.longitude} (${result.confidence})"
                 (context as Activity).runOnUiThread {
-                    lastResultTv.text = stringResult
+                    fmStatisticsView.updateResult(result)
 
                     googleMapsManager.addCorrespondingMarkersToMap(
                         result.location.coordinate.latitude,
@@ -385,18 +351,7 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
 
             override fun locationManager(didChangeState: FMLocationManager.State) {
                 (context as Activity).runOnUiThread {
-                    when (didChangeState) {
-                        FMLocationManager.State.LOCALIZING -> {
-                            statusTv.setTextColor(Color.GREEN)
-                        }
-                        FMLocationManager.State.UPLOADING -> {
-                            statusTv.setTextColor(Color.RED)
-                        }
-                        else -> {
-                            statusTv.setTextColor(Color.BLACK)
-                        }
-                    }
-                    statusTv.text = didChangeState.toString()
+                    fmStatisticsView.updateState(didChangeState)
                 }
             }
 
@@ -406,27 +361,7 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
                 rejections: FrameFilterRejectionStatistics
             ) {
                 (context as Activity).runOnUiThread {
-                    normalTv.text =
-                        info.trackingStateFrameStatistics.framesWithNormalTrackingState.toString()
-                    limitedTv.text =
-                        info.trackingStateFrameStatistics.framesWithLimitedTrackingState.toString()
-                    notAvailableTv.text =
-                        info.trackingStateFrameStatistics.framesWithNotAvailableTracking.toString()
-                    excessiveMotionTv.text = rejections.excessiveMotionFrameCount.toString()
-                    insufficientFeaturesTv.text = rejections.insufficientFeatures.toString()
-                    pitchLowTv.text = rejections.excessiveTiltFrameCount.toString()
-                    pitchHighTv.text = rejections.insufficientTiltFrameCount.toString()
-                    blurryTv.text = rejections.excessiveBlurFrameCount.toString()
-                    //tooFastTv.text = rejections.excessiveMotionFrameCount.toString()
-                    tooLittleTv.text = rejections.insufficientMotionFrameCount.toString()
-                    //featuresTv.text = rejections.insufficientFeatures.toString()
-                    val stringDistance = String.format("%.2f", info.translationAccumulator.totalTranslation) + " m"
-                    distanceTravelledTv.text = stringDistance
-                    val stringSpread =
-                        "[${info.rotationAccumulator.yaw[0]},${info.rotationAccumulator.yaw[1]}],${info.rotationAccumulator.yaw[2]}\n" +
-                                "[${info.rotationAccumulator.pitch[0]},${info.rotationAccumulator.pitch[1]}],${info.rotationAccumulator.pitch[2]}\n" +
-                                "[${info.rotationAccumulator.roll[0]},${info.rotationAccumulator.roll[1]}],${info.rotationAccumulator.roll[2]}"
-                    cameraAnglesSpreadTv.text = stringSpread
+                    fmStatisticsView.updateStats(didUpdateFrame, info, rejections)
                 }
             }
         }
@@ -524,13 +459,6 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
      * Data obtained from the sensor: Camera Translation and Camera Rotation values
      * */
     private fun onUpdate(frame: Frame) {
-        val cameraTranslation = frame.androidSensorPose?.translation
-        cameraTranslationTv.text =
-            createStringDisplay(cameraTranslation)
-
-        val cameraRotation = frame.androidSensorPose?.rotationQuaternion
-        cameraAnglesTv.text = createStringDisplay(cameraRotation)
-
         val anchorDelta = frame.let { frame2 ->
             fmLocationManager.anchorFrame?.let { anchorFrame ->
                 FMUtility.anchorDeltaPoseForFrame(
@@ -548,6 +476,7 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
                     anchorDelta.position.y,
                     anchorDelta.position.z
                 )
+            Log.d(TAG,"Anchor Delta: ${createStringDisplay(position)}")
             //anchorDeltaTv.text = createStringDisplay("Anchor Delta: ", position)
         }
 
@@ -564,7 +493,7 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
         }
 
         // Only read frame if the qrCodeReader is enabled and only if qrCodeReader is in reading mode
-        if (qrCodeReaderEnabled && qrCodeReader.state != QRCodeReader.State.QRSCANNING) {
+        if (qrCodeReaderEnabled && qrCodeReader.state != FMQRScanningView.State.QRSCANNING) {
             frame.let { qrCodeReader.processImage(it) }
         }
 
@@ -612,11 +541,13 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
                 }
             }
 
-            fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                Looper.myLooper()!!
-            )
+            if(connected){
+                fusedLocationClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    Looper.myLooper()!!
+                )
+            }
         }
     }
 
@@ -633,6 +564,21 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
                 TAG,
                 "FMLocationManager not initialized: Please make sure connect() was invoked before updateLocation"
             )
+        }
+    }
+
+    fun disconnect() {
+        if(connected){
+            connected = false
+            if(localizing){
+                localizeToggleButton.isChecked = false
+                fmLocationManager.stopUpdatingLocation()
+            }
+            if(anchored){
+                anchorToggleButton.isChecked = false
+                googleMapsManager.unsetAnchor()
+                fmLocationManager.unsetAnchor()
+            }
         }
     }
 }
