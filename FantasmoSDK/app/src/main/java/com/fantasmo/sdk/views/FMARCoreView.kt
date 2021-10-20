@@ -13,10 +13,7 @@ import android.util.Log
 import android.util.Size
 import android.view.Gravity
 import android.view.View
-import android.widget.Button
-import android.widget.Switch
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.PermissionChecker
@@ -93,6 +90,9 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var anchorToggleButton: Switch
 
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
+    private lateinit var qrToggleButton: Switch
+
     private lateinit var locationManager: LocationManager
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var currentLocation: android.location.Location = android.location.Location("")
@@ -105,6 +105,9 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
     private var behaviorReceived = 0L
     private var n2s = 1_000_000_000L
     private val behaviorThreshold = 1L
+
+    lateinit var qrCodeReader: QRCodeReader
+    private var qrCodeReaderEnabled = false
 
     private fun helloWorld() {
         Log.d(TAG, "Setting ARCore Session")
@@ -230,6 +233,20 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
                 //anchorDeltaTv.visibility = View.GONE
                 fmLocationManager.unsetAnchor()
                 googleMapsManager.unsetAnchor()
+            }
+        }
+
+        qrToggleButton = arLayout.findViewById(R.id.qrToggle)
+        qrToggleButton.setOnClickListener {
+            val qrOverlay = arLayout.findViewById(R.id.qrOverlay) as ConstraintLayout
+            if(qrOverlay.visibility == View.GONE){
+                qrCodeReaderEnabled = true
+                Log.d(TAG, "QR Code Reader Enabled")
+                qrOverlay.visibility = View.VISIBLE
+            }else{
+                qrCodeReaderEnabled = false
+                Log.d(TAG, "QR Code Reader Disabled")
+                qrOverlay.visibility = View.GONE
             }
         }
     }
@@ -544,6 +561,11 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
             val clearText = "FrameFilterResult"
             filterRejectionTv.text = clearText
             filterRejectionTv.visibility = View.GONE
+        }
+
+        // Only read frame if the qrCodeReader is enabled and only if qrCodeReader is in reading mode
+        if (qrCodeReaderEnabled && qrCodeReader.state != QRCodeReader.State.QRSCANNING) {
+            frame.let { qrCodeReader.processImage(it) }
         }
 
     }

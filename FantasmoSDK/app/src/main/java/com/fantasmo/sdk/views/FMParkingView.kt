@@ -9,12 +9,16 @@ import android.widget.LinearLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.fantasmo.sdk.fantasmosdk.R
 
-class FMParkingView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
-    LinearLayout(context, attrs) {
+class FMParkingView @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null
+) : LinearLayout(context, attrs) {
+
     private val TAG = "FMParkingView"
     private lateinit var arLayout: CoordinatorLayout
     private lateinit var googleMapsView: GoogleMapsView
     private lateinit var fmARCoreView: FMARCoreView
+    private var qrCodeReader = QRCodeReader()
     var showStatistics = false
     var isSimulation = false
     var usesInternalLocationManager = false
@@ -37,6 +41,7 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
     fun connect(accessToken: String, appSessionId: String) {
         googleMapsView = GoogleMapsView(context)
         fmARCoreView.googleMapsManager = googleMapsView
+        fmARCoreView.qrCodeReader = qrCodeReader
         fmARCoreView.setupFantasmoEnvironment(
             accessToken,
             appSessionId,
@@ -73,15 +78,15 @@ class FMParkingView @JvmOverloads constructor(context: Context, attrs: Attribute
         googleMapsView.onLowMemory()
     }
 
-    fun updateLocation(latitude: Double, longitude: Double){
-        fmARCoreView.updateLocation(latitude,longitude)
+    fun updateLocation(latitude: Double, longitude: Double) {
+        fmARCoreView.updateLocation(latitude, longitude)
     }
 
-    fun initGoogleMap(savedInstanceState: Bundle?){
+    fun initGoogleMap(savedInstanceState: Bundle?) {
         googleMapsView.initGoogleMap(savedInstanceState)
     }
 
-    fun onSaveInstanceStateApp(outState: Bundle){
+    fun onSaveInstanceStateApp(outState: Bundle) {
         googleMapsView.onSaveInstanceState(outState)
     }
 }

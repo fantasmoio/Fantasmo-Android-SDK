@@ -19,6 +19,11 @@
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <include
+            android:id="@+id/qrOverlay"
+            layout="@layout/fmqrview"
+            android:visibility="gone" />
+
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -76,8 +81,7 @@
                     android:textColor="#000000"
                     android:textSize="18sp"
                     app:layout_constraintBottom_toTopOf="@+id/checkParkingButton"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintEnd_toStartOf="@+id/qrToggle"
                     app:layout_constraintStart_toEndOf="@+id/localizeToggle"
                     app:layout_constraintTop_toTopOf="@+id/localizeToggle"
                     app:theme="@style/ColorAnchorSwitchStyle"
@@ -109,6 +113,20 @@
                     app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintStart_toEndOf="@+id/checkParkingButton"
                     app:layout_constraintTop_toTopOf="@+id/checkParkingButton" />
+
+                <Switch
+                    android:id="@+id/qrToggle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="#BFFFFFFF"
+                    android:minHeight="48dp"
+                    android:text="@string/qr"
+                    android:textColor="@color/black"
+                    app:layout_constraintBottom_toBottomOf="@+id/anchorToggle"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/anchorToggle"
+                    app:layout_constraintTop_toTopOf="@+id/anchorToggle" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <androidx.constraintlayout.widget.ConstraintLayout

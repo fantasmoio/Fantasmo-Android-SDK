@@ -17,7 +17,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.fantasmo_android"
-        minSdkVersion 14
+        minSdkVersion 16
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
@@ -80,12 +80,13 @@ dependencies {
     // Google ARCore
     implementation 'com.google.ar:core:1.27.0'
     implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.17.1'
-    implementation 'com.google.ar.sceneform:core:1.17.1'
-    implementation 'com.google.ar.sceneform:animation:1.17.1'
 
     // Location Services
     implementation 'com.google.android.gms:play-services-location:18.0.0'
     implementation 'com.google.android.gms:play-services-maps:17.0.1'
+
+    // Barcode model dependencies
+    implementation 'com.google.mlkit:barcode-scanning:17.0.0'
 
     //GSON for JSON parse
     implementation 'com.google.code.gson:gson:2.8.6'
