@@ -19,7 +19,9 @@ import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.views.FMParkingView
 import com.fantasmo.sdk.views.FMQRScanningViewProtocol
 import com.fantasmo.sdk.views.FMParkingViewProtocol
+
 import com.google.android.gms.location.*
+import com.google.android.gms.maps.MapView
 import com.google.ar.core.*
 import java.util.*
 
@@ -44,6 +46,11 @@ class ARCoreFragment : Fragment() {
     private lateinit var endRideButton: Button
     private lateinit var exitButton: Button
 
+    private lateinit var mapButton: Button
+    private lateinit var googleMapView: MapView
+
+    private lateinit var googleMapsManager: GoogleMapsManager
+
     private lateinit var qrCodeResultTv: TextView
     private lateinit var qrOverlay: ConstraintLayout
 
@@ -61,6 +68,19 @@ class ARCoreFragment : Fragment() {
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
         fmParkingView.fmParkingViewController = fmParkingViewController
+
+        googleMapView = currentView.findViewById(R.id.mapView)
+        googleMapsManager = GoogleMapsManager(requireActivity(), googleMapView)
+        googleMapsManager.initGoogleMap(savedInstanceState)
+
+        mapButton = currentView.findViewById(R.id.mapButton)
+        mapButton.setOnClickListener {
+            if (googleMapView.visibility == View.VISIBLE) {
+                googleMapView.visibility = View.GONE
+            } else {
+                googleMapView.visibility = View.VISIBLE
+            }
+        }
 
         // Enable simulation mode to test purposes with specific location
         // depending on which SDK flavor it's being used (Paris, Munich, Miami)
@@ -85,6 +105,8 @@ class ARCoreFragment : Fragment() {
                 fmParkingView.disconnect()
                 exitButton.visibility = View.GONE
                 controlsLayout.visibility = View.VISIBLE
+                mapButton.visibility = View.GONE
+                googleMapView.visibility = View.GONE
                 Log.d(TAG, "END SESSION")
             }
         }
@@ -96,12 +118,11 @@ class ARCoreFragment : Fragment() {
             fmParkingView.isParkingAvailable(latitude, longitude, accessToken) {
                 if (it) {
                     if (fmParkingView.visibility == View.GONE) {
+                        mapButton.visibility = View.VISIBLE
                         fmParkingView.visibility = View.VISIBLE
                         val appSessionId = UUID.randomUUID().toString()
                         fmParkingView.connect(accessToken, appSessionId)
                         //fmParkingView.updateLocation(1.0,2.0)
-                        // Initiates GoogleMap display on UI from savedInstanceState from onCreateView method
-                        fmParkingView.initGoogleMap(savedInstanceState)
                         controlsLayout.visibility = View.GONE
                         exitButton.visibility = View.VISIBLE
                     }
@@ -121,6 +142,11 @@ class ARCoreFragment : Fragment() {
         return currentView
     }
 
+    override fun onStart() {
+        super.onStart()
+        googleMapView.onStart()
+    }
+
     /**
      * Release heap allocation of the AR session
      */
@@ -135,14 +161,7 @@ class ARCoreFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         fmParkingView.onResume()
-    }
-
-    /**
-     * Delivers the Google Maps API Key to the FMParkingView
-     */
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        fmParkingView.onSaveInstanceStateApp(outState)
+        googleMapView.onResume()
     }
 
     /**
@@ -150,7 +169,7 @@ class ARCoreFragment : Fragment() {
      */
     override fun onStop() {
         super.onStop()
-        fmParkingView.onStop()
+        googleMapView.onStop()
     }
 
     /**
@@ -159,6 +178,13 @@ class ARCoreFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         fmParkingView.onPause()
+        googleMapView.onPause()
+    }
+
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        googleMapsManager.onSaveInstanceState(outState)
     }
 
     /**
@@ -167,7 +193,7 @@ class ARCoreFragment : Fragment() {
      */
     override fun onLowMemory() {
         super.onLowMemory()
-        fmParkingView.onLowMemory()
+        googleMapView.onLowMemory()
     }
 
     /**
@@ -177,6 +203,7 @@ class ARCoreFragment : Fragment() {
         object : FMParkingViewProtocol {
             override fun fmParkingViewDidStartQRScanning() {
                 Log.d(TAG, "QR Code Reader Enabled")
+                googleMapsManager.updateAnchor(true)
                 if (qrCodeResultTv.visibility == View.GONE) {
                     qrCodeResultTv.visibility = View.VISIBLE
                 }
@@ -200,7 +227,9 @@ class ARCoreFragment : Fragment() {
                 Log.d(TAG,"BEGINNING LOCALIZING")
             }
             override fun fmParkingView(behavior: FMBehaviorRequest){}
-            override fun fmParkingView(result: FMLocationResult){}
+            override fun fmParkingView(result: FMLocationResult){
+                googleMapsManager.addCorrespondingMarkersToMap(result)
+            }
             override fun fmParkingView(error: ErrorResponse, metadata: Any?){}
         }
 }

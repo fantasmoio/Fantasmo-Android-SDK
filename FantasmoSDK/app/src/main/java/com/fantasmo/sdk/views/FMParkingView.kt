@@ -1,7 +1,6 @@
 package com.fantasmo.sdk.views
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
@@ -30,7 +29,6 @@ import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.utilities.QRCodeScanner
 import com.fantasmo.sdk.views.debug.FMStatisticsView
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.MapView
 import com.google.ar.core.Frame
 
 class FMParkingView @JvmOverloads constructor(
@@ -40,7 +38,6 @@ class FMParkingView @JvmOverloads constructor(
 
     private val TAG = "FMParkingView"
     private lateinit var arLayout: CoordinatorLayout
-    private lateinit var googleMapsView: GoogleMapsView
     private lateinit var fmARCoreView: FMARCoreView
     private lateinit var qrCodeReader: QRCodeScanner
 
@@ -49,14 +46,9 @@ class FMParkingView @JvmOverloads constructor(
     var isSimulation = false
     var usesInternalLocationManager = false
     private var connected = false
+    private lateinit var appSessionId: String
 
     private lateinit var filterRejectionTv: TextView
-
-    @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var localizeToggleButton: Switch
-
-    @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var anchorToggleButton: Switch
 
     private lateinit var checkParkingButton: Button
 
@@ -68,9 +60,6 @@ class FMParkingView @JvmOverloads constructor(
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var currentLocation: android.location.Location = android.location.Location("")
     private val locationInterval = 300L
-
-    private lateinit var googleMapView: MapView
-    private lateinit var mapButton: Button
 
     init {
         orientation = HORIZONTAL
@@ -100,9 +89,10 @@ class FMParkingView @JvmOverloads constructor(
     }
 
     fun connect(accessToken: String, appSessionId: String) {
+        this.appSessionId = appSessionId
         connected = true
-        googleMapsView = GoogleMapsView(context)
-        qrCodeReader = QRCodeScanner(fmParkingViewController,fmQrScanningViewController)
+
+        qrCodeReader = QRCodeScanner(fmParkingViewController,fmQrScanningViewController,fmLocalizingViewProtocol)
 
         fmLocationManager.isSimulation = isSimulation
 
@@ -136,21 +126,6 @@ class FMParkingView @JvmOverloads constructor(
             statistics.visibility = View.GONE
         }
 
-        localizeToggleButton = arLayout.findViewById(R.id.localizeToggle)
-        localizeToggleButton.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                Log.d(TAG, "LocalizeToggle Enabled")
-                fmARCoreView.localizing = true
-                // Start getting location updates
-                fmLocationManager.startUpdatingLocation(appSessionId, true)
-            } else {
-                Log.d(TAG, "LocalizeToggle Disabled")
-                fmARCoreView.localizing = false
-                // Stop getting location updates
-                fmLocationManager.stopUpdatingLocation()
-            }
-        }
-
         checkParkingButton = arLayout.findViewById(R.id.checkParkingButton)
         checkParkingButton.setOnClickListener {
             Log.d(TAG, "CheckPark Pressed")
@@ -161,30 +136,6 @@ class FMParkingView @JvmOverloads constructor(
                     "Is Zone In Radius Response: $it",
                     Toast.LENGTH_LONG
                 ).show()
-            }
-        }
-
-        googleMapView = arLayout.findViewById(R.id.mapView)
-        googleMapsView.googleMapView = googleMapView
-        mapButton = arLayout.findViewById(R.id.mapButton)
-        mapButton.setOnClickListener {
-            if (googleMapView.visibility == View.VISIBLE) {
-                googleMapView.visibility = View.GONE
-            } else {
-                googleMapView.visibility = View.VISIBLE
-            }
-        }
-
-        anchorToggleButton = arLayout.findViewById(R.id.anchorToggle)
-        anchorToggleButton.setOnCheckedChangeListener { _, isChecked ->
-            fmARCoreView.anchorIsChecked = isChecked
-            googleMapsView.updateAnchor(fmARCoreView.anchorIsChecked)
-            if (!isChecked) {
-                fmARCoreView.anchored = false
-                Log.d(TAG, "AnchorToggle Disabled")
-                //anchorDeltaTv.visibility = View.GONE
-                fmLocationManager.unsetAnchor()
-                googleMapsView.unsetAnchor()
             }
         }
 
@@ -262,12 +213,9 @@ class FMParkingView @JvmOverloads constructor(
         if (connected) {
             connected = false
             if (fmARCoreView.localizing) {
-                localizeToggleButton.isChecked = false
                 fmLocationManager.stopUpdatingLocation()
             }
             if (fmARCoreView.anchored) {
-                anchorToggleButton.isChecked = false
-                googleMapsView.unsetAnchor()
                 fmLocationManager.unsetAnchor()
             }
         }
@@ -275,40 +223,15 @@ class FMParkingView @JvmOverloads constructor(
 
     fun onResume() {
         fmARCoreView.onResume()
-        if (connected) {
-            googleMapsView.onResume()
-        }
+
     }
 
     fun onPause() {
-        googleMapsView.onPause()
         fmARCoreView.onPause()
     }
 
     fun onDestroy() {
         fmARCoreView.onDestroy()
-        googleMapsView.onDestroy()
-    }
-
-    fun onStart() {
-        googleMapsView.onStart()
-    }
-
-    fun onStop() {
-        googleMapsView.onStop()
-    }
-
-    fun onLowMemory() {
-        googleMapsView.onLowMemory()
-    }
-
-    fun initGoogleMap(savedInstanceState: Bundle?) {
-        googleMapsView.initGoogleMap(savedInstanceState)
-        googleMapsView.onStart()
-    }
-
-    fun onSaveInstanceStateApp(outState: Bundle) {
-        googleMapsView.onSaveInstanceState(outState)
     }
 
 
@@ -316,7 +239,6 @@ class FMParkingView @JvmOverloads constructor(
         object : FMQRScanningViewProtocol {
             override fun didStartQRScanning() {
                 fmARCoreView.anchorIsChecked = true
-                googleMapsView.updateAnchor(fmARCoreView.anchorIsChecked)
                 qrCodeReader.qrCodeReaderEnabled = true
                 qrCodeReader.state = QRCodeScanner.State.IDLE
             }
@@ -328,6 +250,16 @@ class FMParkingView @JvmOverloads constructor(
 
             override fun didStopQRScanning(){
 
+            }
+        }
+
+    private val fmLocalizingViewProtocol: FMLocalizingViewProtocol =
+        object : FMLocalizingViewProtocol {
+            override fun didStartLocalizing() {
+                Log.d(TAG, "LocalizeToggle Enabled")
+                fmARCoreView.localizing = true
+                // Start getting location updates
+                fmLocationManager.startUpdatingLocation(appSessionId, true)
             }
         }
 
@@ -352,7 +284,6 @@ class FMParkingView @JvmOverloads constructor(
                 Log.d(TAG, result.location.toString())
                 (context as Activity).runOnUiThread {
                     fmStatisticsView.updateResult(result)
-                    googleMapsView.addCorrespondingMarkersToMap(result)
                 }
             }
 

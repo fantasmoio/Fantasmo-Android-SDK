@@ -6,6 +6,7 @@ import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
 import android.util.Log
+import com.fantasmo.sdk.views.FMLocalizingViewProtocol
 import com.fantasmo.sdk.views.FMParkingViewProtocol
 import com.fantasmo.sdk.views.FMQRScanningViewProtocol
 import com.google.ar.core.Frame
@@ -28,7 +29,8 @@ import java.nio.ByteBuffer
  */
 class QRCodeScanner(
     var fmParkingViewController: FMParkingViewProtocol,
-    private var fmQrScanningViewController: FMQRScanningViewProtocol
+    private var fmQrScanningViewController: FMQRScanningViewProtocol,
+    private var fmLocalizingViewProtocol: FMLocalizingViewProtocol
 ) {
     // This prevents the qrCodeReader to be overflowed with frames to analyze
     enum class State{
@@ -112,6 +114,7 @@ class QRCodeScanner(
         fmParkingViewController.fmParkingView(value){
             if(it){
                 fmParkingViewController.fmParkingViewDidStartLocalizing()
+                fmLocalizingViewProtocol.didStartLocalizing()
             }
             else{
                 Log.d(TAG,"REFUSED")

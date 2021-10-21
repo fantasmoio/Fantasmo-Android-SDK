@@ -110,7 +110,6 @@ dependencies {
 
     // Location Services
     implementation 'com.google.android.gms:play-services-location:18.0.0'
-    implementation 'com.google.android.gms:play-services-maps:17.0.1'
 
     // Barcode model dependencies
     implementation 'com.google.mlkit:barcode-scanning:17.0.0'
