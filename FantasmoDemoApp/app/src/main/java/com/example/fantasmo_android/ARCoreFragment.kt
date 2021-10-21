@@ -8,10 +8,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Switch
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
+import com.fantasmo.sdk.FMBehaviorRequest
+import com.fantasmo.sdk.FMLocationResult
+import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.views.FMParkingView
+import com.fantasmo.sdk.views.FMQRScanningViewProtocol
+import com.fantasmo.sdk.views.FMParkingViewProtocol
 import com.google.android.gms.location.*
 import com.google.ar.core.*
 import java.util.*
@@ -37,6 +44,10 @@ class ARCoreFragment : Fragment() {
     private lateinit var endRideButton: Button
     private lateinit var exitButton: Button
 
+    private lateinit var qrCodeResultTv: TextView
+    private lateinit var qrOverlay: ConstraintLayout
+
+    private val accessToken = "API_KEY"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -49,6 +60,7 @@ class ARCoreFragment : Fragment() {
         controlsLayout = currentView.findViewById(R.id.controlsLayout)
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
+        fmParkingView.fmParkingViewController = fmParkingViewController
 
         // Enable simulation mode to test purposes with specific location
         // depending on which SDK flavor it's being used (Paris, Munich, Miami)
@@ -67,31 +79,44 @@ class ARCoreFragment : Fragment() {
         fmParkingView.usesInternalLocationManager = true
 
         exitButton = currentView.findViewById(R.id.exitButton)
-        exitButton.setOnClickListener{
-            if(fmParkingView.visibility == View.VISIBLE){
+        exitButton.setOnClickListener {
+            if (fmParkingView.visibility == View.VISIBLE) {
                 fmParkingView.visibility = View.GONE
                 fmParkingView.disconnect()
                 exitButton.visibility = View.GONE
                 controlsLayout.visibility = View.VISIBLE
-                Log.d(TAG,"END SESSION")
-            }else{
-                Log.d(TAG,"Exit Button Pressed")
+                Log.d(TAG, "END SESSION")
             }
         }
 
+        val latitude = 52.50578283943285
+        val longitude = 13.378954977173915
         endRideButton = currentView.findViewById(R.id.endRideButton)
-        endRideButton.setOnClickListener{
-            if(fmParkingView.visibility == View.GONE){
-                fmParkingView.visibility = View.VISIBLE
-                val appSessionId = UUID.randomUUID().toString()
-                fmParkingView.connect("API_KEY", appSessionId)
-                //fmParkingView.updateLocation(1.0,2.0)
-                // Initiates GoogleMap display on UI from savedInstanceState from onCreateView method
-                fmParkingView.initGoogleMap(savedInstanceState)
-                controlsLayout.visibility = View.GONE
-                exitButton.visibility = View.VISIBLE
+        endRideButton.setOnClickListener {
+            fmParkingView.isParkingAvailable(latitude, longitude, accessToken) {
+                if (it) {
+                    if (fmParkingView.visibility == View.GONE) {
+                        fmParkingView.visibility = View.VISIBLE
+                        val appSessionId = UUID.randomUUID().toString()
+                        fmParkingView.connect(accessToken, appSessionId)
+                        //fmParkingView.updateLocation(1.0,2.0)
+                        // Initiates GoogleMap display on UI from savedInstanceState from onCreateView method
+                        fmParkingView.initGoogleMap(savedInstanceState)
+                        controlsLayout.visibility = View.GONE
+                        exitButton.visibility = View.VISIBLE
+                    }
+                } else {
+                    Toast.makeText(
+                        context?.applicationContext,
+                        "Is Zone In Radius Response: $it",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         }
+
+        qrCodeResultTv = currentView.findViewById(R.id.qrCodeResultTextView)
+        qrOverlay = currentView.findViewById(R.id.qrOverlay) as ConstraintLayout
 
         return currentView
     }
@@ -144,4 +169,38 @@ class ARCoreFragment : Fragment() {
         super.onLowMemory()
         fmParkingView.onLowMemory()
     }
+
+    /**
+     * Listener for the QR Code Scanner.
+     */
+    private val fmParkingViewController: FMParkingViewProtocol =
+        object : FMParkingViewProtocol {
+            override fun fmParkingViewDidStartQRScanning() {
+                Log.d(TAG, "QR Code Reader Enabled")
+                if (qrCodeResultTv.visibility == View.GONE) {
+                    qrCodeResultTv.visibility = View.VISIBLE
+                }
+                if (qrOverlay.visibility == View.GONE) {
+                    qrOverlay.visibility = View.VISIBLE
+                }
+            }
+
+            override fun fmParkingViewDidStopQRScanning(){}
+            override fun fmParkingView(qrCode: String, shouldContinue: (Boolean) -> Unit){
+                // Display result and approve or not the QR Code Scanned
+                qrCodeResultTv.text = qrCode
+                if (qrOverlay.visibility == View.VISIBLE) {
+                    qrOverlay.visibility = View.GONE
+                }
+                shouldContinue(true)
+                // show dialogue to accept or refuse
+            }
+
+            override fun fmParkingViewDidStartLocalizing(){
+                Log.d(TAG,"BEGINNING LOCALIZING")
+            }
+            override fun fmParkingView(behavior: FMBehaviorRequest){}
+            override fun fmParkingView(result: FMLocationResult){}
+            override fun fmParkingView(error: ErrorResponse, metadata: Any?){}
+        }
 }

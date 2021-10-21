@@ -26,6 +26,7 @@ import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
+import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.utilities.QRCodeScanner
 import com.fantasmo.sdk.views.debug.FMStatisticsView
 import com.google.android.gms.location.*
@@ -43,7 +44,7 @@ class FMParkingView @JvmOverloads constructor(
     private lateinit var fmARCoreView: FMARCoreView
     private lateinit var qrCodeReader: QRCodeScanner
 
-    lateinit var fmQrScanningViewController: FMQRScanningViewProtocol
+    lateinit var fmParkingViewController: FMParkingViewProtocol
     var showStatistics = false
     var isSimulation = false
     var usesInternalLocationManager = false
@@ -86,16 +87,23 @@ class FMParkingView @JvmOverloads constructor(
         fmARCoreView.setupARSession()
 
         fmStatisticsView = FMStatisticsView(arLayout)
+        fmLocationManager = FMLocationManager(context)
 
         filterRejectionTv = arLayout.findViewById(R.id.filterRejectionTextView)
+    }
+
+    fun isParkingAvailable(latitude: Double, longitude: Double, accessToken: String, onCompletion: (Boolean) -> Unit) {
+        fmLocationManager.setLocation(latitude,longitude)
+        val fmApi = FMApi(fmLocationManager,context,accessToken)
+        fmApi.sendZoneInRadiusRequest(10, onCompletion)
+        //fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING,10, onCompletion)
     }
 
     fun connect(accessToken: String, appSessionId: String) {
         connected = true
         googleMapsView = GoogleMapsView(context)
-        qrCodeReader = QRCodeScanner(fmQrScanningViewController)
+        qrCodeReader = QRCodeScanner(fmParkingViewController,fmQrScanningViewController)
 
-        fmLocationManager = FMLocationManager(context)
         fmLocationManager.isSimulation = isSimulation
 
         if (usesInternalLocationManager) {
@@ -184,10 +192,8 @@ class FMParkingView @JvmOverloads constructor(
     }
 
     private fun startQRScanning() {
-        fmARCoreView.anchorIsChecked = true
-        googleMapsView.updateAnchor(fmARCoreView.anchorIsChecked)
-        qrCodeReader.qrCodeReaderEnabled = true
         fmQrScanningViewController.didStartQRScanning()
+        fmParkingViewController.fmParkingViewDidStartQRScanning()
     }
 
     /**
@@ -306,36 +312,24 @@ class FMParkingView @JvmOverloads constructor(
     }
 
 
-     /*=
+    private val fmQrScanningViewController: FMQRScanningViewProtocol =
         object : FMQRScanningViewProtocol {
             override fun didStartQRScanning() {
-                Log.d(TAG, "QR Code Reader Enabled")
-                if (qrCodeResultTv.visibility == View.GONE) {
-                    qrCodeResultTv.visibility = View.VISIBLE
-                }
-                if (qrOverlay.visibility == View.GONE) {
-                    qrOverlay.visibility = View.VISIBLE
-                }
+                fmARCoreView.anchorIsChecked = true
+                googleMapsView.updateAnchor(fmARCoreView.anchorIsChecked)
+                qrCodeReader.qrCodeReaderEnabled = true
+                qrCodeReader.state = QRCodeScanner.State.IDLE
             }
 
             override fun didScanQRCode(result: String) {
                 // Display result and approve or not the QR Code Scanned
-                qrCodeResultTv.text = result
-                if(qrOverlay.visibility == View.VISIBLE){
-                    qrOverlay.visibility = View.GONE
-                }
+
             }
 
             override fun didStopQRScanning(){
-                // Unset Anchor and begin Localizing
-                fmARCoreView.anchored = false
-                Log.d(TAG, "Anchor Disabled Start Localizing")
-                // anchorDeltaTv.visibility = View.GONE
-                fmLocationManager.unsetAnchor()
-                googleMapsView.unsetAnchor()
+
             }
         }
-        */
 
     /**
      * Listener for the Fantasmo SDK Location results.
@@ -343,6 +337,7 @@ class FMParkingView @JvmOverloads constructor(
     private val fmLocationListener: FMLocationListener =
         object : FMLocationListener {
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
+                fmParkingViewController.fmParkingView(error, metadata)
                 Log.d(TAG, error.message.toString())
                 /*
                 (context as Activity).runOnUiThread {
@@ -352,6 +347,7 @@ class FMParkingView @JvmOverloads constructor(
             }
 
             override fun locationManager(result: FMLocationResult) {
+                fmParkingViewController.fmParkingView(result)
                 Log.d(TAG, result.confidence.toString())
                 Log.d(TAG, result.location.toString())
                 (context as Activity).runOnUiThread {
@@ -361,6 +357,7 @@ class FMParkingView @JvmOverloads constructor(
             }
 
             override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
+                fmParkingViewController.fmParkingView(didRequestBehavior)
                 //behaviorReceived = System.nanoTime()
                 Log.d(TAG, "FrameFilterResult " + didRequestBehavior.displayName)
                 val stringResult = didRequestBehavior.displayName

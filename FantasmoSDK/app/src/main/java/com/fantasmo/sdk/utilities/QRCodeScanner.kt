@@ -6,8 +6,7 @@ import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
 import android.util.Log
-import android.view.View
-import android.widget.TextView
+import com.fantasmo.sdk.views.FMParkingViewProtocol
 import com.fantasmo.sdk.views.FMQRScanningViewProtocol
 import com.google.ar.core.Frame
 import com.google.ar.core.exceptions.DeadlineExceededException
@@ -28,6 +27,7 @@ import java.nio.ByteBuffer
  * if there's a QRCode.
  */
 class QRCodeScanner(
+    var fmParkingViewController: FMParkingViewProtocol,
     private var fmQrScanningViewController: FMQRScanningViewProtocol
 ) {
     // This prevents the qrCodeReader to be overflowed with frames to analyze
@@ -109,7 +109,17 @@ class QRCodeScanner(
         qrFound = true
         val stringScan = "QRCodeDetected with value: $value"
         fmQrScanningViewController.didScanQRCode(stringScan)
-
+        fmParkingViewController.fmParkingView(value){
+            if(it){
+                fmParkingViewController.fmParkingViewDidStartLocalizing()
+            }
+            else{
+                Log.d(TAG,"REFUSED")
+                qrFound = false
+                fmQrScanningViewController.didStartQRScanning()
+                fmParkingViewController.fmParkingViewDidStartQRScanning()
+            }
+        }
     }
 
     private fun createByteArrayOutputStream(
