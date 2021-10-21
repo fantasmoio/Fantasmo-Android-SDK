@@ -68,7 +68,7 @@ class FMParkingView @JvmOverloads constructor(
     private var currentLocation: android.location.Location = android.location.Location("")
     private val locationInterval = 300L
 
-    lateinit var googleMapView: MapView
+    private lateinit var googleMapView: MapView
     private lateinit var mapButton: Button
 
     init {
