@@ -41,7 +41,9 @@ class FMParkingView @JvmOverloads constructor(
     private lateinit var arLayout: CoordinatorLayout
     private lateinit var googleMapsView: GoogleMapsView
     private lateinit var fmARCoreView: FMARCoreView
-    private var qrCodeReader = QRCodeScanner()
+    private lateinit var qrCodeReader: QRCodeScanner
+
+    lateinit var fmQrScanningViewController: FMQRScanningViewProtocol
     var showStatistics = false
     var isSimulation = false
     var usesInternalLocationManager = false
@@ -51,10 +53,9 @@ class FMParkingView @JvmOverloads constructor(
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var localizeToggleButton: Switch
+
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var anchorToggleButton: Switch
-    @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var qrToggleButton: Switch
 
     private lateinit var checkParkingButton: Button
 
@@ -69,12 +70,6 @@ class FMParkingView @JvmOverloads constructor(
 
     lateinit var googleMapView: MapView
     private lateinit var mapButton: Button
-
-    enum class State {
-        IDLE,
-        QRSCANNING,
-        LOCALIZING
-    }
 
     init {
         orientation = HORIZONTAL
@@ -98,9 +93,7 @@ class FMParkingView @JvmOverloads constructor(
     fun connect(accessToken: String, appSessionId: String) {
         connected = true
         googleMapsView = GoogleMapsView(context)
-
-        fmARCoreView.qrCodeReader = qrCodeReader
-        fmARCoreView.filterRejectionTv = filterRejectionTv
+        qrCodeReader = QRCodeScanner(fmQrScanningViewController)
 
         fmLocationManager = FMLocationManager(context)
         fmLocationManager.isSimulation = isSimulation
@@ -125,6 +118,8 @@ class FMParkingView @JvmOverloads constructor(
             )
         }
         fmARCoreView.fmLocationManager = fmLocationManager
+        fmARCoreView.qrCodeReader = qrCodeReader
+        fmARCoreView.filterRejectionTv = filterRejectionTv
 
         val statistics = arLayout.findViewWithTag<ConstraintLayout>("StatisticsView")
         if (showStatistics) {
@@ -185,19 +180,14 @@ class FMParkingView @JvmOverloads constructor(
             }
         }
 
-        qrToggleButton = arLayout.findViewById(R.id.qrToggle)
-        qrToggleButton.setOnClickListener {
-            val qrOverlay = arLayout.findViewById(R.id.qrOverlay) as ConstraintLayout
-            if(qrOverlay.visibility == View.GONE){
-                fmARCoreView.qrCodeReaderEnabled = true
-                Log.d(TAG, "QR Code Reader Enabled")
-                qrOverlay.visibility = View.VISIBLE
-            }else{
-                fmARCoreView.qrCodeReaderEnabled = false
-                Log.d(TAG, "QR Code Reader Disabled")
-                qrOverlay.visibility = View.GONE
-            }
-        }
+        startQRScanning()
+    }
+
+    private fun startQRScanning() {
+        fmARCoreView.anchorIsChecked = true
+        googleMapsView.updateAnchor(fmARCoreView.anchorIsChecked)
+        qrCodeReader.qrCodeReaderEnabled = true
+        fmQrScanningViewController.didStartQRScanning()
     }
 
     /**
@@ -229,7 +219,10 @@ class FMParkingView @JvmOverloads constructor(
                         currentLocation.latitude,
                         currentLocation.longitude
                     )
-                    fmStatisticsView.updateLocation(currentLocation.latitude, currentLocation.longitude)
+                    fmStatisticsView.updateLocation(
+                        currentLocation.latitude,
+                        currentLocation.longitude
+                    )
                     Log.d(TAG, "onLocationResult: ${locationResult.lastLocation}")
                 }
             }
@@ -260,13 +253,13 @@ class FMParkingView @JvmOverloads constructor(
     }
 
     fun disconnect() {
-        if(connected){
+        if (connected) {
             connected = false
-            if(fmARCoreView.localizing){
+            if (fmARCoreView.localizing) {
                 localizeToggleButton.isChecked = false
                 fmLocationManager.stopUpdatingLocation()
             }
-            if(fmARCoreView.anchored){
+            if (fmARCoreView.anchored) {
                 anchorToggleButton.isChecked = false
                 googleMapsView.unsetAnchor()
                 fmLocationManager.unsetAnchor()
@@ -276,7 +269,7 @@ class FMParkingView @JvmOverloads constructor(
 
     fun onResume() {
         fmARCoreView.onResume()
-        if(connected){
+        if (connected) {
             googleMapsView.onResume()
         }
     }
@@ -312,6 +305,38 @@ class FMParkingView @JvmOverloads constructor(
         googleMapsView.onSaveInstanceState(outState)
     }
 
+
+     /*=
+        object : FMQRScanningViewProtocol {
+            override fun didStartQRScanning() {
+                Log.d(TAG, "QR Code Reader Enabled")
+                if (qrCodeResultTv.visibility == View.GONE) {
+                    qrCodeResultTv.visibility = View.VISIBLE
+                }
+                if (qrOverlay.visibility == View.GONE) {
+                    qrOverlay.visibility = View.VISIBLE
+                }
+            }
+
+            override fun didScanQRCode(result: String) {
+                // Display result and approve or not the QR Code Scanned
+                qrCodeResultTv.text = result
+                if(qrOverlay.visibility == View.VISIBLE){
+                    qrOverlay.visibility = View.GONE
+                }
+            }
+
+            override fun didStopQRScanning(){
+                // Unset Anchor and begin Localizing
+                fmARCoreView.anchored = false
+                Log.d(TAG, "Anchor Disabled Start Localizing")
+                // anchorDeltaTv.visibility = View.GONE
+                fmLocationManager.unsetAnchor()
+                googleMapsView.unsetAnchor()
+            }
+        }
+        */
+
     /**
      * Listener for the Fantasmo SDK Location results.
      */
@@ -341,7 +366,7 @@ class FMParkingView @JvmOverloads constructor(
                 val stringResult = didRequestBehavior.displayName
                 (context as Activity).runOnUiThread {
                     filterRejectionTv.text = stringResult
-                    if(filterRejectionTv.visibility == View.GONE){
+                    if (filterRejectionTv.visibility == View.GONE) {
                         filterRejectionTv.visibility = View.VISIBLE
                     }
                 }

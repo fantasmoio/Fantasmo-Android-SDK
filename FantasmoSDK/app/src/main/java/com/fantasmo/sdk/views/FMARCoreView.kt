@@ -10,6 +10,7 @@ import android.view.View
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
@@ -56,7 +57,6 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
     private val behaviorThreshold = 1L
 
     lateinit var qrCodeReader: QRCodeScanner
-    var qrCodeReaderEnabled = false
     var localizing = false
 
     private fun helloWorld() {
@@ -209,6 +209,7 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
             // Code here will run in UI thread
             onUpdate(frame)
             anchorFrame(frame)
+            qrScanFrame(frame)
         }
 
         val camera = frame.camera
@@ -227,6 +228,18 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
         trackingStateHelper.updateKeepScreenOnFlag(camera.trackingState)
         if (frame.timestamp != 0L) {
             backgroundRenderer.drawBackground(render)
+        }
+    }
+
+    private fun qrScanFrame(frame: Frame) {
+        // Only read frame if the qrCodeReader is enabled and only if qrCodeReader is in reading mode
+        if (qrCodeReader.qrCodeReaderEnabled && qrCodeReader.state == QRCodeScanner.State.IDLE) {
+            Log.d(TAG,"QR Code Scanning")
+            frame.let { qrCodeReader.processImage(it) }
+        }
+
+        if(!qrCodeReader.qrCodeReaderEnabled){
+            localizing = true
         }
     }
 
@@ -292,11 +305,6 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
             val clearText = "FrameFilterResult"
             filterRejectionTv.text = clearText
             filterRejectionTv.visibility = View.GONE
-        }
-
-        // Only read frame if the qrCodeReader is enabled and only if qrCodeReader is in reading mode
-        if (qrCodeReaderEnabled && qrCodeReader.state != QRCodeScanner.State.QRSCANNING) {
-            frame.let { qrCodeReader.processImage(it) }
         }
     }
 

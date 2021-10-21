@@ -6,6 +6,9 @@ import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
 import android.util.Log
+import android.view.View
+import android.widget.TextView
+import com.fantasmo.sdk.views.FMQRScanningViewProtocol
 import com.google.ar.core.Frame
 import com.google.ar.core.exceptions.DeadlineExceededException
 import com.google.ar.core.exceptions.NotYetAvailableException
@@ -24,18 +27,22 @@ import java.nio.ByteBuffer
  * QRCodeReader - class responsible for getting a frame form ARCore and check
  * if there's a QRCode.
  */
-class QRCodeScanner{
+class QRCodeScanner(
+    private var fmQrScanningViewController: FMQRScanningViewProtocol
+) {
     // This prevents the qrCodeReader to be overflowed with frames to analyze
     enum class State{
         QRCODEDETECTED,
         QRSCANNING,
         IDLE
     }
+
+    var qrCodeReaderEnabled: Boolean = false
     var state = State.IDLE
     private val TAG = QRCodeScanner::class.java.simpleName
     private var imageWidth = 0
     private var imageHeight = 0
-    lateinit var qrCodeResult: String
+    private var qrFound = false
 
     /**
      * Gets a frame from ARCore and converts it to bitmap and proceeds with
@@ -45,6 +52,9 @@ class QRCodeScanner{
     fun processImage(
         arFrame: Frame
     ) {
+        if(!qrCodeReaderEnabled && state == State.QRCODEDETECTED){
+            return
+        }
         state = State.QRSCANNING
         // Note that if you know which format of barcode your app is dealing with, detection will be
         // faster to specify the supported barcode formats one by one, e.g.
@@ -73,8 +83,7 @@ class QRCodeScanner{
                         barcodes.forEach {
                             val value = it.rawValue!!
                             Log.d(TAG, value)
-                            qrCodeResult = value
-                            state = State.QRCODEDETECTED
+                            displayQRScanResult(value)
                         }
                     }
                     .addOnFailureListener {
@@ -83,10 +92,24 @@ class QRCodeScanner{
                         // When the image is from CameraX analysis use case, must call image.close() on received
                         // images when finished using them. Otherwise, new images may not be received or the camera
                         // may stall.
-                        state = State.IDLE
+                        state = if(qrFound){
+                            qrCodeReaderEnabled = false
+                            Log.d(TAG, "QR Code Reader Disabled")
+                            State.QRCODEDETECTED
+                        }else{
+                            qrCodeReaderEnabled = true
+                            State.IDLE
+                        }
                     }
             }
         }
+    }
+
+    private fun displayQRScanResult(value: String){
+        qrFound = true
+        val stringScan = "QRCodeDetected with value: $value"
+        fmQrScanningViewController.didScanQRCode(stringScan)
+
     }
 
     private fun createByteArrayOutputStream(
