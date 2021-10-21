@@ -1,7 +1,12 @@
 package com.example.fantasmo_android
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Bundle
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -12,12 +17,12 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.PermissionChecker
 import androidx.fragment.app.Fragment
 import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMLocationResult
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.views.FMParkingView
-import com.fantasmo.sdk.views.FMQRScanningViewProtocol
 import com.fantasmo.sdk.views.FMParkingViewProtocol
 
 import com.google.android.gms.location.*
@@ -48,11 +53,24 @@ class ARCoreFragment : Fragment() {
 
     private lateinit var mapButton: Button
     private lateinit var googleMapView: MapView
-
     private lateinit var googleMapsManager: GoogleMapsManager
 
     private lateinit var qrCodeResultTv: TextView
     private lateinit var qrOverlay: ConstraintLayout
+
+    private lateinit var filterRejectionTv: TextView
+
+    private var behaviorReceived = 0L
+    private var n2s = 1_000_000_000L
+    private val behaviorThreshold = 1L
+    private var firstBehavior = false
+
+    private lateinit var locationManager: LocationManager
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var currentLocation: android.location.Location = android.location.Location("")
+    private val locationInterval = 300L
+
+    private val usesInternalLocationManager = true
 
     private val accessToken = "API_KEY"
 
@@ -68,19 +86,8 @@ class ARCoreFragment : Fragment() {
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
         fmParkingView.fmParkingViewController = fmParkingViewController
-
-        googleMapView = currentView.findViewById(R.id.mapView)
-        googleMapsManager = GoogleMapsManager(requireActivity(), googleMapView)
-        googleMapsManager.initGoogleMap(savedInstanceState)
-
-        mapButton = currentView.findViewById(R.id.mapButton)
-        mapButton.setOnClickListener {
-            if (googleMapView.visibility == View.VISIBLE) {
-                googleMapView.visibility = View.GONE
-            } else {
-                googleMapView.visibility = View.VISIBLE
-            }
-        }
+        fmParkingView.appSessionId = UUID.randomUUID().toString()
+        fmParkingView.accessToken = accessToken
 
         // Enable simulation mode to test purposes with specific location
         // depending on which SDK flavor it's being used (Paris, Munich, Miami)
@@ -96,40 +103,39 @@ class ARCoreFragment : Fragment() {
         }
 
         // Enable internal Location Manager
-        fmParkingView.usesInternalLocationManager = true
+        fmParkingView.usesInternalLocationManager = usesInternalLocationManager
+
+        filterRejectionTv = currentView.findViewById(R.id.filterRejectionTextView)
+
+        googleMapView = currentView.findViewById(R.id.mapView)
+        googleMapsManager = GoogleMapsManager(requireActivity(), googleMapView)
+        googleMapsManager.initGoogleMap(savedInstanceState)
+
+        mapButton = currentView.findViewById(R.id.mapButton)
+        mapButton.setOnClickListener {
+            if (googleMapView.visibility == View.VISIBLE) {
+                googleMapView.visibility = View.GONE
+            } else {
+                googleMapView.visibility = View.VISIBLE
+            }
+        }
 
         exitButton = currentView.findViewById(R.id.exitButton)
         exitButton.setOnClickListener {
-            if (fmParkingView.visibility == View.VISIBLE) {
-                fmParkingView.visibility = View.GONE
-                fmParkingView.disconnect()
-                exitButton.visibility = View.GONE
-                controlsLayout.visibility = View.VISIBLE
-                mapButton.visibility = View.GONE
-                googleMapView.visibility = View.GONE
-                Log.d(TAG, "END SESSION")
-            }
+            handleExitButton()
         }
 
         val latitude = 52.50578283943285
         val longitude = 13.378954977173915
         endRideButton = currentView.findViewById(R.id.endRideButton)
         endRideButton.setOnClickListener {
-            fmParkingView.isParkingAvailable(latitude, longitude, accessToken) {
+            fmParkingView.isParkingAvailable(latitude, longitude) {
                 if (it) {
-                    if (fmParkingView.visibility == View.GONE) {
-                        mapButton.visibility = View.VISIBLE
-                        fmParkingView.visibility = View.VISIBLE
-                        val appSessionId = UUID.randomUUID().toString()
-                        fmParkingView.connect(accessToken, appSessionId)
-                        //fmParkingView.updateLocation(1.0,2.0)
-                        controlsLayout.visibility = View.GONE
-                        exitButton.visibility = View.VISIBLE
-                    }
+                    startParkingFlow()
                 } else {
                     Toast.makeText(
                         context?.applicationContext,
-                        "Is Zone In Radius Response: $it",
+                        "Parking not available near your location.",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -142,6 +148,47 @@ class ARCoreFragment : Fragment() {
         return currentView
     }
 
+    private fun startParkingFlow() {
+        if (fmParkingView.visibility == View.GONE) {
+            mapButton.visibility = View.VISIBLE
+            fmParkingView.visibility = View.VISIBLE
+            fmParkingView.present()
+            useOwnLocationProvider()
+            controlsLayout.visibility = View.GONE
+            exitButton.visibility = View.VISIBLE
+        }
+    }
+
+    /**
+     * Example on how to override the internal location Manager
+     */
+    private fun useOwnLocationProvider() {
+        if(!usesInternalLocationManager){
+            locationManager = context?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                getLocation()
+            } else {
+                Log.e(TAG, "Your GPS seems to be disabled")
+            }
+        }
+    }
+
+    private fun handleExitButton() {
+        if (fmParkingView.visibility == View.VISIBLE) {
+            fmParkingView.visibility = View.GONE
+            fmParkingView.disconnect()
+            exitButton.visibility = View.GONE
+            controlsLayout.visibility = View.VISIBLE
+            mapButton.visibility = View.GONE
+            googleMapView.visibility = View.GONE
+            Log.d(TAG, "END SESSION")
+        }
+    }
+
+    /**
+     * Android lifecycle methods
+     */
     override fun onStart() {
         super.onStart()
         googleMapView.onStart()
@@ -196,8 +243,23 @@ class ARCoreFragment : Fragment() {
         googleMapView.onLowMemory()
     }
 
+    private fun manageBehaviorMessage(){
+        if(!firstBehavior){
+            firstBehavior = true
+        }
+
+        if(firstBehavior){
+            val currentTime = System.nanoTime()
+            if ((currentTime - behaviorReceived) / n2s > behaviorThreshold) {
+                val clearText = "FrameFilterResult"
+                filterRejectionTv.text = clearText
+                filterRejectionTv.visibility = View.GONE
+            }
+        }
+    }
+
     /**
-     * Listener for the QR Code Scanner.
+     * Listener for the FMParkingView.
      */
     private val fmParkingViewController: FMParkingViewProtocol =
         object : FMParkingViewProtocol {
@@ -226,10 +288,56 @@ class ARCoreFragment : Fragment() {
             override fun fmParkingViewDidStartLocalizing(){
                 Log.d(TAG,"BEGINNING LOCALIZING")
             }
-            override fun fmParkingView(behavior: FMBehaviorRequest){}
+            override fun fmParkingView(behavior: FMBehaviorRequest){
+                behaviorReceived = System.nanoTime()
+                val stringResult = behavior.displayName
+                filterRejectionTv.text = stringResult
+                if (filterRejectionTv.visibility == View.GONE) {
+                    filterRejectionTv.visibility = View.VISIBLE
+                }
+            }
             override fun fmParkingView(result: FMLocationResult){
                 googleMapsManager.addCorrespondingMarkersToMap(result)
             }
             override fun fmParkingView(error: ErrorResponse, metadata: Any?){}
         }
+
+    /**
+     * Gets system location through the app context
+     * Then checks if it has permission to ACCESS_FINE_LOCATION
+     * Also includes Callback for Location updates.
+     * Sets the currentLocation coordinates used to localize.
+     */
+    private fun getLocation() {
+        if ((context.let {
+                PermissionChecker.checkSelfPermission(
+                    it!!,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                )
+            } != PackageManager.PERMISSION_GRANTED)) {
+            Log.e(TAG, "Location permission needs to be granted.")
+        } else {
+            val locationRequest = LocationRequest.create()
+            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            locationRequest.smallestDisplacement = 1f
+            locationRequest.fastestInterval = locationInterval
+            locationRequest.interval = locationInterval
+
+            val locationCallback = object : LocationCallback() {
+                override fun onLocationResult(locationResult: LocationResult) {
+                    currentLocation = locationResult.lastLocation
+                    //Set SDK Location
+                    fmParkingView.updateLocation(currentLocation.latitude,currentLocation.longitude)
+
+                    Log.d(TAG, "onLocationResult: ${locationResult.lastLocation}")
+                }
+            }
+
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                Looper.myLooper()!!
+            )
+        }
+    }
 }

@@ -43,18 +43,8 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
     private lateinit var displayRotationHelper: DisplayRotationHelper
     private lateinit var trackingStateHelper: TrackingStateHelper
 
-    lateinit var filterRejectionTv: TextView
-    private lateinit var anchorDeltaTv: TextView
-
-    @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var anchorToggleButton: Switch
-
     var anchorIsChecked = false
     var anchored = false
-
-    private var behaviorReceived = 0L
-    private var n2s = 1_000_000_000L
-    private val behaviorThreshold = 1L
 
     lateinit var qrCodeReader: QRCodeScanner
     var localizing = false
@@ -249,11 +239,10 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
     private fun anchorFrame(currentArFrame: Frame) {
         if (!anchored) {
             if (anchorIsChecked) {
-                Log.d(TAG, "AnchorToggle Enabled")
+                Log.d(TAG, "Anchor Enabled")
 
                 currentArFrame.let {
                     if (currentArFrame.camera.trackingState == TrackingState.TRACKING) {
-                        //anchorDeltaTv.visibility = View.VISIBLE
                         fmLocationManager.setAnchor(it)
                     } else {
                         Toast.makeText(
@@ -261,7 +250,6 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
                             "Anchor can't be set because tracking state is not correct, please try again.",
                             Toast.LENGTH_LONG
                         ).show()
-                        anchorToggleButton.isChecked = false
                     }
                 }
                 anchored = true
@@ -283,8 +271,7 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
             }
         }
 
-        if (//anchorDeltaTv.isVisible &&
-            anchorDelta != null) {
+        if (anchorDelta != null) {
             val position =
                 floatArrayOf(
                     anchorDelta.position.x,
@@ -292,19 +279,11 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
                     anchorDelta.position.z
                 )
             Log.d(TAG,"Anchor Delta: ${createStringDisplay(position)}")
-            //anchorDeltaTv.text = createStringDisplay("Anchor Delta: ", position)
         }
 
         // Localize current frame if not already localizing
         if (fmLocationManager.state == FMLocationManager.State.LOCALIZING) {
             fmLocationManager.localize(frame)
-        }
-
-        val currentTime = System.nanoTime()
-        if ((currentTime - behaviorReceived) / n2s > behaviorThreshold) {
-            val clearText = "FrameFilterResult"
-            filterRejectionTv.text = clearText
-            filterRejectionTv.visibility = View.GONE
         }
     }
 

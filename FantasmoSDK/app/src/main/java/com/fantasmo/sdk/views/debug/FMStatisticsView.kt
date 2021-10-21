@@ -1,6 +1,7 @@
 package com.fantasmo.sdk.views.debug
 
 import android.graphics.Color
+import android.util.Log
 import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.fantasmo.sdk.FMLocationManager
@@ -12,7 +13,7 @@ import com.google.ar.core.Frame
 
 class FMStatisticsView(arLayout: CoordinatorLayout) {
 
-    private lateinit var filterRejectionTv: TextView
+    private val TAG = FMStatisticsView::class.java.simpleName
     private lateinit var anchorDeltaTv: TextView
     private var cameraTranslationTv: TextView = arLayout.findViewById(R.id.translationTextView)
     private var cameraAnglesTv: TextView = arLayout.findViewById(R.id.cameraAnglesTextView)
@@ -86,6 +87,8 @@ class FMStatisticsView(arLayout: CoordinatorLayout) {
         val stringResult =
             "${result.location.coordinate.latitude},\n${result.location.coordinate.longitude} (${result.confidence})"
         lastResultTv.text = stringResult
+        Log.d(TAG, result.confidence.toString())
+        Log.d(TAG, result.location.toString())
     }
 
     fun updateLocation(latitude: Double, longitude: Double) {
