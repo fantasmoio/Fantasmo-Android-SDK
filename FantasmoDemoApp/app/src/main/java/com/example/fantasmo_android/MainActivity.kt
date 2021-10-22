@@ -71,6 +71,7 @@ class MainActivity : AppCompatActivity() {
                 }
             } else {
                 if (arcoreCompatibility) {
+                    //graph.startDestination = R.id.custom_arcore_fragment
                     graph.startDestination = R.id.arcore_fragment
                 } else {
                     graph.startDestination = R.id.noarcore_fragment
@@ -101,6 +102,7 @@ class MainActivity : AppCompatActivity() {
                 grantResults[1] == PackageManager.PERMISSION_GRANTED
             ) {
                 if (arcoreCompatibility) {
+                    //graph.startDestination = R.id.custom_arcore_fragment
                     graph.startDestination = R.id.arcore_fragment
                 } else {
                     graph.startDestination = R.id.noarcore_fragment

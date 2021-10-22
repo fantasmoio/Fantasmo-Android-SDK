@@ -229,6 +229,7 @@ class FMParkingView @JvmOverloads constructor(
 
 
     fun registerQRScanningViewController(customQRScanningView: FMQRScanningViewProtocol) {
+        Log.d(TAG,"QRScanningView Registered")
         this.fmQrScanningViewController = customQRScanningView
     }
 
@@ -251,6 +252,7 @@ class FMParkingView @JvmOverloads constructor(
         }
 
     fun registerLocalizingViewController(customLocalizingView: FMLocalizingViewProtocol) {
+        Log.d(TAG,"LocalizingView Registered")
         this.fmLocalizingViewController = customLocalizingView
     }
 

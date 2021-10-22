@@ -13,21 +13,23 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Switch
-import android.widget.TextView
 import android.widget.Toast
+
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.PermissionChecker
 import androidx.fragment.app.Fragment
+
 import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMLocationResult
+import com.fantasmo.sdk.FMResultConfidence
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.views.FMParkingView
 import com.fantasmo.sdk.views.FMParkingViewProtocol
 
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.MapView
 import com.google.ar.core.*
+
 import java.util.*
 
 /**
@@ -37,8 +39,6 @@ class ARCoreFragment : Fragment() {
     private val TAG = "ARCoreFragment"
 
     private lateinit var currentView: View
-
-    private lateinit var fmParkingView: FMParkingView
 
     private lateinit var controlsLayout: ConstraintLayout
 
@@ -51,27 +51,15 @@ class ARCoreFragment : Fragment() {
     private lateinit var endRideButton: Button
     private lateinit var exitButton: Button
 
-    private lateinit var mapButton: Button
-    private lateinit var googleMapView: MapView
-    private lateinit var googleMapsManager: GoogleMapsManager
-
-    private lateinit var qrCodeResultTv: TextView
-    private lateinit var qrOverlay: ConstraintLayout
-
-    private lateinit var filterRejectionTv: TextView
-
-    private var behaviorReceived = 0L
-    private var n2s = 1_000_000_000L
-    private val behaviorThreshold = 1L
-    private var firstBehavior = false
-
+    // Host App location Manager to exemplify how to set Location
     private lateinit var locationManager: LocationManager
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var currentLocation: android.location.Location = android.location.Location("")
     private val locationInterval = 300L
 
+    // Control variables for the FMParkingView
+    private lateinit var fmParkingView: FMParkingView
     private val usesInternalLocationManager = true
-
     private val accessToken = "API_KEY"
 
     override fun onCreateView(
@@ -102,28 +90,10 @@ class ARCoreFragment : Fragment() {
             fmParkingView.showStatistics = checked
         }
 
-        // Enable internal Location Manager
+        // Enable FMParkingView internal Location Manager
         fmParkingView.usesInternalLocationManager = usesInternalLocationManager
 
-        filterRejectionTv = currentView.findViewById(R.id.filterRejectionTextView)
-
-        googleMapView = currentView.findViewById(R.id.mapView)
-        googleMapsManager = GoogleMapsManager(requireActivity(), googleMapView)
-        googleMapsManager.initGoogleMap(savedInstanceState)
-
-        mapButton = currentView.findViewById(R.id.mapButton)
-        mapButton.setOnClickListener {
-            if (googleMapView.visibility == View.VISIBLE) {
-                googleMapView.visibility = View.GONE
-            } else {
-                googleMapView.visibility = View.VISIBLE
-            }
-        }
-
-        exitButton = currentView.findViewById(R.id.exitButton)
-        exitButton.setOnClickListener {
-            handleExitButton()
-        }
+        handleExitButton()
 
         val latitude = 52.50578283943285
         val longitude = 13.378954977173915
@@ -142,16 +112,13 @@ class ARCoreFragment : Fragment() {
             }
         }
 
-        qrCodeResultTv = currentView.findViewById(R.id.qrCodeResultTextView)
-        qrOverlay = currentView.findViewById(R.id.qrOverlay) as ConstraintLayout
-
         return currentView
     }
 
     private fun startParkingFlow() {
         if (fmParkingView.visibility == View.GONE) {
-            mapButton.visibility = View.VISIBLE
             fmParkingView.visibility = View.VISIBLE
+            // Present the FMParkingView
             fmParkingView.present()
             useOwnLocationProvider()
             controlsLayout.visibility = View.GONE
@@ -174,24 +141,19 @@ class ARCoreFragment : Fragment() {
         }
     }
 
-    private fun handleExitButton() {
-        if (fmParkingView.visibility == View.VISIBLE) {
-            fmParkingView.visibility = View.GONE
-            fmParkingView.disconnect()
-            exitButton.visibility = View.GONE
-            controlsLayout.visibility = View.VISIBLE
-            mapButton.visibility = View.GONE
-            googleMapView.visibility = View.GONE
-            Log.d(TAG, "END SESSION")
-        }
-    }
 
-    /**
-     * Android lifecycle methods
-     */
-    override fun onStart() {
-        super.onStart()
-        googleMapView.onStart()
+    private fun handleExitButton() {
+        exitButton = currentView.findViewById(R.id.exitButton)
+        exitButton.setOnClickListener {
+            if (fmParkingView.visibility == View.VISIBLE) {
+                fmParkingView.visibility = View.GONE
+                // When exit Button is clicked close the session
+                fmParkingView.disconnect()
+                exitButton.visibility = View.GONE
+                controlsLayout.visibility = View.VISIBLE
+                Log.d(TAG, "END SESSION")
+            }
+        }
     }
 
     /**
@@ -208,15 +170,6 @@ class ARCoreFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         fmParkingView.onResume()
-        googleMapView.onResume()
-    }
-
-    /**
-     * Stops the AR session
-     */
-    override fun onStop() {
-        super.onStop()
-        googleMapView.onStop()
     }
 
     /**
@@ -225,37 +178,6 @@ class ARCoreFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         fmParkingView.onPause()
-        googleMapView.onPause()
-    }
-
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        googleMapsManager.onSaveInstanceState(outState)
-    }
-
-    /**
-     * Makes sure GoogleMaps View follows every Android lifecycle
-     * https://developers.google.com/android/reference/com/google/android/gms/maps/MapView#developer-guide
-     */
-    override fun onLowMemory() {
-        super.onLowMemory()
-        googleMapView.onLowMemory()
-    }
-
-    private fun manageBehaviorMessage(){
-        if(!firstBehavior){
-            firstBehavior = true
-        }
-
-        if(firstBehavior){
-            val currentTime = System.nanoTime()
-            if ((currentTime - behaviorReceived) / n2s > behaviorThreshold) {
-                val clearText = "FrameFilterResult"
-                filterRejectionTv.text = clearText
-                filterRejectionTv.visibility = View.GONE
-            }
-        }
     }
 
     /**
@@ -265,39 +187,28 @@ class ARCoreFragment : Fragment() {
         object : FMParkingViewProtocol {
             override fun fmParkingViewDidStartQRScanning() {
                 Log.d(TAG, "QR Code Reader Enabled")
-                googleMapsManager.updateAnchor(true)
-                if (qrCodeResultTv.visibility == View.GONE) {
-                    qrCodeResultTv.visibility = View.VISIBLE
-                }
-                if (qrOverlay.visibility == View.GONE) {
-                    qrOverlay.visibility = View.VISIBLE
-                }
             }
 
             override fun fmParkingViewDidStopQRScanning(){}
             override fun fmParkingView(qrCode: String, shouldContinue: (Boolean) -> Unit){
-                // Display result and approve or not the QR Code Scanned
-                qrCodeResultTv.text = qrCode
-                if (qrOverlay.visibility == View.VISIBLE) {
-                    qrOverlay.visibility = View.GONE
-                }
-                shouldContinue(true)
+                // Optional validation of the QR code can be done here
+                // Note: If you choose to implement this method, you must call the `shouldContinue` with the validation result
                 // show dialogue to accept or refuse
+                shouldContinue(true)
             }
 
             override fun fmParkingViewDidStartLocalizing(){
                 Log.d(TAG,"BEGINNING LOCALIZING")
             }
             override fun fmParkingView(behavior: FMBehaviorRequest){
-                behaviorReceived = System.nanoTime()
-                val stringResult = behavior.displayName
-                filterRejectionTv.text = stringResult
-                if (filterRejectionTv.visibility == View.GONE) {
-                    filterRejectionTv.visibility = View.VISIBLE
-                }
             }
             override fun fmParkingView(result: FMLocationResult){
-                googleMapsManager.addCorrespondingMarkersToMap(result)
+                // Got a localization result
+                // Localization will continue until you dismiss the view
+                // You should decide on acceptable criteria for a result, one way is by checking the `confidence` value
+                if(result.confidence == FMResultConfidence.LOW){
+                    Log.d(TAG,"Low Confidence Result")
+                }
             }
             override fun fmParkingView(error: ErrorResponse, metadata: Any?){}
         }
@@ -306,7 +217,7 @@ class ARCoreFragment : Fragment() {
      * Gets system location through the app context
      * Then checks if it has permission to ACCESS_FINE_LOCATION
      * Also includes Callback for Location updates.
-     * Sets the currentLocation coordinates used to localize.
+     * Sets the FMParkingView currentLocation coordinates used to localize.
      */
     private fun getLocation() {
         if ((context.let {
