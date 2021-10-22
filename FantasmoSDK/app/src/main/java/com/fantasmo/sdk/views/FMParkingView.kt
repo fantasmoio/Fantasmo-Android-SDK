@@ -76,6 +76,16 @@ class FMParkingView @JvmOverloads constructor(
         fmLocationManager = FMLocationManager(context)
     }
 
+    /**
+     * Check if there's an available parking space near a supplied CLLocation.
+     * @param latitude: the latitude of the Location to check
+     * @param longitude: the longitude of the Location to check
+     * @param onCompletion: block with a boolean result
+     * This method should be used to determine whether or not you should try to park and localize with Fantasmo.
+     * The boolean value passed to the completion block tells you if there is an available parking space within the
+     * acceptable radius of the supplied location. If `true`, you should construct an `FMParkingView` and
+     * attempt to localize. If `false` you should resort to other options.
+     */
     fun isParkingAvailable(
         latitude: Double,
         longitude: Double,
@@ -94,7 +104,7 @@ class FMParkingView @JvmOverloads constructor(
         qrCodeReader = QRCodeScanner(
             fmParkingViewController,
             fmQrScanningViewController,
-            fmLocalizingViewProtocol
+            fmLocalizingViewController
         )
 
         fmLocationManager.isSimulation = isSimulation
@@ -197,7 +207,7 @@ class FMParkingView @JvmOverloads constructor(
     /**
      * Listener for the Fantasmo Localizing View.
      */
-    private val fmLocalizingViewProtocol: FMLocalizingViewProtocol =
+    private val fmLocalizingViewController : FMLocalizingViewProtocol =
         object : FMLocalizingViewProtocol {
             override fun didStartLocalizing() {
                 Log.d(TAG, "Localize Enabled")
@@ -214,7 +224,7 @@ class FMParkingView @JvmOverloads constructor(
         object : FMLocationListener {
             override fun locationManager(result: FMLocationResult) {
                 fmParkingViewController.fmParkingView(result)
-                fmLocalizingViewProtocol.didReceiveLocalizationResult(result)
+                fmLocalizingViewController.didReceiveLocalizationResult(result)
                 (context as Activity).runOnUiThread {
                     fmStatisticsView.updateResult(result)
                 }
@@ -222,12 +232,12 @@ class FMParkingView @JvmOverloads constructor(
 
             override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
                 fmParkingViewController.fmParkingView(didRequestBehavior)
-                fmLocalizingViewProtocol.didRequestLocalizationBehavior(didRequestBehavior)
+                fmLocalizingViewController.didRequestLocalizationBehavior(didRequestBehavior)
             }
 
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
                 fmParkingViewController.fmParkingView(error, metadata)
-                fmLocalizingViewProtocol.didReceiveLocalizationError(error, metadata)
+                fmLocalizingViewController.didReceiveLocalizationError(error, metadata)
             }
 
             override fun locationManager(didChangeState: FMLocationManager.State) {

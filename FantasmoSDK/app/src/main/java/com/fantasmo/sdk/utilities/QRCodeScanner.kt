@@ -30,7 +30,7 @@ import java.nio.ByteBuffer
 class QRCodeScanner(
     var fmParkingViewController: FMParkingViewProtocol,
     private var fmQrScanningViewController: FMQRScanningViewProtocol,
-    private var fmLocalizingViewProtocol: FMLocalizingViewProtocol
+    private var fmLocalizingViewController: FMLocalizingViewProtocol
 ) {
     // This prevents the qrCodeReader to be overflowed with frames to analyze
     enum class State{
@@ -114,7 +114,7 @@ class QRCodeScanner(
         fmParkingViewController.fmParkingView(value){
             if(it){
                 fmParkingViewController.fmParkingViewDidStartLocalizing()
-                fmLocalizingViewProtocol.didStartLocalizing()
+                fmLocalizingViewController.didStartLocalizing()
             }
             else{
                 Log.d(TAG,"REFUSED")
