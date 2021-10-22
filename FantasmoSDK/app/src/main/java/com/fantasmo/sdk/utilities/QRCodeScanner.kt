@@ -6,7 +6,6 @@ import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
 import android.util.Log
-import com.fantasmo.sdk.views.FMLocalizingViewProtocol
 import com.fantasmo.sdk.views.FMParkingViewProtocol
 import com.fantasmo.sdk.views.FMQRScanningViewProtocol
 import com.google.ar.core.Frame
@@ -30,7 +29,7 @@ import java.nio.ByteBuffer
 class QRCodeScanner(
     var fmParkingViewController: FMParkingViewProtocol,
     private var fmQrScanningViewController: FMQRScanningViewProtocol,
-    private var fmLocalizingViewController: FMLocalizingViewProtocol
+    private var qrCodeScannerListener: QRCodeScannerListener
 ) {
     // This prevents the qrCodeReader to be overflowed with frames to analyze
     enum class State{
@@ -113,14 +112,12 @@ class QRCodeScanner(
         fmQrScanningViewController.didScanQRCode(stringScan)
         fmParkingViewController.fmParkingView(value){
             if(it){
-                fmParkingViewController.fmParkingViewDidStartLocalizing()
-                fmLocalizingViewController.didStartLocalizing()
+                qrCodeScannerListener.deployLocalizing()
             }
             else{
                 Log.d(TAG,"REFUSED")
                 qrFound = false
-                fmQrScanningViewController.didStartQRScanning()
-                fmParkingViewController.fmParkingViewDidStartQRScanning()
+                qrCodeScannerListener.deployQRScanning()
             }
         }
     }
@@ -185,4 +182,9 @@ class QRCodeScanner(
         }
         return null
     }
+}
+
+interface QRCodeScannerListener {
+    fun deployQRScanning()
+    fun deployLocalizing()
 }

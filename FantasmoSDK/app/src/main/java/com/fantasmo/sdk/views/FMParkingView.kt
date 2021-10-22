@@ -15,19 +15,19 @@ import android.widget.*
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.PermissionChecker
-import com.fantasmo.sdk.FMBehaviorRequest
-import com.fantasmo.sdk.FMLocationListener
-import com.fantasmo.sdk.FMLocationManager
-import com.fantasmo.sdk.FMLocationResult
+import com.fantasmo.sdk.*
 import com.fantasmo.sdk.fantasmosdk.R
 import com.fantasmo.sdk.models.ErrorResponse
+import com.fantasmo.sdk.models.FMPose
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.utilities.QRCodeScanner
+import com.fantasmo.sdk.utilities.QRCodeScannerListener
 import com.fantasmo.sdk.views.debug.FMStatisticsView
 import com.google.android.gms.location.*
 import com.google.ar.core.Frame
+import com.google.ar.core.TrackingState
 
 class FMParkingView @JvmOverloads constructor(
     context: Context,
@@ -35,23 +35,28 @@ class FMParkingView @JvmOverloads constructor(
 ) : LinearLayout(context, attrs) {
 
     private val TAG = "FMParkingView"
-    private lateinit var arLayout: CoordinatorLayout
-    private lateinit var fmARCoreView: FMARCoreView
-    private lateinit var qrCodeReader: QRCodeScanner
+    private var arLayout: CoordinatorLayout
+    private var fmARCoreView: FMARCoreView
 
     lateinit var fmParkingViewController: FMParkingViewProtocol
 
     var showStatistics = false
     var isSimulation = false
-    var usesInternalLocationManager = false
+    var usesInternalLocationManager = true
 
     private var connected = false
     lateinit var appSessionId: String
     lateinit var accessToken: String
 
     private lateinit var fmLocationManager: FMLocationManager
+    private var fmStatisticsView: FMStatisticsView
 
-    private lateinit var fmStatisticsView: FMStatisticsView
+    //Default UI for the QR view
+    private lateinit var fmQRScanningView: FMQRScanningView
+    private lateinit var qrCodeReader: QRCodeScanner
+
+    //Default UI for the Localizing view
+    private lateinit var fmLocalizingView: FMLocalizingView
 
     private lateinit var locationManager: LocationManager
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -63,16 +68,15 @@ class FMParkingView @JvmOverloads constructor(
         gravity = Gravity.CENTER_VERTICAL
         val inflater = context
             .getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        setUpAREnvironmentOpenGL(inflater)
-    }
-
-    private fun setUpAREnvironmentOpenGL(inflater: LayoutInflater) {
         inflater.inflate(R.layout.fmparkingview, this, true)
         arLayout = getChildAt(0) as CoordinatorLayout
         fmARCoreView = FMARCoreView(arLayout, context)
         fmARCoreView.setupARSession()
-
         fmStatisticsView = FMStatisticsView(arLayout)
+        setupFMLocationManager()
+    }
+
+    private fun setupFMLocationManager() {
         fmLocationManager = FMLocationManager(context)
     }
 
@@ -101,10 +105,20 @@ class FMParkingView @JvmOverloads constructor(
     fun present() {
         connected = true
 
+        fmQRScanningView = FMQRScanningView(
+            arLayout.findViewById(R.id.fmQRView),
+            arLayout.findViewById(R.id.qrCodeResultTextView)
+        )
+
+        fmLocalizingView = FMLocalizingView(
+            arLayout.findViewById(R.id.fmLocalizeView),
+            arLayout.findViewById(R.id.filterRejectionTextView)
+        )
+
         qrCodeReader = QRCodeScanner(
             fmParkingViewController,
             fmQrScanningViewController,
-            fmLocalizingViewController
+            qrCodeScannerListener
         )
 
         fmLocationManager.isSimulation = isSimulation
@@ -128,8 +142,8 @@ class FMParkingView @JvmOverloads constructor(
                 fmLocationListener
             )
         }
-        fmARCoreView.fmLocationManager = fmLocationManager
-        fmARCoreView.qrCodeReader = qrCodeReader
+        fmARCoreView.arSessionListener = arSessionListener
+        fmARCoreView.connected = true
 
         val statistics = arLayout.findViewWithTag<ConstraintLayout>("StatisticsView")
         if (showStatistics) {
@@ -142,6 +156,10 @@ class FMParkingView @JvmOverloads constructor(
     }
 
     private fun startQRScanning() {
+        fmARCoreView.anchorIsChecked = true
+        fmARCoreView.anchored = false
+        qrCodeReader.qrCodeReaderEnabled = true
+        qrCodeReader.state = QRCodeScanner.State.IDLE
         fmQrScanningViewController.didStartQRScanning()
         fmParkingViewController.fmParkingViewDidStartQRScanning()
     }
@@ -158,7 +176,7 @@ class FMParkingView @JvmOverloads constructor(
         } else {
             Log.e(
                 TAG,
-                "FMLocationManager not initialized: Please make sure connect() was invoked before updateLocation"
+                "FMLocationManager not initialized: Please make sure present() was invoked before updateLocation"
             )
         }
     }
@@ -167,11 +185,15 @@ class FMParkingView @JvmOverloads constructor(
         if (connected) {
             connected = false
             if (fmARCoreView.localizing) {
+                fmARCoreView.connected = false
                 fmLocationManager.stopUpdatingLocation()
             }
             if (fmARCoreView.anchored) {
+                fmARCoreView.anchored = false
                 fmLocationManager.unsetAnchor()
             }
+            fmQRScanningView.hide()
+            fmLocalizingView.hide()
         }
     }
 
@@ -188,34 +210,49 @@ class FMParkingView @JvmOverloads constructor(
     }
 
     /**
-     * Listener for the Fantasmo QR Scanning View.
+     * Default Listener for the Fantasmo QR Scanning View.
      */
-    private val fmQrScanningViewController: FMQRScanningViewProtocol =
+    private var fmQrScanningViewController: FMQRScanningViewProtocol =
         object : FMQRScanningViewProtocol {
             override fun didStartQRScanning() {
-                fmARCoreView.anchorIsChecked = true
-                fmARCoreView.anchored = false
-                qrCodeReader.qrCodeReaderEnabled = true
-                qrCodeReader.state = QRCodeScanner.State.IDLE
+                fmQRScanningView.display()
             }
 
-            override fun didScanQRCode(result: String) {}
+            override fun didScanQRCode(result: String) {
+                fmQRScanningView.displayQRCodeResult(result)
+            }
 
-            override fun didStopQRScanning() {}
+            override fun didStopQRScanning() {
+                fmQRScanningView.hide()
+            }
         }
+
+
+    fun registerQRScanningViewController(customQRScanningView: FMQRScanningViewProtocol) {
+        this.fmQrScanningViewController = customQRScanningView
+    }
 
     /**
-     * Listener for the Fantasmo Localizing View.
+     * Default Listener for the Fantasmo Localizing View.
      */
-    private val fmLocalizingViewController : FMLocalizingViewProtocol =
+    private var fmLocalizingViewController: FMLocalizingViewProtocol =
         object : FMLocalizingViewProtocol {
             override fun didStartLocalizing() {
-                Log.d(TAG, "Localize Enabled")
-                fmARCoreView.localizing = true
-                // Start getting location updates
-                fmLocationManager.startUpdatingLocation(appSessionId, true)
+                fmLocalizingView.display()
             }
+
+            override fun didRequestLocalizationBehavior(behavior: FMBehaviorRequest) {
+                fmLocalizingView.displayFilterResult(behavior)
+            }
+
+            override fun didReceiveLocalizationResult(result: FMLocationResult) {}
+
+            override fun didReceiveLocalizationError(error: ErrorResponse, errorMetadata: Any?) {}
         }
+
+    fun registerLocalizingViewController(customLocalizingView: FMLocalizingViewProtocol) {
+        this.fmLocalizingViewController = customLocalizingView
+    }
 
     /**
      * Listener for the Fantasmo SDK Location results.
@@ -301,4 +338,77 @@ class FMParkingView @JvmOverloads constructor(
             )
         }
     }
+
+    private fun startLocalizing() {
+        fmQrScanningViewController.didStopQRScanning()
+        fmParkingViewController.fmParkingViewDidStopQRScanning()
+
+        fmARCoreView.localizing = true
+        // Start getting location updates
+        fmLocationManager.startUpdatingLocation(appSessionId, true)
+
+        fmLocalizingViewController.didStartLocalizing()
+        fmParkingViewController.fmParkingViewDidStartLocalizing()
+    }
+
+    private var qrCodeScannerListener: QRCodeScannerListener =
+        object : QRCodeScannerListener {
+            override fun deployLocalizing() {
+                startLocalizing()
+            }
+
+            override fun deployQRScanning() {
+                startQRScanning()
+            }
+        }
+
+    private var arSessionListener: FMARSessionListener =
+        object : FMARSessionListener {
+            override fun localize(frame: Frame) {
+                // Localize current frame if not already localizing
+                if (fmLocationManager.state == FMLocationManager.State.LOCALIZING) {
+                    fmLocationManager.localize(frame)
+                }
+            }
+
+            override fun anchored(frame: Frame): Boolean {
+                var anchored = false
+                frame.let {
+                    if (frame.camera.trackingState == TrackingState.TRACKING) {
+                        fmLocationManager.setAnchor(it)
+                        anchored = true
+                    } else {
+                        Toast.makeText(
+                            context.applicationContext,
+                            "Anchor can't be set because tracking state is not correct, please try again.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+                return anchored
+            }
+
+            override fun qrCodeScannerState(): Boolean {
+                return qrCodeReader.qrCodeReaderEnabled
+            }
+
+            override fun qrCodeScan(frame: Frame) {
+                // Only read frame if the qrCodeReader is enabled and only if qrCodeReader is in reading mode
+                if (qrCodeReader.qrCodeReaderEnabled && qrCodeReader.state == QRCodeScanner.State.IDLE) {
+                    Log.d(TAG, "QR Code Scanning")
+                    frame.let { qrCodeReader.processImage(it) }
+                }
+            }
+
+            override fun anchorDelta(frame: Frame): FMPose? {
+                return frame.let { frame2 ->
+                    fmLocationManager.anchorFrame?.let { anchorFrame ->
+                        FMUtility.anchorDeltaPoseForFrame(
+                            frame2,
+                            anchorFrame
+                        )
+                    }
+                }
+            }
+        }
 }
