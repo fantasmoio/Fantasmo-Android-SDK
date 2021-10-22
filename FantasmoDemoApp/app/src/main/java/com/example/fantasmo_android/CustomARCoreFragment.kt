@@ -1,12 +1,8 @@
 package com.example.fantasmo_android
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
-import android.content.pm.PackageManager
-import android.location.LocationManager
+import android.location.Location
 import android.os.Bundle
-import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -18,17 +14,16 @@ import android.widget.Toast
 
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.content.PermissionChecker
 import androidx.fragment.app.Fragment
 
 import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMLocationResult
 import com.fantasmo.sdk.FMResultConfidence
 import com.fantasmo.sdk.models.ErrorResponse
+import com.fantasmo.sdk.views.FMLocalizingViewProtocol
 import com.fantasmo.sdk.views.FMParkingView
 import com.fantasmo.sdk.views.FMParkingViewProtocol
 import com.fantasmo.sdk.views.FMQRScanningViewProtocol
-import com.fantasmo.sdk.views.FMLocalizingViewProtocol
 
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.MapView
@@ -71,10 +66,7 @@ class CustomARCoreFragment : Fragment() {
     private var firstBehavior = false
 
     // Host App location Manager to exemplify how to set Location
-    private lateinit var locationManager: LocationManager
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private var currentLocation: android.location.Location = android.location.Location("")
-    private val locationInterval = 300L
+    private lateinit var systemLocationManager: SystemLocationManager
 
     // Control variables for the FMParkingView
     private lateinit var fmParkingView: FMParkingView
@@ -151,20 +143,6 @@ class CustomARCoreFragment : Fragment() {
         }
     }
 
-    /**
-     * Example on how to override the internal location Manager
-     */
-    private fun useOwnLocationProvider() {
-        if(!usesInternalLocationManager){
-            locationManager = context?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                getLocation()
-            } else {
-                Log.e(TAG, "Your GPS seems to be disabled")
-            }
-        }
-    }
 
     private fun handleQRView() {
         qrCodeResultTv = currentView.findViewById(R.id.qrCodeResultTextView)
@@ -277,43 +255,20 @@ class CustomARCoreFragment : Fragment() {
     }
 
     /**
-     * Gets system location through the app context
-     * Then checks if it has permission to ACCESS_FINE_LOCATION
-     * Also includes Callback for Location updates.
-     * Sets the FMParkingView currentLocation coordinates used to localize.
+     * Example on how to override the internal location Manager
      */
-    private fun getLocation() {
-        if ((context.let {
-                PermissionChecker.checkSelfPermission(
-                    it!!,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                )
-            } != PackageManager.PERMISSION_GRANTED)) {
-            Log.e(TAG, "Location permission needs to be granted.")
-        } else {
-            val locationRequest = LocationRequest.create()
-            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-            locationRequest.smallestDisplacement = 1f
-            locationRequest.fastestInterval = locationInterval
-            locationRequest.interval = locationInterval
-
-            val locationCallback = object : LocationCallback() {
-                override fun onLocationResult(locationResult: LocationResult) {
-                    currentLocation = locationResult.lastLocation
-                    //Set SDK Location
-                    fmParkingView.updateLocation(currentLocation.latitude,currentLocation.longitude)
-
-                    Log.d(TAG, "onLocationResult: ${locationResult.lastLocation}")
-                }
-            }
-
-            fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                Looper.myLooper()!!
-            )
+    private fun useOwnLocationProvider() {
+        if(!usesInternalLocationManager){
+            systemLocationManager = SystemLocationManager(context,systemLocationListener)
         }
     }
+
+    private val systemLocationListener: SystemLocationListener =
+        object : SystemLocationListener{
+            override fun onLocationUpdate(currentLocation: Location) {
+                fmParkingView.updateLocation(currentLocation.latitude,currentLocation.longitude)
+            }
+        }
 
     /**
      * Listener for the FMParkingView.
