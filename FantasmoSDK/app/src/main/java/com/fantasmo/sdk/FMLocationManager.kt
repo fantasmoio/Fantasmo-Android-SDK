@@ -28,8 +28,6 @@ import java.util.*
 class FMLocationManager(private val context: Context) {
     private val TAG = "FMLocationManager"
 
-    private val locationInterval = 300L
-
     enum class State {
         // doing nothing
         STOPPED,
