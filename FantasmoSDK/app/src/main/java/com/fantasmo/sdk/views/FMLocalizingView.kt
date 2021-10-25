@@ -4,6 +4,7 @@ import android.view.View
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.fantasmo.sdk.FMBehaviorRequest
+import android.os.CountDownTimer
 
 class FMLocalizingView(var fmLocalizingView: ConstraintLayout, var filterResultView: TextView) {
 
@@ -23,6 +24,12 @@ class FMLocalizingView(var fmLocalizingView: ConstraintLayout, var filterResultV
         filterResultView.text = behavior.displayName
         if (filterResultView.visibility == View.GONE) {
             filterResultView.visibility = View.VISIBLE
+            val timer = object : CountDownTimer(2000, 1000) {
+                override fun onTick(millisUntilFinished: Long) {}
+                override fun onFinish() {
+                    filterResultView.visibility = View.GONE
+                }
+            }.start()
         }
     }
 }

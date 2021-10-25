@@ -10,8 +10,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.Toast
+
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+
 import com.fantasmo.sdk.*
 import com.fantasmo.sdk.fantasmosdk.R
 import com.fantasmo.sdk.models.ErrorResponse
@@ -24,6 +26,7 @@ import com.fantasmo.sdk.utilities.DeviceLocationManager
 import com.fantasmo.sdk.utilities.QRCodeScanner
 import com.fantasmo.sdk.utilities.QRCodeScannerListener
 import com.fantasmo.sdk.views.debug.FMStatisticsView
+
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
 
@@ -40,6 +43,10 @@ class FMParkingView @JvmOverloads constructor(
 
     var showStatistics = false
     var isSimulation = false
+    /**
+     * Controls whether this class uses its own internal LocationManager to automatically receive location updates. Default is true.
+     * When set to false it is expected that location updates will be manually provided via the updateLocation() method.
+     */
     var usesInternalLocationManager = true
 
     private var connected = false
@@ -148,29 +155,28 @@ class FMParkingView @JvmOverloads constructor(
         startQRScanning()
     }
 
-    private fun startQRScanning() {
-        fmARCoreView.anchorIsChecked = true
-        fmARCoreView.anchored = false
-        qrCodeReader.qrCodeReaderEnabled = true
-        qrCodeReader.state = QRCodeScanner.State.IDLE
-        fmQrScanningViewController.didStartQRScanning()
-        fmParkingViewController.fmParkingViewDidStartQRScanning()
-    }
-
+    /**
+     * Allows host apps to manually provide a location update.
+     * @param latitude: the device's current latitude.
+     * @param longitude: the device's current longitude.
+     * This method can only be used when usesInternalLocationManager is set to false.
+     */
     fun updateLocation(latitude: Double, longitude: Double) {
-        // Prevents fmLocationManager lateinit property not initialized
-        if (this::fmLocationManager.isInitialized) {
-            //Set SDK Location
-            fmLocationManager.setLocation(
-                latitude,
-                longitude
-            )
-            fmStatisticsView.updateLocation(latitude, longitude)
-        } else {
-            Log.e(
-                TAG,
-                "FMLocationManager not initialized: Please make sure present() was invoked before updateLocation"
-            )
+        if(!usesInternalLocationManager){
+            // Prevents fmLocationManager lateinit property not initialized
+            if (this::fmLocationManager.isInitialized) {
+                //Set SDK Location
+                fmLocationManager.setLocation(
+                    latitude,
+                    longitude
+                )
+                fmStatisticsView.updateLocation(latitude, longitude)
+            } else {
+                Log.e(
+                    TAG,
+                    "FMLocationManager not initialized: Please make sure present() was invoked before updateLocation"
+                )
+            }
         }
     }
 
@@ -220,10 +226,25 @@ class FMParkingView @JvmOverloads constructor(
             }
         }
 
-
+    /**
+     * Registers a custom view controller class to present and use when scanning QR codes.
+     * @param customQRScanningView: custom FMQRScanningViewProtocol class
+     */
     fun registerQRScanningViewController(customQRScanningView: FMQRScanningViewProtocol) {
         Log.d(TAG, "QRScanningView Registered")
         this.fmQrScanningViewController = customQRScanningView
+    }
+
+    /**
+     * Presents the default or custom registered QR scanning view controller and starts observing QR codes in the ARSession.
+     */
+    private fun startQRScanning() {
+        fmARCoreView.anchorIsChecked = true
+        fmARCoreView.anchored = false
+        qrCodeReader.qrCodeReaderEnabled = true
+        qrCodeReader.state = QRCodeScanner.State.IDLE
+        fmQrScanningViewController.didStartQRScanning()
+        fmParkingViewController.fmParkingViewDidStartQRScanning()
     }
 
     /**
@@ -244,9 +265,28 @@ class FMParkingView @JvmOverloads constructor(
             override fun didReceiveLocalizationError(error: ErrorResponse, errorMetadata: Any?) {}
         }
 
+    /**
+     * Registers a custom view controller type to present and use when localizing.
+     * @param customLocalizingView: custom FMLocalizingViewProtocol class
+     */
     fun registerLocalizingViewController(customLocalizingView: FMLocalizingViewProtocol) {
         Log.d(TAG, "LocalizingView Registered")
         this.fmLocalizingViewController = customLocalizingView
+    }
+
+    /**
+     * Presents the default or custom registered localizing view controller and starts the localization process.
+     */
+    private fun startLocalizing() {
+        fmQrScanningViewController.didStopQRScanning()
+        fmParkingViewController.fmParkingViewDidStopQRScanning()
+
+        fmARCoreView.localizing = true
+        // Start getting location updates
+        fmLocationManager.startUpdatingLocation(appSessionId, true)
+
+        fmLocalizingViewController.didStartLocalizing()
+        fmParkingViewController.fmParkingViewDidStartLocalizing()
     }
 
     /**
@@ -288,18 +328,6 @@ class FMParkingView @JvmOverloads constructor(
                 }
             }
         }
-
-    private fun startLocalizing() {
-        fmQrScanningViewController.didStopQRScanning()
-        fmParkingViewController.fmParkingViewDidStopQRScanning()
-
-        fmARCoreView.localizing = true
-        // Start getting location updates
-        fmLocationManager.startUpdatingLocation(appSessionId, true)
-
-        fmLocalizingViewController.didStartLocalizing()
-        fmParkingViewController.fmParkingViewDidStartLocalizing()
-    }
 
     /**
      * Listener for the QR Code results.

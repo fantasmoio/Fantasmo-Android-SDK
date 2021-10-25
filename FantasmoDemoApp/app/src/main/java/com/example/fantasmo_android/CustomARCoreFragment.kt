@@ -3,6 +3,7 @@ package com.example.fantasmo_android
 import android.annotation.SuppressLint
 import android.location.Location
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -239,21 +240,6 @@ class CustomARCoreFragment : Fragment() {
         googleMapView.onLowMemory()
     }
 
-    private fun manageBehaviorMessage(){
-        if(!firstBehavior){
-            firstBehavior = true
-        }
-
-        if(firstBehavior){
-            val currentTime = System.nanoTime()
-            if ((currentTime - behaviorReceived) / n2s > behaviorThreshold) {
-                val clearText = "FrameFilterResult"
-                filterRejectionTv.text = clearText
-                filterRejectionTv.visibility = View.GONE
-            }
-        }
-    }
-
     /**
      * Example on how to override the internal location Manager
      */
@@ -329,6 +315,12 @@ class CustomARCoreFragment : Fragment() {
                 filterRejectionTv.text = stringResult
                 if (filterRejectionTv.visibility == View.GONE) {
                     filterRejectionTv.visibility = View.VISIBLE
+                    val timer = object : CountDownTimer(2000, 1000) {
+                        override fun onTick(millisUntilFinished: Long) {}
+                        override fun onFinish() {
+                            filterRejectionTv.visibility = View.GONE
+                        }
+                    }.start()
                 }
             }
 

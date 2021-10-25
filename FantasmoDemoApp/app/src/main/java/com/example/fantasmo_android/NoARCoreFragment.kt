@@ -1,25 +1,17 @@
 package com.example.fantasmo_android
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
-import android.location.LocationManager
+import android.location.Location
 import android.os.Bundle
-import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.Toast
-import androidx.core.content.PermissionChecker
 import androidx.fragment.app.Fragment
 import com.fantasmo.sdk.FMLocationListener
 import com.fantasmo.sdk.FMLocationManager
-import com.fantasmo.sdk.models.ErrorResponse
-import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.FMLocationResult
-import com.google.android.gms.location.*
+import com.fantasmo.sdk.models.ErrorResponse
 
 class NoARCoreFragment : Fragment() {
 
@@ -29,13 +21,10 @@ class NoARCoreFragment : Fragment() {
 
     private lateinit var checkParkingButton: Button
 
-    private lateinit var locationManager: LocationManager
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private var currentLocation: android.location.Location = android.location.Location("")
-
     private lateinit var fmLocationManager: FMLocationManager
 
-    private val locationInterval = 300L
+    // Host App location Manager to exemplify how to set Location
+    private lateinit var systemLocationManager: SystemLocationManager
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -47,13 +36,9 @@ class NoARCoreFragment : Fragment() {
         checkParkingButton = currentView.findViewById(R.id.checkParkingButton)
 
         fmLocationManager = context?.let { FMLocationManager(it.applicationContext) }!!
-        locationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            getLocation()
-        } else {
-            Log.e(TAG, "Your GPS seems to be disabled")
-        }
+
+        useOwnLocationProvider()
+
         return currentView
     }
 
@@ -75,14 +60,14 @@ class NoARCoreFragment : Fragment() {
 
         checkParkingButton.setOnClickListener {
             Log.d(TAG, "CheckPark Pressed")
-
+/*
             fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, 23) {
                 Toast.makeText(
                     activity?.applicationContext,
                     "Is Zone In Radius Response: $it",
                     Toast.LENGTH_LONG
                 ).show()
-            }
+            }*/
         }
     }
 
@@ -94,54 +79,21 @@ class NoARCoreFragment : Fragment() {
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
             }
 
-            override fun locationManager(location: FMLocationResult) {
+            override fun locationManager(result: FMLocationResult) {
             }
         }
 
     /**
-     * Gets system location through the app context
-     * Then checks if it has permission to ACCESS_FINE_LOCATION
-     * Also includes Callback for Location updates.
-     * Sets the [fmLocationManager.currentLocation] coordinates used to localize.
+     * Example on how to override the internal location Manager
      */
-    private fun getLocation() {
-        if ((context.let {
-                PermissionChecker.checkSelfPermission(
-                    it!!,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                )
-            } != PackageManager.PERMISSION_GRANTED) &&
-            (context.let {
-                PermissionChecker.checkSelfPermission(
-                    it!!,
-                    Manifest.permission.CAMERA
-                )
-            } != PackageManager.PERMISSION_GRANTED)) {
-            Log.e(TAG, "Location permission needs to be granted.")
-        } else {
-            val locationRequest = LocationRequest.create()
-            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-            locationRequest.smallestDisplacement = 1f
-            locationRequest.fastestInterval = locationInterval
-            locationRequest.interval = locationInterval
-
-            val locationCallback = object : LocationCallback() {
-                override fun onLocationResult(locationResult: LocationResult) {
-                    currentLocation = locationResult.lastLocation
-                    //Set SDK Location
-                    fmLocationManager.setLocation(
-                        currentLocation.latitude,
-                        currentLocation.longitude
-                    )
-                    Log.d(TAG, "onLocationResult: ${locationResult.lastLocation}")
-                }
-            }
-
-            fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                Looper.myLooper()
-            )
-        }
+    private fun useOwnLocationProvider() {
+        systemLocationManager = SystemLocationManager(context, systemLocationListener)
     }
+
+    private val systemLocationListener: SystemLocationListener =
+        object : SystemLocationListener {
+            override fun onLocationUpdate(currentLocation: Location) {
+                fmLocationManager.setLocation(currentLocation.latitude, currentLocation.longitude)
+            }
+        }
 }
