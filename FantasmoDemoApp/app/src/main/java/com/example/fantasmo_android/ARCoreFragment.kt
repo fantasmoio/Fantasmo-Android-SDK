@@ -1,7 +1,6 @@
 package com.example.fantasmo_android
 
 import android.annotation.SuppressLint
-import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -46,9 +45,6 @@ class ARCoreFragment : Fragment() {
     private lateinit var endRideButton: Button
     private lateinit var exitButton: Button
 
-    // Host App location Manager to exemplify how to set Location
-    private lateinit var systemLocationManager: SystemLocationManager
-
     // Control variables for the FMParkingView
     private lateinit var fmParkingView: FMParkingView
     private val usesInternalLocationManager = true
@@ -65,8 +61,9 @@ class ARCoreFragment : Fragment() {
         controlsLayout = currentView.findViewById(R.id.controlsLayout)
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
+        // Assign a controller
         fmParkingView.fmParkingViewController = fmParkingViewController
-        fmParkingView.appSessionId = UUID.randomUUID().toString()
+        // Assign an accessToken
         fmParkingView.accessToken = accessToken
 
         // Enable simulation mode to test purposes with specific location
@@ -85,66 +82,60 @@ class ARCoreFragment : Fragment() {
         // Enable FMParkingView internal Location Manager
         fmParkingView.usesInternalLocationManager = usesInternalLocationManager
 
-        handleExitButton()
+        exitButton = currentView.findViewById(R.id.exitButton)
+        exitButton.setOnClickListener {
+            handleExitButton()
+        }
 
-        val latitude = 52.50578283943285
-        val longitude = 13.378954977173915
         endRideButton = currentView.findViewById(R.id.endRideButton)
         endRideButton.setOnClickListener {
-            fmParkingView.isParkingAvailable(latitude, longitude) {
-                if (it) {
-                    startParkingFlow()
-                } else {
-                    Toast.makeText(
-                        context?.applicationContext,
-                        "Parking not available near your location.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
+            handleEndRideButton()
         }
 
         return currentView
     }
 
+    private fun handleEndRideButton() {
+        // Test location of a parking space in Berlin
+        val latitude = 52.50578283943285
+        val longitude = 13.378954977173915
+        // Before trying to localize with Fantasmo you should check if the user is near a mapped parking space
+        fmParkingView.isParkingAvailable(latitude, longitude) {
+            if (it) {
+                startParkingFlow()
+            } else {
+                Toast.makeText(
+                    context?.applicationContext,
+                    "Parking not available near your location.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
     private fun startParkingFlow() {
+        // Display `FMParkingView` and initialize `sessionId`. This is typically a UUID string
+        // but it can also follow your own format. It is used for analytics and billing purposes and
+        // should represent a single parking session.
+        val sessionId = UUID.randomUUID().toString()
+        // Present the FMParkingView
+        fmParkingView.connect(sessionId)
+
         if (fmParkingView.visibility == View.GONE) {
             fmParkingView.visibility = View.VISIBLE
-            // Present the FMParkingView
-            fmParkingView.present()
-            useOwnLocationProvider()
             controlsLayout.visibility = View.GONE
             exitButton.visibility = View.VISIBLE
         }
     }
 
-    /**
-     * Example on how to override the internal location Manager
-     */
-    private fun useOwnLocationProvider() {
-        if(!usesInternalLocationManager){
-            systemLocationManager = SystemLocationManager(context,systemLocationListener)
-        }
-    }
-
-    private val systemLocationListener: SystemLocationListener =
-        object : SystemLocationListener{
-            override fun onLocationUpdate(currentLocation: Location) {
-                fmParkingView.updateLocation(currentLocation.latitude,currentLocation.longitude)
-            }
-        }
-
+    // When exit Button is clicked close the session
     private fun handleExitButton() {
-        exitButton = currentView.findViewById(R.id.exitButton)
-        exitButton.setOnClickListener {
-            if (fmParkingView.visibility == View.VISIBLE) {
-                fmParkingView.visibility = View.GONE
-                // When exit Button is clicked close the session
-                fmParkingView.disconnect()
-                exitButton.visibility = View.GONE
-                controlsLayout.visibility = View.VISIBLE
-                Log.d(TAG, "END SESSION")
-            }
+        fmParkingView.disconnect()
+
+        if (fmParkingView.visibility == View.VISIBLE) {
+            fmParkingView.visibility = View.GONE
+            exitButton.visibility = View.GONE
+            controlsLayout.visibility = View.VISIBLE
         }
     }
 
@@ -181,27 +172,45 @@ class ARCoreFragment : Fragment() {
                 Log.d(TAG, "QR Code Reader Enabled")
             }
 
-            override fun fmParkingViewDidStopQRScanning(){}
-            override fun fmParkingView(qrCode: String, shouldContinue: (Boolean) -> Unit){
+            override fun fmParkingViewDidStopQRScanning() {
+                Log.d(TAG, "QR Code Reader Disabled")
+            }
+
+            override fun fmParkingView(qrCode: String, shouldContinue: (Boolean) -> Unit) {
+                Log.d(TAG, "QR Code Scan Successful")
                 // Optional validation of the QR code can be done here
                 // Note: If you choose to implement this method, you must call the `shouldContinue` with the validation result
                 // show dialogue to accept or refuse
                 shouldContinue(true)
             }
 
-            override fun fmParkingViewDidStartLocalizing(){
-                Log.d(TAG,"BEGINNING LOCALIZING")
+            override fun fmParkingViewDidStartLocalizing() {
+                Log.d(TAG, "Started Localizing")
             }
-            override fun fmParkingView(behavior: FMBehaviorRequest){
+
+            override fun fmParkingView(behavior: FMBehaviorRequest) {
+                Log.d(TAG, "Received Behavior: ${behavior.displayName}")
             }
-            override fun fmParkingView(result: FMLocationResult){
+
+            override fun fmParkingView(result: FMLocationResult) {
                 // Got a localization result
                 // Localization will continue until you dismiss the view
                 // You should decide on acceptable criteria for a result, one way is by checking the `confidence` value
-                if(result.confidence == FMResultConfidence.LOW){
-                    Log.d(TAG,"Low Confidence Result")
+                when (result.confidence) {
+                    FMResultConfidence.LOW -> {
+                        Log.d(TAG, "LOW Confidence Result")
+                    }
+                    FMResultConfidence.MEDIUM -> {
+                        Log.d(TAG, "MEDIUM Confidence Result")
+                    }
+                    FMResultConfidence.HIGH -> {
+                        Log.d(TAG, "HIGH Confidence Result")
+                    }
                 }
             }
-            override fun fmParkingView(error: ErrorResponse, metadata: Any?){}
+
+            override fun fmParkingView(error: ErrorResponse, metadata: Any?) {
+                Log.e(TAG, "Received Error: ${error.message}")
+            }
         }
 }

@@ -5,8 +5,13 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.fantasmo.sdk.FMBehaviorRequest
 import android.os.CountDownTimer
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import com.fantasmo.sdk.fantasmosdk.R
 
-class FMLocalizingView(var fmLocalizingView: ConstraintLayout, var filterResultView: TextView) {
+class FMLocalizingView(arLayout: CoordinatorLayout) {
+
+    private var fmLocalizingView: ConstraintLayout = arLayout.findViewById(R.id.fmLocalizeView)
+    private var filterResultView: TextView = arLayout.findViewById(R.id.filterRejectionTextView)
 
     fun hide() {
         if (fmLocalizingView.visibility == View.VISIBLE) {

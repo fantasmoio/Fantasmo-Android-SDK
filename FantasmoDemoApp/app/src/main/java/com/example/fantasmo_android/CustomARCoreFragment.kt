@@ -61,11 +61,6 @@ class CustomARCoreFragment : Fragment() {
     private lateinit var googleMapView: MapView
     private lateinit var googleMapsManager: GoogleMapsManager
 
-    private var behaviorReceived = 0L
-    private var n2s = 1_000_000_000L
-    private val behaviorThreshold = 1L
-    private var firstBehavior = false
-
     // Host App location Manager to exemplify how to set Location
     private lateinit var systemLocationManager: SystemLocationManager
 
@@ -85,12 +80,10 @@ class CustomARCoreFragment : Fragment() {
         controlsLayout = currentView.findViewById(R.id.controlsLayout)
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
+        // Assign a controller
         fmParkingView.fmParkingViewController = fmParkingViewController
-        fmParkingView.appSessionId = UUID.randomUUID().toString()
+        // Assign an accessToken
         fmParkingView.accessToken = accessToken
-
-        fmParkingView.registerQRScanningViewController(fmQrScanningViewController)
-        fmParkingView.registerLocalizingViewController(fmLocalizingViewController)
 
         // Enable simulation mode to test purposes with specific location
         // depending on which SDK flavor it's being used (Paris, Munich, Miami)
@@ -133,11 +126,18 @@ class CustomARCoreFragment : Fragment() {
     }
 
     private fun startParkingFlow() {
+        // Display `FMParkingView` and initialize `sessionId`. This is typically a UUID string
+        // but it can also follow your own format. It is used for analytics and billing purposes and
+        // should represent a single parking session.
+        val sessionId = UUID.randomUUID().toString()
+        // Present the FMParkingView
+        fmParkingView.connect(sessionId)
+        fmParkingView.registerQRScanningViewController(fmQrScanningViewController)
+        fmParkingView.registerLocalizingViewController(fmLocalizingViewController)
         if (fmParkingView.visibility == View.GONE) {
             mapButton.visibility = View.VISIBLE
             fmParkingView.visibility = View.VISIBLE
-            // Present the FMParkingView
-            fmParkingView.present()
+
             useOwnLocationProvider()
             controlsLayout.visibility = View.GONE
             exitButton.visibility = View.VISIBLE
@@ -310,7 +310,6 @@ class CustomARCoreFragment : Fragment() {
 
             override fun didRequestLocalizationBehavior(behavior: FMBehaviorRequest) {
                 Log.d(TAG,"didRequestLocalizationBehavior")
-                behaviorReceived = System.nanoTime()
                 val stringResult = behavior.displayName
                 filterRejectionTv.text = stringResult
                 if (filterRejectionTv.visibility == View.GONE) {

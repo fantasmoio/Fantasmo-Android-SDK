@@ -44,8 +44,6 @@ class FMARCoreView(
     // Result of anchoring
     var anchored = false
 
-    var localizing = false
-
     fun setupARSession() {
         Log.d(TAG, "Setting ARCore Session")
         surfaceView = arLayout.findViewWithTag("SurfaceView")
@@ -233,15 +231,11 @@ class FMARCoreView(
 
         if (!anchored) {
             if (anchorIsChecked) {
-                Log.d(TAG, "Anchor Enabled")
                 anchored = arSessionListener.anchored(frame)
             }
         }
 
         arSessionListener.qrCodeScan(frame)
-        if(!arSessionListener.qrCodeScannerState()){
-            localizing = true
-        }
     }
 
     /**
@@ -258,6 +252,5 @@ interface FMARSessionListener{
     fun localize(frame: Frame)
     fun anchored(frame: Frame): Boolean
     fun anchorDelta(frame: Frame): FMPose?
-    fun qrCodeScannerState(): Boolean
     fun qrCodeScan(frame: Frame)
 }

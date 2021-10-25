@@ -112,10 +112,11 @@ class QRCodeScanner(
         fmQrScanningViewController.didScanQRCode(stringScan)
         fmParkingViewController.fmParkingView(value){
             if(it){
+                Log.d(TAG,"QR CODE ACCEPTED")
                 qrCodeScannerListener.deployLocalizing()
             }
             else{
-                Log.d(TAG,"REFUSED")
+                Log.d(TAG,"QR CODE REFUSED")
                 qrFound = false
                 qrCodeScannerListener.deployQRScanning()
             }
