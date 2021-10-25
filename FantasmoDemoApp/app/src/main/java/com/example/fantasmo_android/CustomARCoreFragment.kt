@@ -16,6 +16,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
+import com.example.fantasmo_android.helpers.GoogleMapsManager
 
 import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMLocationResult
@@ -26,9 +27,7 @@ import com.fantasmo.sdk.views.FMParkingView
 import com.fantasmo.sdk.views.FMParkingViewProtocol
 import com.fantasmo.sdk.views.FMQRScanningViewProtocol
 
-import com.google.android.gms.location.*
 import com.google.android.gms.maps.MapView
-import com.google.ar.core.*
 import java.util.*
 
 /**
@@ -103,26 +102,36 @@ class CustomARCoreFragment : Fragment() {
 
         handleQRView()
         handleLocalizeView(savedInstanceState)
-        handleExitButton()
 
-        val latitude = 52.50578283943285
-        val longitude = 13.378954977173915
+        exitButton = currentView.findViewById(R.id.exitButton)
+        exitButton.setOnClickListener {
+            handleExitButton()
+        }
+
         endRideButton = currentView.findViewById(R.id.endRideButton)
         endRideButton.setOnClickListener {
-            fmParkingView.isParkingAvailable(latitude, longitude) {
-                if (it) {
-                    startParkingFlow()
-                } else {
-                    Toast.makeText(
-                        context?.applicationContext,
-                        "Parking not available near your location.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
+            handleEndRideButton()
         }
 
         return currentView
+    }
+
+    private fun handleEndRideButton() {
+        // Test location of a parking space in Berlin
+        val latitude = 52.50578283943285
+        val longitude = 13.378954977173915
+        // Before trying to localize with Fantasmo you should check if the user is near a mapped parking space
+        fmParkingView.isParkingAvailable(latitude, longitude) {
+            if (it) {
+                startParkingFlow()
+            } else {
+                Toast.makeText(
+                    context?.applicationContext,
+                    "Parking not available near your location.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
     }
 
     private fun startParkingFlow() {
@@ -130,28 +139,31 @@ class CustomARCoreFragment : Fragment() {
         // but it can also follow your own format. It is used for analytics and billing purposes and
         // should represent a single parking session.
         val sessionId = UUID.randomUUID().toString()
-        // Present the FMParkingView
-        fmParkingView.connect(sessionId)
+
+        // Before presenting the FMParkingView register custom views, otherwise the default ones
+        // will overpass these ones
         fmParkingView.registerQRScanningViewController(fmQrScanningViewController)
         fmParkingView.registerLocalizingViewController(fmLocalizingViewController)
+        // Present the FMParkingView
+        fmParkingView.connect(sessionId)
+
+        useOwnLocationProvider()
+
         if (fmParkingView.visibility == View.GONE) {
             mapButton.visibility = View.VISIBLE
             fmParkingView.visibility = View.VISIBLE
-
-            useOwnLocationProvider()
             controlsLayout.visibility = View.GONE
             exitButton.visibility = View.VISIBLE
         }
     }
 
-
     private fun handleQRView() {
         qrCodeResultTv = currentView.findViewById(R.id.qrCodeResultTextView)
-        fmQRView = currentView.findViewById(R.id.fmQRview) as ConstraintLayout
+        fmQRView = currentView.findViewById(R.id.custom_qr_view) as ConstraintLayout
     }
 
     private fun handleLocalizeView(savedInstanceState: Bundle?) {
-        fmLocalizeView = currentView.findViewById(R.id.custom_fmLocalizeView)
+        fmLocalizeView = currentView.findViewById(R.id.custom_localize_view)
         googleMapView = currentView.findViewById(R.id.mapView)
         googleMapsManager = GoogleMapsManager(requireActivity(), googleMapView)
         googleMapsManager.initGoogleMap(savedInstanceState)
@@ -168,18 +180,14 @@ class CustomARCoreFragment : Fragment() {
     }
 
     private fun handleExitButton() {
-        exitButton = currentView.findViewById(R.id.exitButton)
-        exitButton.setOnClickListener {
-            if (fmParkingView.visibility == View.VISIBLE) {
-                fmParkingView.visibility = View.GONE
-                // When exit Button is clicked close the session
-                fmParkingView.disconnect()
-                exitButton.visibility = View.GONE
-                controlsLayout.visibility = View.VISIBLE
-                fmLocalizeView.visibility = View.GONE
-                googleMapsManager.unsetAnchor()
-                Log.d(TAG, "END SESSION")
-            }
+        fmParkingView.disconnect()
+        googleMapsManager.unsetAnchor()
+
+        if (fmParkingView.visibility == View.VISIBLE) {
+            fmParkingView.visibility = View.GONE
+            exitButton.visibility = View.GONE
+            controlsLayout.visibility = View.VISIBLE
+            fmLocalizeView.visibility = View.GONE
         }
     }
 
@@ -244,15 +252,15 @@ class CustomARCoreFragment : Fragment() {
      * Example on how to override the internal location Manager
      */
     private fun useOwnLocationProvider() {
-        if(!usesInternalLocationManager){
-            systemLocationManager = SystemLocationManager(context,systemLocationListener)
+        if (!usesInternalLocationManager) {
+            systemLocationManager = SystemLocationManager(context, systemLocationListener)
         }
     }
 
     private val systemLocationListener: SystemLocationListener =
-        object : SystemLocationListener{
+        object : SystemLocationListener {
             override fun onLocationUpdate(currentLocation: Location) {
-                fmParkingView.updateLocation(currentLocation.latitude,currentLocation.longitude)
+                fmParkingView.updateLocation(currentLocation.latitude, currentLocation.longitude)
             }
         }
 
@@ -265,10 +273,11 @@ class CustomARCoreFragment : Fragment() {
                 Log.d(TAG, "fmParkingViewDidStartQRScanning")
             }
 
-            override fun fmParkingViewDidStopQRScanning(){
+            override fun fmParkingViewDidStopQRScanning() {
                 Log.d(TAG, "fmParkingViewDidStopQRScanning")
             }
-            override fun fmParkingView(qrCode: String, shouldContinue: (Boolean) -> Unit){
+
+            override fun fmParkingView(qrCode: String, shouldContinue: (Boolean) -> Unit) {
                 Log.d(TAG, "fmParkingView ShouldContinue")
                 // Optional validation of the QR code can be done here
                 // Note: If you choose to implement this method, you must call the `shouldApprove` with the validation result
@@ -276,27 +285,29 @@ class CustomARCoreFragment : Fragment() {
                 shouldContinue(true)
             }
 
-            override fun fmParkingViewDidStartLocalizing(){
-                Log.d(TAG,"fmParkingViewDidStartLocalizing")
-                if(fmLocalizeView.visibility == View.GONE){
+            override fun fmParkingViewDidStartLocalizing() {
+                Log.d(TAG, "fmParkingViewDidStartLocalizing")
+                if (fmLocalizeView.visibility == View.GONE) {
                     fmLocalizeView.visibility = View.VISIBLE
                 }
             }
-            override fun fmParkingView(behavior: FMBehaviorRequest){
-                Log.d(TAG,"fmParkingView Behavior")
+
+            override fun fmParkingView(behavior: FMBehaviorRequest) {
+                Log.d(TAG, "fmParkingView Behavior")
             }
 
-            override fun fmParkingView(result: FMLocationResult){
-                Log.d(TAG,"fmParkingView Result")
+            override fun fmParkingView(result: FMLocationResult) {
+                Log.d(TAG, "fmParkingView Result")
                 // Got a localization result
                 // Localization will continue until you dismiss the view
                 // You should decide on acceptable criteria for a result, one way is by checking the `confidence` value
-                if(result.confidence == FMResultConfidence.LOW){
-                    Log.d(TAG,"Low Confidence Result")
+                if (result.confidence == FMResultConfidence.LOW) {
+                    Log.d(TAG, "Low Confidence Result")
                 }
                 googleMapsManager.addCorrespondingMarkersToMap(result)
             }
-            override fun fmParkingView(error: ErrorResponse, metadata: Any?){}
+
+            override fun fmParkingView(error: ErrorResponse, metadata: Any?) {}
         }
 
     /**
@@ -305,11 +316,11 @@ class CustomARCoreFragment : Fragment() {
     private var fmLocalizingViewController: FMLocalizingViewProtocol =
         object : FMLocalizingViewProtocol {
             override fun didStartLocalizing() {
-                Log.d(TAG,"didStartLocalizing")
+                Log.d(TAG, "didStartLocalizing")
             }
 
             override fun didRequestLocalizationBehavior(behavior: FMBehaviorRequest) {
-                Log.d(TAG,"didRequestLocalizationBehavior")
+                Log.d(TAG, "didRequestLocalizationBehavior")
                 val stringResult = behavior.displayName
                 filterRejectionTv.text = stringResult
                 if (filterRejectionTv.visibility == View.GONE) {
@@ -324,11 +335,11 @@ class CustomARCoreFragment : Fragment() {
             }
 
             override fun didReceiveLocalizationResult(result: FMLocationResult) {
-                Log.d(TAG,"didReceiveLocalizationResult")
+                Log.d(TAG, "didReceiveLocalizationResult")
             }
 
             override fun didReceiveLocalizationError(error: ErrorResponse, errorMetadata: Any?) {
-                Log.d(TAG,"didReceiveLocalizationError")
+                Log.d(TAG, "didReceiveLocalizationError")
             }
         }
 
@@ -338,7 +349,7 @@ class CustomARCoreFragment : Fragment() {
     private var fmQrScanningViewController: FMQRScanningViewProtocol =
         object : FMQRScanningViewProtocol {
             override fun didStartQRScanning() {
-                Log.d(TAG,"didStartQRScanning")
+                Log.d(TAG, "didStartQRScanning")
                 googleMapsManager.updateAnchor(true)
 
                 if (fmQRView.visibility == View.GONE) {
@@ -347,7 +358,7 @@ class CustomARCoreFragment : Fragment() {
             }
 
             override fun didScanQRCode(result: String) {
-                Log.d(TAG,"didScanQRCode")
+                Log.d(TAG, "didScanQRCode")
                 qrCodeResultTv.text = result
                 if (fmQRView.visibility == View.VISIBLE) {
                     fmQRView.visibility = View.GONE
@@ -355,7 +366,7 @@ class CustomARCoreFragment : Fragment() {
             }
 
             override fun didStopQRScanning() {
-                Log.d(TAG,"didStopQRScanning")
+                Log.d(TAG, "didStopQRScanning")
                 if (qrCodeResultTv.visibility == View.VISIBLE) {
                     qrCodeResultTv.visibility = View.GONE
                 }

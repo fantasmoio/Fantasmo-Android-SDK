@@ -1,7 +1,6 @@
-package com.example.fantasmo_android
+package com.example.fantasmo_android.helpers
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.core.app.ActivityCompat

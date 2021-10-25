@@ -21,9 +21,6 @@ import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.views.FMParkingView
 import com.fantasmo.sdk.views.FMParkingViewProtocol
 
-import com.google.android.gms.location.*
-import com.google.ar.core.*
-
 import java.util.*
 
 /**
