@@ -1,20 +1,17 @@
 package com.fantasmo.sdk.views
 
-import android.Manifest
 import android.app.Activity
 import android.content.Context
-import android.content.pm.PackageManager
-import android.location.LocationManager
-import android.os.Looper
+import android.location.Location
 import android.util.AttributeSet
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.*
+import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.content.PermissionChecker
 import com.fantasmo.sdk.*
 import com.fantasmo.sdk.fantasmosdk.R
 import com.fantasmo.sdk.models.ErrorResponse
@@ -22,10 +19,11 @@ import com.fantasmo.sdk.models.FMPose
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.FMApi
+import com.fantasmo.sdk.utilities.DeviceLocationListener
+import com.fantasmo.sdk.utilities.DeviceLocationManager
 import com.fantasmo.sdk.utilities.QRCodeScanner
 import com.fantasmo.sdk.utilities.QRCodeScannerListener
 import com.fantasmo.sdk.views.debug.FMStatisticsView
-import com.google.android.gms.location.*
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
 
@@ -58,10 +56,13 @@ class FMParkingView @JvmOverloads constructor(
     //Default UI for the Localizing view
     private lateinit var fmLocalizingView: FMLocalizingView
 
-    private lateinit var locationManager: LocationManager
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private var currentLocation: android.location.Location = android.location.Location("")
-    private val locationInterval = 300L
+    private var currentLocation: Location = Location("")
+
+    // Internal Device Location Manager to set Location
+    private lateinit var deviceLocationManager: DeviceLocationManager
+
+    // Default radius in meters used when checking parking availability via `isParkingAvailable()`.
+    private var defaultParkingAvailabilityRadius: Int = 50
 
     init {
         orientation = HORIZONTAL
@@ -87,7 +88,7 @@ class FMParkingView @JvmOverloads constructor(
      * @param onCompletion: block with a boolean result
      * This method should be used to determine whether or not you should try to park and localize with Fantasmo.
      * The boolean value passed to the completion block tells you if there is an available parking space within the
-     * acceptable radius of the supplied location. If `true`, you should construct an `FMParkingView` and
+     * acceptable radius of the supplied location. If `true`, you should construct a `FMParkingView` and
      * attempt to localize. If `false` you should resort to other options.
      */
     fun isParkingAvailable(
@@ -95,11 +96,9 @@ class FMParkingView @JvmOverloads constructor(
         longitude: Double,
         onCompletion: (Boolean) -> Unit
     ) {
-        val fmLocationManagerLocal = FMLocationManager(context)
-        fmLocationManagerLocal.setLocation(latitude, longitude)
-        val fmApi = FMApi(fmLocationManagerLocal, context, accessToken)
-        fmApi.sendZoneInRadiusRequest(10, onCompletion)
-        //fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING,10, onCompletion)
+        val radius = defaultParkingAvailabilityRadius
+        val fmApi = FMApi(fmLocationManager, context, accessToken)
+        fmApi.sendZoneInRadiusRequest(latitude, longitude, radius, onCompletion)
     }
 
     fun present() {
@@ -124,13 +123,7 @@ class FMParkingView @JvmOverloads constructor(
         fmLocationManager.isSimulation = isSimulation
 
         if (usesInternalLocationManager) {
-            locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                getLocation()
-            } else {
-                Log.e(TAG, "Your GPS seems to be disabled")
-            }
+            deviceLocationManager = DeviceLocationManager(context, deviceLocationListener)
         }
 
         // Connect the FMLocationManager from Fantasmo SDK
@@ -229,7 +222,7 @@ class FMParkingView @JvmOverloads constructor(
 
 
     fun registerQRScanningViewController(customQRScanningView: FMQRScanningViewProtocol) {
-        Log.d(TAG,"QRScanningView Registered")
+        Log.d(TAG, "QRScanningView Registered")
         this.fmQrScanningViewController = customQRScanningView
     }
 
@@ -252,7 +245,7 @@ class FMParkingView @JvmOverloads constructor(
         }
 
     fun registerLocalizingViewController(customLocalizingView: FMLocalizingViewProtocol) {
-        Log.d(TAG,"LocalizingView Registered")
+        Log.d(TAG, "LocalizingView Registered")
         this.fmLocalizingViewController = customLocalizingView
     }
 
@@ -296,51 +289,6 @@ class FMParkingView @JvmOverloads constructor(
             }
         }
 
-    /**
-     * Gets system location through the app context
-     * Then checks if it has permission to ACCESS_FINE_LOCATION
-     * Also includes Callback for Location updates.
-     * Sets the [fmLocationManager.currentLocation] coordinates used to localize.
-     */
-    private fun getLocation() {
-        if ((context.let {
-                PermissionChecker.checkSelfPermission(
-                    it,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                )
-            } != PackageManager.PERMISSION_GRANTED)) {
-            Log.e(TAG, "Location permission needs to be granted.")
-        } else {
-            val locationRequest = LocationRequest.create()
-            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-            locationRequest.smallestDisplacement = 1f
-            locationRequest.fastestInterval = locationInterval
-            locationRequest.interval = locationInterval
-
-            val locationCallback = object : LocationCallback() {
-                override fun onLocationResult(locationResult: LocationResult) {
-                    currentLocation = locationResult.lastLocation
-                    //Set SDK Location
-                    fmLocationManager.setLocation(
-                        currentLocation.latitude,
-                        currentLocation.longitude
-                    )
-                    fmStatisticsView.updateLocation(
-                        currentLocation.latitude,
-                        currentLocation.longitude
-                    )
-                    Log.d(TAG, "onLocationResult: ${locationResult.lastLocation}")
-                }
-            }
-
-            fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                Looper.myLooper()!!
-            )
-        }
-    }
-
     private fun startLocalizing() {
         fmQrScanningViewController.didStopQRScanning()
         fmParkingViewController.fmParkingViewDidStopQRScanning()
@@ -353,6 +301,9 @@ class FMParkingView @JvmOverloads constructor(
         fmParkingViewController.fmParkingViewDidStartLocalizing()
     }
 
+    /**
+     * Listener for the QR Code results.
+     */
     private var qrCodeScannerListener: QRCodeScannerListener =
         object : QRCodeScannerListener {
             override fun deployLocalizing() {
@@ -364,6 +315,9 @@ class FMParkingView @JvmOverloads constructor(
             }
         }
 
+    /**
+     * Listener of the ARSession.
+     */
     private var arSessionListener: FMARSessionListener =
         object : FMARSessionListener {
             override fun localize(frame: Frame) {
@@ -411,6 +365,25 @@ class FMParkingView @JvmOverloads constructor(
                         )
                     }
                 }
+            }
+        }
+
+    /**
+     * Listener of the internal Location Updates.
+     */
+    private val deviceLocationListener: DeviceLocationListener =
+        object : DeviceLocationListener {
+            override fun onLocationUpdate(locationResult: Location) {
+                currentLocation = locationResult
+                //Set SDK Location
+                fmLocationManager.setLocation(
+                    currentLocation.latitude,
+                    currentLocation.longitude
+                )
+                fmStatisticsView.updateLocation(
+                    currentLocation.latitude,
+                    currentLocation.longitude
+                )
             }
         }
 }

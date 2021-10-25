@@ -305,35 +305,4 @@ class FMLocationManager(private val context: Context) {
         fmLocationListener?.locationManager(arFrame, accumulatedARCoreInfo, frameEventAccumulator)
         return result
     }
-
-    /**
-     * Check to see if a given zone is in the provided radius
-     * @param zone: zone to search for
-     * @param radius: search radius in meters
-     * @param onCompletion: closure that consumes boolean server result
-     */
-    fun isZoneInRadius(zone: FMZone.ZoneType, radius: Int, onCompletion: (Boolean) -> Unit) {
-        Log.d(TAG, "isZoneInRadius")
-        val timeOut = 10000
-        coroutineScope.launch {
-            // If it's not in simulation mode
-            if (!isSimulation) {
-                // Wait on First Location Update if it isn't already available
-                val start = System.currentTimeMillis()
-                while (currentLocation.latitude == 0.0) {
-                    delay(locationInterval)
-                    if (System.currentTimeMillis() - start > timeOut) {
-                        // When timeout is reached, isZoneInRadius sends empty coordinates field
-                        Log.d(TAG, "isZoneInRadius Timeout Reached")
-                        break
-                    }
-                }
-            }
-
-            fmApi.sendZoneInRadiusRequest(
-                radius,
-                onCompletion
-            )
-        }
-    }
 }
