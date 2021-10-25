@@ -21,13 +21,17 @@ class FrameFilterRejectionStatsTest {
         frameFilterStats.accumulate(result)
         assertEquals(1,frameFilterStats.insufficientMotionFrameCount)
 
+        result = FMFilterRejectionReason.MOVINGTOOFAST
+        frameFilterStats.accumulate(result)
+        assertEquals(1,frameFilterStats.excessiveMotionFrameCount)
+
         result = FMFilterRejectionReason.PITCHTOOHIGH
         frameFilterStats.accumulate(result)
-        assertEquals(1,frameFilterStats.excessiveTiltFrameCount)
+        assertEquals(1,frameFilterStats.insufficientTiltFrameCount)
 
         result = FMFilterRejectionReason.PITCHTOOLOW
         frameFilterStats.accumulate(result)
-        assertEquals(2,frameFilterStats.excessiveTiltFrameCount)
+        assertEquals(1,frameFilterStats.excessiveTiltFrameCount)
 
         result = FMFilterRejectionReason.INSUFFICIENTFEATURES
         frameFilterStats.accumulate(result)
@@ -36,6 +40,6 @@ class FrameFilterRejectionStatsTest {
         val field = frameFilterStats.javaClass.getDeclaredField("totalFrameCount")
         field.isAccessible = true
         val fieldValue = field.get(frameFilterStats)
-        assertEquals(6,fieldValue)
+        assertEquals(7,fieldValue)
     }
 }
