@@ -33,8 +33,8 @@ import java.util.*
 /**
  * Fragment to show AR camera image and make use of the Fantasmo SDK localization feature.
  */
-class CustomARCoreFragment : Fragment() {
-    private val TAG = CustomARCoreFragment::class.java.simpleName
+class CustomDemoFragment : Fragment() {
+    private val TAG = CustomDemoFragment::class.java.simpleName
 
     private lateinit var currentView: View
 
@@ -74,7 +74,7 @@ class CustomARCoreFragment : Fragment() {
     ): View {
         (activity as AppCompatActivity?)!!.supportActionBar!!.hide()
 
-        currentView = inflater.inflate(R.layout.custom_arcore_fragment, container, false)
+        currentView = inflater.inflate(R.layout.custom_demo_fragment, container, false)
 
         controlsLayout = currentView.findViewById(R.id.controlsLayout)
 
@@ -180,7 +180,7 @@ class CustomARCoreFragment : Fragment() {
     }
 
     private fun handleExitButton() {
-        fmParkingView.disconnect()
+        fmParkingView.dismiss()
         googleMapsManager.unsetAnchor()
 
         if (fmParkingView.visibility == View.VISIBLE) {

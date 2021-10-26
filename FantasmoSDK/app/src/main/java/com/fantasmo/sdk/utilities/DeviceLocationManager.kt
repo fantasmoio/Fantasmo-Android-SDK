@@ -12,6 +12,18 @@ import com.google.android.gms.location.*
 
 class DeviceLocationManager(val context: Context?, val deviceLocationListener: DeviceLocationListener) {
 
+    companion object{
+        fun isValidLatLng(latitude: Double, longitude: Double): Boolean {
+            if (latitude > 90.0 || latitude < -90.0) {
+                Log.d("Coord","WrongLat")
+                return false
+            } else if (longitude > 180.0 || longitude < -180.0) {
+                Log.d("Coord","WrongLong")
+                return false
+            }
+            return true
+        }
+    }
     private val TAG = DeviceLocationManager::class.java.simpleName
     private var locationManager: LocationManager = context?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     private var fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)

@@ -31,6 +31,9 @@ class QRCodeScanner(
     private var fmQrScanningViewController: FMQRScanningViewProtocol,
     private var qrCodeScannerListener: QRCodeScannerListener
 ) {
+
+    private val TAG = QRCodeScanner::class.java.simpleName
+
     // This prevents the qrCodeReader to be overflowed with frames to analyze
     enum class State{
         QRCODEDETECTED,
@@ -40,7 +43,6 @@ class QRCodeScanner(
 
     var qrCodeReaderEnabled: Boolean = false
     var state = State.IDLE
-    private val TAG = QRCodeScanner::class.java.simpleName
     private var imageWidth = 0
     private var imageHeight = 0
     private var qrFound = false
@@ -95,7 +97,6 @@ class QRCodeScanner(
                         // may stall.
                         state = if(qrFound){
                             qrCodeReaderEnabled = false
-                            Log.d(TAG, "QR Code Reader Disabled")
                             State.QRCODEDETECTED
                         }else{
                             qrCodeReaderEnabled = true

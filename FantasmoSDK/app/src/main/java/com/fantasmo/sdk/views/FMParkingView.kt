@@ -107,6 +107,11 @@ class FMParkingView @JvmOverloads constructor(
         longitude: Double,
         onCompletion: (Boolean) -> Unit
     ) {
+        if(!DeviceLocationManager.isValidLatLng(latitude,longitude)){
+            onCompletion(false)
+            Log.d(TAG,"Invalid Coordinates")
+            return
+        }
         val radius = defaultParkingAvailabilityRadius
         val fmApi = FMApi(fmLocationManager, context, accessToken)
         fmApi.sendZoneInRadiusRequest(latitude, longitude, radius, onCompletion)
@@ -161,7 +166,7 @@ class FMParkingView @JvmOverloads constructor(
      * Resets the session to a normal ARSession.
      * Closes Localizing and QR Scanning Sessions
      */
-    fun disconnect() {
+    fun dismiss() {
         if (state == State.LOCALIZING || state == State.QRSCANNING) {
             state = State.IDLE
 

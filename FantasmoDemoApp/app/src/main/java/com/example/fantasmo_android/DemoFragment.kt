@@ -26,8 +26,8 @@ import java.util.*
 /**
  * Fragment to show AR camera image and make use of the Fantasmo SDK localization feature.
  */
-class ARCoreFragment : Fragment() {
-    private val TAG = "ARCoreFragment"
+class DemoFragment : Fragment() {
+    private val TAG = DemoFragment::class.java.simpleName
 
     private lateinit var currentView: View
 
@@ -53,7 +53,7 @@ class ARCoreFragment : Fragment() {
     ): View {
         (activity as AppCompatActivity?)!!.supportActionBar!!.hide()
 
-        currentView = inflater.inflate(R.layout.arcore_fragment, container, false)
+        currentView = inflater.inflate(R.layout.demo_fragment, container, false)
 
         controlsLayout = currentView.findViewById(R.id.controlsLayout)
 
@@ -127,7 +127,7 @@ class ARCoreFragment : Fragment() {
 
     // When exit Button is clicked close the session
     private fun handleExitButton() {
-        fmParkingView.disconnect()
+        fmParkingView.dismiss()
 
         if (fmParkingView.visibility == View.VISIBLE) {
             fmParkingView.visibility = View.GONE
@@ -173,12 +173,12 @@ class ARCoreFragment : Fragment() {
                 Log.d(TAG, "QR Code Reader Disabled")
             }
 
-            override fun fmParkingView(qrCode: String, shouldContinue: (Boolean) -> Unit) {
+            override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
                 Log.d(TAG, "QR Code Scan Successful")
                 // Optional validation of the QR code can be done here
-                // Note: If you choose to implement this method, you must call the `shouldContinue` with the validation result
+                // Note: If you choose to implement this method, you must call the `onValidQRCode` with the validation result
                 // show dialogue to accept or refuse
-                shouldContinue(true)
+                onValidQRCode(true)
             }
 
             override fun fmParkingViewDidStartLocalizing() {
@@ -202,12 +202,13 @@ class ARCoreFragment : Fragment() {
                     }
                     FMResultConfidence.HIGH -> {
                         Log.d(TAG, "HIGH Confidence Result")
+                        fmParkingView.dismiss()
                     }
                 }
             }
 
             override fun fmParkingView(error: ErrorResponse, metadata: Any?) {
-                Log.e(TAG, "Received Error: ${error.message}")
+                Log.e(TAG, "Received Error: $error")
             }
         }
 }
