@@ -10,25 +10,28 @@ import com.fantasmo.sdk.fantasmosdk.R
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.google.ar.core.Frame
+import com.google.ar.core.TrackingFailureReason
 
 class FMStatisticsView(arLayout: CoordinatorLayout) {
 
     private val TAG = FMStatisticsView::class.java.simpleName
-    private lateinit var anchorDeltaTv: TextView
     private var cameraTranslationTv: TextView = arLayout.findViewById(R.id.translationTextView)
     private var cameraAnglesTv: TextView = arLayout.findViewById(R.id.cameraAnglesTextView)
     private var lastResultTv: TextView = arLayout.findViewById(R.id.lastResultTextView)
 
     private var statusTv: TextView = arLayout.findViewById(R.id.statusTextView)
-    private var localizeTv: TextView = arLayout.findViewById(R.id.localizeTimeTextView)
-    private var uploadTv: TextView = arLayout.findViewById(R.id.uploadTimeTextView)
-    private var distanceTravelledTv: TextView = arLayout.findViewById(R.id.distanceTravelledTextView)
-    private var cameraAnglesSpreadTv: TextView = arLayout.findViewById(R.id.cameraAnglesSpreadTextView)
+    private var localizeTimeTv: TextView = arLayout.findViewById(R.id.localizeTimeTextView)
+    private var uploadTimeTv: TextView = arLayout.findViewById(R.id.uploadTimeTextView)
+    private var distanceTravelledTv: TextView =
+        arLayout.findViewById(R.id.distanceTravelledTextView)
+    private var cameraAnglesSpreadTv: TextView =
+        arLayout.findViewById(R.id.cameraAnglesSpreadTextView)
     private var normalTv: TextView = arLayout.findViewById(R.id.normalTextView)
     private var limitedTv: TextView = arLayout.findViewById(R.id.limitedTextView)
     private var notAvailableTv: TextView = arLayout.findViewById(R.id.notAvailableTextView)
     private var excessiveMotionTv: TextView = arLayout.findViewById(R.id.excessiveMotionTextView)
-    private var insufficientFeaturesTv: TextView = arLayout.findViewById(R.id.insufficientFeaturesTextView)
+    private var insufficientFeaturesTv: TextView =
+        arLayout.findViewById(R.id.insufficientFeaturesTextView)
     private var pitchLowTv: TextView = arLayout.findViewById(R.id.pitchLowTextView)
     private var pitchHighTv: TextView = arLayout.findViewById(R.id.pitchHighTextView)
     private var blurryTv: TextView = arLayout.findViewById(R.id.blurryTextView)
@@ -37,7 +40,11 @@ class FMStatisticsView(arLayout: CoordinatorLayout) {
     private var featuresTv: TextView = arLayout.findViewById(R.id.featuresTextView)
     private var deviceLocationTv: TextView = arLayout.findViewById(R.id.deviceLocationTextView)
 
-    fun updateStats(frame: Frame, info: AccumulatedARCoreInfo, rejections: FrameFilterRejectionStatistics) {
+    fun updateStats(
+        frame: Frame,
+        info: AccumulatedARCoreInfo,
+        rejections: FrameFilterRejectionStatistics
+    ) {
         val cameraTranslation = frame.androidSensorPose?.translation
         cameraTranslationTv.text =
             createStringDisplay(cameraTranslation)
@@ -51,15 +58,28 @@ class FMStatisticsView(arLayout: CoordinatorLayout) {
             info.trackingStateFrameStatistics.framesWithLimitedTrackingState.toString()
         notAvailableTv.text =
             info.trackingStateFrameStatistics.framesWithNotAvailableTracking.toString()
-        excessiveMotionTv.text = rejections.excessiveMotionFrameCount.toString()
-        insufficientFeaturesTv.text = rejections.insufficientFeatures.toString()
+        excessiveMotionTv.text =
+            if (info.trackingStateFrameStatistics.framesWithLimitedTrackingStateByReason[TrackingFailureReason.EXCESSIVE_MOTION] == null) {
+                "0"
+            } else {
+                info.trackingStateFrameStatistics.framesWithLimitedTrackingStateByReason[TrackingFailureReason.EXCESSIVE_MOTION].toString()
+            }
+        insufficientFeaturesTv.text =
+            if (info.trackingStateFrameStatistics.framesWithLimitedTrackingStateByReason[TrackingFailureReason.INSUFFICIENT_FEATURES] == null) {
+                "0"
+            } else {
+                info.trackingStateFrameStatistics.framesWithLimitedTrackingStateByReason[TrackingFailureReason.INSUFFICIENT_FEATURES].toString()
+            }
+
         pitchLowTv.text = rejections.excessiveTiltFrameCount.toString()
         pitchHighTv.text = rejections.insufficientTiltFrameCount.toString()
         blurryTv.text = rejections.excessiveBlurFrameCount.toString()
-        //tooFastTv.text = rejections.excessiveMotionFrameCount.toString()
+        tooFastTv.text = rejections.excessiveMotionFrameCount.toString()
         tooLittleTv.text = rejections.insufficientMotionFrameCount.toString()
-        //featuresTv.text = rejections.insufficientFeatures.toString()
-        val stringDistance = String.format("%.2f", info.translationAccumulator.totalTranslation) + " m"
+        featuresTv.text = rejections.insufficientFeatures.toString()
+
+        val stringDistance =
+            String.format("%.2f", info.translationAccumulator.totalTranslation) + " m"
         distanceTravelledTv.text = stringDistance
         val stringSpread =
             "[${info.rotationAccumulator.yaw[0]},${info.rotationAccumulator.yaw[1]}],${info.rotationAccumulator.yaw[2]}\n" +
@@ -83,12 +103,25 @@ class FMStatisticsView(arLayout: CoordinatorLayout) {
         statusTv.text = didChangeState.toString()
     }
 
+    private var localizingStart: Long = System.currentTimeMillis()
+    private var uploadingStart: Long = System.currentTimeMillis()
+
     fun updateResult(result: FMLocationResult) {
         val stringResult =
             "${result.location.coordinate.latitude},\n${result.location.coordinate.longitude} (${result.confidence})"
         lastResultTv.text = stringResult
         Log.d(TAG, result.confidence.toString())
         Log.d(TAG, result.location.toString())
+
+        val elapsedUploading = (System.currentTimeMillis() - uploadingStart) / 1_000.0
+        val stringUploadTime = String.format("%.2f", elapsedUploading) + "s"
+        uploadTimeTv.text = stringUploadTime
+        uploadingStart = System.currentTimeMillis()
+
+        val elapsedLocalizing = (System.currentTimeMillis() - localizingStart) / 1_000.0
+        val stringLocalizeTime = String.format("%.2f", elapsedLocalizing) + "s"
+        localizeTimeTv.text = stringLocalizeTime
+        localizingStart = System.currentTimeMillis()
     }
 
     fun updateLocation(latitude: Double, longitude: Double) {

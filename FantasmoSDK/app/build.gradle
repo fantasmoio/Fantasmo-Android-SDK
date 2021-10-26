@@ -105,12 +105,6 @@ dependencies {
     // Location Manager
     implementation 'com.google.android.gms:play-services-location:18.0.0'
 
-    // Fragment Navigation
-    implementation "androidx.navigation:navigation-fragment-ktx:2.3.5"
-
-    // Location Services
-    implementation 'com.google.android.gms:play-services-location:18.0.0'
-
     // Barcode model dependencies
     implementation 'com.google.mlkit:barcode-scanning:17.0.0'
 
