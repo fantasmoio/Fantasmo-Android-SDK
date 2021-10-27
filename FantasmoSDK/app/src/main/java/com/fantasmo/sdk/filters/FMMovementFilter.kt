@@ -10,7 +10,7 @@ import kotlin.math.abs
  */
 class FMMovementFilter : FMFrameFilter {
     // Sideways movement threshold
-    private val threshold = 0.02 //0.25
+    private val threshold = 0.001
     // Previous frame translation
     private var lastTransform: FloatArray = floatArrayOf(0F, 0F, 0F)
 
