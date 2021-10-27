@@ -15,10 +15,8 @@ class DeviceLocationManager(val context: Context?, val deviceLocationListener: D
     companion object{
         fun isValidLatLng(latitude: Double, longitude: Double): Boolean {
             if (latitude > 90.0 || latitude < -90.0) {
-                Log.d("Coord","WrongLat")
                 return false
             } else if (longitude > 180.0 || longitude < -180.0) {
-                Log.d("Coord","WrongLong")
                 return false
             }
             return true

@@ -51,13 +51,11 @@ class FMInputQualityFilter(context: Context) {
     fun accepts(arFrame: Frame): FMFrameFilterResult {
         if (shouldForceAccept(arFrame)) {
             lastAcceptTime = arFrame.timestamp
-            Log.d(TAG, "shouldForceAccept True")
             return FMFrameFilterResult.Accepted
         } else {
             for (filter in filters) {
                 val result = filter.accepts(arFrame)
                 if (result != FMFrameFilterResult.Accepted) {
-                    Log.d(TAG, "RULE_CHECK: Frame not accepted ${result.getRejectedReason()}")
                     return result
                 }
             }

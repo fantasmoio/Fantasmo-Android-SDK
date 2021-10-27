@@ -170,7 +170,6 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
                 // Get standard deviation from meanStdDev
                 meanStdDev(edgesBitmap)
             }
-            Log.i(TAG, "calculateVariance: ${stdDev.await()}")
             return stdDev.await()
         }
     }
@@ -226,9 +225,9 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
             cameraImage.close()
             return baOutputStream
         } catch (e: NotYetAvailableException) {
-            Log.d(TAG, "FrameNotYetAvailable")
+            Log.e(TAG, "FrameNotYetAvailable")
         } catch (e: DeadlineExceededException) {
-            Log.d(TAG, "DeadlineExceededException")
+            Log.e(TAG, "DeadlineExceededException")
         }
         return null
     }

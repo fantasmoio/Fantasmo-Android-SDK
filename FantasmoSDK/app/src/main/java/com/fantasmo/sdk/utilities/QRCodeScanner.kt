@@ -178,9 +178,9 @@ class QRCodeScanner(
             cameraImage.close()
             return arrayOf(cameraPlaneY,cameraPlaneU,cameraPlaneV)
         } catch (e: NotYetAvailableException) {
-            Log.d(TAG, "FrameNotYetAvailable")
+            Log.e(TAG, "FrameNotYetAvailable")
         } catch (e: DeadlineExceededException) {
-            Log.d(TAG, "DeadlineExceededException")
+            Log.e(TAG, "DeadlineExceededException")
         }
         return null
     }

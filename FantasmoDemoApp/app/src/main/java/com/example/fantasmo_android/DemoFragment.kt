@@ -8,19 +8,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Switch
+import android.widget.TextView
 import android.widget.Toast
-
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
-
 import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMLocationResult
 import com.fantasmo.sdk.FMResultConfidence
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.views.FMParkingView
 import com.fantasmo.sdk.views.FMParkingViewProtocol
-
 import java.util.*
 
 /**
@@ -32,6 +30,7 @@ class DemoFragment : Fragment() {
     private lateinit var currentView: View
 
     private lateinit var controlsLayout: ConstraintLayout
+    private lateinit var localizationResult: TextView
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var simulationModeToggle: Switch
@@ -40,7 +39,6 @@ class DemoFragment : Fragment() {
     private lateinit var showDebugStatsToggle: Switch
 
     private lateinit var endRideButton: Button
-    private lateinit var exitButton: Button
 
     // Control variables for the FMParkingView
     private lateinit var fmParkingView: FMParkingView
@@ -56,6 +54,7 @@ class DemoFragment : Fragment() {
         currentView = inflater.inflate(R.layout.demo_fragment, container, false)
 
         controlsLayout = currentView.findViewById(R.id.controlsLayout)
+        localizationResult = currentView.findViewById(R.id.localizationResultView)
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
         // Assign a controller
@@ -79,10 +78,7 @@ class DemoFragment : Fragment() {
         // Enable FMParkingView internal Location Manager
         fmParkingView.usesInternalLocationManager = usesInternalLocationManager
 
-        exitButton = currentView.findViewById(R.id.exitButton)
-        exitButton.setOnClickListener {
-            handleExitButton()
-        }
+        handleFMParkingViewDismiss()
 
         endRideButton = currentView.findViewById(R.id.endRideButton)
         endRideButton.setOnClickListener {
@@ -117,22 +113,17 @@ class DemoFragment : Fragment() {
         val sessionId = UUID.randomUUID().toString()
         // Present the FMParkingView
         fmParkingView.connect(sessionId)
-
-        if (fmParkingView.visibility == View.GONE) {
-            fmParkingView.visibility = View.VISIBLE
-            controlsLayout.visibility = View.GONE
-            exitButton.visibility = View.VISIBLE
-        }
+        localizationResult.visibility = View.GONE
+        controlsLayout.visibility = View.INVISIBLE
     }
 
-    // When exit Button is clicked close the session
-    private fun handleExitButton() {
-        fmParkingView.dismiss()
-
-        if (fmParkingView.visibility == View.VISIBLE) {
-            fmParkingView.visibility = View.GONE
-            exitButton.visibility = View.GONE
-            controlsLayout.visibility = View.VISIBLE
+    private fun handleFMParkingViewDismiss() {
+        fmParkingView.viewTreeObserver.addOnGlobalLayoutListener {
+            if(fmParkingView.visibility == View.GONE){
+                //visibility has changed
+                Log.d(TAG,"FMParkingView Changed Visibility")
+                controlsLayout.visibility = View.VISIBLE
+            }
         }
     }
 
@@ -203,6 +194,12 @@ class DemoFragment : Fragment() {
                     FMResultConfidence.HIGH -> {
                         Log.d(TAG, "HIGH Confidence Result")
                         fmParkingView.dismiss()
+                        val stringResult = "Result: ${result.location.coordinate} (${result.confidence})"
+                        localizationResult.text = stringResult
+                        if(localizationResult.visibility == View.GONE){
+                            localizationResult.visibility = View.VISIBLE
+                        }
+
                     }
                 }
             }

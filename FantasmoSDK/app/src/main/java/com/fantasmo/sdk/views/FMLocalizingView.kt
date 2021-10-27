@@ -1,18 +1,25 @@
 package com.fantasmo.sdk.views
 
+import android.os.CountDownTimer
 import android.view.View
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.fantasmo.sdk.FMBehaviorRequest
-import android.os.CountDownTimer
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.fantasmosdk.R
 
-class FMLocalizingView(arLayout: CoordinatorLayout) {
+class FMLocalizingView(arLayout: CoordinatorLayout, private val fmParkingView: FMParkingView) {
 
     private var fmLocalizingView: ConstraintLayout = arLayout.findViewById(R.id.fmLocalizeView)
     private var filterResultView: TextView = arLayout.findViewById(R.id.filterRejectionTextView)
+    private var closeButton: ImageButton = fmLocalizingView.findViewById(R.id.fmExitButton)
 
+    init {
+        closeButton.setOnClickListener {
+            fmParkingView.dismiss()
+        }
+    }
     fun hide() {
         if (fmLocalizingView.visibility == View.VISIBLE) {
             fmLocalizingView.visibility = View.GONE

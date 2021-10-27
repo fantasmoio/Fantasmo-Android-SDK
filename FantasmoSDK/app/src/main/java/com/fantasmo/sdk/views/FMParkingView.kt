@@ -50,8 +50,8 @@ class FMParkingView @JvmOverloads constructor(
      */
     var usesInternalLocationManager = true
 
-    private lateinit var appSessionId: String
     lateinit var accessToken: String
+    private lateinit var appSessionId: String
 
     private lateinit var fmLocationManager: FMLocationManager
     private var fmStatisticsView: FMStatisticsView
@@ -135,11 +135,13 @@ class FMParkingView @JvmOverloads constructor(
      * you to link a set of attempts with a single parking session.
      */
     fun connect(sessionId: String) {
+        this.visibility = View.VISIBLE
+
         appSessionId = sessionId
 
-        fmQRScanningView = FMQRScanningView(arLayout)
+        fmQRScanningView = FMQRScanningView(arLayout,this)
 
-        fmLocalizingView = FMLocalizingView(arLayout)
+        fmLocalizingView = FMLocalizingView(arLayout,this)
 
         qrCodeReader = QRCodeScanner(
             fmParkingViewController,
@@ -180,6 +182,7 @@ class FMParkingView @JvmOverloads constructor(
             fmQRScanningView.hide()
             fmLocalizingView.hide()
         }
+        this.visibility = View.GONE
     }
 
     fun onResume() {
