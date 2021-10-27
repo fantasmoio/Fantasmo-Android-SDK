@@ -182,6 +182,7 @@ class FMParkingView @JvmOverloads constructor(
             fmQRScanningView.hide()
             fmLocalizingView.hide()
         }
+        fmStatisticsView.reset()
         this.visibility = View.GONE
     }
 

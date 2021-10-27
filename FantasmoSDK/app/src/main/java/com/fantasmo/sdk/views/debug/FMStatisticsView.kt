@@ -15,17 +15,20 @@ import com.google.ar.core.TrackingFailureReason
 class FMStatisticsView(arLayout: CoordinatorLayout) {
 
     private val TAG = FMStatisticsView::class.java.simpleName
-    private var cameraTranslationTv: TextView = arLayout.findViewById(R.id.translationTextView)
-    private var cameraAnglesTv: TextView = arLayout.findViewById(R.id.cameraAnglesTextView)
-    private var lastResultTv: TextView = arLayout.findViewById(R.id.lastResultTextView)
-
     private var statusTv: TextView = arLayout.findViewById(R.id.statusTextView)
+    private var lastResultTv: TextView = arLayout.findViewById(R.id.lastResultTextView)
     private var localizeTimeTv: TextView = arLayout.findViewById(R.id.localizeTimeTextView)
     private var uploadTimeTv: TextView = arLayout.findViewById(R.id.uploadTimeTextView)
+    private var deviceLocationTv: TextView = arLayout.findViewById(R.id.deviceLocationTextView)
+
+    private var cameraTranslationTv: TextView = arLayout.findViewById(R.id.translationTextView)
     private var distanceTravelledTv: TextView =
         arLayout.findViewById(R.id.distanceTravelledTextView)
+
+    private var cameraAnglesTv: TextView = arLayout.findViewById(R.id.cameraAnglesTextView)
     private var cameraAnglesSpreadTv: TextView =
         arLayout.findViewById(R.id.cameraAnglesSpreadTextView)
+
     private var normalTv: TextView = arLayout.findViewById(R.id.normalTextView)
     private var limitedTv: TextView = arLayout.findViewById(R.id.limitedTextView)
     private var notAvailableTv: TextView = arLayout.findViewById(R.id.notAvailableTextView)
@@ -38,7 +41,6 @@ class FMStatisticsView(arLayout: CoordinatorLayout) {
     private var tooFastTv: TextView = arLayout.findViewById(R.id.tooFastTextView)
     private var tooLittleTv: TextView = arLayout.findViewById(R.id.tooLittleTextView)
     private var featuresTv: TextView = arLayout.findViewById(R.id.featuresTextView)
-    private var deviceLocationTv: TextView = arLayout.findViewById(R.id.deviceLocationTextView)
 
     fun updateStats(
         frame: Frame,
@@ -136,5 +138,33 @@ class FMStatisticsView(arLayout: CoordinatorLayout) {
         return String.format("%.2f", cameraAttr?.get(0)) + ", " +
                 String.format("%.2f", cameraAttr?.get(1)) + ", " +
                 String.format("%.2f", cameraAttr?.get(2))
+    }
+
+    fun reset() {
+        val stringZero = "0"
+        val stringZeroS = "0,0s"
+        val stringClear = ""
+
+        lastResultTv.text = stringZero
+        localizeTimeTv.text = stringZeroS
+        uploadTimeTv.text = stringZeroS
+
+        deviceLocationTv.text = stringClear
+        cameraTranslationTv.text = stringClear
+        distanceTravelledTv.text = stringClear
+        cameraAnglesTv.text = stringClear
+        cameraAnglesSpreadTv.text = stringZero
+
+        normalTv.text = stringZero
+        limitedTv.text = stringZero
+        notAvailableTv.text = stringZero
+        excessiveMotionTv.text = stringZero
+        insufficientFeaturesTv.text = stringZero
+        pitchLowTv.text = stringZero
+        pitchHighTv.text = stringZero
+        blurryTv.text = stringZero
+        tooFastTv.text = stringZero
+        tooLittleTv.text = stringZero
+        featuresTv.text = stringZero
     }
 }
