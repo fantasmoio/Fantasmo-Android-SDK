@@ -113,7 +113,7 @@ class FMParkingView @JvmOverloads constructor(
             return
         }
         val radius = defaultParkingAvailabilityRadius
-        val fmApi = FMApi(fmLocationManager, context, accessToken)
+        val fmApi = FMApi(context, accessToken)
         fmApi.sendZoneInRadiusRequest(latitude, longitude, radius, onCompletion)
     }
 

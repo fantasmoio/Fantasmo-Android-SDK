@@ -21,7 +21,6 @@ import com.fantasmo.sdk.utilities.LocationFuser
 import com.google.ar.core.Frame
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -96,7 +95,7 @@ class FMLocationManager(private val context: Context) {
 
         this.token = accessToken
         this.fmLocationListener = callback
-        fmApi = FMApi(this, context, token)
+        fmApi = FMApi(context, token)
         frameFilter = FMInputQualityFilter(context)
         fmLocationListener?.locationManager(state)
     }
@@ -206,7 +205,7 @@ class FMLocationManager(private val context: Context) {
         coroutineScope.launch {
             state = State.UPLOADING
             fmLocationListener?.locationManager(state)
-            val localizeRequest = createLocalizationRequest()
+            val localizeRequest = createLocalizationRequest(arFrame)
             fmApi.sendLocalizeRequest(
                 arFrame,
                 localizeRequest,
@@ -231,7 +230,7 @@ class FMLocationManager(private val context: Context) {
     /**
      * Gather all the information needed to assemble a LocalizationRequest
      */
-    private fun createLocalizationRequest(): FMLocalizationRequest {
+    private fun createLocalizationRequest(frame: Frame): FMLocalizationRequest {
         val frameEvents = FMFrameEvent(
             frameEventAccumulator.excessiveTiltFrameCount + frameEventAccumulator.insufficientTiltFrameCount,
             frameEventAccumulator.excessiveBlurFrameCount,
@@ -255,6 +254,13 @@ class FMLocationManager(private val context: Context) {
             accumulatedARCoreInfo.translationAccumulator.totalTranslation,
             motionManager.magneticField
         )
+        val openCVRelativeAnchorPose = anchorFrame?.let { anchorFrame ->
+            FMUtility.anchorDeltaPoseForFrame(
+                frame,
+                anchorFrame
+            )
+        }
+
         return FMLocalizationRequest(
             isSimulation,
             FMZone.ZoneType.PARKING,
@@ -262,6 +268,7 @@ class FMLocationManager(private val context: Context) {
                 currentLocation.latitude,
                 currentLocation.longitude
             ),
+            openCVRelativeAnchorPose,
             frameAnalytics
         )
     }

@@ -5,13 +5,9 @@ import android.os.Build
 import android.provider.Settings.Secure
 import android.util.Log
 import com.fantasmo.sdk.FMConfiguration
-import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.fantasmosdk.BuildConfig
-import com.fantasmo.sdk.models.Coordinate
-import com.fantasmo.sdk.models.ErrorResponse
-import com.fantasmo.sdk.models.FMIntrinsics
-import com.fantasmo.sdk.models.FMZone
+import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.models.analytics.MagneticField
 import com.google.ar.core.Frame
 import com.google.gson.Gson
@@ -24,6 +20,7 @@ class FMLocalizationRequest(
     var isSimulation: Boolean,
     var simulationZone: FMZone.ZoneType,
     var coordinate: Coordinate,
+    var relativeOpenCVAnchorPose: FMPose?,
     var analytics: FMLocalizationAnalytics
 )
 
@@ -64,7 +61,6 @@ class FMRotationSpread(
  * Class to hold the necessary logic to communicate with Fantasmo API.
  */
 class FMApi(
-    private val fmLocationManager: FMLocationManager,
     private val context: Context,
     private val token: String,
 ) {
@@ -78,7 +74,7 @@ class FMApi(
     fun sendLocalizeRequest(
         arFrame: Frame,
         request: FMLocalizationRequest,
-        onCompletion: (com.fantasmo.sdk.models.Location, List<FMZone>) -> Unit,
+        onCompletion: (Location, List<FMZone>) -> Unit,
         onError: (ErrorResponse) -> Unit
     ) {
         try {
@@ -209,10 +205,9 @@ class FMApi(
         params["magneticData"] = gson.toJson(request.analytics.magneticField)
 
         // calculate and send reference frame if anchoring
-        val anchorFrame = fmLocationManager.anchorFrame
-        if (anchorFrame != null) {
-            params["referenceFrame"] =
-                gson.toJson(FMUtility.anchorDeltaPoseForFrame(frame, anchorFrame))
+        val relativeOpenCVAnchorPose = request.relativeOpenCVAnchorPose
+        if(relativeOpenCVAnchorPose != null){
+            params["referenceFrame"] = gson.toJson(relativeOpenCVAnchorPose)
         }
 
         Log.i(TAG, "getLocalizeParams: $params")
