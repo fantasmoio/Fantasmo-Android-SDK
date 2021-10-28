@@ -3,12 +3,15 @@ package com.fantasmo.sdk
 import android.content.Context
 import android.graphics.*
 import android.media.Image
+import android.util.Log
 import android.view.Display
 import android.view.Surface
 import android.view.WindowManager
 import com.fantasmo.sdk.models.*
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
+import com.google.ar.core.exceptions.DeadlineExceededException
+import com.google.ar.core.exceptions.NotYetAvailableException
 import com.google.ar.sceneform.math.Vector3
 import java.io.ByteArrayOutputStream
 import kotlin.math.*
@@ -19,21 +22,20 @@ import kotlin.math.*
 class FMUtility {
 
     companion object {
+        var forceAccept: Boolean = false
+        private val TAG = FMUtility::class.java.simpleName
+        private var baOutputStream : ByteArrayOutputStream? = null
         /**
          * Method to get the the AR Frame camera image data.
          * @param arFrame the AR Frame to localize.
          * @return a ByteArray with the data of the [arFrame]
          */
         fun getImageDataFromARFrame(context: Context, arFrame: Frame): ByteArray {
-            //The camera image
-            val cameraImage = arFrame.acquireCameraImage()
-
-            val baOutputStream = createByteArrayOutputStream(cameraImage)
-
-            // Release the image
-            cameraImage.close()
-
-            val imageBytes: ByteArray = baOutputStream.toByteArray()
+            if(forceAccept){
+                baOutputStream = acquireFrameImage(arFrame)
+            }
+            forceAccept = false
+            val imageBytes: ByteArray = baOutputStream!!.toByteArray()
             val imageBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                 .rotate(getImageRotationDegrees(context))
             val data = getFileDataFromDrawable(imageBitmap)
@@ -42,7 +44,7 @@ class FMUtility {
             return data
         }
 
-        fun createByteArrayOutputStream(cameraImage: Image): ByteArrayOutputStream {
+        private fun createByteArrayOutputStream(cameraImage: Image): ByteArrayOutputStream {
             //The camera image received is in YUV YCbCr Format. Get buffers for each of the planes and use
             // them to create a new byte array defined by the size of all three buffers combined
             val cameraPlaneY = cameraImage.planes[0].buffer
@@ -212,6 +214,33 @@ class FMUtility {
                         (translation[1] - previousTranslation[1]).pow(2) +
                         (translation[2] - previousTranslation[2]).pow(2)
             )
+        }
+
+        /**
+         * Acquires the image from the ARCore frame catching all
+         * exceptions that could happen during localizing session
+         * @param arFrame: Frame
+         * @return ByteArrayOutputStream or null in case of exception
+         */
+        fun acquireFrameImage(arFrame: Frame): ByteArrayOutputStream? {
+            try {
+                val cameraImage = arFrame.acquireCameraImage()
+                arFrame.acquireCameraImage().close()
+
+                val baOutputStream = createByteArrayOutputStream(cameraImage)
+                // Release the image
+                cameraImage.close()
+                return baOutputStream
+            } catch (e: NotYetAvailableException) {
+                Log.e(TAG, "FrameNotYetAvailable")
+            } catch (e: DeadlineExceededException) {
+                Log.e(TAG, "DeadlineExceededException")
+            }
+            return null
+        }
+
+        fun setFrame(baOutputStream: ByteArrayOutputStream?) {
+            this.baOutputStream = baOutputStream
         }
     }
 

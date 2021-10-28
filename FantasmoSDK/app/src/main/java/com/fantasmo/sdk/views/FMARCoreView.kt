@@ -45,7 +45,6 @@ class FMARCoreView(
     var anchored = false
 
     fun setupARSession() {
-        Log.d(TAG, "Setting ARCore Session")
         surfaceView = arLayout.findViewWithTag("SurfaceView")
         displayRotationHelper = DisplayRotationHelper(context)
         trackingStateHelper = TrackingStateHelper(context as Activity?)
@@ -130,11 +129,6 @@ class FMARCoreView(
         val cameraConfigsList: List<CameraConfig> = arSession!!.getSupportedCameraConfigs(filter)
         for (currentCameraConfig in cameraConfigsList) {
             val cpuImageSize: Size = currentCameraConfig.imageSize
-            val gpuTextureSize: Size = currentCameraConfig.textureSize
-            Log.d(
-                TAG,
-                "Available CameraConfigs: CPU image size:$cpuImageSize GPU texture size:$gpuTextureSize"
-            )
             if (cpuImageSize.width > selectedSize.width && cpuImageSize.height <= 1080) {
                 selectedSize = cpuImageSize
                 selectedCameraConfig = cameraConfigsList.indexOf(currentCameraConfig)

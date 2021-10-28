@@ -2,6 +2,7 @@ package com.fantasmo.sdk.filters
 
 import android.content.Context
 import android.os.Build
+import com.fantasmo.sdk.FMUtility
 import com.google.ar.core.Frame
 
 /**
@@ -12,10 +13,10 @@ class FMInputQualityFilter(context: Context) {
     private val TAG = "FMInputQualityFilter"
 
     // the last time a frame was accepted
-    var lastAcceptTime: Long = System.nanoTime()
+    private var lastAcceptTime: Long = System.nanoTime()
 
     // number of seconds after which we force acceptance
-    var acceptanceThreshold = 1.0
+    private var acceptanceThreshold = 1.0
 
     /**
      * List of filter rules to apply on frame received.
@@ -49,6 +50,7 @@ class FMInputQualityFilter(context: Context) {
      */
     fun accepts(arFrame: Frame): FMFrameFilterResult {
         if (shouldForceAccept()) {
+            FMUtility.forceAccept = true
             lastAcceptTime = System.nanoTime()
             return FMFrameFilterResult.Accepted
         } else {

@@ -6,13 +6,10 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Build
 import android.renderscript.*
-import android.util.Log
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.utilities.MovingAverage
 import com.google.ar.core.Frame
-import com.google.ar.core.exceptions.DeadlineExceededException
-import com.google.ar.core.exceptions.NotYetAvailableException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -27,8 +24,6 @@ import kotlin.math.sqrt
  */
 @RequiresApi(Build.VERSION_CODES.KITKAT)
 class FMBlurFilter(private val context: Context) : FMFrameFilter {
-
-    private val TAG = "FMBlurFilter"
 
     private val laplacianMatrix = floatArrayOf(
         0.0f, 1.0f, 0.0f,
@@ -52,7 +47,7 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
      * @return Accepts frame or Rejects frame with MovingTooFast failure
      */
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
-        val baOutputStream = acquireFrameImage(arFrame)
+        val baOutputStream = FMUtility.acquireFrameImage(arFrame)
         GlobalScope.launch(Dispatchers.Default) { // launches coroutine in cpu thread
             variance = calculateVariance(baOutputStream)
         }
@@ -78,8 +73,10 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
         }
 
         return if (isBlurry) {
+            FMUtility.setFrame(null)
             FMFrameFilterResult.Rejected(FMFilterRejectionReason.IMAGETOOBLURRY)
         } else {
+            FMUtility.setFrame(baOutputStream)
             FMFrameFilterResult.Accepted
         }
     }
@@ -207,28 +204,5 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
         }
 
         return sqrt(stdDevR / pixels.size) * 100
-    }
-
-    /**
-     * Acquires the image from the ARCore frame catching all
-     * exceptions that could happen during localizing session
-     * @param arFrame: Frame
-     * @return ByteArrayOutputStream or null in case of exception
-     */
-    private fun acquireFrameImage(arFrame: Frame): ByteArrayOutputStream? {
-        try {
-            val cameraImage = arFrame.acquireCameraImage()
-            arFrame.acquireCameraImage().close()
-
-            val baOutputStream = FMUtility.createByteArrayOutputStream(cameraImage)
-            // Release the image
-            cameraImage.close()
-            return baOutputStream
-        } catch (e: NotYetAvailableException) {
-            Log.e(TAG, "FrameNotYetAvailable")
-        } catch (e: DeadlineExceededException) {
-            Log.e(TAG, "DeadlineExceededException")
-        }
-        return null
     }
 }
