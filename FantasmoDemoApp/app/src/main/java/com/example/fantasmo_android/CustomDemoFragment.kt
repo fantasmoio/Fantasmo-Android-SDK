@@ -149,12 +149,9 @@ class CustomDemoFragment : Fragment() {
 
         useOwnLocationProvider()
 
-        if (fmParkingView.visibility == View.GONE) {
-            mapButton.visibility = View.VISIBLE
-            fmParkingView.visibility = View.VISIBLE
-            controlsLayout.visibility = View.GONE
-            exitButton.visibility = View.VISIBLE
-        }
+        mapButton.visibility = View.VISIBLE
+        controlsLayout.visibility = View.GONE
+        exitButton.visibility = View.VISIBLE
     }
 
     private fun handleQRView() {
@@ -183,12 +180,9 @@ class CustomDemoFragment : Fragment() {
         fmParkingView.dismiss()
         googleMapsManager.unsetAnchor()
 
-        if (fmParkingView.visibility == View.VISIBLE) {
-            fmParkingView.visibility = View.GONE
-            exitButton.visibility = View.GONE
-            controlsLayout.visibility = View.VISIBLE
-            fmLocalizeView.visibility = View.GONE
-        }
+        exitButton.visibility = View.GONE
+        controlsLayout.visibility = View.VISIBLE
+        fmLocalizeView.visibility = View.GONE
     }
 
     /**
