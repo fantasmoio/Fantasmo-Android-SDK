@@ -13,9 +13,23 @@ Add the .aar library file to your app and make sure the folder it's added in the
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8'
     implementation 'com.android.volley:volley:1.2.0'
     implementation 'com.google.code.gson:gson:2.8.6'
-    implementation 'com.google.ar:core:1.23.0'
+    implementation 'androidx.core:core-ktx:1.3.2'
+
+    // ARCore
+    implementation 'com.google.ar:core:1.27.0'
     implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.17.1'
+
+    // Location Services
     implementation 'com.google.android.gms:play-services-location:18.0.0'
+
+    // Barcode model dependencies
+    implementation 'com.google.mlkit:barcode-scanning:17.0.0'
+
+    // Layouts
+    implementation 'androidx.appcompat:appcompat:1.3.1'
+    implementation 'com.google.android.material:material:1.4.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
+    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.1.0'
 
 ### Building and Importing
 
@@ -24,174 +38,220 @@ The Fantasmo SDK .aar file can be imported directly into a project.
 
 ## Requirements
 
-- Android version 4.0+
+- Android version 4.1+
 - Android Studio 4.1.2+
 
 ## Functionality
 
-### Localization
-
-Camera-based localization is the process of determining the global position of the device camera from an image. Image frames are received from the client app and sent to a server for computation. The server computation time is approximately 900 ms. The full round trip time is then dictated by latency of the connection.
+Camera-based localization is the process of determining the global position of the device camera from an image. Image frames are acquired from an active `ARSession` and sent to a server for computation. The server computation time is approximately 900 ms. The full round trip time is then dictated by latency of the connection.
 
 Since the camera will likely move after the moment at which the image frame is captured, it is necessary to track the motion of the device continuously during localizaiton to determine the position of the device at the time of response. Tracking is provided by `ARSession`. Conventiently, it is then possible to determine the global position of the device at any point in the tracking session regardless of when the image was captured (though you may incur some drift after excessive motion).
-
-### Anchors
-
-Localization determines the position of the camera at a point in time. If it is desired to track the location of an object besides the camera itself (e.g., a scooter), then it is possible to set an anchor point for that object. When an anchor is set, the location update will provide the location of the anchor instead of the camera. The anchor position is determined by applying the inverse motion since the anchor was set until the localization was request was made. 
-
-### Semantic Zones
-
-The utility of precise localization is only as useful as the precision of the underlying map data. Semantic zones (e.g., "micro-geofences") allow your application to make contextual decisions about operating in the environment. 
-
-When a position is found that is in a semantic zone, the server will report the zone type and ID. The zone types are as follows:
-
-+ Street
-+ Sidewalk
-+ Furniture
-+ Crosswalk
-+ Access Ramp
-+ Mobility parking
-+ Auto parking
-+ Bus stop
-+ Planter
-
 
 ## Usage
 
 ### Quick Start 
 
 Try out the `FantasmoDemoApp` project or implement the code below. 
-
-    fmLocationManager = context?.let { FMLocationManager(it.applicationContext) }!!
-    
+   
     /**
      * Listener for the Fantasmo SDK Location results.
      */
-    private val fmLocationListener: FMLocationListener =
-        object : FMLocationListener {
-            override fun locationManager(error: ErrorResponse, metadata: Any?) {
+    private val fmParkingViewController: FMParkingViewProtocol =
+        object : FMParkingViewProtocol {
+            override fun fmParkingView(qrCode: String, shouldContinue: (Boolean) -> Unit) {
+                // Handle QR Code result
+            }
+
+            override fun fmParkingView(behavior: FMBehaviorRequest) {
+                // Handle Behavior Request
+            }
+
+            override fun fmParkingView(result: FMLocationResult) {
+                // Handle localization result
+            }
+
+            override fun fmParkingView(error: ErrorResponse, metadata: Any?) {
                 // Handle error
             }
+        }
 
-            override fun locationManager(result: FMLocationResult) {
-                // Handle location update
+    fmParkingView = findViewById(R.id.fmParkingView)
+
+    // Connect the FMParkingView Controller to FMParkingView
+    fmParkingView.fmParkingViewController = fmParkingViewController
+
+    // Assign an accessToken to the FMParkingView
+    fmParkingView.accessToken = "API_KEY"
+
+    // Present FMParkingView with a sessionId
+    val sessionId = UUID.randomUUID().toString()
+    fmParkingView.connect(sessionId)
+
+And add this to your `layout.xml` file:
+
+    <com.fantasmo.sdk.views.FMParkingView
+        android:id="@+id/fmParkingView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+    </com.fantasmo.sdk.views.FMParkingView>
+
+### Checking Availability
+
+Before attempting to park and localize with Fantasmo SDK, you should first check if parking is available in the user's current location. You can do this with the method `fmParkingView.isParkingAvailable(latitude: Double, longitude: Double, onCompletion:(Boolean) → Unit)` passing a latitude and longitude of the location. The result block is called with a boolean indicating whether or not the user is near a mapped parking space.
+
+    fmParkingView.isParkingAvailable(latitude, longitude) { isParkingAvailable: Boolean
+            if (isParkingAvailable) {
+                // Create and present FMParkingView here
+            } else {
+                Toast.makeText(
+                    context?.applicationContext,
+                    "No mapped parking spaces nearby.",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
-    
-    // Connect the FMLocationManager from Fantasmo SDK
-    fmLocationManager.connect(
-        "API_KEY",
-        fmLocationListener
-    )
 
-    // Start getting location updates
-    fmLocationManager.startUpdatingLocation("AppSessionIdExample")
-    
+### Providing a `sessionId`
+
+The `sessionId` parameter allows you to associate localization results with your own session identifier. Typically this would be a UUID string, but it can also follow your own format. For example, a scooter parking session might take multiple localization attempts. For analytics and billing purposes, this identifier allows you to link multiple attempts with a single parking session.
+
 ### Initialization
 
-The location manager is accessed through a initialized instance.  
+The FMParkingView is initialized as long as you import it to your `layout.xml` file: 
 
-    var fmLocationManager = context?.let { FMLocationManager(it.applicationContext) }!!
-    
-    // Connect the FMLocationManager from Fantasmo SDK
-    fmLocationManager.connect(
-        "API_KEY",
-        fmLocationListener
-    )
-    
-### Localizing 
+    <com.fantasmo.sdk.views.FMParkingView
+        android:id="@+id/fmParkingView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+    </com.fantasmo.sdk.views.FMParkingView>
 
-To have location updates, the client app must update the device GPS coordinates for the SDK to use. It should be done using the following call:
+After that, when you inflate the layout of your App, initialize the FMParkingView with `findViewById` and call with it's registered id (e.g. `fmParkingView = yourView.findViewById(R.id.fmParkingView)`). After that, it should be ready to present a camera preview when you run the App.
 
-    fun setLocation(latitude: Double, longitude: Double)
-    
-To start location updates, the client must also provide an `appSessionId`, which is an identifier that will be used for billing and tracking an entire parking session:
-
-    fmLocationManager.startUpdatingLocation(appSessionId: String) 
-
-Image frames will be continuously captured and sent to the server for localization.
-
-To stop location updates:
-
-    fmLocationManager.stopUpdatingLocation()
-
-Location events are provided through `FMLocationListener`. Confidence in the location result increases during successive updates. Clients can choose to stop location updates when a desired confidence threshold is reached.
-
-    enum class FMResultConfidence{
-        LOW,
-        MEDIUM,
-        HIGH
-    }
-
-    class FMLocationResult(
-        var location: Location,
-        var confidence: FMResultConfidence,
-        var zones: List<FMZone>
-    )
-
-    /**
-     * Listener for the Fantasmo SDK Location results.
-     */
-    private val fmLocationListener: FMLocationListener =
-        object : FMLocationListener {
-            override fun locationManager(error: ErrorResponse, metadata: Any?) {
-                // Handle error
-            }
-            override fun locationManager(result: FMLocationResult) {
-                // Handle location update
-            }
-        }
-
-### Behaviors
-
-To maximize localization quality, camera input is filtered against common problems. Camera input filtering, tests each frame against ARCore tracking issues, extreme camera tilt angles, blurred images and fast and slow motion by the user. In order to enable this feature, you should start localizing using the following call. By entering `true` value on `filtersEnabled` it will enable the behaviors described below. 
-
-    // Start getting location updates
-    fmLocationManager.startUpdatingLocation(appSessionId: String, filtersEnabled: Boolean)
+**Important:** Since the `FMParkingView` is ARCore based, you should call the `fmParkingView` throughout your app lifecycle. We provide `onResume()`, `onPause()` and `onDestroy()` methods and you should invoke them by calling, for example, `fmParkingView.onResume()` on your App's `onResume()` method.
 
 
-The designated `FMLocationListener` will be called with behavior requests intended to alleviate such problems.
+### Providing Location Updates
 
-    private val fmLocationListener: FMLocationListener = {
-        object : FMLocationListener {
-            fun locationManager(didRequestBehavior: FMBehaviorRequest){
-                // Handle behavior update
-            }
+By default, during localization the `FMParkingView` uses a `LocationManager` internally to get automatic updates of the device's location. If you would like to provide your own location updates, you can set the `usesInternalLocationManager` property to false and manually call `updateLocation(latitude: Double, longitude: Double)` with each update to the location.
+
+    fmParkingView.connect(sessionId)
+    fmParkingView.usesInternalLocationManager = false
+
+    // create your own Location Manager
+    val locationRequest = LocationRequest.create()
+    locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+    locationRequest.smallestDisplacement = 1f
+    locationRequest.fastestInterval = locationInterval
+    locationRequest.interval = locationInterval
+
+    val locationCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            // notify the FMParkingView of the location update
+            fmParkingView.updateLocation(locationResult.latitude, locationResult.longitude)      
         }
     }
 
+    fusedLocationClient.requestLocationUpdates(
+        locationRequest,
+        locationCallback,
+        Looper.myLooper()!!
+    )
 
-The following behaviors are currently requested:
+If an error occurs you should check that you're correctly providing the location updates, or if you're using the internal location manager, that the user has given permission to access the device's location.
 
-    enum class FMBehaviorRequest(val displayName: String) {
-        TILTUP("Tilt your device up"),
-        TILTDOWN("Tilt your device down"),
-        PANAROUND("Pan around the scene"),
-        PANSLOWLY("Pan more slowly");
+### QR Codes
+
+Scanning a QR code is the first and only step before localizing. Because we are trying to localize a vehicle and not the device itself, we need a way to determine the vehicle's position relative to the device. This is accomplished by setting an anchor in the `ARSession` and it's done automatically when the user scans a QR code. The SDK doesn't care about the contents of the QR code and by default will start localizing after any QR code is detected. If your app does care about the contents of the QR code, they can be validated by implementing the `FMParkingViewController` method:
+
+    override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
+        // Optional validation of the QR code can be done here
+        onValidQRCode(true)
     }
 
-When notified, your application should prompt the user to undertake the remedial behavior. You may use our enum cases to map to your own verbiage or simply rely on our `.rawValue` strings.
+**Important:** If you implement this method, you must call the `onValidQRCode` with a boolean value. A value of `true` indicates the QR code is valid and that localization should start. Passing `false` to this block indicates the code is invalid and instructs the parking view to scan for more QR codes. This block may be called synchronously or asynchronously but must be done so on the main queue.
 
-### Anchors
+### Localizing
 
-In order to get location updates for an anchor, set the anchor before
-starting or during location updates. 
+During localization, frames are continuously captured and sent to the server. Filtering logic in the SDK will automatically select the best frames, and it will issue behavior requests to the user to help improve the incoming images. Confidence in the location result increases during successive updates and clients can choose to stop localizing by dismissing the view, when a desired confidence level is reached.
 
-    val currentArFrame = arSceneView.arFrame
-    currentArFrame?.let { fmLocationManager.setAnchor(it) }
+    override fun fmParkingView(result: FMLocationResult) {
+        // Got a localization result
+        // Localization will continue until you dismiss the view
+        // You should decide on acceptable criteria for a result, one way is by checking the `confidence` value
+        if (result.confidence == FMResultConfidence.LOW) {
+            return
+        }
+        val coordinates = result.location.coordinate
+        Log.d("Coordinates","$coordinates")
+        
+        // Medium or high confidence, dismiss to stop localizing
+        fmParkingView.dismiss()
+    }
 
-To return to device localization, simply unset the anchor point. 
+Localization errors may occur but the localization process will not stop and it is still possible to get a successful localization result. You should decide on an acceptable threshold for errors and only stop localizing when it is reached, again by dismissing the view.
 
-    fmLocationManager.unsetAnchor()
+    override fun fmParkingView(error: ErrorResponse, metadata: Any?) {
+        // Got a localization error
+        errorCount += 1
+        if (errorCount < 5) {
+            return
+        }
+        // Too many errors, dismiss to stop localizing
+        fmParkingView.dismiss()
+    }
 
-### Simulation Mode
+### Customizing UI
 
-Since it's not always possible to be onsite for testing, a simulation mode is provided
-queries the localization service with stored images. 
+The UI for both scanning QR codes and localizing can be completely customized by creating your own implementations of the view protocols.
 
-In order to activate simulation mode, set the flag and choose a semantic zone type to simulate. 
+    private var fmQrScanningViewController: FMQRScanningViewProtocol =
+        object : FMQRScanningViewProtocol {
+            override fun didStartQRScanning() {}
+            override fun didScanQRCode(result: String) {}
+            override fun didStopQRScanning() {}
+        }
 
-    fmLocationManager.isSimulation = true
+       private var fmLocalizingViewController: FMLocalizingViewProtocol =
+        object : FMLocalizingViewProtocol {
+            override fun didStartLocalizing() {}
+            override fun didRequestLocalizationBehavior(behavior: FMBehaviorRequest) {}
+            override fun didReceiveLocalizationResult(result: FMLocationResult) {}
+            override fun didReceiveLocalizationError(error: ErrorResponse, errorMetadata: Any?) {}
+        }
+    
+Once you've created view controllers for the above protocols, simply register them with your `FMParkingView` instance before presenting it, otherwise the default ones will overpass these ones.
+ 
+    fmParkingView.registerQRScanningViewController(fmQrScanningViewController)
+    fmParkingView.registerLocalizingViewController(fmLocalizingViewController)
+
+### Behavior Requests
+
+To help the user localize successfully and to maximize the result quality, camera input is filtered against common problems and behavior requests are displayed to the user. These are messages explaining what the user should be doing with their device in order to localize properly. For example, if the users device is aimed at the ground, you may receive a `"Tilt your device up"` request.
+
+If you're using the default localization UI, these requests are already displayed to the user. If you've registered your own custom UI, you should use the `didRequestLocalizationBehavior(behavior: FMBehaviorRequest)` method of `FMLocalizingViewProtocol` to display these requests to users.
+
+    class MyCustomLocalizingView: FMLocalizingViewProtocol {
+    
+        var label: TextView
+    
+        override fun didRequestLocalizationBehavior(behavior: FMBehaviorRequest) {
+            // display the requested behavior to the user
+            label.text = behavior.displayName
+        }
+    }
+
+As of right now behavior requests are only available in English. More languages coming soon.
+
+### Testing and Debugging
+
+Since it's not always possible to be onsite for testing, a simulation mode is provided to make test localization queries.
+
+    fmParkingView.isSimulation = true
+
+And for debugging, it's sometimes useful to show the statistics view to see what's happening under the hood.
+
+    fmParkingView.showStatistics = true
+
     
 ### Overrides
 
