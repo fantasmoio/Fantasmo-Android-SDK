@@ -25,6 +25,7 @@ import com.fantasmo.sdk.models.FMZone
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.MapView
 import com.google.ar.core.*
+import com.google.ar.core.exceptions.CameraNotAvailableException
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.ux.ArFragment
 import java.util.*
@@ -39,7 +40,7 @@ class ARCoreFragment : Fragment() {
 
     private lateinit var arSceneView: ArSceneView
     private lateinit var arFragment: ArFragment
-    private lateinit var arSession: Session
+    private var arSession: Session? = null
     private lateinit var currentView: View
 
     private lateinit var filterRejectionTv: TextView
@@ -108,6 +109,7 @@ class ARCoreFragment : Fragment() {
         qrEnabler = currentView.findViewById(R.id.qrEnabler)
         urlView = currentView.findViewById(R.id.qrResultView)
         qrReader = QRCodeReader(urlView)
+        onConfigureSession()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -132,7 +134,7 @@ class ARCoreFragment : Fragment() {
             arFragment.planeDiscoveryController.setInstructionView(null)
             arSceneView = arFragment.arSceneView
 
-            configureARSession()
+            arSceneView.setupSession(arSession)
             val scene = arSceneView.scene
             scene.addOnUpdateListener { frameTime ->
                 run {
@@ -235,8 +237,6 @@ class ARCoreFragment : Fragment() {
      * enable auto focus for ARSceneView.
      */
     private fun configureARSession() {
-        arSession = Session(context)
-
         val config = Config(arSession)
         config.focusMode = Config.FocusMode.AUTO
         config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
@@ -246,7 +246,7 @@ class ARCoreFragment : Fragment() {
         var selectedCameraConfig = 0
 
         val filter = CameraConfigFilter(arSession)
-        val cameraConfigsList: List<CameraConfig> = arSession.getSupportedCameraConfigs(filter)
+        val cameraConfigsList: List<CameraConfig> = arSession!!.getSupportedCameraConfigs(filter)
         for (currentCameraConfig in cameraConfigsList) {
             val cpuImageSize: Size = currentCameraConfig.imageSize
             val gpuTextureSize: Size = currentCameraConfig.textureSize
@@ -259,11 +259,10 @@ class ARCoreFragment : Fragment() {
                 selectedCameraConfig = cameraConfigsList.indexOf(currentCameraConfig)
             }
         }
-        arSession.cameraConfig = cameraConfigsList[selectedCameraConfig]
-        arSession.configure(config)
-        arSceneView.setupSession(arSession)
+        arSession!!.cameraConfig = cameraConfigsList[selectedCameraConfig]
+        arSession!!.configure(config)
 
-        Log.d(TAG, arSceneView.session?.config.toString())
+        Log.d(TAG, arSession?.config.toString())
     }
 
     /**
@@ -415,14 +414,43 @@ class ARCoreFragment : Fragment() {
      * Release heap allocation of the AR session
      * */
     override fun onDestroy() {
-        arSession.close()
+        if (arSession != null) {
+            arSession!!.close()
+            arSession = null
+        }
         googleMapView.onDestroy()
         super.onDestroy()
     }
 
     override fun onResume() {
         super.onResume()
+        onConfigureSession()
         googleMapView.onResume()
+    }
+
+    private fun onConfigureSession() {
+        if (arSession == null) {
+            try {
+                // Create the session.
+                arSession = Session(this.context)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        // Note that order matters - see the note in onPause(), the reverse applies here.
+        try {
+            configureARSession()
+            // To record a live camera session for later playback, call
+            // `session.startRecording(recorderConfig)` at anytime. To playback a previously recorded AR
+            // session instead of using the live camera feed, call
+            // `session.setPlaybackDataset(playbackDatasetPath)` before calling `session.resume()`. To
+            // learn more about recording and playback, see:
+            // https://developers.google.com/ar/develop/java/recording-and-playback
+            arSession!!.resume()
+        } catch (e: CameraNotAvailableException) {
+            return
+        }
     }
 
     override fun onStop() {
@@ -431,6 +459,9 @@ class ARCoreFragment : Fragment() {
     }
 
     override fun onPause() {
+        if (arSession == null) {
+            arSession!!.pause()
+        }
         googleMapView.onPause()
         super.onPause()
     }
