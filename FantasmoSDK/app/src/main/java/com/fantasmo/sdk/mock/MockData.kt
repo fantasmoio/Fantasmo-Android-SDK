@@ -14,6 +14,7 @@ import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.fantasmosdk.R
 import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.FMZone
+import com.fantasmo.sdk.network.FMLocalizationRequest
 import com.google.gson.Gson
 import java.io.ByteArrayOutputStream
 
@@ -43,7 +44,7 @@ class MockData {
                 params = parkingMockParameters()
 
                 val bitmap =
-                    BitmapFactory.decodeResource(context.resources, R.drawable.image_in_parking)
+                    BitmapFactory.decodeResource(context.resources, R.drawable.image_in_parking_paris)
                 jpegData = getFileDataFromDrawable(bitmap)
             } else {
                 params = streetMockParameters()
@@ -116,6 +117,42 @@ class MockData {
                 byteArrayOutputStream
             )
             return byteArrayOutputStream.toByteArray()
+        }
+
+        /**
+         * Return a simulated localization images from a known location.
+         * @param request: FMLocalizeRequest that contains Type of semantic zone to simulate
+         * @param context: App Context
+         * @return result: ByteArray containing encoded image data for query.
+         */
+        fun imageData(request: FMLocalizationRequest, context: Context): ByteArray {
+            return if (request.simulationZone == FMZone.ZoneType.PARKING) {
+                val bitmap =
+                    BitmapFactory.decodeResource(context.resources, R.drawable.image_in_parking)
+                getFileDataFromDrawable(bitmap)
+            } else {
+                val bitmap =
+                    BitmapFactory.decodeResource(context.resources, R.drawable.image_on_street)
+                return getFileDataFromDrawable(bitmap)
+            }
+        }
+
+        /**
+         * Return a simulated localization images from a known location.
+         * @param request: FMLocalizeRequest that contains Type of semantic zone to simulate
+         * @param context: App Context
+         * @return result: IntArray containing image resolution data for query.
+         */
+        fun getImageResolution(request: FMLocalizationRequest, context: Context): IntArray{
+            return if(request.simulationZone == FMZone.ZoneType.PARKING){
+                val bitmap =
+                    BitmapFactory.decodeResource(context.resources, R.drawable.image_in_parking)
+                intArrayOf(bitmap.height,bitmap.width)
+            }else{
+                val bitmap =
+                    BitmapFactory.decodeResource(context.resources, R.drawable.image_on_street)
+                intArrayOf(bitmap.height,bitmap.width)
+            }
         }
     }
 }
