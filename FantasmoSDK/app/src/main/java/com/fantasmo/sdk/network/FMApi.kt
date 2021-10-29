@@ -218,7 +218,7 @@ class FMApi(
             params["referenceFrame"] = gson.toJson(relativeOpenCVAnchorPose)
         }
 
-        Log.i(TAG, "getLocalizeParams: $params")
+        Log.i(TAG, "getLocalizeParams")
         return params
     }
 

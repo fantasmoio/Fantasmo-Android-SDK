@@ -25,7 +25,6 @@ import com.fantasmo.sdk.utilities.DeviceLocationListener
 import com.fantasmo.sdk.utilities.DeviceLocationManager
 import com.fantasmo.sdk.utilities.QRCodeScanner
 import com.fantasmo.sdk.utilities.QRCodeScannerListener
-import com.fantasmo.sdk.views.debug.FMStatisticsView
 
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
@@ -54,7 +53,7 @@ class FMParkingView @JvmOverloads constructor(
     private lateinit var appSessionId: String
 
     private lateinit var fmLocationManager: FMLocationManager
-    private var fmStatisticsView: FMStatisticsView
+    private var fmSessionStatisticsView: FMSessionStatisticsView
 
     // Default UI for the QR view
     private lateinit var fmQRScanningView: FMQRScanningView
@@ -80,7 +79,7 @@ class FMParkingView @JvmOverloads constructor(
         arLayout = getChildAt(0) as CoordinatorLayout
         fmARCoreView = FMARCoreView(arLayout, context)
         fmARCoreView.setupARSession()
-        fmStatisticsView = FMStatisticsView(arLayout)
+        fmSessionStatisticsView = FMSessionStatisticsView(arLayout)
         setupFMLocationManager()
     }
 
@@ -182,7 +181,7 @@ class FMParkingView @JvmOverloads constructor(
             fmQRScanningView.hide()
             fmLocalizingView.hide()
         }
-        fmStatisticsView.reset()
+        fmSessionStatisticsView.reset()
         this.visibility = View.GONE
     }
 
@@ -310,7 +309,7 @@ class FMParkingView @JvmOverloads constructor(
                     latitude,
                     longitude
                 )
-                fmStatisticsView.updateLocation(latitude, longitude)
+                fmSessionStatisticsView.updateLocation(latitude, longitude)
             } else {
                 Log.e(
                     TAG,
@@ -329,7 +328,7 @@ class FMParkingView @JvmOverloads constructor(
                 fmParkingViewController.fmParkingView(result)
                 fmLocalizingViewController.didReceiveLocalizationResult(result)
                 (context as Activity).runOnUiThread {
-                    fmStatisticsView.updateResult(result)
+                    fmSessionStatisticsView.updateResult(result)
                 }
             }
 
@@ -345,7 +344,7 @@ class FMParkingView @JvmOverloads constructor(
 
             override fun locationManager(didChangeState: FMLocationManager.State) {
                 (context as Activity).runOnUiThread {
-                    fmStatisticsView.updateState(didChangeState)
+                    fmSessionStatisticsView.updateState(didChangeState)
                 }
             }
 
@@ -355,7 +354,7 @@ class FMParkingView @JvmOverloads constructor(
                 rejections: FrameFilterRejectionStatistics
             ) {
                 (context as Activity).runOnUiThread {
-                    fmStatisticsView.updateStats(didUpdateFrame, info, rejections)
+                    fmSessionStatisticsView.updateStats(didUpdateFrame, info, rejections)
                 }
             }
         }
@@ -380,10 +379,8 @@ class FMParkingView @JvmOverloads constructor(
     private var arSessionListener: FMARSessionListener =
         object : FMARSessionListener {
             override fun localize(frame: Frame) {
-                // Localize current frame if not already localizing
-                if (fmLocationManager.state == FMLocationManager.State.LOCALIZING) {
-                    fmLocationManager.localize(frame)
-                }
+                // If localizing, pass the current AR frame to the location manager
+                fmLocationManager.session(frame)
             }
 
             override fun anchored(frame: Frame): Boolean {
@@ -406,7 +403,6 @@ class FMParkingView @JvmOverloads constructor(
             override fun qrCodeScan(frame: Frame) {
                 // Only read frame if the qrCodeReader is enabled and only if qrCodeReader is in reading mode
                 if (qrCodeReader.qrCodeReaderEnabled && qrCodeReader.state == QRCodeScanner.State.IDLE) {
-                    Log.d(TAG, "QR Code Scanning")
                     frame.let { qrCodeReader.processImage(it) }
                 }
             }
@@ -434,7 +430,7 @@ class FMParkingView @JvmOverloads constructor(
                     locationResult.latitude,
                     locationResult.longitude
                 )
-                fmStatisticsView.updateLocation(
+                fmSessionStatisticsView.updateLocation(
                     locationResult.latitude,
                     locationResult.longitude
                 )
