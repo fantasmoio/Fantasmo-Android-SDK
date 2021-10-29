@@ -89,24 +89,27 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
      * @return variance: blurriness value
      * */
     suspend fun calculateVariance(byteArrayFrame: ByteArray?): Double {
+        val reducedHeight = 480
+        val reducedWidth = 640
         if (byteArrayFrame == null) {
             return 0.0
         } else {
             val stdDev = GlobalScope.async {
 
-                val imageBitmap = BitmapFactory.decodeByteArray(byteArrayFrame, 0, byteArrayFrame.size)
+                val originalBitmap = BitmapFactory.decodeByteArray(byteArrayFrame, 0, byteArrayFrame.size)
+                val reducedBitmap = Bitmap.createScaledBitmap(originalBitmap, reducedWidth, reducedHeight, true)
                 val rs = RenderScript.create(context)
 
                 // Greyscale so we're only dealing with white <--> black pixels,
                 // this is so we only need to detect pixel luminosity
                 val greyscaleBitmap = Bitmap.createBitmap(
-                    imageBitmap.width,
-                    imageBitmap.height,
-                    imageBitmap.config
+                    reducedBitmap.width,
+                    reducedBitmap.height,
+                    reducedBitmap.config
                 )
                 val smootherInput = Allocation.createFromBitmap(
                     rs,
-                    imageBitmap,
+                    reducedBitmap,
                     Allocation.MipmapControl.MIPMAP_NONE,
                     Allocation.USAGE_SHARED
                 )
@@ -126,9 +129,9 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
                 // Run edge detection algorithm using a laplacian matrix convolution
                 // Apply 3x3 convolution to detect edges
                 val edgesBitmap = Bitmap.createBitmap(
-                    imageBitmap.width,
-                    imageBitmap.height,
-                    imageBitmap.config
+                    reducedBitmap.width,
+                    reducedBitmap.height,
+                    reducedBitmap.config
                 )
                 val greyscaleInput = Allocation.createFromBitmap(
                     rs,

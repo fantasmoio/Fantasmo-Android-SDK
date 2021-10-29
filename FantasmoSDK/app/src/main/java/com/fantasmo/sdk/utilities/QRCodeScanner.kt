@@ -35,14 +35,14 @@ class QRCodeScanner(
     private val TAG = QRCodeScanner::class.java.simpleName
 
     // This prevents the qrCodeReader to be overflowed with frames to analyze
-    enum class State{
+    private enum class State {
         QRCODEDETECTED,
         QRSCANNING,
         IDLE
     }
 
-    var qrCodeReaderEnabled: Boolean = false
-    var state = State.IDLE
+    private var qrCodeReaderEnabled: Boolean = false
+    private var state = State.IDLE
     private var imageWidth = 0
     private var imageHeight = 0
     private var qrFound = false
@@ -55,69 +55,73 @@ class QRCodeScanner(
     fun processImage(
         arFrame: Frame
     ) {
-        if(!qrCodeReaderEnabled && state == State.QRCODEDETECTED){
+        if (!qrCodeReaderEnabled && state == State.QRCODEDETECTED) {
             return
         }
-        state = State.QRSCANNING
-        // Note that if you know which format of barcode your app is dealing with, detection will be
-        // faster to specify the supported barcode formats one by one, e.g.
-        // BarcodeScannerOptions.Builder()
-        //     .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-        //     .build();
-        val options = BarcodeScannerOptions.Builder()
-            .setBarcodeFormats(
-                Barcode.FORMAT_QR_CODE)
-            .build()
-        val barcodeScanner: BarcodeScanner = BarcodeScanning.getClient(options)
+        // Only read frame if the qrCodeReader is enabled and only if qrCodeReader is in reading mode
+        if (canScanFrame()) {
+            state = State.QRSCANNING
+            // Note that if you know which format of barcode your app is dealing with, detection will be
+            // faster to specify the supported barcode formats one by one, e.g.
+            // BarcodeScannerOptions.Builder()
+            //     .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+            //     .build();
+            val options = BarcodeScannerOptions.Builder()
+                .setBarcodeFormats(
+                    Barcode.FORMAT_QR_CODE
+                )
+                .build()
+            val barcodeScanner: BarcodeScanner = BarcodeScanning.getClient(options)
 
-        val byteBuffers = acquireFrameImage(arFrame)
-        GlobalScope.launch(Dispatchers.Default){
-            if(byteBuffers == null){
-                state = State.IDLE
-            }else{
-                val baOutputStream = createByteArrayOutputStream(byteBuffers[0],byteBuffers[1],byteBuffers[2])
-                val imageBytes: ByteArray = baOutputStream.toByteArray()
-                val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                val inputImage =
-                    InputImage.fromBitmap(bitmap!!, 0)
+            val byteBuffers = acquireFrameImage(arFrame)
+            GlobalScope.launch(Dispatchers.Default) {
+                if (byteBuffers == null) {
+                    state = State.IDLE
+                } else {
+                    val baOutputStream =
+                        createByteArrayOutputStream(byteBuffers[0], byteBuffers[1], byteBuffers[2])
+                    val imageBytes: ByteArray = baOutputStream.toByteArray()
+                    val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                    val inputImage =
+                        InputImage.fromBitmap(bitmap!!, 0)
 
-                barcodeScanner.process(inputImage)
-                    .addOnSuccessListener { barcodes ->
-                        barcodes.forEach {
-                            val value = it.rawValue!!
-                            Log.d(TAG, value)
-                            displayQRScanResult(value)
+                    barcodeScanner.process(inputImage)
+                        .addOnSuccessListener { barcodes ->
+                            barcodes.forEach {
+                                val value = it.rawValue!!
+                                Log.d(TAG, value)
+                                displayQRScanResult(value)
+                            }
                         }
-                    }
-                    .addOnFailureListener {
-                        Log.e(TAG, it.message!!)
-                    }.addOnCompleteListener {
-                        // When the image is from CameraX analysis use case, must call image.close() on received
-                        // images when finished using them. Otherwise, new images may not be received or the camera
-                        // may stall.
-                        state = if(qrFound){
-                            qrCodeReaderEnabled = false
-                            State.QRCODEDETECTED
-                        }else{
-                            qrCodeReaderEnabled = true
-                            State.IDLE
+                        .addOnFailureListener {
+                            Log.e(TAG, it.message!!)
+                        }.addOnCompleteListener {
+                            // When the image is from CameraX analysis use case, must call image.close() on received
+                            // images when finished using them. Otherwise, new images may not be received or the camera
+                            // may stall.
+                            state = if (qrFound) {
+                                qrCodeReaderEnabled = false
+                                State.QRCODEDETECTED
+                            } else {
+                                qrCodeReaderEnabled = true
+                                State.IDLE
+                            }
                         }
-                    }
+                }
             }
         }
     }
 
-    private fun displayQRScanResult(value: String){
+    private fun displayQRScanResult(value: String) {
         qrFound = true
         val stringScan = "QRCodeDetected with value: $value"
         fmQrScanningViewController.didScanQRCode(stringScan)
-        fmParkingViewController.fmParkingView(value){
-            if(it){
-                Log.d(TAG,"QR CODE ACCEPTED")
+        fmParkingViewController.fmParkingView(value) {
+            if (it) {
+                Log.d(TAG, "QR CODE ACCEPTED")
                 qrCodeScannerListener.deployLocalizing()
-            }
-            else{
-                Log.d(TAG,"QR CODE REFUSED")
+            } else {
+                Log.d(TAG, "QR CODE REFUSED")
                 qrFound = false
                 qrCodeScannerListener.deployQRScanning()
             }
@@ -176,13 +180,22 @@ class QRCodeScanner(
             imageHeight = cameraImage.height
             // Release the image
             cameraImage.close()
-            return arrayOf(cameraPlaneY,cameraPlaneU,cameraPlaneV)
+            return arrayOf(cameraPlaneY, cameraPlaneU, cameraPlaneV)
         } catch (e: NotYetAvailableException) {
             Log.e(TAG, "FrameNotYetAvailable")
         } catch (e: DeadlineExceededException) {
             Log.e(TAG, "DeadlineExceededException")
         }
         return null
+    }
+
+    fun startQRScanner() {
+        qrCodeReaderEnabled = true
+        state = State.IDLE
+    }
+
+    private fun canScanFrame(): Boolean {
+        return (qrCodeReaderEnabled && state == State.IDLE)
     }
 }
 

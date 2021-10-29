@@ -174,8 +174,8 @@ class FMParkingView @JvmOverloads constructor(
             fmARCoreView.connected = false
             fmLocationManager.stopUpdatingLocation()
 
-            if (fmARCoreView.anchored) {
-                fmARCoreView.anchored = false
+            if (fmARCoreView.isAnchored()) {
+                fmARCoreView.unsetAnchor()
                 fmLocationManager.unsetAnchor()
             }
             fmQRScanningView.hide()
@@ -233,10 +233,8 @@ class FMParkingView @JvmOverloads constructor(
             return
         }
         state = State.QRSCANNING
-        fmARCoreView.anchorIsChecked = true
-        fmARCoreView.anchored = false
-        qrCodeReader.qrCodeReaderEnabled = true
-        qrCodeReader.state = QRCodeScanner.State.IDLE
+        fmARCoreView.startAnchor()
+        qrCodeReader.startQRScanner()
         fmQrScanningViewController.didStartQRScanning()
         fmParkingViewController.fmParkingViewDidStartQRScanning()
     }
@@ -380,7 +378,9 @@ class FMParkingView @JvmOverloads constructor(
         object : FMARSessionListener {
             override fun localize(frame: Frame) {
                 // If localizing, pass the current AR frame to the location manager
-                fmLocationManager.session(frame)
+                if(state == State.LOCALIZING){
+                    fmLocationManager.session(frame)
+                }
             }
 
             override fun anchored(frame: Frame): Boolean {
@@ -401,8 +401,8 @@ class FMParkingView @JvmOverloads constructor(
             }
 
             override fun qrCodeScan(frame: Frame) {
-                // Only read frame if the qrCodeReader is enabled and only if qrCodeReader is in reading mode
-                if (qrCodeReader.qrCodeReaderEnabled && qrCodeReader.state == QRCodeScanner.State.IDLE) {
+                // If qrScanning, pass the current AR frame to the qrCode reader
+                if(state == State.QRSCANNING){
                     frame.let { qrCodeReader.processImage(it) }
                 }
             }

@@ -228,7 +228,7 @@ class FMLocationManager(private val context: Context) {
      */
     private fun createLocalizationRequest(frame: Frame): FMLocalizationRequest {
         val frameEvents = FMFrameEvent(
-            frameEventAccumulator.excessiveTiltFrameCount + frameEventAccumulator.insufficientTiltFrameCount,
+            (frameEventAccumulator.excessiveTiltFrameCount + frameEventAccumulator.insufficientTiltFrameCount),
             frameEventAccumulator.excessiveBlurFrameCount,
             frameEventAccumulator.excessiveMotionFrameCount,
             frameEventAccumulator.insufficientFeatures,
@@ -291,7 +291,7 @@ class FMLocationManager(private val context: Context) {
             behaviorRequester.processResult(filterResult)
             accumulatedARCoreInfo.update(arFrame)
             if (filterResult == FMFrameFilterResult.Accepted) {
-                if(state == State.LOCALIZING){
+                if (state == State.LOCALIZING) {
                     localize(arFrame)
                 }
             } else {

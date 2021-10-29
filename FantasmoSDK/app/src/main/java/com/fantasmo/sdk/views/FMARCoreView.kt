@@ -40,9 +40,9 @@ class FMARCoreView(
     private lateinit var trackingStateHelper: TrackingStateHelper
 
     // Set anchor after QR code is read
-    var anchorIsChecked = false
+    private var anchorIsChecked = false
     // Result of anchoring
-    var anchored = false
+    private var anchored = false
 
     fun setupARSession() {
         surfaceView = arLayout.findViewWithTag("SurfaceView")
@@ -239,6 +239,19 @@ class FMARCoreView(
         return String.format("%.2f", cameraAttr?.get(0)) + ", " +
                 String.format("%.2f", cameraAttr?.get(1)) + ", " +
                 String.format("%.2f", cameraAttr?.get(2))
+    }
+
+    fun startAnchor() {
+        anchorIsChecked = true
+        anchored = false
+    }
+
+    fun isAnchored(): Boolean {
+        return anchored
+    }
+
+    fun unsetAnchor() {
+        anchored = true
     }
 }
 
