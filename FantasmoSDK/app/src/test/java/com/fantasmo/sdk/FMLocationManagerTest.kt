@@ -210,7 +210,7 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(cameraPose)
         `when`(frame.androidSensorPose).thenReturn(cameraPose)
 
-        assertEquals(true, fmLocationManager.shouldLocalize(frame))
+        assertEquals(true, fmLocationManager.session(frame))
     }
 
     @Test
@@ -257,7 +257,7 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
-        assertEquals(true, fmLocationManager.shouldLocalize(frame))
+        assertEquals(true, fmLocationManager.session(frame))
     }
 
     @Test
@@ -290,7 +290,7 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
-        assertEquals(false, fmLocationManager.shouldLocalize(frame))
+        assertEquals(false, fmLocationManager.session(frame))
     }
 
     // Localize Test Batch
@@ -539,7 +539,7 @@ class FMLocationManagerTest {
         }
 
         verify(spyFMLocationManager, times(1)).localize(frame)
-        verify(spyFMLocationManager, times(1)).shouldLocalize(frame)
+        verify(spyFMLocationManager, times(1)).session(frame)
         verify(spyFMLocationManager, times(2)).fmApi
         verify(spyFMApi2, times(1)).fmNetworkManager
     }
@@ -629,7 +629,7 @@ class FMLocationManagerTest {
         }
 
         verify(spyFMLocationManager, times(1)).localize(frame)
-        verify(spyFMLocationManager, times(1)).shouldLocalize(frame)
+        verify(spyFMLocationManager, times(1)).session(frame)
         verify(spyFMLocationManager, times(2)).fmApi
         verify(spyFMApi3, times(1)).fmNetworkManager
     }

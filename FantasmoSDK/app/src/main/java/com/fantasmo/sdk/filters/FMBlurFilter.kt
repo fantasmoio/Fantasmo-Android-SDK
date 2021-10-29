@@ -14,7 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -47,9 +46,9 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
      * @return Accepts frame or Rejects frame with MovingTooFast failure
      */
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
-        val baOutputStream = FMUtility.acquireFrameImage(arFrame)
+        val byteArrayFrame = FMUtility.acquireFrameImage(arFrame)
         GlobalScope.launch(Dispatchers.Default) { // launches coroutine in cpu thread
-            variance = calculateVariance(baOutputStream)
+            variance = calculateVariance(byteArrayFrame)
         }
         varianceAverager.addSample(variance)
 
@@ -76,7 +75,7 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
             FMUtility.setFrame(null)
             FMFrameFilterResult.Rejected(FMFilterRejectionReason.IMAGETOOBLURRY)
         } else {
-            FMUtility.setFrame(baOutputStream)
+            FMUtility.setFrame(byteArrayFrame)
             FMFrameFilterResult.Accepted
         }
     }
@@ -86,17 +85,16 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
      * Takes the frame and acquire the image from it and turns into greyscale
      * After that applies edge detection matrix to the greyscale image and
      * calculate variance from that
-     * @param arFrame: frame to be measure the variance
+     * @param byteArrayFrame: frame converted to ByteArray to measure the variance
      * @return variance: blurriness value
      * */
-    suspend fun calculateVariance(baOutputStream: ByteArrayOutputStream?): Double {
-        if (baOutputStream == null) {
+    suspend fun calculateVariance(byteArrayFrame: ByteArray?): Double {
+        if (byteArrayFrame == null) {
             return 0.0
         } else {
             val stdDev = GlobalScope.async {
 
-                val imageBytes: ByteArray = baOutputStream.toByteArray()
-                val imageBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                val imageBitmap = BitmapFactory.decodeByteArray(byteArrayFrame, 0, byteArrayFrame.size)
                 val rs = RenderScript.create(context)
 
                 // Greyscale so we're only dealing with white <--> black pixels,

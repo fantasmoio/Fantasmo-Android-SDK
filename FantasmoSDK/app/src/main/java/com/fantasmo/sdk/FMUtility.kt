@@ -22,21 +22,22 @@ import kotlin.math.*
 class FMUtility {
 
     companion object {
-        var forceAccept: Boolean = false
+        private var hasPassedBlurFilter: Boolean = false
         private val TAG = FMUtility::class.java.simpleName
-        private var baOutputStream : ByteArrayOutputStream? = null
+        private var frameToByteArray : ByteArray? = null
         /**
-         * Method to get the the AR Frame camera image data.
+         * Method to get the AR Frame camera image data.
          * @param arFrame the AR Frame to localize.
          * @return a ByteArray with the data of the [arFrame]
          */
         fun getImageDataFromARFrame(context: Context, arFrame: Frame): ByteArray {
-            if(forceAccept){
-                baOutputStream = acquireFrameImage(arFrame)
+            val localBa: ByteArray? = if(!hasPassedBlurFilter){
+                acquireFrameImage(arFrame)
+            }else{
+                frameToByteArray
             }
-            forceAccept = false
-            val imageBytes: ByteArray = baOutputStream!!.toByteArray()
-            val imageBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+
+            val imageBitmap = BitmapFactory.decodeByteArray(localBa, 0, localBa!!.size)
                 .rotate(getImageRotationDegrees(context))
             val data = getFileDataFromDrawable(imageBitmap)
 
@@ -222,7 +223,7 @@ class FMUtility {
          * @param arFrame: Frame
          * @return ByteArrayOutputStream or null in case of exception
          */
-        fun acquireFrameImage(arFrame: Frame): ByteArrayOutputStream? {
+        fun acquireFrameImage(arFrame: Frame): ByteArray? {
             try {
                 val cameraImage = arFrame.acquireCameraImage()
                 arFrame.acquireCameraImage().close()
@@ -230,7 +231,7 @@ class FMUtility {
                 val baOutputStream = createByteArrayOutputStream(cameraImage)
                 // Release the image
                 cameraImage.close()
-                return baOutputStream
+                return baOutputStream.toByteArray()
             } catch (e: NotYetAvailableException) {
                 Log.e(TAG, "FrameNotYetAvailable")
             } catch (e: DeadlineExceededException) {
@@ -239,8 +240,14 @@ class FMUtility {
             return null
         }
 
-        fun setFrame(baOutputStream: ByteArrayOutputStream?) {
-            this.baOutputStream = baOutputStream
+        /**
+         * This avoids frame being converted twice to ByteArray.
+         * Prevents outdated frames from throwing DeadlineExceededException
+         * after being analyzed on the BlurFilter
+         */
+        fun setFrame(byteArrayFrame: ByteArray?) {
+            hasPassedBlurFilter = byteArrayFrame != null
+            frameToByteArray = byteArrayFrame
         }
     }
 
