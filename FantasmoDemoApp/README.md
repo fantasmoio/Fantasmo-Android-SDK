@@ -26,8 +26,10 @@ implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.17.1'
 // Location Services
 implementation 'com.google.android.gms:play-services-location:18.0.0'
 implementation 'com.google.android.gms:play-services-maps:17.0.1'
+
 // Barcode model dependencies
 implementation 'com.google.mlkit:barcode-scanning:17.0.0'
+
 //GSON for JSON parse and Volley for networking
 implementation 'com.google.code.gson:gson:2.8.6'
 implementation 'com.android.volley:volley:1.2.0'
