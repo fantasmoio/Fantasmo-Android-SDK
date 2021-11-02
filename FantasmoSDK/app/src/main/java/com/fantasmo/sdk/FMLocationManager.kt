@@ -84,8 +84,8 @@ class FMLocationManager(private val context: Context) {
     /**
      * Connect to the location service.
      *
-     * @param accessToken: Token for service authorization.
-     * @param callback: FMLocationListener
+     * @param accessToken Token for service authorization.
+     * @param callback `FMLocationListener`
      */
     fun connect(
         accessToken: String,
@@ -103,9 +103,9 @@ class FMLocationManager(private val context: Context) {
     /**
      * Sets currentLocation with values given by the client application.
      *
-     * @param latitude: Location latitude.
-     * @param longitude: Location longitude.
-     * */
+     * @param latitude Location latitude.
+     * @param longitude Location longitude.
+     */
     fun setLocation(latitude: Double, longitude: Double) {
         this.currentLocation.latitude = latitude
         this.currentLocation.longitude = longitude
@@ -114,7 +114,7 @@ class FMLocationManager(private val context: Context) {
 
     /**
      * Starts the generation of updates that report the user’s current location.
-     * @param appSessionId: appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
+     * @param appSessionId appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
      */
     fun startUpdatingLocation(appSessionId: String) {
         localizationSessionId = UUID.randomUUID().toString()
@@ -136,8 +136,8 @@ class FMLocationManager(private val context: Context) {
     /**
      * Starts the generation of updates that report the user’s current location
      * enabling FrameFiltering
-     * @param appSessionId: appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
-     * @param filtersEnabled: flag that enables/disables frame filtering
+     * @param appSessionId appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
+     * @param filtersEnabled flag that enables/disables frame filtering
      */
     fun startUpdatingLocation(appSessionId: String, filtersEnabled: Boolean) {
         localizationSessionId = UUID.randomUUID().toString()

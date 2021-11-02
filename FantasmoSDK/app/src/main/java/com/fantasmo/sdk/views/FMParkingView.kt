@@ -40,15 +40,25 @@ class FMParkingView @JvmOverloads constructor(
 
     lateinit var fmParkingViewController: FMParkingViewProtocol
 
+    /**
+     * Controls the debug UI. When set to `true`, the display will show multiple statistics about the session
+     */
     var showStatistics = false
+    /**
+     * Controls whether the Session uses simulation Mode or real Mode.
+     * Default behavior is to be set on `false`
+     */
     var isSimulation = false
 
     /**
-     * Controls whether this class uses its own internal LocationManager to automatically receive location updates. Default is true.
-     * When set to false it is expected that location updates will be manually provided via the updateLocation() method.
+     * Controls whether this class uses its own internal LocationManager to automatically receive location updates. Default is `true`.
+     * When set to `false` it is expected that location updates will be manually provided via the `updateLocation()` method.
      */
     var usesInternalLocationManager = true
 
+    /**
+     * Token used to provide access to the Fantasmo API
+     */
     lateinit var accessToken: String
     private lateinit var appSessionId: String
 
@@ -91,15 +101,16 @@ class FMParkingView @JvmOverloads constructor(
     private var defaultParkingAvailabilityRadius: Int = 50
 
     /**
-     * Check if there's an available parking space near a supplied CLLocation.
-     * @param latitude: the latitude of the Location to check
-     * @param longitude: the longitude of the Location to check
-     * @param onCompletion: block with a boolean result
+     * Check if there's an available parking space near a supplied Location.
      *
      * This method should be used to determine whether or not you should try to park and localize with Fantasmo.
      * The boolean value passed to the completion block tells you if there is an available parking space within the
      * acceptable radius of the supplied location. If `true`, you should construct a `FMParkingView` and
      * attempt to localize. If `false` you should resort to other options.
+     *
+     * @param latitude the latitude of the Location to check
+     * @param longitude the longitude of the Location to check
+     * @param onCompletion block with a boolean result
      */
     fun isParkingAvailable(
         latitude: Double,
@@ -108,7 +119,7 @@ class FMParkingView @JvmOverloads constructor(
     ) {
         if(!DeviceLocationManager.isValidLatLng(latitude,longitude)){
             onCompletion(false)
-            Log.d(TAG,"Invalid Coordinates")
+            Log.e(TAG,"Invalid Coordinates")
             return
         }
         val radius = defaultParkingAvailabilityRadius
@@ -126,12 +137,12 @@ class FMParkingView @JvmOverloads constructor(
 
     /**
      * Designated initializer.
-     * @param sessionId: an identifier for the parking session
-     *
      * The `sessionId` parameter allows you to associate localization results with your own session identifier.
      * Typically this would be a UUID string, but it can also follow your own format. For example, a scooter parking
      * session might involve multiple localization attempts. For analytics and billing purposes this identifier allows
      * you to link a set of attempts with a single parking session.
+     *
+     * @param sessionId an identifier for the parking session
      */
     fun connect(sessionId: String) {
         this.visibility = View.VISIBLE
@@ -165,7 +176,7 @@ class FMParkingView @JvmOverloads constructor(
 
     /**
      * Resets the session to a normal ARSession.
-     * Closes Localizing and QR Scanning Sessions
+     * Closes Localizing and QR Scanning Sessions.
      */
     fun dismiss() {
         if (state == State.LOCALIZING || state == State.QRSCANNING) {
@@ -217,7 +228,7 @@ class FMParkingView @JvmOverloads constructor(
 
     /**
      * Registers a custom view controller class to present and use when scanning QR codes.
-     * @param customQRScanningView: custom FMQRScanningViewProtocol class
+     * @param customQRScanningView custom FMQRScanningViewProtocol class
      */
     fun registerQRScanningViewController(customQRScanningView: FMQRScanningViewProtocol) {
         Log.d(TAG, "QRScanningView Registered")
@@ -259,7 +270,7 @@ class FMParkingView @JvmOverloads constructor(
 
     /**
      * Registers a custom view controller type to present and use when localizing.
-     * @param customLocalizingView: custom FMLocalizingViewProtocol class
+     * @param customLocalizingView custom FMLocalizingViewProtocol class
      */
     fun registerLocalizingViewController(customLocalizingView: FMLocalizingViewProtocol) {
         Log.d(TAG, "LocalizingView Registered")
@@ -294,9 +305,9 @@ class FMParkingView @JvmOverloads constructor(
 
     /**
      * Allows host apps to manually provide a location update.
-     * @param latitude: the device's current latitude.
-     * @param longitude: the device's current longitude.
      * This method can only be used when usesInternalLocationManager is set to false.
+     * @param latitude the device current latitude.
+     * @param longitude the device current longitude.
      */
     fun updateLocation(latitude: Double, longitude: Double) {
         if (!usesInternalLocationManager) {
@@ -311,7 +322,7 @@ class FMParkingView @JvmOverloads constructor(
             } else {
                 Log.e(
                     TAG,
-                    "FMLocationManager not initialized: Please make sure present() was invoked before updateLocation"
+                    "FMLocationManager not initialized: Please make sure connect() was invoked before updateLocation"
                 )
             }
         }

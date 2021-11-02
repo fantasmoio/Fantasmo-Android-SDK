@@ -31,8 +31,8 @@ class BehaviorRequester(handler: (FMBehaviorRequest) -> Unit) {
     )
 
     /**
-     * On new failure, onNext is invoked to update validationErrorToCountDict.
-     * @param frameFilterResult: FMFrameFilterResult
+     * On new failure, `onNext` is invoked to update `validationErrorToCountDict`.
+     * @param frameFilterResult `FMFrameFilterResult
      */
     fun processResult(frameFilterResult: FMFrameFilterResult) {
         when (frameFilterResult) {

@@ -44,8 +44,8 @@ class FMInputQualityFilter(context: Context) {
 
     /**
      * Check if frame is valid to determine localize result.
-     * @param arFrame: Frame for approval.
-     * @return result: FMFrameFilterResult
+     * @param arFrame Frame for approval.
+     * @return result FMFrameFilterResult
      */
     fun accepts(arFrame: Frame): FMFrameFilterResult {
         if (shouldForceAccept()) {

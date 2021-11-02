@@ -16,7 +16,7 @@ class FMMovementFilter : FMFrameFilter {
 
     /**
      * Check frame acceptance.
-     * @param arFrame: Frame to be evaluated
+     * @param arFrame Frame to be evaluated
      * @return Accepts frame or Rejects frame with MovingTooLittle failure
      */
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
@@ -30,8 +30,8 @@ class FMMovementFilter : FMFrameFilter {
 
     /**
      * Check if frame translation has exceeded threshold
-     * @param newTransform: Frame translation
-     * @return If frame translation is within(false) or without threshold(true)
+     * @param newTransform Frame translation
+     * @return If frame translation is within (false) or without threshold (true)
      */
     private fun exceededThreshold(newTransform: FloatArray?): Boolean {
         val diff = FMPosition.minus(FMPosition(lastTransform), FMPosition(newTransform!!))

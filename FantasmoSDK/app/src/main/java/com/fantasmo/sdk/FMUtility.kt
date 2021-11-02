@@ -220,8 +220,8 @@ class FMUtility {
         /**
          * Acquires the image from the ARCore frame catching all
          * exceptions that could happen during localizing session
-         * @param arFrame: Frame
-         * @return ByteArrayOutputStream or null in case of exception
+         * @param arFrame Frame
+         * @return `ByteArrayOutputStream or `null in case of exception
          */
         fun acquireFrameImage(arFrame: Frame): ByteArray? {
             try {
@@ -241,9 +241,11 @@ class FMUtility {
         }
 
         /**
-         * This avoids frame being converted twice to ByteArray.
-         * Prevents outdated frames from throwing DeadlineExceededException
-         * after being analyzed on the BlurFilter
+         * This avoids AR frames from being converted twice to `ByteArray`.
+         *
+         * Also prevents outdated frames from throwing `DeadlineExceededException
+         * after being analyzed on the `BlurFilter`
+         * @param byteArrayFrame `ByteArray` with frame image data
          */
         fun setFrame(byteArrayFrame: ByteArray?) {
             hasPassedBlurFilter = byteArrayFrame != null

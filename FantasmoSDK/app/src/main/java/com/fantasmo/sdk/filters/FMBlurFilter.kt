@@ -42,8 +42,8 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
 
     /**
      * Check frame acceptance.
-     * @param arFrame: Frame to be evaluated
-     * @return Accepts frame or Rejects frame with MovingTooFast failure
+     * @param arFrame Frame to be evaluated
+     * @return Accepts frame or Rejects frame with ImageToBlurry failure
      */
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
         val byteArrayFrame = FMUtility.acquireFrameImage(arFrame)
@@ -85,8 +85,8 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
      * Takes the frame and acquire the image from it and turns into greyscale
      * After that applies edge detection matrix to the greyscale image and
      * calculate variance from that
-     * @param byteArrayFrame: frame converted to ByteArray to measure the variance
-     * @return variance: blurriness value
+     * @param byteArrayFrame frame converted to ByteArray to measure the variance
+     * @return variance blurriness value
      * */
     private suspend fun calculateVariance(byteArrayFrame: ByteArray?): Double {
         val reducedHeight = 480
@@ -175,8 +175,8 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
     /**
      * Finds the average of all pixels in the image
      * Also calculates the standard deviation from the average and pixel color
-     * @param bitmap: image after edge detection matrix application
-     * @return stdDev: blurriness value
+     * @param bitmap image after edge detection matrix application
+     * @return stdDev variable with blurriness value
      * */
     private fun meanStdDev(bitmap: Bitmap): Double {
         val pixels = IntArray(bitmap.height * bitmap.width)

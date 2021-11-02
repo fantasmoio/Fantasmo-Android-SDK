@@ -33,7 +33,7 @@ class FMLocalizingView(arLayout: CoordinatorLayout, private val fmParkingView: F
     }
 
     fun displayFilterResult(behavior: FMBehaviorRequest) {
-        filterResultView.text = behavior.displayName
+        filterResultView.text = behavior.description
         if (filterResultView.visibility == View.GONE) {
             filterResultView.visibility = View.VISIBLE
             val timer = object : CountDownTimer(2000, 1000) {

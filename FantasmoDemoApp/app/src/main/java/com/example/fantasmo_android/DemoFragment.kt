@@ -177,7 +177,7 @@ class DemoFragment : Fragment() {
             }
 
             override fun fmParkingView(behavior: FMBehaviorRequest) {
-                Log.d(TAG, "Received Behavior: ${behavior.displayName}")
+                Log.d(TAG, "Received Behavior: ${behavior.description}")
             }
 
             override fun fmParkingView(result: FMLocationResult) {

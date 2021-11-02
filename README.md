@@ -236,7 +236,7 @@ If you're using the default localization UI, these requests are already displaye
     
         override fun didRequestLocalizationBehavior(behavior: FMBehaviorRequest) {
             // display the requested behavior to the user
-            label.text = behavior.displayName
+            label.text = behavior.description
         }
     }
 

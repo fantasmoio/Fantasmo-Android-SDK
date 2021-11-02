@@ -315,7 +315,7 @@ class CustomDemoFragment : Fragment() {
 
             override fun didRequestLocalizationBehavior(behavior: FMBehaviorRequest) {
                 Log.d(TAG, "didRequestLocalizationBehavior")
-                val stringResult = behavior.displayName
+                val stringResult = behavior.description
                 filterRejectionTv.text = stringResult
                 if (filterRejectionTv.visibility == View.GONE) {
                     filterRejectionTv.visibility = View.VISIBLE
