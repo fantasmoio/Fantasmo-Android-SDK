@@ -32,7 +32,7 @@ class TotalDeviceRotationAccumulator {
 
     /**
      * On every frame, update get the rotation from the current frame
-     * @param arFrame: Frame
+     * @param arFrame Frame
      */
     fun update(arFrame: Frame) {
         val rotation = arFrame.androidSensorPose.rotationQuaternion
@@ -44,7 +44,7 @@ class TotalDeviceRotationAccumulator {
      * Method called by updated responsible for finding new maximum
      * and minimum values from the rotation Quaternion of the frame
      * Also updates the total amount of rotation on each axis
-     * @param rotation: FloatArray correspondent to the rotationQuaternion
+     * @param rotation FloatArray correspondent to the rotationQuaternion
      */
     private fun updateRotationValues(rotation: FloatArray) {
         val rads = convertQuaternionToEuler(rotation)

@@ -27,7 +27,7 @@ class AccumulatedARCoreInfo {
     /**
      * When invoked, this method gives a copy of the frame (collected during the localize request
      * call) to each class involved in the statistics collection
-     * @param arFrame: frame collected during localize request
+     * @param arFrame frame collected during localize request
      */
     fun update(arFrame: Frame) {
         elapsedFrames += 1

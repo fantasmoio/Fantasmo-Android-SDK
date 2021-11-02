@@ -29,6 +29,11 @@ import com.fantasmo.sdk.utilities.QRCodeScannerListener
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
 
+/**
+ * Manager of the ARCore session. Provides a camera preview with AR capabilities when not connected.
+ * When connected with `connect(sessionId: String)`, starts a QRScanning session and after when a QR Code
+ * is accepted, starts a Localization session.
+ */
 class FMParkingView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null

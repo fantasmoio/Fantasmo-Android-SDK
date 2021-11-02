@@ -11,6 +11,9 @@ import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingFailureReason
 
+/**
+ * Debug View responsible for displaying the Statistics generated during the session.
+ */
 class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
 
     private val TAG = FMSessionStatisticsView::class.java.simpleName
@@ -130,7 +133,8 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
 
     /**
      * Method to simplify task of creating a String to be shown in the screen
-     * */
+     * @param cameraAttr `FloatArray` of values and with size that equals 3
+     */
     private fun createStringDisplay(cameraAttr: FloatArray?): String {
         return String.format("%.2f", cameraAttr?.get(0)) + ", " +
                 String.format("%.2f", cameraAttr?.get(1)) + ", " +

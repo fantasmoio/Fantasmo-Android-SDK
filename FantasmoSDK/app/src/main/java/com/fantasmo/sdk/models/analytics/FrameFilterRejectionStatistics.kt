@@ -19,7 +19,7 @@ class FrameFilterRejectionStatistics {
      * During shouldLocalize call, frames are filtered from rejected and accepted
      * When a frame is rejected, this method gets the rejection failure and updates
      * the information about the localization session regarding frame filtration
-     * @param result: FMFrameFilterFailure
+     * @param result FMFrameFilterFailure
      */
     fun accumulate(result: FMFilterRejectionReason) {
         totalFrameCount += 1

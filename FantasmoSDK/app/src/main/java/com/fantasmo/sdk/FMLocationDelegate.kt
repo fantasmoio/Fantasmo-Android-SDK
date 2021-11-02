@@ -7,6 +7,9 @@ import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.google.ar.core.Frame
 
+/**
+ * Class that describes the confidence level of a Localization Result
+ */
 enum class FMResultConfidence{
     LOW,
     MEDIUM,
@@ -29,12 +32,20 @@ enum class FMResultConfidence{
     }
 }
 
+/**
+ * Class that holds a Localization Result with a location result,
+ * confidence level result and the zones on it was performed.
+ */
 class FMLocationResult(
     var location: Location,
     var confidence: FMResultConfidence,
     var zones: List<FMZone>
     )
 
+/**
+ * Class that describes the behavior that a user should do in order
+ * to get more accurate and correct frames to analyze.
+ */
 enum class FMBehaviorRequest(val description: String) {
     POINTATBUILDINGS("Point at stores, signs and buildings around you to get a precise location"),
     TILTUP("Tilt your device up"),
@@ -58,7 +69,7 @@ interface FMLocationListener {
     /**
      * Tells the listener that an error has occurred.
      * @param error The error reported.
-     * @param metadata Metadata related to the error.
+     * @param metadata Metadata related t the error.
      */
     fun locationManager(error: ErrorResponse, metadata: Any?)
 
@@ -69,7 +80,7 @@ interface FMLocationListener {
     fun locationManager(didRequestBehavior: FMBehaviorRequest){}
 
     /**
-     * Tells the listener that the `FMLocationManager has changed state
+     * Tells the listener that the `FMLocationManager` has changed state
      * @param didChangeState The new state of the `FMLocationManager` instance
      */
     fun locationManager(didChangeState: FMLocationManager.State){}
