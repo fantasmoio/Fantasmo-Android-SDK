@@ -5,7 +5,7 @@
 
     <!--fragment
         android:id="@+id/custom_arcore_fragment"
-        android:name="com.example.fantasmo_android.CustomARCoreFragment"
+        android:name="com.example.fantasmo_android.CustomDemoFragment"
         android:label="custom_arcore_fragment"
         tools:layout="@layout/custom_demo_fragment" /-->
 

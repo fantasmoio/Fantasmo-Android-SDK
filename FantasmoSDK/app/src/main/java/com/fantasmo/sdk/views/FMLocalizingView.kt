@@ -9,6 +9,9 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.fantasmosdk.R
 
+/**
+ * Default View for the Localization session.
+ */
 class FMLocalizingView(arLayout: CoordinatorLayout, private val fmParkingView: FMParkingView) {
 
     private var fmLocalizingView: ConstraintLayout = arLayout.findViewById(R.id.fmLocalizeView)
@@ -20,20 +23,29 @@ class FMLocalizingView(arLayout: CoordinatorLayout, private val fmParkingView: F
             fmParkingView.dismiss()
         }
     }
+    /**
+     * When a localization session ends, this method provides the ability to hide the Localization view.
+     */
     fun hide() {
         if (fmLocalizingView.visibility == View.VISIBLE) {
             fmLocalizingView.visibility = View.GONE
         }
     }
 
+    /**
+     * When a localization session begins, this method provides the ability to display the Localization view.
+     */
     fun display() {
         if (fmLocalizingView.visibility == View.GONE) {
             fmLocalizingView.visibility = View.VISIBLE
         }
     }
 
+    /**
+     * Method responsible for displaying to the user the behavior to follow.
+     */
     fun displayFilterResult(behavior: FMBehaviorRequest) {
-        filterResultView.text = behavior.displayName
+        filterResultView.text = behavior.description
         if (filterResultView.visibility == View.GONE) {
             filterResultView.visibility = View.VISIBLE
             val timer = object : CountDownTimer(2000, 1000) {

@@ -21,7 +21,7 @@ class FMCameraPitchFilter(private val context: Context) : FMFrameFilter {
 
     /**
      * Check frame acceptance.
-     * @param arFrame: Frame to be evaluated
+     * @param arFrame Frame to be evaluated
      * @return Accepts frame or Rejects frame with PitchTooHigh or PitchTooLow failure
      */
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
@@ -63,10 +63,10 @@ class FMCameraPitchFilter(private val context: Context) : FMFrameFilter {
 
     /**
      * Verifies if tilt angle is acceptable, high or low
-     * @param rotationQuaternion: rotation quaternion correspondent to rotation of the device
-     * @param orientationSign: device orientation
-     * @return Pair<FMFrameFilterResult, FMFrameFilterFailure>
-     * */
+     * @param rotationQuaternion rotation quaternion correspondent to rotation of the device
+     * @param orientationSign device orientation
+     * @return FMFrameFilterResult
+     */
     private fun checkTilt(
         rotationQuaternion: FloatArray,
         orientationSign: Int

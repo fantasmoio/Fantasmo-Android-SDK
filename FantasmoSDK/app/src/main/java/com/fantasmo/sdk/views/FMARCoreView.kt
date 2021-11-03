@@ -15,6 +15,9 @@ import com.google.ar.core.*
 import com.google.ar.core.exceptions.CameraNotAvailableException
 import java.io.IOException
 
+/**
+ * Class responsible by the ARCore management and keeping it on throughout the app lifecycles.
+ */
 class FMARCoreView(
     private val arLayout: CoordinatorLayout,
     val context: Context
@@ -40,12 +43,11 @@ class FMARCoreView(
     private lateinit var trackingStateHelper: TrackingStateHelper
 
     // Set anchor after QR code is read
-    var anchorIsChecked = false
+    private var anchorIsChecked = false
     // Result of anchoring
-    var anchored = false
+    private var anchored = false
 
     fun setupARSession() {
-        Log.d(TAG, "Setting ARCore Session")
         surfaceView = arLayout.findViewWithTag("SurfaceView")
         displayRotationHelper = DisplayRotationHelper(context)
         trackingStateHelper = TrackingStateHelper(context as Activity?)
@@ -130,11 +132,6 @@ class FMARCoreView(
         val cameraConfigsList: List<CameraConfig> = arSession!!.getSupportedCameraConfigs(filter)
         for (currentCameraConfig in cameraConfigsList) {
             val cpuImageSize: Size = currentCameraConfig.imageSize
-            val gpuTextureSize: Size = currentCameraConfig.textureSize
-            Log.d(
-                TAG,
-                "Available CameraConfigs: CPU image size:$cpuImageSize GPU texture size:$gpuTextureSize"
-            )
             if (cpuImageSize.width > selectedSize.width && cpuImageSize.height <= 1080) {
                 selectedSize = cpuImageSize
                 selectedCameraConfig = cameraConfigsList.indexOf(currentCameraConfig)
@@ -214,7 +211,7 @@ class FMARCoreView(
     /**
      * On any changes to the scene call onUpdate method to get arFrames and get the camera data
      * Also responsible for frame anchoring and qrScanning with arFrames
-     * */
+     */
     private fun onUpdate(frame: Frame) {
         val anchorDelta = arSessionListener.anchorDelta(frame)
 
@@ -240,17 +237,51 @@ class FMARCoreView(
 
     /**
      * Method to simplify task of creating a String to be shown in the screen
-     * */
+     */
     private fun createStringDisplay(cameraAttr: FloatArray?): String {
         return String.format("%.2f", cameraAttr?.get(0)) + ", " +
                 String.format("%.2f", cameraAttr?.get(1)) + ", " +
                 String.format("%.2f", cameraAttr?.get(2))
     }
+
+    fun startAnchor() {
+        anchorIsChecked = true
+        anchored = false
+    }
+
+    fun isAnchored(): Boolean {
+        return anchored
+    }
+
+    fun unsetAnchor() {
+        anchored = true
+    }
 }
 
+/**
+ * Listener designed to keep encapsulation between the ARCoreView
+ * and other classes that need values from the AR session.
+ */
 interface FMARSessionListener{
+    /**
+     * When the SDK enters the localization session, this provides the frame
+     * to localize and passes to the `FMLocationManager.session()` method.
+     */
     fun localize(frame: Frame)
+
+    /**
+     * Sends the state of the anchor. In case of success returns `true`,
+     * otherwise returns `false` telling the user to try again.
+     */
     fun anchored(frame: Frame): Boolean
+
+    /**
+     * Gets the FMPose regarding the difference between the anchor and current frame.
+     */
     fun anchorDelta(frame: Frame): FMPose?
+
+    /**
+     * Sends a frame to the QRCodeReader and extract a QR Code from it.
+     */
     fun qrCodeScan(frame: Frame)
 }

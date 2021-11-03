@@ -10,6 +10,12 @@ import android.util.Log
 import androidx.core.content.PermissionChecker
 import com.google.android.gms.location.*
 
+/**
+ * Internal Location Manager.
+ *
+ * When host app doesn't specify whether to use a provided Location manager this,
+ * starts to get the location updates.
+ */
 class DeviceLocationManager(val context: Context?, val deviceLocationListener: DeviceLocationListener) {
 
     companion object{

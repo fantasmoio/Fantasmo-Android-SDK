@@ -15,8 +15,8 @@ class LocationFuserExtension {
 
         /**
          * Measures distance treating lat and long as unitless Cartesian coordinates
-         * @param pointA: Starting Location point
-         * @param pointB: Ending Location point
+         * @param pointA Starting Location point
+         * @param pointB Ending Location point
          * @return distance between the two points
          */
         fun degreeDistance(pointA: Location, pointB: Location): Double {
@@ -27,7 +27,7 @@ class LocationFuserExtension {
 
         /**
          * Measures the geometric mean from a group of Locations
-         * @param locations: list of Locations to extract mean
+         * @param locations list of Locations to extract mean
          * @return mean Location
          * */
         private fun geometricMean(locations: List<Location>): Location {
@@ -60,7 +60,7 @@ class LocationFuserExtension {
         /**
          * Finds the geometric median using Weiszfeld method
          * It follows this: https://stackoverflow.com/a/30299705
-         * @param locations: list of Locations to extract the geometric median
+         * @param locations list of Locations to extract the geometric median
          * @return median Location
          */
         fun geometricMedian(locations: List<Location>): Location {
@@ -147,7 +147,7 @@ class LocationFuserExtension {
         /**
          * Measures the distance between the median Location and all the Location results
          * Then it returns the median distance from all of those distances
-         * @param locations: list of Locations
+         * @param locations list of Locations
          * @return median distance
          */
         private fun medianOfAbsoluteDistances(
@@ -166,7 +166,7 @@ class LocationFuserExtension {
 
         /**
          * Classifies all Locations as Inlier or Outlier
-         * @param locations: list of locations
+         * @param locations list of locations
          * @return list of Locations classified as Inlier
          */
         fun classifyInliers(locations: List<Location>): List<Location> {

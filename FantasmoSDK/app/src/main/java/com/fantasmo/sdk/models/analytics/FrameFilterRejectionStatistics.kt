@@ -3,7 +3,7 @@ package com.fantasmo.sdk.models.analytics
 import com.fantasmo.sdk.filters.FMFilterRejectionReason
 
 /**
- * Class responsible for gathering information about frame filtration rejection
+ * Class responsible for gathering information about frame filtration rejection.
  */
 class FrameFilterRejectionStatistics {
 
@@ -16,10 +16,10 @@ class FrameFilterRejectionStatistics {
     var excessiveMotionFrameCount = 0
 
     /**
-     * During shouldLocalize call, frames are filtered from rejected and accepted
+     * During shouldLocalize call, frames are filtered from rejected and accepted.
      * When a frame is rejected, this method gets the rejection failure and updates
-     * the information about the localization session regarding frame filtration
-     * @param result: FMFrameFilterFailure
+     * the information about the localization session regarding frame filtration.
+     * @param result FMFrameFilterFailure
      */
     fun accumulate(result: FMFilterRejectionReason) {
         totalFrameCount += 1
@@ -46,7 +46,7 @@ class FrameFilterRejectionStatistics {
     }
 
     /**
-     * Resets counters on a new localization session
+     * Resets counters on a new localization session.
      */
     fun reset() {
         totalFrameCount = 0

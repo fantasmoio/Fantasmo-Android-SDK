@@ -7,7 +7,6 @@ import com.google.ar.core.Frame
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineScope
-import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.launch
 import org.junit.After
 import org.junit.Assert

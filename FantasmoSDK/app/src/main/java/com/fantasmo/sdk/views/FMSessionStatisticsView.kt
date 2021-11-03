@@ -1,7 +1,6 @@
-package com.fantasmo.sdk.views.debug
+package com.fantasmo.sdk.views
 
 import android.graphics.Color
-import android.util.Log
 import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.fantasmo.sdk.FMLocationManager
@@ -12,9 +11,12 @@ import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingFailureReason
 
-class FMStatisticsView(arLayout: CoordinatorLayout) {
+/**
+ * Debug View responsible for displaying the Statistics generated during the session.
+ */
+class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
 
-    private val TAG = FMStatisticsView::class.java.simpleName
+    private val TAG = FMSessionStatisticsView::class.java.simpleName
     private var statusTv: TextView = arLayout.findViewById(R.id.statusTextView)
     private var lastResultTv: TextView = arLayout.findViewById(R.id.lastResultTextView)
     private var localizeTimeTv: TextView = arLayout.findViewById(R.id.localizeTimeTextView)
@@ -112,8 +114,6 @@ class FMStatisticsView(arLayout: CoordinatorLayout) {
         val stringResult =
             "${result.location.coordinate.latitude},\n${result.location.coordinate.longitude} (${result.confidence})"
         lastResultTv.text = stringResult
-        Log.d(TAG, result.confidence.toString())
-        Log.d(TAG, result.location.toString())
 
         val elapsedUploading = (System.currentTimeMillis() - uploadingStart) / 1_000.0
         val stringUploadTime = String.format("%.2f", elapsedUploading) + "s"
@@ -133,7 +133,8 @@ class FMStatisticsView(arLayout: CoordinatorLayout) {
 
     /**
      * Method to simplify task of creating a String to be shown in the screen
-     * */
+     * @param cameraAttr `FloatArray` of values and with size that equals 3
+     */
     private fun createStringDisplay(cameraAttr: FloatArray?): String {
         return String.format("%.2f", cameraAttr?.get(0)) + ", " +
                 String.format("%.2f", cameraAttr?.get(1)) + ", " +

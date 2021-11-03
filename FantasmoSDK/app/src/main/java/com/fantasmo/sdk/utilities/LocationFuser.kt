@@ -19,7 +19,7 @@ class LocationFuser {
 
     /**
      * Derives a confidence based on the standard deviation of locations
-     * @param locations: list of Locations
+     * @param locations list of Locations
      * @return FMResultConfidence
      */
     private fun standardDeviationConfidence(locations: List<Location>): FMResultConfidence{
@@ -45,7 +45,7 @@ class LocationFuser {
      * Measures confidence level based on a series of Location measurements
      * If the standard deviation of measurements is sufficiently low, confidence is high.
      * Otherwise, confidence increases with the number of samples.
-     * @param locations: list of Locations
+     * @param locations list of Locations
      * @return FMResultConfidence
      */
     private fun confidence(locations: List<Location>): FMResultConfidence {
@@ -67,9 +67,9 @@ class LocationFuser {
     /**
      * Method responsible to fuse locations in order to
      * improve accuracy during localization session
-     * @param location: New location to be combined with previous observations
-     * @param zones: List of FMZones at this Location
-     * @return FMLocationResult obtained from location fuse
+     * @param location New location to be combined with previous observations
+     * @param zones List of FMZones` at this Location
+     * @return `FMLocationResult` obtained from location fuse
      */
     fun fusedResult(location: Location, zones: List<FMZone>): FMLocationResult {
         locations.add(location)
