@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/verifyParkingView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/verify_parking"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.036"
+        tools:ignore="TextContrastCheck" />
+
+    <ImageButton
+        android:id="@+id/fmExitButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:contentDescription="@string/exit"
+        android:minWidth="20dp"
+        android:minHeight="20dp"
+        app:layout_constraintBottom_toBottomOf="@+id/verifyParkingView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.747"
+        app:layout_constraintStart_toEndOf="@+id/verifyParkingView"
+        app:layout_constraintTop_toTopOf="@+id/verifyParkingView"
+        app:layout_constraintVertical_bias="0.0"
+        app:srcCompat="@drawable/fm_btn_close"
+        tools:ignore="ImageContrastCheck,TouchTargetSizeCheck" />
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/camera_fragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.fantasmo.sdk.views.FMParkingView
+        android:id="@+id/fmParkingView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="MissingClass">
+
+    </com.fantasmo.sdk.views.FMParkingView>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/controlsLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <Button
+            android:id="@+id/endRideButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/end_ride"
+            app:backgroundTint="@color/black"
+            app:layout_constraintBottom_toTopOf="@+id/simulationModeToggle"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toTopOf="@+id/simulationModeToggle"
+            app:layout_constraintEnd_toEndOf="@+id/endRideButton"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="@+id/endRideButton"
+            app:layout_constraintTop_toBottomOf="@+id/endRideButton" />
+
+        <Switch
+            android:id="@+id/simulationModeToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/simulation_mode"
+            app:layout_constraintBottom_toTopOf="@+id/showDebugStatsToggle"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+        <Switch
+            android:id="@+id/showDebugStatsToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/show_debug_statitics"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/simulationModeToggle"
+            tools:ignore="UseSwitchCompatOrMaterialXml" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <Button
+        android:id="@+id/exitButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/exit"
+        android:visibility="gone"
+        app:backgroundTint="@color/black"
+        app:layout_constraintBottom_toTopOf="@+id/controlsLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.949"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.19" />
+
+    <include
+        android:id="@+id/custom_qr_view"
+        layout="@layout/custom_qr_view"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/custom_localize_view"
+        layout="@layout/custom_localize_view"
+        android:visibility="gone" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

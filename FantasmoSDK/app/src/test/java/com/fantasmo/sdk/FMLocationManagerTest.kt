@@ -193,77 +193,6 @@ class FMLocationManagerTest {
         assertEquals(expectedFMPose.orientation.w, anchorDeltaPose.orientation.w)
     }
 
-    //IsZoneInRadius Test Batch
-    @Test
-    fun testIsZoneInRadius() {
-        fmLocationManager.isSimulation = true
-
-        var radius = 10
-        fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius) {
-            assertEquals(true, it)
-        }
-
-        radius = 100
-        fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius) {
-            assertEquals(false, it)
-        }
-    }
-
-    @Test
-    fun testIsZoneInRadiusNoSimulation(){
-        fmLocationManager.isSimulation = false
-        fmLocationManager.setLocation(latitude, longitude)
-
-        val radius = 20
-        var returnValue = false
-        testScope.runBlockingTest {
-            spyFMLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius) {
-                returnValue = it
-            }
-            assertEquals(false, returnValue)
-        }
-        verify(spyFMLocationManager, times(2)).fmApi
-        verify(spyFMApi, times(1)).fmNetworkManager
-    }
-
-    @Test
-    fun testIsZoneInRadiusSimulation(){
-        fmLocationManager.isSimulation = true
-
-        val radius = 20
-        var returnValue = false
-        testScope.runBlockingTest {
-            spyFMLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius) {
-                returnValue = it
-            }
-            assertEquals(false, returnValue)
-        }
-        verify(spyFMLocationManager, times(2)).fmApi
-        verify(spyFMApi, times(1)).fmNetworkManager
-    }
-
-    @Test
-    fun testZeroCoordIsZoneInRadius(){
-        fmLocationManager.isSimulation = false
-        val latitude = 0.0
-        val longitude = 0.0
-        fmLocationManager.setLocation(latitude, longitude)
-
-        val radius = 20
-        var returnValue = false
-        val start = System.currentTimeMillis()
-        testScope.runBlockingTest {
-            fmLocationManager.isZoneInRadius(FMZone.ZoneType.PARKING, radius) {
-                returnValue = it
-            }
-        }
-        val stop = System.currentTimeMillis()
-        val delta = stop-start
-
-        assertTrue(delta >= 10000)
-        assertEquals(false, returnValue)
-    }
-
     // Should Localize
     @Test
     fun testShouldLocalizeFiltersDisabled() {
@@ -281,7 +210,7 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(cameraPose)
         `when`(frame.androidSensorPose).thenReturn(cameraPose)
 
-        assertEquals(true, fmLocationManager.shouldLocalize(frame))
+        assertEquals(true, fmLocationManager.session(frame))
     }
 
     @Test
@@ -328,7 +257,7 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
-        assertEquals(true, fmLocationManager.shouldLocalize(frame))
+        assertEquals(true, fmLocationManager.session(frame))
     }
 
     @Test
@@ -361,7 +290,7 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
-        assertEquals(false, fmLocationManager.shouldLocalize(frame))
+        assertEquals(false, fmLocationManager.session(frame))
     }
 
     // Localize Test Batch
@@ -610,7 +539,7 @@ class FMLocationManagerTest {
         }
 
         verify(spyFMLocationManager, times(1)).localize(frame)
-        verify(spyFMLocationManager, times(1)).shouldLocalize(frame)
+        verify(spyFMLocationManager, times(1)).session(frame)
         verify(spyFMLocationManager, times(2)).fmApi
         verify(spyFMApi2, times(1)).fmNetworkManager
     }
@@ -700,7 +629,7 @@ class FMLocationManagerTest {
         }
 
         verify(spyFMLocationManager, times(1)).localize(frame)
-        verify(spyFMLocationManager, times(1)).shouldLocalize(frame)
+        verify(spyFMLocationManager, times(1)).session(frame)
         verify(spyFMLocationManager, times(2)).fmApi
         verify(spyFMApi3, times(1)).fmNetworkManager
     }

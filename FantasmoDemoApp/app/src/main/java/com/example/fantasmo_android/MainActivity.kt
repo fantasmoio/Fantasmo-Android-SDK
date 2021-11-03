@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
 
         val navInflater = navController.navInflater
         graph = navInflater.inflate(R.navigation.main_navigation)
-        chechARCoreCompatibility()
+        checkARCoreCompatibility()
     }
 
     /**
@@ -71,6 +71,7 @@ class MainActivity : AppCompatActivity() {
                 }
             } else {
                 if (arcoreCompatibility) {
+                    //graph.startDestination = R.id.custom_arcore_fragment
                     graph.startDestination = R.id.arcore_fragment
                 } else {
                     graph.startDestination = R.id.noarcore_fragment
@@ -101,6 +102,7 @@ class MainActivity : AppCompatActivity() {
                 grantResults[1] == PackageManager.PERMISSION_GRANTED
             ) {
                 if (arcoreCompatibility) {
+                    //graph.startDestination = R.id.custom_arcore_fragment
                     graph.startDestination = R.id.arcore_fragment
                 } else {
                     graph.startDestination = R.id.noarcore_fragment
@@ -151,12 +153,12 @@ class MainActivity : AppCompatActivity() {
     /**
      * Checks if device is compatible with Google Play Services for AR
      */
-    private fun chechARCoreCompatibility() {
+    private fun checkARCoreCompatibility() {
         val availability = ArCoreApk.getInstance().checkAvailability(this)
         if (availability.isTransient) {
             // Continue to query availability at 5Hz while compatibility is checked in the background.
             Handler().postDelayed({
-                chechARCoreCompatibility()
+                checkARCoreCompatibility()
             }, 200)
         }
         if (availability.isSupported) {

@@ -5,13 +5,10 @@ import android.os.Build
 import android.provider.Settings.Secure
 import android.util.Log
 import com.fantasmo.sdk.FMConfiguration
-import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.fantasmosdk.BuildConfig
-import com.fantasmo.sdk.models.Coordinate
-import com.fantasmo.sdk.models.ErrorResponse
-import com.fantasmo.sdk.models.FMIntrinsics
-import com.fantasmo.sdk.models.FMZone
+import com.fantasmo.sdk.mock.MockData
+import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.models.analytics.MagneticField
 import com.google.ar.core.Frame
 import com.google.gson.Gson
@@ -24,6 +21,7 @@ class FMLocalizationRequest(
     var isSimulation: Boolean,
     var simulationZone: FMZone.ZoneType,
     var coordinate: Coordinate,
+    var relativeOpenCVAnchorPose: FMPose?,
     var analytics: FMLocalizationAnalytics
 )
 
@@ -61,10 +59,17 @@ class FMRotationSpread(
 )
 
 /**
+ * Class to hold image resolution
+ */
+class FMFrameResolution(
+    var height: Int,
+    var width: Int
+)
+
+/**
  * Class to hold the necessary logic to communicate with Fantasmo API.
  */
 class FMApi(
-    private val fmLocationManager: FMLocationManager,
     private val context: Context,
     private val token: String,
 ) {
@@ -78,13 +83,13 @@ class FMApi(
     fun sendLocalizeRequest(
         arFrame: Frame,
         request: FMLocalizationRequest,
-        onCompletion: (com.fantasmo.sdk.models.Location, List<FMZone>) -> Unit,
+        onCompletion: (Location, List<FMZone>) -> Unit,
         onError: (ErrorResponse) -> Unit
     ) {
         try {
             fmNetworkManager.uploadImage(
-                FMUtility.getImageDataFromARFrame(context, arFrame),
-                getLocalizeParams(arFrame,request),
+                imageData(arFrame, request),
+                getLocalizeParams(arFrame, request),
                 token,
                 {
                     val location = it.location
@@ -114,14 +119,19 @@ class FMApi(
 
     /**
      * Method to build the ZoneInRadius request.
+     * @param latitude: Location latitude to search
+     * @param longitude: Location longitude to search
+     * @param radius: search radius in meters
      */
     fun sendZoneInRadiusRequest(
+        latitude: Double,
+        longitude: Double,
         radius: Int,
         onCompletion: (Boolean) -> Unit
     ) {
         fmNetworkManager.zoneInRadiusRequest(
             "https://api.fantasmo.io/v1/parking.in.radius",
-            getZoneInRadiusParams(radius),
+            getZoneInRadiusParams(latitude, longitude, radius),
             token,
             onCompletion
         )
@@ -146,11 +156,10 @@ class FMApi(
             request.coordinate
         }
 
-        val height = frame.camera.imageIntrinsics.imageDimensions[0]
-        val width = frame.camera.imageIntrinsics.imageDimensions[1]
-        val resolution = hashMapOf<String,Int>()
-        resolution["height"] = height
-        resolution["width"] = width
+        val resolution = hashMapOf<String, Int>()
+        val imageResolution = getImageResolution(frame,request)
+        resolution["height"] = imageResolution.height
+        resolution["width"] = imageResolution.width
 
         val focalLength = frame.camera.imageIntrinsics.focalLength
         val principalPoint = frame.camera.imageIntrinsics.principalPoint
@@ -162,7 +171,7 @@ class FMApi(
         )
 
         val events = request.analytics.frameEvents
-        val frameEventCounts = hashMapOf<String,String>()
+        val frameEventCounts = hashMapOf<String, String>()
         frameEventCounts["excessiveTilt"] = events.excessiveTilt.toString()
         frameEventCounts["excessiveBlur"] = events.excessiveBlur.toString()
         frameEventCounts["excessiveMotion"] = events.excessiveMotion.toString()
@@ -204,42 +213,59 @@ class FMApi(
         params["magneticData"] = gson.toJson(request.analytics.magneticField)
 
         // calculate and send reference frame if anchoring
-        val anchorFrame = fmLocationManager.anchorFrame
-        if (anchorFrame != null) {
-            params["referenceFrame"] =
-                gson.toJson(FMUtility.anchorDeltaPoseForFrame(frame, anchorFrame))
+        val relativeOpenCVAnchorPose = request.relativeOpenCVAnchorPose
+        if (relativeOpenCVAnchorPose != null) {
+            params["referenceFrame"] = gson.toJson(relativeOpenCVAnchorPose)
         }
 
-        Log.i(TAG, "getLocalizeParams: $params")
+        Log.i(TAG, "getLocalizeParams")
         return params
     }
 
     /**
      * Generate the zoneInRadius HTTP request parameters.
+     * @param latitude: Location latitude to search
+     * @param longitude: Location longitude to search
      * @param radius: search radius in meters
      * @return an HashMap with all the localization parameters.
      *
      * Only works with PARKING zones currently
      */
     private fun getZoneInRadiusParams(
+        latitude: Double,
+        longitude: Double,
         radius: Int,
     ): HashMap<String, String> {
         val params = hashMapOf<String, String>()
 
-        val coordinates = if (fmLocationManager.isSimulation) {
-            val simulationLocation = FMConfiguration.getConfigLocation()
-            Coordinate(simulationLocation.latitude, simulationLocation.longitude)
-        } else {
-            Coordinate(
-                fmLocationManager.currentLocation.latitude,
-                fmLocationManager.currentLocation.longitude
-            )
-        }
+        val coordinates = Coordinate(latitude, longitude)
 
         params["radius"] = radius.toString()
         params["coordinate"] = Gson().toJson(coordinates)
 
         Log.i(TAG, "getZoneInRadiusParams: $params")
         return params
+    }
+
+    /**
+     * Generate the image data used to perform "localize" HTTP request.
+     * @param arFrame: Frame to localize
+     * @param request: FMLocalizationRequest with information about simulation mode
+     * @return result: ByteArray with image to localize
+     */
+    private fun imageData(arFrame: Frame, request: FMLocalizationRequest): ByteArray {
+        return FMUtility.getImageDataFromARFrame(context, arFrame)
+    }
+
+    /**
+     * Get the image resolution used to perform "localize" HTTP request.
+     * @param arFrame: Frame to return the resolution from
+     * @param request: Localization request struct
+     * @return result: Resolution of the frame
+     */
+    private fun getImageResolution(arFrame: Frame, request: FMLocalizationRequest): FMFrameResolution{
+        val height = arFrame.camera.imageIntrinsics.imageDimensions[0]
+        val width = arFrame.camera.imageIntrinsics.imageDimensions[1]
+        return FMFrameResolution(height,width)
     }
 }

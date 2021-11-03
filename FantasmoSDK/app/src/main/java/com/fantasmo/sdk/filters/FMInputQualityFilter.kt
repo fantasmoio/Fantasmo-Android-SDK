@@ -2,7 +2,6 @@ package com.fantasmo.sdk.filters
 
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import com.google.ar.core.Frame
 
 /**
@@ -13,10 +12,10 @@ class FMInputQualityFilter(context: Context) {
     private val TAG = "FMInputQualityFilter"
 
     // the last time a frame was accepted
-    var lastAcceptTime: Long = 0L
+    private var lastAcceptTime: Long = System.nanoTime()
 
     // number of seconds after which we force acceptance
-    var acceptanceThreshold = 3.0
+    private var acceptanceThreshold = 1.0
 
     /**
      * List of filter rules to apply on frame received.
@@ -40,29 +39,27 @@ class FMInputQualityFilter(context: Context) {
      * Init a new Sequence of frames
      */
     fun restart() {
-        lastAcceptTime = 0L
+        lastAcceptTime = System.nanoTime()
     }
 
     /**
      * Check if frame is valid to determine localize result.
-     * @param arFrame: Frame for approval.
-     * @return result: Pair<FMFrameFilterResult, FMFrameFilterFailure>
+     * @param arFrame Frame for approval.
+     * @return result FMFrameFilterResult
      */
     fun accepts(arFrame: Frame): FMFrameFilterResult {
-        if (shouldForceAccept(arFrame)) {
-            lastAcceptTime = arFrame.timestamp
-            Log.d(TAG, "shouldForceAccept True")
+        if (shouldForceAccept()) {
+            lastAcceptTime = System.nanoTime()
             return FMFrameFilterResult.Accepted
         } else {
             for (filter in filters) {
                 val result = filter.accepts(arFrame)
                 if (result != FMFrameFilterResult.Accepted) {
-                    Log.d(TAG, "RULE_CHECK: Frame not accepted ${result.getRejectedReason()}")
                     return result
                 }
             }
         }
-        lastAcceptTime = arFrame.timestamp
+        lastAcceptTime = System.nanoTime()
         return FMFrameFilterResult.Accepted
     }
 
@@ -70,14 +67,11 @@ class FMInputQualityFilter(context: Context) {
     /**
      * Method to Force Approve frame if a certain time has passed in case
      * of every frame in that period was refused
-     * @param arFrame: Frame for approval
+     * @return result: Boolean
      */
-    private fun shouldForceAccept(arFrame: Frame): Boolean {
-        if (lastAcceptTime != 0L) {
-            //convert to seconds (Frame timestamp is in nanoseconds)
-            val elapsed = (arFrame.timestamp - lastAcceptTime) / 1000000000
-            return elapsed > acceptanceThreshold
-        }
-        return false
+    private fun shouldForceAccept(): Boolean {
+        //convert to seconds (timestamp is in nanoseconds)
+        val elapsed = (System.nanoTime() - lastAcceptTime) / 1_000_000_000
+        return elapsed > acceptanceThreshold
     }
 }

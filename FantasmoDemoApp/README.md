@@ -6,196 +6,170 @@ Demo application to demonstrate how to interact with and test the Fantasmo Andro
 The SDK library is located inside the libs folder. When changing the SDK, the .aar should be replaced with the new version. 
   
 ## Dependencies
+```kotlin
+// Include libs folder 
+implementation fileTree(dir: 'libs', include: ['*.aar'])
 
-    // Include libs folder 
-    implementation fileTree(dir: 'libs', include: ['*.aar'])
-    
-    // Google ARCore
-    implementation 'com.google.ar:core:1.23.0'
-    implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.17.1'
-    implementation 'com.google.ar.sceneform:core:1.17.1'
-    implementation 'com.google.ar.sceneform:animation:1.17.1'
-    implementation 'com.google.android.material:material:1.4.0-alpha01'
+implementation 'androidx.core:core-ktx:1.3.2'
+implementation 'androidx.appcompat:appcompat:1.3.1'
+implementation 'com.google.android.material:material:1.4.0'
+implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
+implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
-    // Location Services
-    implementation 'com.google.gms:google-services:4.3.5'
-    implementation 'com.google.android.gms:play-services-auth:19.0.0'
-    implementation 'com.google.android.gms:play-services-location:18.0.0'
+// Fragment Navigation
+implementation "androidx.navigation:navigation-fragment-ktx:2.3.5"
 
-    //GSON for JSON parse and Volley for networking
-    implementation 'com.google.code.gson:gson:2.8.6'
-    implementation 'com.android.volley:volley:1.2.0'
+// Google ARCore
+implementation 'com.google.ar:core:1.27.0'
+implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.17.1'
 
+// Location Services
+implementation 'com.google.android.gms:play-services-location:18.0.0'
+implementation 'com.google.android.gms:play-services-maps:17.0.1'
+
+// Barcode model dependencies
+implementation 'com.google.mlkit:barcode-scanning:17.0.0'
+
+//GSON for JSON parse and Volley for networking
+implementation 'com.google.code.gson:gson:2.8.6'
+implementation 'com.android.volley:volley:1.2.0'
+```
 
 ## Permissions and requirements
-ARCore compatibility is optional, so the minSdkVersion is 14 but in case the device does not support ARCore, the localize request will not work. The necessary permissions and feature are:
-    
-    <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.INTERNET" />
+ARCore compatibility is optional and the `minSdkVersion` is **16**. In case the device does not support ARCore, the FMParkingView will not work. The necessary permissions and feature are:
 
+```xml
+<uses-permission android:name="android.permission.CAMERA"/>
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+<uses-permission android:name="android.permission.INTERNET" />
+```
 ## Schemes and Simulation Mode
 
-Depending on the building flavor of the SDK when setting the flag isSimulation to true , GPS location and server URL will be overriden. Example of the values used when simulation is turned on for the devMunich flavour. You can find the aar files for the three available flavours on the folder "SimulationTestLibraryFiles" inside the folder libs. Replace the production aar with any of the flavours, in conjunction with isSimulation set to true to test with specific coordinates and url.
+Depending on the building flavor of the SDK when setting the flag `isSimulation` to `true`, GPS location and server URL will be overriden. Example of the values used when simulation is turned on for the `devMunich` flavour. You can find the `.aar` files for the three available flavours on the folder `"SimulationTestLibraryFiles"` inside the folder `libs`. Replace the production `.aar` with any of the flavours, in conjunction with `isSimulation` set to true to test with specific coordinates and url.
 
-    devMunich {
-            dimension "env"
-            buildConfigField "String", "FM_API_BASE_URL", "\"https://api.fantasmo.io/v1/image.localize\""
-            buildConfigField "String", "FM_GPS_LAT_LONG", "\"48.12863302178715,11.572371166069702\""
-        }
+```kotlin
+devMunich {
+    dimension "env"
+    buildConfigField "String", "FM_API_BASE_URL", "\"https://api.fantasmo.io/v1/image.localize\""
+    buildConfigField "String", "FM_GPS_LAT_LONG", "\"48.12863302178715,11.572371166069702\""
+}
+```
 
-You can test by using the pointing the camera to the images on the drawable folder, "image_on_street_munich" and "image_in_parking_paris".
+You can test by using the pointing the camera to the images on the drawable folder, `"image_on_street_munich.jpg"` and `"image_in_parking_paris.jpg"`.
 
-## Setting up ARCore.
+## Setting up FMParkingView
 
-In the CameraFragment.kt there is an example of how to configures the necessary ARCore elements to have localization working. Firstly it's necessary to set up the ArFragment:
+In the `DemoFragment.kt` there is an example of how to set up the FMParkingView to start a parking session.
+Firstly, like the `demo_fragment.xml` demonstrates, it's necessary to create the FMParkingView:
+```xml
+<com.fantasmo.sdk.views.FMParkingView
+    android:id="@+id/fmParkingView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+</com.fantasmo.sdk.views.FMParkingView>
+```
+After that, to initialize it we only need to do `findViewById` or equivalent and call it on the `onCreate` lifecycle. After this it should provide a camera preview displaying the current `ARSession`.
 
-    arFragment = childFragmentManager.findFragmentById(R.id.ar_fragment) as ArFragment
-    arFragment.planeDiscoveryController.hide()
-    arFragment.planeDiscoveryController.setInstructionView(null)
-    arSceneView = arFragment.arSceneView
-    
-Then configuring the ARSession. 
+## Parking Flow
 
-    /**
-     * Method to configure the AR Session, used to
-     * enable auto focus for ARSceneView.
-     */
-    private fun configureARSession() {
-        arSession = Session(context)
-        val config = Config(arSession)
-        config.focusMode = Config.FocusMode.AUTO
-        config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
-        config.planeFindingMode = Config.PlaneFindingMode.DISABLED
-        arSession.configure(config)
-        arSceneView.setupSession(arSession)
-        Log.d(TAG, arSceneView.session?.config.toString())
+Before attempting to park and localize with Fantasmo SDK, you should first check if parking is available in the user's current location. You can do this by replicating the following method `fmParkingView.isParkingAvailable(latitude: Double, longitude: Double, onCompletion:(Boolean) → Unit)` passing a latitude and longitude of the location. The result block is called with a boolean indicating whether or not the user is near a mapped parking space.
+```kotlin
+fmParkingView.isParkingAvailable(latitude, longitude) { isParkingAvailable: Boolean
+    if (isParkingAvailable) {
+        // Create and present FMParkingView here
+    } else {
+        Toast.makeText(
+            context?.applicationContext,
+            "No mapped parking spaces nearby.",
+            Toast.LENGTH_LONG
+        ).show()
     }
+}
+```    
+**Important:** Before atempting parking please make sure you provide the FMParkingView with an accessToken, otherwise it will deny your access to the Fantasmo SDK features. (e.g. `fmParkingView.accessToken = "API_KEY"`)
 
-ARCore defaults it's resolution to 640x480. In order to improve image quality, the following piece of code should be added before the `arSession.configure(config)` line. This will find the largest resolution and use it during the ARSession. We've locked maximum resolution at 1080p resolution as we don’t recommend using more than that.
+After this, we are ready to connect to the Fantasmo SDK. We need to provide a controller to get the results from the SDK and a sessionId. Here's an example of connecting to the FMParkingView and start a parking session: 
 
-    var selectedSize = Size(0, 0)
-    var selectedCameraConfig = 0
+```kotlin
+fmParkingView.fmParkingViewController = fmParkingViewController
+val sessionId = UUID.randomUUID().toString()
+fmParkingView.connect(sessionId)
+```
 
-    val filter = CameraConfigFilter(arSession)
-    val cameraConfigsList: List<CameraConfig> = arSession.getSupportedCameraConfigs(filter)
-    for (currentCameraConfig in cameraConfigsList) {
-        val cpuImageSize: Size = currentCameraConfig.imageSize
-        val gpuTextureSize: Size = currentCameraConfig.textureSize
+The SDK provides an internal LocationManager and it will give updates on location. If you want to use your own Location Manager, all you have to do is set `fmParkingView.usesInternalLocationManager` to false and call the `fmParkingView.updateLocation(latitude: Double, longitude: Double)` on your location manager in order to get location updates. If you check `CustomDemoFragment.kt` there's an example of how to manage your own location updates: 
 
-        if (cpuImageSize.width > selectedSize.width && cpuImageSize.height <= 1080) {
-            selectedSize = cpuImageSize
-            selectedCameraConfig = cameraConfigsList.indexOf(currentCameraConfig)
-        }
-    }
-    arSession.cameraConfig = cameraConfigsList[selectedCameraConfig]
-    
-
-And set the onUpdateListener to localize the ARFrames.
-
-    val scene = arSceneView.scene
-    scene.addOnUpdateListener { frameTime ->
-        run {
-            arFragment.onUpdate(frameTime)
-            onUpdate()
+```kotlin
+// Custom Location Manager
+private val systemLocationListener: SystemLocationListener =
+    object : SystemLocationListener {
+        override fun onLocationUpdate(currentLocation: Location) {
+            fmParkingView.updateLocation(currentLocation.latitude, currentLocation.longitude)
         }
     }
-    
+```
+Create the listener for the result updates:
+```kotlin        
+/**
+ * Listener for the FMParkingView.
+ */
+private val fmParkingViewController: FMParkingViewProtocol =
+    object : FMParkingViewProtocol {
+        override fun fmParkingViewDidStartQRScanning() {
+        }
 
-## Fantasmo SDK setup
+        override fun fmParkingViewDidStopQRScanning() {
+        }
 
-First step is connecting the app with the SDK FMLocationManager. Example with the token and the listener to get the localization events.
+        override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
+            // Optional validation of the QR code can be done here
+            // Note: If you choose to implement this method, you must call the `onValidQRCode` with the validation 
+            // result show dialogue to accept or refuse
+            onValidQRCode(true)
+        }
 
-    fmLocationManager.connect(
-        "API_KEY",
-        fmLocationListener
-    )
+        override fun fmParkingViewDidStartLocalizing() {
+        }
 
-Before starting to make use of the SDK features, the GPS location must be passed from the client app to the SDK and to have the best results, it should be kept updated:
+        override fun fmParkingView(behavior: FMBehaviorRequest) {
+        }
 
-    val locationCallback = object : LocationCallback() {
-        override fun onLocationResult(locationResult: LocationResult) {
-            currentLocation = locationResult.lastLocation
-                
-            //Set SDK Location
-            fmLocationManager.setLocation(
-                currentLocation.latitude,
-                currentLocation.longitude
-            )
-            Log.d(TAG, "onLocationResult: ${locationResult.lastLocation}")
+        override fun fmParkingView(result: FMLocationResult) {
+            // Got a localization result
+            // Localization will continue until you dismiss the view
+            // You should decide on acceptable criteria for a result, one way is by checking the `confidence` value
+        }
+
+        override fun fmParkingView(error: ErrorResponse, metadata: Any?) {
         }
     }
+```
+### Customizing UI
 
-Then you can start or stop localizing using the following calls (done based on the 'Localize' toogle on the demo app). Note, to start localizing, you must provide an `appSessionId`, which is an identifier used for billing and tracking purposes:
-    
-    // Start getting location updates
-    fmLocationManager.startUpdatingLocation(appSessionId: String)
-    
-    // Stop getting location updates
-    fmLocationManager.stopUpdatingLocation()
-    
-Create the listener for location updates:
-        
-    /**
-    * Listener for the Fantasmo SDK Location results.
-    */
-    private val fmLocationListener: FMLocationListener =
-        object : FMLocationListener {
-            override fun locationManager(error: ErrorResponse, metadata: Any?) {
-            }
+The SDK, provides with default views for both the QRScanning and Localizing views. If you want to customize these views, you need to provide with your own view controllers. We provide an example in the `CustomDemoFragment.kt` with the following controllers filled with view management.
 
-            override fun locationManager(result: FMLocationResult) {
-            }
-    }
-    
-    
-And localize the ARFrames (done in the onUpdate on the sample app):
-
-    // Localize current frame if not already localizing
-    if (fmLocationManager.state == FMLocationManager.State.LOCALIZING) {
-        arFrame?.let { fmLocationManager.localize(it) }
+```kotlin
+private var fmQrScanningViewController: FMQRScanningViewProtocol =
+    object : FMQRScanningViewProtocol {
+        override fun didStartQRScanning() {}
+        override fun didScanQRCode(result: String) {}
+        override fun didStopQRScanning() {}
     }
 
-### Behaviors
-
-To maximize localization quality, camera input is filtered against common problems. In order to enable camera input filtering, you should start localizing using the following call. By entering `true` value on `filtersEnabled` it will enable the behaviors described below. 
-
-    // Start getting location updates
-    fmLocationManager.startUpdatingLocation(appSessionId: String, filtersEnabled: Boolean)
-
-The following listener will be called with behavior requests enabled and it's intended to alleviate such problems.
-
-    private val fmLocationListener: FMLocationListener = {
-        object : FMLocationListener {
-            fun locationManager(didRequestBehavior: FMBehaviorRequest){
-            }
-        }
+private var fmLocalizingViewController: FMLocalizingViewProtocol =
+    object : FMLocalizingViewProtocol {
+        override fun didStartLocalizing() {}
+        override fun didRequestLocalizationBehavior(behavior: FMBehaviorRequest) {}
+        override fun didReceiveLocalizationResult(result: FMLocationResult) {}
+        override fun didReceiveLocalizationError(error: ErrorResponse, errorMetadata: Any?) {}
     }
+```
 
-The following behaviors are currently requested:
-
-    enum class FMBehaviorRequest(val displayName: String) {
-        TILTUP("Tilt your device up"),
-        TILTDOWN("Tilt your device down"),
-        PANAROUND("Pan around the scene"),
-        PANSLOWLY("Pan more slowly");
-    }
-
-When notified, it should prompt the user to undertake the remedial behavior.
-
-## Anchoring
-
-Use the `Anchor` toggle to activate anchoring mode. The anchor position, i.e. the phone's position when anchoring is activated and sent to the SDK to be processed.
-SDK methods to set and unset anchor: 
-
-    // Set the anchor for the current frame
-    val currentArFrame = arSceneView.arFrame
-    currentArFrame?.let { fmLocationManager.setAnchor(it) }
-
-    //Unset the current anchor
-    fmLocationManager.unsetAnchor()
-
+Once you've created view controllers for the above protocols, simply register them with your `FMParkingView` instance before presenting it, otherwise the default ones will overpass these ones.
+```kotlin
+    fmParkingView.registerQRScanningViewController(fmQrScanningViewController)
+    fmParkingView.registerLocalizingViewController(fmLocalizingViewController)
+```
 ## ProGuard rules
 
 The following rules should be added to the ProGuard file: 
