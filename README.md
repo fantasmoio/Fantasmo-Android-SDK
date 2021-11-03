@@ -101,16 +101,16 @@ And add this to your `layout.xml` file:
 Before attempting to park and localize with Fantasmo SDK, you should first check if parking is available in the user's current location. You can do this with the method `fmParkingView.isParkingAvailable(latitude: Double, longitude: Double, onCompletion:(Boolean) → Unit)` passing a latitude and longitude of the location. The result block is called with a boolean indicating whether or not the user is near a mapped parking space.
 ```kotlin
 fmParkingView.isParkingAvailable(latitude, longitude) { isParkingAvailable: Boolean
-        if (isParkingAvailable) {
-            // Create and present FMParkingView here
-        } else {
-            Toast.makeText(
-                context?.applicationContext,
+    if (isParkingAvailable) {
+        // Create and present FMParkingView here
+    } else {
+        Toast.makeText(
+            context?.applicationContext,
                 "No mapped parking spaces nearby.",
                 Toast.LENGTH_LONG
             ).show()
-        }
     }
+}
 ```
 ### Providing a `sessionId`
 
