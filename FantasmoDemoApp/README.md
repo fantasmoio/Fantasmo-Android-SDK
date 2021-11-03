@@ -50,10 +50,10 @@ Depending on the building flavor of the SDK when setting the flag `isSimulation`
 
 ```kotlin
 devMunich {
-        dimension "env"
-        buildConfigField "String", "FM_API_BASE_URL", "\"https://api.fantasmo.io/v1/image.localize\""
-        buildConfigField "String", "FM_GPS_LAT_LONG", "\"48.12863302178715,11.572371166069702\""
-    }
+    dimension "env"
+    buildConfigField "String", "FM_API_BASE_URL", "\"https://api.fantasmo.io/v1/image.localize\""
+    buildConfigField "String", "FM_GPS_LAT_LONG", "\"48.12863302178715,11.572371166069702\""
+}
 ```
 
 You can test by using the pointing the camera to the images on the drawable folder, `"image_on_street_munich.jpg"` and `"image_in_parking_paris.jpg"`.
@@ -76,16 +76,16 @@ After that, to initialize it we only need to do `findViewById` or equivalent and
 Before attempting to park and localize with Fantasmo SDK, you should first check if parking is available in the user's current location. You can do this by replicating the following method `fmParkingView.isParkingAvailable(latitude: Double, longitude: Double, onCompletion:(Boolean) → Unit)` passing a latitude and longitude of the location. The result block is called with a boolean indicating whether or not the user is near a mapped parking space.
 ```kotlin
 fmParkingView.isParkingAvailable(latitude, longitude) { isParkingAvailable: Boolean
-        if (isParkingAvailable) {
-            // Create and present FMParkingView here
-        } else {
-            Toast.makeText(
-                context?.applicationContext,
-                "No mapped parking spaces nearby.",
-                Toast.LENGTH_LONG
-            ).show()
-        }
+    if (isParkingAvailable) {
+        // Create and present FMParkingView here
+    } else {
+        Toast.makeText(
+            context?.applicationContext,
+            "No mapped parking spaces nearby.",
+            Toast.LENGTH_LONG
+        ).show()
     }
+}
 ```    
 **Important:** Before atempting parking please make sure you provide the FMParkingView with an accessToken, otherwise it will deny your access to the Fantasmo SDK features. (e.g. `fmParkingView.accessToken = "API_KEY"`)
 
@@ -156,12 +156,13 @@ private var fmQrScanningViewController: FMQRScanningViewProtocol =
         override fun didStopQRScanning() {}
     }
 
-    private var fmLocalizingViewController: FMLocalizingViewProtocol =
-     object : FMLocalizingViewProtocol {
-         override fun didStartLocalizing() {}
-         override fun didRequestLocalizationBehavior(behavior: FMBehaviorRequest) {}
-         override fun didReceiveLocalizationResult(result: FMLocationResult) {}
-         override fun didReceiveLocalizationError(error: ErrorResponse, errorMetadata: Any?) {}
+private var fmLocalizingViewController: FMLocalizingViewProtocol =
+    object : FMLocalizingViewProtocol {
+        override fun didStartLocalizing() {}
+        override fun didRequestLocalizationBehavior(behavior: FMBehaviorRequest) {}
+        override fun didReceiveLocalizationResult(result: FMLocationResult) {}
+        override fun didReceiveLocalizationError(error: ErrorResponse, errorMetadata: Any?) {}
+    }
 ```
 
 Once you've created view controllers for the above protocols, simply register them with your `FMParkingView` instance before presenting it, otherwise the default ones will overpass these ones.

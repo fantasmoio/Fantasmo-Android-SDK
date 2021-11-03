@@ -12,6 +12,7 @@ import com.google.ar.core.Frame
 import com.google.ar.core.Pose
 import com.google.ar.core.exceptions.DeadlineExceededException
 import com.google.ar.core.exceptions.NotYetAvailableException
+import com.google.ar.core.exceptions.ResourceExhaustedException
 import com.google.ar.sceneform.math.Vector3
 import java.io.ByteArrayOutputStream
 import kotlin.math.*
@@ -159,7 +160,7 @@ class FMUtility {
         }
 
         /**
-         * Converts Quaternion to Euler Angles
+         * Converts Quaternion to Euler Angles.
          * Source: https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
          * @param rotationQuaternion: rotation quaternion correspondent to rotation of the device
          * */
@@ -221,7 +222,7 @@ class FMUtility {
          * Acquires the image from the ARCore frame catching all
          * exceptions that could happen during localizing session
          * @param arFrame Frame
-         * @return `ByteArrayOutputStream or `null in case of exception
+         * @return `ByteArrayOutputStream` or `null` in case of exception
          */
         fun acquireFrameImage(arFrame: Frame): ByteArray? {
             try {
@@ -236,6 +237,8 @@ class FMUtility {
                 Log.e(TAG, "FrameNotYetAvailable")
             } catch (e: DeadlineExceededException) {
                 Log.e(TAG, "DeadlineExceededException")
+            } catch (e: ResourceExhaustedException) {
+                Log.e(TAG, "ResourceExhaustedException")
             }
             return null
         }
@@ -243,7 +246,7 @@ class FMUtility {
         /**
          * This avoids AR frames from being converted twice to `ByteArray`.
          *
-         * Also prevents outdated frames from throwing `DeadlineExceededException
+         * Also prevents outdated frames from throwing `DeadlineExceededException`
          * after being analyzed on the `BlurFilter`
          * @param byteArrayFrame `ByteArray` with frame image data
          */

@@ -180,7 +180,8 @@ During localization, frames are continuously captured and sent to the server. Fi
 override fun fmParkingView(result: FMLocationResult) {
     // Got a localization result
     // Localization will continue until you dismiss the view
-    // You should decide on acceptable criteria for a result, one way is by checking the `confidence` value
+    // You should decide on acceptable criteria for a result, 
+    // one way is by checking the `confidence` value
     if (result.confidence == FMResultConfidence.LOW) {
         return
     }
@@ -216,7 +217,7 @@ private var fmQrScanningViewController: FMQRScanningViewProtocol =
         override fun didStopQRScanning() {}
     }
 
-   private var fmLocalizingViewController: FMLocalizingViewProtocol =
+private var fmLocalizingViewController: FMLocalizingViewProtocol =
     object : FMLocalizingViewProtocol {
         override fun didStartLocalizing() {}
         override fun didRequestLocalizationBehavior(behavior: FMBehaviorRequest) {}

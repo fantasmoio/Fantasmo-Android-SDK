@@ -9,7 +9,7 @@ import android.hardware.SensorManager
 import android.util.Log
 
 /**
- * Class responsible for holding the reads from the magnetometer values
+ * Class responsible for holding the reads from the magnetometer values.
  */
 class MagneticField(
     var x: Float,
@@ -18,7 +18,9 @@ class MagneticField(
 )
 
 /**
- * Class responsible for getting magnetometer events values
+ * Class responsible for getting magnetometer events values.
+ * Encapsulates device motion updates used for getting magnetometer data.
+ * If no data is gathered, an all-zero field is return.
  */
 class MotionManager(val context: Context) : SensorEventListener {
 

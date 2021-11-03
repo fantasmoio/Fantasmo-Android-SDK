@@ -224,7 +224,7 @@ class FMLocationManager(private val context: Context) {
     }
 
     /**
-     * Gather all the information needed to assemble a LocalizationRequest
+     * Gather all the information needed to assemble a LocalizationRequest.
      */
     private fun createLocalizationRequest(frame: Frame): FMLocalizationRequest {
         val frameEvents = FMFrameEvent(
