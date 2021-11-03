@@ -1,20 +1,12 @@
 package com.fantasmo.sdk.views
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.opengl.GLSurfaceView
 import android.util.Log
 import android.util.Size
-import android.view.View
-import android.widget.Switch
-import android.widget.TextView
-import android.widget.Toast
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import com.fantasmo.sdk.FMLocationManager
-import com.fantasmo.sdk.FMUtility
-import com.fantasmo.sdk.utilities.QRCodeScanner
+import com.fantasmo.sdk.models.FMPose
 import com.fantasmo.sdk.views.common.helpers.DisplayRotationHelper
 import com.fantasmo.sdk.views.common.helpers.TrackingStateHelper
 import com.fantasmo.sdk.views.common.samplerender.SampleRender
@@ -23,13 +15,17 @@ import com.google.ar.core.*
 import com.google.ar.core.exceptions.CameraNotAvailableException
 import java.io.IOException
 
-class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context) :
+class FMARCoreView(
+    private val arLayout: CoordinatorLayout,
+    val context: Context
+) :
     SampleRender.Renderer {
 
-    private val TAG = "FMARCoreManager"
+    var connected: Boolean = false
+    private val TAG = FMARCoreView::class.java.simpleName
 
     private var arSession: Session? = null
-    lateinit var fmLocationManager: FMLocationManager
+    lateinit var arSessionListener: FMARSessionListener
 
     // Rendering. The Renderers are created here, and initialized when the GL surface is created.
     // This is important because ARCore needs a GL context even when it doesn't need to render
@@ -43,29 +39,13 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
     private lateinit var displayRotationHelper: DisplayRotationHelper
     private lateinit var trackingStateHelper: TrackingStateHelper
 
-    lateinit var filterRejectionTv: TextView
-    private lateinit var anchorDeltaTv: TextView
-
-    @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var anchorToggleButton: Switch
-
+    // Set anchor after QR code is read
     var anchorIsChecked = false
+    // Result of anchoring
     var anchored = false
 
-    private var behaviorReceived = 0L
-    private var n2s = 1_000_000_000L
-    private val behaviorThreshold = 1L
-
-    lateinit var qrCodeReader: QRCodeScanner
-    var localizing = false
-
-    private fun helloWorld() {
-        Log.d(TAG, "Setting ARCore Session")
-    }
-
     fun setupARSession() {
-        helloWorld()
-
+        Log.d(TAG, "Setting ARCore Session")
         surfaceView = arLayout.findViewWithTag("SurfaceView")
         displayRotationHelper = DisplayRotationHelper(context)
         trackingStateHelper = TrackingStateHelper(context as Activity?)
@@ -207,9 +187,9 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
         //Acquire ARCore Frame to set anchor and updates UI setting values in the view
         (context as Activity).runOnUiThread {
             // Code here will run in UI thread
-            onUpdate(frame)
-            anchorFrame(frame)
-            qrScanFrame(frame)
+            if(connected){
+                onUpdate(frame)
+            }
         }
 
         val camera = frame.camera
@@ -231,81 +211,31 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
         }
     }
 
-    private fun qrScanFrame(frame: Frame) {
-        // Only read frame if the qrCodeReader is enabled and only if qrCodeReader is in reading mode
-        if (qrCodeReader.qrCodeReaderEnabled && qrCodeReader.state == QRCodeScanner.State.IDLE) {
-            Log.d(TAG,"QR Code Scanning")
-            frame.let { qrCodeReader.processImage(it) }
-        }
-
-        if(!qrCodeReader.qrCodeReaderEnabled){
-            localizing = true
-        }
-    }
-
-    /**
-     * Frame Anchoring
-     */
-    private fun anchorFrame(currentArFrame: Frame) {
-        if (!anchored) {
-            if (anchorIsChecked) {
-                Log.d(TAG, "AnchorToggle Enabled")
-
-                currentArFrame.let {
-                    if (currentArFrame.camera.trackingState == TrackingState.TRACKING) {
-                        //anchorDeltaTv.visibility = View.VISIBLE
-                        fmLocationManager.setAnchor(it)
-                    } else {
-                        Toast.makeText(
-                            context.applicationContext,
-                            "Anchor can't be set because tracking state is not correct, please try again.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        anchorToggleButton.isChecked = false
-                    }
-                }
-                anchored = true
-            }
-        }
-    }
-
     /**
      * On any changes to the scene call onUpdate method to get arFrames and get the camera data
-     * Data obtained from the sensor: Camera Translation and Camera Rotation values
+     * Also responsible for frame anchoring and qrScanning with arFrames
      * */
     private fun onUpdate(frame: Frame) {
-        val anchorDelta = frame.let { frame2 ->
-            fmLocationManager.anchorFrame?.let { anchorFrame ->
-                FMUtility.anchorDeltaPoseForFrame(
-                    frame2,
-                    anchorFrame
-                )
-            }
-        }
+        val anchorDelta = arSessionListener.anchorDelta(frame)
 
-        if (//anchorDeltaTv.isVisible &&
-            anchorDelta != null) {
+        if (anchorDelta != null) {
             val position =
                 floatArrayOf(
                     anchorDelta.position.x,
                     anchorDelta.position.y,
                     anchorDelta.position.z
                 )
-            Log.d(TAG,"Anchor Delta: ${createStringDisplay(position)}")
-            //anchorDeltaTv.text = createStringDisplay("Anchor Delta: ", position)
+            //Log.d(TAG,"Anchor Delta: ${createStringDisplay(position)}")
+        }
+        arSessionListener.localize(frame)
+
+        if (!anchored) {
+            if (anchorIsChecked) {
+                anchored = arSessionListener.anchored(frame)
+            }
         }
 
-        // Localize current frame if not already localizing
-        if (fmLocationManager.state == FMLocationManager.State.LOCALIZING) {
-            fmLocationManager.localize(frame)
-        }
-
-        val currentTime = System.nanoTime()
-        if ((currentTime - behaviorReceived) / n2s > behaviorThreshold) {
-            val clearText = "FrameFilterResult"
-            filterRejectionTv.text = clearText
-            filterRejectionTv.visibility = View.GONE
-        }
+        arSessionListener.qrCodeScan(frame)
     }
 
     /**
@@ -316,4 +246,11 @@ class FMARCoreView(private val arLayout: CoordinatorLayout, val context: Context
                 String.format("%.2f", cameraAttr?.get(1)) + ", " +
                 String.format("%.2f", cameraAttr?.get(2))
     }
+}
+
+interface FMARSessionListener{
+    fun localize(frame: Frame)
+    fun anchored(frame: Frame): Boolean
+    fun anchorDelta(frame: Frame): FMPose?
+    fun qrCodeScan(frame: Frame)
 }

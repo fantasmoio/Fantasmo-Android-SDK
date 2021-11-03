@@ -7,7 +7,7 @@ import com.fantasmo.sdk.models.ErrorResponse
 interface FMParkingViewProtocol {
     fun fmParkingViewDidStartQRScanning(){}
     fun fmParkingViewDidStopQRScanning(){}
-    fun fmParkingView(qrCode: String, shouldContinue: (Boolean) -> Unit){}
+    fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit){}
     fun fmParkingViewDidStartLocalizing(){}
     fun fmParkingView(behavior: FMBehaviorRequest){}
     fun fmParkingView(result: FMLocationResult){}

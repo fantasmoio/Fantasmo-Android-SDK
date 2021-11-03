@@ -1,6 +1,5 @@
 package com.fantasmo.sdk.models.analytics
 
-import android.util.Log
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingFailureReason
 import com.google.ar.core.TrackingState
@@ -23,7 +22,7 @@ class TrackingStateFrameStatistics {
     // Bad internal state;
     // Insufficient Features;
     // Insufficient Light;
-    private var framesWithLimitedTrackingStateByReason : MutableMap<TrackingFailureReason,Int> = EnumMap(
+    var framesWithLimitedTrackingStateByReason : MutableMap<TrackingFailureReason,Int> = EnumMap(
         TrackingFailureReason::class.java
     )
 

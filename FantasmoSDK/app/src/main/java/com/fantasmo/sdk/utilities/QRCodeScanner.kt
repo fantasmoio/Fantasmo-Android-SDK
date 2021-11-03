@@ -28,8 +28,12 @@ import java.nio.ByteBuffer
  */
 class QRCodeScanner(
     var fmParkingViewController: FMParkingViewProtocol,
-    private var fmQrScanningViewController: FMQRScanningViewProtocol
+    private var fmQrScanningViewController: FMQRScanningViewProtocol,
+    private var qrCodeScannerListener: QRCodeScannerListener
 ) {
+
+    private val TAG = QRCodeScanner::class.java.simpleName
+
     // This prevents the qrCodeReader to be overflowed with frames to analyze
     enum class State{
         QRCODEDETECTED,
@@ -39,7 +43,6 @@ class QRCodeScanner(
 
     var qrCodeReaderEnabled: Boolean = false
     var state = State.IDLE
-    private val TAG = QRCodeScanner::class.java.simpleName
     private var imageWidth = 0
     private var imageHeight = 0
     private var qrFound = false
@@ -94,7 +97,6 @@ class QRCodeScanner(
                         // may stall.
                         state = if(qrFound){
                             qrCodeReaderEnabled = false
-                            Log.d(TAG, "QR Code Reader Disabled")
                             State.QRCODEDETECTED
                         }else{
                             qrCodeReaderEnabled = true
@@ -111,13 +113,13 @@ class QRCodeScanner(
         fmQrScanningViewController.didScanQRCode(stringScan)
         fmParkingViewController.fmParkingView(value){
             if(it){
-                fmParkingViewController.fmParkingViewDidStartLocalizing()
+                Log.d(TAG,"QR CODE ACCEPTED")
+                qrCodeScannerListener.deployLocalizing()
             }
             else{
-                Log.d(TAG,"REFUSED")
+                Log.d(TAG,"QR CODE REFUSED")
                 qrFound = false
-                fmQrScanningViewController.didStartQRScanning()
-                fmParkingViewController.fmParkingViewDidStartQRScanning()
+                qrCodeScannerListener.deployQRScanning()
             }
         }
     }
@@ -176,10 +178,15 @@ class QRCodeScanner(
             cameraImage.close()
             return arrayOf(cameraPlaneY,cameraPlaneU,cameraPlaneV)
         } catch (e: NotYetAvailableException) {
-            Log.d(TAG, "FrameNotYetAvailable")
+            Log.e(TAG, "FrameNotYetAvailable")
         } catch (e: DeadlineExceededException) {
-            Log.d(TAG, "DeadlineExceededException")
+            Log.e(TAG, "DeadlineExceededException")
         }
         return null
     }
+}
+
+interface QRCodeScannerListener {
+    fun deployQRScanning()
+    fun deployLocalizing()
 }

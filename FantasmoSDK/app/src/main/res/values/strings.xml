@@ -42,4 +42,7 @@
     <string name="filterresult">FilterResult</string>
     <string name="qr">QR</string>
     <string name="device_location">Device Location:</string>
+    <string name="scan_qr_code">Scan QR Code</string>
+    <string name="verify_parking">VERIFY PARKING</string>
+    <string name="exit">Exit</string>
 </resources>

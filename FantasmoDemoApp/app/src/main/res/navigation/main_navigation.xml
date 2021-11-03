@@ -3,11 +3,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_navigation">
 
+    <!--fragment
+        android:id="@+id/custom_arcore_fragment"
+        android:name="com.example.fantasmo_android.CustomARCoreFragment"
+        android:label="custom_arcore_fragment"
+        tools:layout="@layout/custom_demo_fragment" /-->
+
     <fragment
         android:id="@+id/arcore_fragment"
-        android:name="com.example.fantasmo_android.ARCoreFragment"
+        android:name="com.example.fantasmo_android.DemoFragment"
         android:label="arcore_fragment"
-        tools:layout="@layout/arcore_fragment" />
+        tools:layout="@layout/demo_fragment" />
 
     <fragment
         android:id="@+id/noarcore_fragment"

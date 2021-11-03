@@ -84,7 +84,7 @@ class FMApi(
         try {
             fmNetworkManager.uploadImage(
                 FMUtility.getImageDataFromARFrame(context, arFrame),
-                getLocalizeParams(arFrame,request),
+                getLocalizeParams(arFrame, request),
                 token,
                 {
                     val location = it.location
@@ -114,14 +114,19 @@ class FMApi(
 
     /**
      * Method to build the ZoneInRadius request.
+     * @param latitude: Location latitude to search
+     * @param longitude: Location longitude to search
+     * @param radius: search radius in meters
      */
     fun sendZoneInRadiusRequest(
+        latitude: Double,
+        longitude: Double,
         radius: Int,
         onCompletion: (Boolean) -> Unit
     ) {
         fmNetworkManager.zoneInRadiusRequest(
             "https://api.fantasmo.io/v1/parking.in.radius",
-            getZoneInRadiusParams(radius),
+            getZoneInRadiusParams(latitude, longitude, radius),
             token,
             onCompletion
         )
@@ -148,7 +153,7 @@ class FMApi(
 
         val height = frame.camera.imageIntrinsics.imageDimensions[0]
         val width = frame.camera.imageIntrinsics.imageDimensions[1]
-        val resolution = hashMapOf<String,Int>()
+        val resolution = hashMapOf<String, Int>()
         resolution["height"] = height
         resolution["width"] = width
 
@@ -162,7 +167,7 @@ class FMApi(
         )
 
         val events = request.analytics.frameEvents
-        val frameEventCounts = hashMapOf<String,String>()
+        val frameEventCounts = hashMapOf<String, String>()
         frameEventCounts["excessiveTilt"] = events.excessiveTilt.toString()
         frameEventCounts["excessiveBlur"] = events.excessiveBlur.toString()
         frameEventCounts["excessiveMotion"] = events.excessiveMotion.toString()
@@ -216,25 +221,21 @@ class FMApi(
 
     /**
      * Generate the zoneInRadius HTTP request parameters.
+     * @param latitude: Location latitude to search
+     * @param longitude: Location longitude to search
      * @param radius: search radius in meters
      * @return an HashMap with all the localization parameters.
      *
      * Only works with PARKING zones currently
      */
     private fun getZoneInRadiusParams(
+        latitude: Double,
+        longitude: Double,
         radius: Int,
     ): HashMap<String, String> {
         val params = hashMapOf<String, String>()
 
-        val coordinates = if (fmLocationManager.isSimulation) {
-            val simulationLocation = FMConfiguration.getConfigLocation()
-            Coordinate(simulationLocation.latitude, simulationLocation.longitude)
-        } else {
-            Coordinate(
-                fmLocationManager.currentLocation.latitude,
-                fmLocationManager.currentLocation.longitude
-            )
-        }
+        val coordinates = Coordinate(latitude, longitude)
 
         params["radius"] = radius.toString()
         params["coordinate"] = Gson().toJson(coordinates)

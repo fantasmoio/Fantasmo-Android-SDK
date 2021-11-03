@@ -11,37 +11,37 @@ class FMFrameFilterTest {
         var rejection = FMFilterRejectionReason.PITCHTOOLOW
 
         assertEquals(
-            rejection.mapToBehaviourRequest(),
+            rejection.mapToBehaviorRequest(),
             FMBehaviorRequest.TILTUP
         )
 
         rejection = FMFilterRejectionReason.PITCHTOOHIGH
         assertEquals(
-            rejection.mapToBehaviourRequest(),
+            rejection.mapToBehaviorRequest(),
             FMBehaviorRequest.TILTDOWN
         )
 
         rejection = FMFilterRejectionReason.MOVINGTOOLITTLE
         assertEquals(
-            rejection.mapToBehaviourRequest(),
+            rejection.mapToBehaviorRequest(),
             FMBehaviorRequest.PANAROUND
         )
 
         rejection = FMFilterRejectionReason.MOVINGTOOFAST
         assertEquals(
-            rejection.mapToBehaviourRequest(),
+            rejection.mapToBehaviorRequest(),
             FMBehaviorRequest.PANSLOWLY
         )
 
         rejection = FMFilterRejectionReason.INSUFFICIENTFEATURES
         assertEquals(
-            rejection.mapToBehaviourRequest(),
+            rejection.mapToBehaviorRequest(),
             FMBehaviorRequest.PANAROUND
         )
 
         rejection = FMFilterRejectionReason.IMAGETOOBLURRY
         assertEquals(
-            rejection.mapToBehaviourRequest(),
+            rejection.mapToBehaviorRequest(),
             FMBehaviorRequest.PANSLOWLY
         )
     }
