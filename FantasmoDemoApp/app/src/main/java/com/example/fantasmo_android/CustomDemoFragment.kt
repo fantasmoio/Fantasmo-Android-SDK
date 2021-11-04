@@ -17,6 +17,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import com.example.fantasmo_android.helpers.GoogleMapsManager
+import com.example.fantasmo_android.helpers.SystemLocationListener
+import com.example.fantasmo_android.helpers.SystemLocationManager
 
 import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMLocationResult
@@ -41,10 +43,10 @@ class CustomDemoFragment : Fragment() {
     private lateinit var controlsLayout: ConstraintLayout
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var simulationModeToggle: Switch
+    private lateinit var isSimulationSwitch: Switch
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var showDebugStatsToggle: Switch
+    private lateinit var showsStatisticsSwitch: Switch
 
     private lateinit var endRideButton: Button
     private lateinit var exitButton: Button
@@ -86,14 +88,14 @@ class CustomDemoFragment : Fragment() {
 
         // Enable simulation mode to test purposes with specific location
         // depending on which SDK flavor it's being used (Paris, Munich, Miami)
-        simulationModeToggle = currentView.findViewById(R.id.simulationModeToggle)
-        simulationModeToggle.setOnCheckedChangeListener { _, checked ->
+        isSimulationSwitch = currentView.findViewById(R.id.simulationModeToggle)
+        isSimulationSwitch.setOnCheckedChangeListener { _, checked ->
             fmParkingView.isSimulation = checked
         }
 
         // Enable Debug Mode to display session statistics
-        showDebugStatsToggle = currentView.findViewById(R.id.showDebugStatsToggle)
-        showDebugStatsToggle.setOnCheckedChangeListener { _, checked ->
+        showsStatisticsSwitch = currentView.findViewById(R.id.showDebugStatsToggle)
+        showsStatisticsSwitch.setOnCheckedChangeListener { _, checked ->
             fmParkingView.showStatistics = checked
         }
 

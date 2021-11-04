@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Switch
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
@@ -30,13 +29,13 @@ class DemoFragment : Fragment() {
     private lateinit var currentView: View
 
     private lateinit var controlsLayout: ConstraintLayout
-    private lateinit var localizationResult: TextView
+    private lateinit var resultTextView: TextView
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var simulationModeToggle: Switch
+    private lateinit var isSimulationSwitch: Switch
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var showDebugStatsToggle: Switch
+    private lateinit var showsStatisticsSwitch: Switch
 
     private lateinit var endRideButton: Button
 
@@ -54,7 +53,7 @@ class DemoFragment : Fragment() {
         currentView = inflater.inflate(R.layout.demo_fragment, container, false)
 
         controlsLayout = currentView.findViewById(R.id.controlsLayout)
-        localizationResult = currentView.findViewById(R.id.localizationResultView)
+        resultTextView = currentView.findViewById(R.id.localizationResultView)
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
         // Assign a controller
@@ -64,14 +63,14 @@ class DemoFragment : Fragment() {
 
         // Enable simulation mode to test purposes with specific location
         // depending on which SDK flavor it's being used (Paris, Munich, Miami)
-        simulationModeToggle = currentView.findViewById(R.id.simulationModeToggle)
-        simulationModeToggle.setOnCheckedChangeListener { _, checked ->
+        isSimulationSwitch = currentView.findViewById(R.id.simulationModeToggle)
+        isSimulationSwitch.setOnCheckedChangeListener { _, checked ->
             fmParkingView.isSimulation = checked
         }
 
         // Enable Debug Mode to display session statistics
-        showDebugStatsToggle = currentView.findViewById(R.id.showDebugStatsToggle)
-        showDebugStatsToggle.setOnCheckedChangeListener { _, checked ->
+        showsStatisticsSwitch = currentView.findViewById(R.id.showDebugStatsToggle)
+        showsStatisticsSwitch.setOnCheckedChangeListener { _, checked ->
             fmParkingView.showStatistics = checked
         }
 
@@ -97,11 +96,9 @@ class DemoFragment : Fragment() {
             if (it) {
                 startParkingFlow()
             } else {
-                Toast.makeText(
-                    context?.applicationContext,
-                    "Parking not available near your location.",
-                    Toast.LENGTH_LONG
-                ).show()
+                resultTextView.visibility = View.VISIBLE
+                val stringNotAvailable = "Parking not available near your location."
+                resultTextView.text = stringNotAvailable
             }
         }
     }
@@ -113,7 +110,7 @@ class DemoFragment : Fragment() {
         val sessionId = UUID.randomUUID().toString()
         // Present the FMParkingView
         fmParkingView.connect(sessionId)
-        localizationResult.visibility = View.GONE
+        resultTextView.visibility = View.GONE
         controlsLayout.visibility = View.INVISIBLE
     }
 
@@ -195,9 +192,9 @@ class DemoFragment : Fragment() {
                         Log.d(TAG, "HIGH Confidence Result")
                         fmParkingView.dismiss()
                         val stringResult = "Result: ${result.location.coordinate} (${result.confidence})"
-                        localizationResult.text = stringResult
-                        if(localizationResult.visibility == View.GONE){
-                            localizationResult.visibility = View.VISIBLE
+                        resultTextView.text = stringResult
+                        if(resultTextView.visibility == View.GONE){
+                            resultTextView.visibility = View.VISIBLE
                         }
 
                     }
