@@ -154,14 +154,6 @@ class DemoFragment : Fragment() {
      */
     private val fmParkingViewController: FMParkingViewProtocol =
         object : FMParkingViewProtocol {
-            override fun fmParkingViewDidStartQRScanning() {
-                Log.d(TAG, "QR Code Reader Enabled")
-            }
-
-            override fun fmParkingViewDidStopQRScanning() {
-                Log.d(TAG, "QR Code Reader Disabled")
-            }
-
             override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
                 Log.d(TAG, "QR Code Scan Successful")
                 // Optional validation of the QR code can be done here
@@ -170,25 +162,11 @@ class DemoFragment : Fragment() {
                 onValidQRCode(true)
             }
 
-            override fun fmParkingViewDidStartLocalizing() {
-                Log.d(TAG, "Started Localizing")
-            }
-
-            override fun fmParkingView(behavior: FMBehaviorRequest) {
-                Log.d(TAG, "Received Behavior: ${behavior.description}")
-            }
-
             override fun fmParkingView(result: FMLocationResult) {
                 // Got a localization result
                 // Localization will continue until you dismiss the view
                 // You should decide on acceptable criteria for a result, one way is by checking the `confidence` value
                 when (result.confidence) {
-                    FMResultConfidence.LOW -> {
-                        Log.d(TAG, "LOW Confidence Result")
-                    }
-                    FMResultConfidence.MEDIUM -> {
-                        Log.d(TAG, "MEDIUM Confidence Result")
-                    }
                     FMResultConfidence.HIGH -> {
                         Log.d(TAG, "HIGH Confidence Result")
                         fmParkingView.dismiss()
@@ -198,6 +176,9 @@ class DemoFragment : Fragment() {
                             resultTextView.visibility = View.VISIBLE
                         }
 
+                    }
+                    else -> {
+                        Log.d(TAG, "${result.confidence} Confidence Result")
                     }
                 }
             }
