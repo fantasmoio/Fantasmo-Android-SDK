@@ -1,6 +1,7 @@
 package com.example.fantasmo_android
 
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.location.Location
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -143,6 +144,7 @@ class CustomDemoFragment : Fragment() {
         // will overpass these ones
         fmParkingView.registerQRScanningViewController(fmQrScanningViewController)
         fmParkingView.registerLocalizingViewController(fmLocalizingViewController)
+
         // Present the FMParkingView
         fmParkingView.connect(sessionId)
 
@@ -270,12 +272,35 @@ class CustomDemoFragment : Fragment() {
                 Log.d(TAG, "fmParkingViewDidStopQRScanning")
             }
 
-            override fun fmParkingView(qrCode: String, shouldContinue: (Boolean) -> Unit) {
+            override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
                 Log.d(TAG, "fmParkingView ShouldContinue")
                 // Optional validation of the QR code can be done here
                 // Note: If you choose to implement this method, you must call the `shouldApprove` with the validation result
                 // show dialogue to accept or refuse
-                shouldContinue(true)
+                val builder1: AlertDialog.Builder = AlertDialog.Builder(context)
+                builder1.setTitle("QR Code Scan result")
+                builder1.setMessage(qrCode)
+                builder1.setCancelable(true)
+
+                builder1.setPositiveButton(
+                    "Yes"
+                ) { dialog, _ ->
+                    dialog.cancel()
+                    onValidQRCode(true)
+                    Log.d(TAG, "QR Code Accepted")
+                }
+
+                builder1.setNegativeButton(
+                    "No"
+                ) { dialog, _ ->
+                    dialog.cancel()
+                    onValidQRCode(false)
+                    Log.d(TAG, "QR Code Refused")
+                }
+
+                val alert11: AlertDialog = builder1.create()
+                alert11.show()
+
             }
 
             override fun fmParkingViewDidStartLocalizing() {

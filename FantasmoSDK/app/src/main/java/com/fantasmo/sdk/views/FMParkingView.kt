@@ -383,6 +383,7 @@ class FMParkingView @JvmOverloads constructor(
             }
 
             override fun deployQRScanning() {
+                state = State.IDLE
                 startQRScanning()
             }
         }
