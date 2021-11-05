@@ -46,7 +46,7 @@ class CustomDemoFragment : Fragment() {
     private lateinit var isSimulationSwitch: Switch
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var showsStatisticsSwitch: Switch
+    private lateinit var showStatisticsSwitch: Switch
 
     private lateinit var endRideButton: Button
     private lateinit var exitButton: Button
@@ -79,25 +79,12 @@ class CustomDemoFragment : Fragment() {
         currentView = inflater.inflate(R.layout.custom_demo_fragment, container, false)
 
         controlsLayout = currentView.findViewById(R.id.controlsLayout)
+        isSimulationSwitch = currentView.findViewById(R.id.simulationModeSwitch)
+        showStatisticsSwitch = currentView.findViewById(R.id.showStatisticsSwitch)
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
-        // Assign a controller
-        fmParkingView.fmParkingViewController = fmParkingViewController
         // Assign an accessToken
         fmParkingView.accessToken = accessToken
-
-        // Enable simulation mode to test purposes with specific location
-        // depending on which SDK flavor it's being used (Paris, Munich, Miami)
-        isSimulationSwitch = currentView.findViewById(R.id.simulationModeToggle)
-        isSimulationSwitch.setOnCheckedChangeListener { _, checked ->
-            fmParkingView.isSimulation = checked
-        }
-
-        // Enable Debug Mode to display session statistics
-        showsStatisticsSwitch = currentView.findViewById(R.id.showDebugStatsToggle)
-        showsStatisticsSwitch.setOnCheckedChangeListener { _, checked ->
-            fmParkingView.showStatistics = checked
-        }
 
         // Enable FMParkingView internal Location Manager
         fmParkingView.usesInternalLocationManager = usesInternalLocationManager
@@ -141,6 +128,16 @@ class CustomDemoFragment : Fragment() {
         // but it can also follow your own format. It is used for analytics and billing purposes and
         // should represent a single parking session.
         val sessionId = UUID.randomUUID().toString()
+
+        // Assign a controller
+        fmParkingView.fmParkingViewController = fmParkingViewController
+
+        // Enable simulation mode to test purposes with specific location
+        // depending on which SDK flavor it's being used (Paris, Munich, Miami)
+        fmParkingView.isSimulation = isSimulationSwitch.isChecked
+
+        // Enable Debug Mode to display session statistics
+        fmParkingView.showStatistics = showStatisticsSwitch.isChecked
 
         // Before presenting the FMParkingView register custom views, otherwise the default ones
         // will overpass these ones
