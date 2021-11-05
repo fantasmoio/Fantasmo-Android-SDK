@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:text="@string/end_ride"
             app:backgroundTint="@color/black"
-            app:layout_constraintBottom_toTopOf="@+id/simulationModeToggle"
+            app:layout_constraintBottom_toTopOf="@+id/simulationModeSwitch"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
@@ -45,27 +45,29 @@
             android:id="@+id/textView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toTopOf="@+id/simulationModeToggle"
+            app:layout_constraintBottom_toTopOf="@+id/simulationModeSwitch"
             app:layout_constraintEnd_toEndOf="@+id/endRideButton"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="@+id/endRideButton"
             app:layout_constraintTop_toBottomOf="@+id/endRideButton" />
 
         <Switch
-            android:id="@+id/simulationModeToggle"
+            android:id="@+id/simulationModeSwitch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:checked="true"
             android:minHeight="48dp"
             android:text="@string/simulation_mode"
-            app:layout_constraintBottom_toTopOf="@+id/showDebugStatsToggle"
+            app:layout_constraintBottom_toTopOf="@+id/showStatisticsSwitch"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textView"
+            tools:checked="true"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
 
         <Switch
-            android:id="@+id/showDebugStatsToggle"
+            android:id="@+id/showStatisticsSwitch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:minHeight="48dp"
@@ -74,7 +76,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/simulationModeToggle"
+            app:layout_constraintTop_toBottomOf="@+id/simulationModeSwitch"
             tools:ignore="UseSwitchCompatOrMaterialXml" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 

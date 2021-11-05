@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Switch
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
@@ -30,19 +29,21 @@ class DemoFragment : Fragment() {
     private lateinit var currentView: View
 
     private lateinit var controlsLayout: ConstraintLayout
-    private lateinit var localizationResult: TextView
+    private lateinit var resultTextView: TextView
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var simulationModeToggle: Switch
+    private lateinit var isSimulationSwitch: Switch
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var showDebugStatsToggle: Switch
+    private lateinit var showStatisticsSwitch: Switch
 
     private lateinit var endRideButton: Button
 
     // Control variables for the FMParkingView
     private lateinit var fmParkingView: FMParkingView
+    // Tell the FMParkingView to use or not its' internal location manager
     private val usesInternalLocationManager = true
+    // FMParkingView accessToken
     private val accessToken = "API_KEY"
 
     override fun onCreateView(
@@ -54,26 +55,13 @@ class DemoFragment : Fragment() {
         currentView = inflater.inflate(R.layout.demo_fragment, container, false)
 
         controlsLayout = currentView.findViewById(R.id.controlsLayout)
-        localizationResult = currentView.findViewById(R.id.localizationResultView)
+        resultTextView = currentView.findViewById(R.id.localizationResultView)
+        isSimulationSwitch = currentView.findViewById(R.id.simulationModeSwitch)
+        showStatisticsSwitch = currentView.findViewById(R.id.showStatisticsSwitch)
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
-        // Assign a controller
-        fmParkingView.fmParkingViewController = fmParkingViewController
         // Assign an accessToken
         fmParkingView.accessToken = accessToken
-
-        // Enable simulation mode to test purposes with specific location
-        // depending on which SDK flavor it's being used (Paris, Munich, Miami)
-        simulationModeToggle = currentView.findViewById(R.id.simulationModeToggle)
-        simulationModeToggle.setOnCheckedChangeListener { _, checked ->
-            fmParkingView.isSimulation = checked
-        }
-
-        // Enable Debug Mode to display session statistics
-        showDebugStatsToggle = currentView.findViewById(R.id.showDebugStatsToggle)
-        showDebugStatsToggle.setOnCheckedChangeListener { _, checked ->
-            fmParkingView.showStatistics = checked
-        }
 
         // Enable FMParkingView internal Location Manager
         fmParkingView.usesInternalLocationManager = usesInternalLocationManager
@@ -97,11 +85,9 @@ class DemoFragment : Fragment() {
             if (it) {
                 startParkingFlow()
             } else {
-                Toast.makeText(
-                    context?.applicationContext,
-                    "Parking not available near your location.",
-                    Toast.LENGTH_LONG
-                ).show()
+                resultTextView.visibility = View.VISIBLE
+                val stringNotAvailable = "Parking not available near your location."
+                resultTextView.text = stringNotAvailable
             }
         }
     }
@@ -111,9 +97,21 @@ class DemoFragment : Fragment() {
         // but it can also follow your own format. It is used for analytics and billing purposes and
         // should represent a single parking session.
         val sessionId = UUID.randomUUID().toString()
-        // Present the FMParkingView
+
+        // Assign a controller
+        fmParkingView.fmParkingViewController = fmParkingViewController
+
+        // Enable simulation mode to test purposes with specific location
+        // depending on which SDK flavor it's being used (Paris, Munich, Miami)
+        fmParkingView.isSimulation = isSimulationSwitch.isChecked
+
+        // Enable Debug Mode to display session statistics
+        fmParkingView.showStatistics = showStatisticsSwitch.isChecked
+
+        // Present the FMParkingView to start
         fmParkingView.connect(sessionId)
-        localizationResult.visibility = View.GONE
+
+        resultTextView.visibility = View.GONE
         controlsLayout.visibility = View.INVISIBLE
     }
 
@@ -156,14 +154,6 @@ class DemoFragment : Fragment() {
      */
     private val fmParkingViewController: FMParkingViewProtocol =
         object : FMParkingViewProtocol {
-            override fun fmParkingViewDidStartQRScanning() {
-                Log.d(TAG, "QR Code Reader Enabled")
-            }
-
-            override fun fmParkingViewDidStopQRScanning() {
-                Log.d(TAG, "QR Code Reader Disabled")
-            }
-
             override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
                 Log.d(TAG, "QR Code Scan Successful")
                 // Optional validation of the QR code can be done here
@@ -172,34 +162,23 @@ class DemoFragment : Fragment() {
                 onValidQRCode(true)
             }
 
-            override fun fmParkingViewDidStartLocalizing() {
-                Log.d(TAG, "Started Localizing")
-            }
-
-            override fun fmParkingView(behavior: FMBehaviorRequest) {
-                Log.d(TAG, "Received Behavior: ${behavior.description}")
-            }
-
             override fun fmParkingView(result: FMLocationResult) {
                 // Got a localization result
                 // Localization will continue until you dismiss the view
                 // You should decide on acceptable criteria for a result, one way is by checking the `confidence` value
                 when (result.confidence) {
-                    FMResultConfidence.LOW -> {
-                        Log.d(TAG, "LOW Confidence Result")
-                    }
-                    FMResultConfidence.MEDIUM -> {
-                        Log.d(TAG, "MEDIUM Confidence Result")
-                    }
                     FMResultConfidence.HIGH -> {
                         Log.d(TAG, "HIGH Confidence Result")
                         fmParkingView.dismiss()
                         val stringResult = "Result: ${result.location.coordinate} (${result.confidence})"
-                        localizationResult.text = stringResult
-                        if(localizationResult.visibility == View.GONE){
-                            localizationResult.visibility = View.VISIBLE
+                        resultTextView.text = stringResult
+                        if(resultTextView.visibility == View.GONE){
+                            resultTextView.visibility = View.VISIBLE
                         }
 
+                    }
+                    else -> {
+                        Log.d(TAG, "${result.confidence} Confidence Result")
                     }
                 }
             }

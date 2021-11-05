@@ -1,6 +1,7 @@
 package com.example.fantasmo_android
 
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.location.Location
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -17,6 +18,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import com.example.fantasmo_android.helpers.GoogleMapsManager
+import com.example.fantasmo_android.helpers.SystemLocationListener
+import com.example.fantasmo_android.helpers.SystemLocationManager
 
 import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMLocationResult
@@ -41,10 +44,10 @@ class CustomDemoFragment : Fragment() {
     private lateinit var controlsLayout: ConstraintLayout
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var simulationModeToggle: Switch
+    private lateinit var isSimulationSwitch: Switch
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var showDebugStatsToggle: Switch
+    private lateinit var showStatisticsSwitch: Switch
 
     private lateinit var endRideButton: Button
     private lateinit var exitButton: Button
@@ -77,25 +80,12 @@ class CustomDemoFragment : Fragment() {
         currentView = inflater.inflate(R.layout.custom_demo_fragment, container, false)
 
         controlsLayout = currentView.findViewById(R.id.controlsLayout)
+        isSimulationSwitch = currentView.findViewById(R.id.simulationModeSwitch)
+        showStatisticsSwitch = currentView.findViewById(R.id.showStatisticsSwitch)
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
-        // Assign a controller
-        fmParkingView.fmParkingViewController = fmParkingViewController
         // Assign an accessToken
         fmParkingView.accessToken = accessToken
-
-        // Enable simulation mode to test purposes with specific location
-        // depending on which SDK flavor it's being used (Paris, Munich, Miami)
-        simulationModeToggle = currentView.findViewById(R.id.simulationModeToggle)
-        simulationModeToggle.setOnCheckedChangeListener { _, checked ->
-            fmParkingView.isSimulation = checked
-        }
-
-        // Enable Debug Mode to display session statistics
-        showDebugStatsToggle = currentView.findViewById(R.id.showDebugStatsToggle)
-        showDebugStatsToggle.setOnCheckedChangeListener { _, checked ->
-            fmParkingView.showStatistics = checked
-        }
 
         // Enable FMParkingView internal Location Manager
         fmParkingView.usesInternalLocationManager = usesInternalLocationManager
@@ -140,10 +130,21 @@ class CustomDemoFragment : Fragment() {
         // should represent a single parking session.
         val sessionId = UUID.randomUUID().toString()
 
+        // Assign a controller
+        fmParkingView.fmParkingViewController = fmParkingViewController
+
+        // Enable simulation mode to test purposes with specific location
+        // depending on which SDK flavor it's being used (Paris, Munich, Miami)
+        fmParkingView.isSimulation = isSimulationSwitch.isChecked
+
+        // Enable Debug Mode to display session statistics
+        fmParkingView.showStatistics = showStatisticsSwitch.isChecked
+
         // Before presenting the FMParkingView register custom views, otherwise the default ones
         // will overpass these ones
         fmParkingView.registerQRScanningViewController(fmQrScanningViewController)
         fmParkingView.registerLocalizingViewController(fmLocalizingViewController)
+
         // Present the FMParkingView
         fmParkingView.connect(sessionId)
 
@@ -271,12 +272,35 @@ class CustomDemoFragment : Fragment() {
                 Log.d(TAG, "fmParkingViewDidStopQRScanning")
             }
 
-            override fun fmParkingView(qrCode: String, shouldContinue: (Boolean) -> Unit) {
+            override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
                 Log.d(TAG, "fmParkingView ShouldContinue")
                 // Optional validation of the QR code can be done here
                 // Note: If you choose to implement this method, you must call the `shouldApprove` with the validation result
                 // show dialogue to accept or refuse
-                shouldContinue(true)
+                val builder1: AlertDialog.Builder = AlertDialog.Builder(context)
+                builder1.setTitle("QR Code Scan result")
+                builder1.setMessage(qrCode)
+                builder1.setCancelable(true)
+
+                builder1.setPositiveButton(
+                    "Yes"
+                ) { dialog, _ ->
+                    dialog.cancel()
+                    onValidQRCode(true)
+                    Log.d(TAG, "QR Code Accepted")
+                }
+
+                builder1.setNegativeButton(
+                    "No"
+                ) { dialog, _ ->
+                    dialog.cancel()
+                    onValidQRCode(false)
+                    Log.d(TAG, "QR Code Refused")
+                }
+
+                val alert11: AlertDialog = builder1.create()
+                alert11.show()
+
             }
 
             override fun fmParkingViewDidStartLocalizing() {

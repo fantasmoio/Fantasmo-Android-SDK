@@ -1,4 +1,4 @@
-package com.example.fantasmo_android
+package com.example.fantasmo_android.helpers
 
 import android.Manifest
 import android.content.Context
@@ -10,21 +10,27 @@ import android.util.Log
 import androidx.core.content.PermissionChecker
 import com.google.android.gms.location.*
 
-class SystemLocationManager(val context: Context?, val systemLocationListener: SystemLocationListener) {
+class SystemLocationManager(
+    private val context: Context?,
+    val systemLocationListener: SystemLocationListener
+) {
 
     private val TAG = SystemLocationManager::class.java.simpleName
-    private var locationManager: LocationManager = context?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-    private var fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+    private var locationManager: LocationManager =
+        context?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    private var fusedLocationClient: FusedLocationProviderClient =
+        LocationServices.getFusedLocationProviderClient(context)
     private var currentLocation: Location = Location("")
     private val locationInterval = 300L
+    private var firstLocation = false
 
-     init {
-         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-             getLocation()
-         } else {
-             Log.e(TAG, "Your GPS seems to be disabled")
-         }
-     }
+    init {
+        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            getLocation()
+        } else {
+            Log.e(TAG, "Your GPS seems to be disabled")
+        }
+    }
 
     /**
      * Gets system location through the app context
@@ -49,6 +55,10 @@ class SystemLocationManager(val context: Context?, val systemLocationListener: S
 
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
+                    if(!firstLocation){
+                        systemLocationListener.hasLocation()
+                        firstLocation = true
+                    }
                     currentLocation = locationResult.lastLocation
                     //Set SDK Location
                     systemLocationListener.onLocationUpdate(currentLocation)
@@ -67,4 +77,5 @@ class SystemLocationManager(val context: Context?, val systemLocationListener: S
 
 interface SystemLocationListener {
     fun onLocationUpdate(currentLocation: Location)
+    fun hasLocation() {}
 }
