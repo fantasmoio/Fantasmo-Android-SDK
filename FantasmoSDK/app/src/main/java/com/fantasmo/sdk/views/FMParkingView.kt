@@ -402,15 +402,8 @@ class FMParkingView @JvmOverloads constructor(
 
             override fun anchored(frame: Frame): Boolean {
                 frame.let {
-                    return if (frame.camera.trackingState == TrackingState.TRACKING) {
-                        fmLocationManager.setAnchor(it)
-                        true
-                    } else {
-                        val errorResponse = ErrorResponse(1,
-                            "Anchor can't be set because tracking state is not correct, please try again.")
-                        fmParkingViewController.fmParkingView(errorResponse,"")
-                        false
-                    }
+                    fmLocationManager.setAnchor(it)
+                    return true
                 }
             }
 
