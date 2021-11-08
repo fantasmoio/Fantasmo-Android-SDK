@@ -52,6 +52,10 @@ class CustomDemoFragment : Fragment() {
     private lateinit var endRideButton: Button
     private lateinit var exitButton: Button
 
+    private lateinit var resultsLayout: ConstraintLayout
+    private lateinit var resultTextView: TextView
+    private lateinit var mapPinButton: Button
+
     // Buttons and Views from the QRView
     private lateinit var fmQRView: ConstraintLayout
     private lateinit var qrCodeResultTv: TextView
@@ -82,6 +86,10 @@ class CustomDemoFragment : Fragment() {
         controlsLayout = currentView.findViewById(R.id.controlsLayout)
         isSimulationSwitch = currentView.findViewById(R.id.simulationModeSwitch)
         showStatisticsSwitch = currentView.findViewById(R.id.showStatisticsSwitch)
+
+        resultsLayout = currentView.findViewById(R.id.resultsLayout)
+        resultTextView = currentView.findViewById(R.id.localizationResultView)
+        mapPinButton = currentView.findViewById(R.id.mapPinButton)
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
         // Assign an accessToken
@@ -115,11 +123,10 @@ class CustomDemoFragment : Fragment() {
             if (it) {
                 startParkingFlow()
             } else {
-                Toast.makeText(
-                    context?.applicationContext,
-                    "Parking not available near your location.",
-                    Toast.LENGTH_LONG
-                ).show()
+                resultsLayout.visibility = View.VISIBLE
+                mapPinButton.visibility = View.GONE
+                val stringNotAvailable = "Parking not available near your location."
+                resultTextView.text = stringNotAvailable
             }
         }
     }
@@ -354,6 +361,14 @@ class CustomDemoFragment : Fragment() {
 
             override fun didReceiveLocalizationResult(result: FMLocationResult) {
                 Log.d(TAG, "didReceiveLocalizationResult")
+                if(result.confidence == FMResultConfidence.HIGH){
+                    val stringResult =
+                        "Result: ${result.location.coordinate} (${result.confidence})"
+                    resultTextView.text = stringResult
+                    if (resultsLayout.visibility == View.GONE) {
+                        resultsLayout.visibility = View.VISIBLE
+                    }
+                }
             }
 
             override fun didReceiveLocalizationError(error: ErrorResponse, errorMetadata: Any?) {
