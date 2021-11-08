@@ -9,7 +9,6 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
-import android.widget.Toast
 
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -384,6 +383,7 @@ class FMParkingView @JvmOverloads constructor(
 
             override fun deployQRScanning() {
                 state = State.IDLE
+                fmLocationManager.unsetAnchor()
                 startQRScanning()
             }
         }
@@ -401,20 +401,17 @@ class FMParkingView @JvmOverloads constructor(
             }
 
             override fun anchored(frame: Frame): Boolean {
-                var anchored = false
                 frame.let {
-                    if (frame.camera.trackingState == TrackingState.TRACKING) {
+                    return if (frame.camera.trackingState == TrackingState.TRACKING) {
                         fmLocationManager.setAnchor(it)
-                        anchored = true
+                        true
                     } else {
-                        Toast.makeText(
-                            context.applicationContext,
-                            "Anchor can't be set because tracking state is not correct, please try again.",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        val errorResponse = ErrorResponse(1,
+                            "Anchor can't be set because tracking state is not correct, please try again.")
+                        fmParkingViewController.fmParkingView(errorResponse,"")
+                        false
                     }
                 }
-                return anchored
             }
 
             override fun qrCodeScan(frame: Frame) {

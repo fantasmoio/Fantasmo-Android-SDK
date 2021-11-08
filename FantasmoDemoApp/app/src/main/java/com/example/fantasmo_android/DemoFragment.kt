@@ -185,6 +185,12 @@ class DemoFragment : Fragment() {
 
             override fun fmParkingView(error: ErrorResponse, metadata: Any?) {
                 Log.e(TAG, "Received Error: $error")
+                if (error.code == 1){
+                    resultTextView.text = error.message
+                    if(resultTextView.visibility == View.GONE){
+                        resultTextView.visibility = View.VISIBLE
+                    }
+                }
             }
         }
 }
