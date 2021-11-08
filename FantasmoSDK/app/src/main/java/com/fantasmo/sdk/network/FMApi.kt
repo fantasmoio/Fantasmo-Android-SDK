@@ -254,6 +254,9 @@ class FMApi(
      * @return result: ByteArray with image to localize
      */
     private fun imageData(arFrame: Frame, request: FMLocalizationRequest): ByteArray {
+        if (request.isSimulation) {
+            return MockData.imageData(request,context)
+        }
         return FMUtility.getImageDataFromARFrame(context, arFrame)
     }
 
@@ -264,6 +267,10 @@ class FMApi(
      * @return result: Resolution of the frame
      */
     private fun getImageResolution(arFrame: Frame, request: FMLocalizationRequest): FMFrameResolution{
+        if (request.isSimulation){
+            val result = MockData.getImageResolution(request,context)
+            return FMFrameResolution(result[0],result[1])
+        }
         val height = arFrame.camera.imageIntrinsics.imageDimensions[0]
         val width = arFrame.camera.imageIntrinsics.imageDimensions[1]
         return FMFrameResolution(height,width)
