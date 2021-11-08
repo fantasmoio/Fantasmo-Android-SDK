@@ -53,24 +53,6 @@ android {
             dimension "env"
             buildConfigField "String", "VERSION_NAME", "\"$defaultConfig.versionName\""
         }
-        devParis {
-            dimension "env"
-            buildConfigField "String", "VERSION_NAME", "\"$defaultConfig.versionName\""
-            buildConfigField "String", "FM_API_BASE_URL", "\"https://api.fantasmo.io/v1/image.localize\""
-            buildConfigField "String", "FM_GPS_LAT_LONG", "\"48.848138681935886,2.371750713292894\""
-        }
-        devMunich {
-            dimension "env"
-            buildConfigField "String", "VERSION_NAME", "\"$defaultConfig.versionName\""
-            buildConfigField "String", "FM_API_BASE_URL", "\"https://api.fantasmo.io/v1/image.localize\""
-            buildConfigField "String", "FM_GPS_LAT_LONG", "\"48.12863302178715,11.572371166069702\""
-        }
-        devMiami{
-            dimension "env"
-            buildConfigField "String", "VERSION_NAME", "\"$defaultConfig.versionName\""
-            buildConfigField "String", "FM_API_BASE_URL", "\"https://api.fantasmo.io/v1/image.localize\""
-            buildConfigField "String", "FM_GPS_LAT_LONG", "\"25.762586765198417,-80.19404801110545\""
-        }
     }
 
     libraryVariants.all { variant ->
