@@ -12,7 +12,6 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
-import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMLocationResult
 import com.fantasmo.sdk.FMResultConfidence
 import com.fantasmo.sdk.models.ErrorResponse
@@ -29,7 +28,11 @@ class DemoFragment : Fragment() {
     private lateinit var currentView: View
 
     private lateinit var controlsLayout: ConstraintLayout
+    private lateinit var resultsLayout: ConstraintLayout
     private lateinit var resultTextView: TextView
+    private lateinit var mapPinButton: Button
+    private lateinit var mapFragment: MapFragment
+    private lateinit var lastResult: FMLocationResult
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var isSimulationSwitch: Switch
@@ -41,8 +44,10 @@ class DemoFragment : Fragment() {
 
     // Control variables for the FMParkingView
     private lateinit var fmParkingView: FMParkingView
+
     // Tell the FMParkingView to use or not its' internal location manager
     private val usesInternalLocationManager = true
+
     // FMParkingView accessToken
     private val accessToken = "API_KEY"
 
@@ -55,6 +60,12 @@ class DemoFragment : Fragment() {
         currentView = inflater.inflate(R.layout.demo_fragment, container, false)
 
         controlsLayout = currentView.findViewById(R.id.controlsLayout)
+        resultsLayout = currentView.findViewById(R.id.resultsLayout)
+        mapPinButton = currentView.findViewById(R.id.mapPinButton)
+        mapPinButton.setOnClickListener {
+            openMap()
+        }
+
         resultTextView = currentView.findViewById(R.id.localizationResultView)
         isSimulationSwitch = currentView.findViewById(R.id.simulationModeSwitch)
         showStatisticsSwitch = currentView.findViewById(R.id.showStatisticsSwitch)
@@ -76,6 +87,18 @@ class DemoFragment : Fragment() {
         return currentView
     }
 
+    private fun openMap() {
+        val bundle = Bundle()
+        bundle.putDouble("latitude", lastResult.location.coordinate.latitude)
+        bundle.putDouble("longitude", lastResult.location.coordinate.longitude)
+        mapFragment = MapFragment()
+        mapFragment.arguments = bundle
+        requireActivity().supportFragmentManager.beginTransaction()
+            .replace(R.id.demo_fragment, mapFragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
     private fun handleEndRideButton() {
         // Test location of a parking space in Berlin
         val latitude = 52.50578283943285
@@ -85,7 +108,8 @@ class DemoFragment : Fragment() {
             if (it) {
                 startParkingFlow()
             } else {
-                resultTextView.visibility = View.VISIBLE
+                resultsLayout.visibility = View.VISIBLE
+                mapPinButton.visibility = View.GONE
                 val stringNotAvailable = "Parking not available near your location."
                 resultTextView.text = stringNotAvailable
             }
@@ -111,15 +135,15 @@ class DemoFragment : Fragment() {
         // Present the FMParkingView to start
         fmParkingView.connect(sessionId)
 
-        resultTextView.visibility = View.GONE
-        controlsLayout.visibility = View.INVISIBLE
+        resultsLayout.visibility = View.GONE
+        controlsLayout.visibility = View.GONE
     }
 
     private fun handleFMParkingViewDismiss() {
         fmParkingView.viewTreeObserver.addOnGlobalLayoutListener {
-            if(fmParkingView.visibility == View.GONE){
+            if (fmParkingView.visibility == View.GONE) {
                 //visibility has changed
-                Log.d(TAG,"FMParkingView Changed Visibility")
+                Log.d(TAG, "FMParkingView Changed Visibility")
                 controlsLayout.visibility = View.VISIBLE
             }
         }
@@ -166,16 +190,17 @@ class DemoFragment : Fragment() {
                 // Got a localization result
                 // Localization will continue until you dismiss the view
                 // You should decide on acceptable criteria for a result, one way is by checking the `confidence` value
+                lastResult = result
                 when (result.confidence) {
                     FMResultConfidence.HIGH -> {
                         Log.d(TAG, "HIGH Confidence Result")
                         fmParkingView.dismiss()
-                        val stringResult = "Result: ${result.location.coordinate} (${result.confidence})"
+                        val stringResult =
+                            "Result: ${result.location.coordinate} (${result.confidence})"
                         resultTextView.text = stringResult
-                        if(resultTextView.visibility == View.GONE){
-                            resultTextView.visibility = View.VISIBLE
+                        if (resultsLayout.visibility == View.GONE) {
+                            resultsLayout.visibility = View.VISIBLE
                         }
-
                     }
                     else -> {
                         Log.d(TAG, "${result.confidence} Confidence Result")
