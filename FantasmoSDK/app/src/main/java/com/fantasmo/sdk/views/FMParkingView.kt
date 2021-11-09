@@ -248,7 +248,6 @@ class FMParkingView @JvmOverloads constructor(
             return
         }
         state = State.QRSCANNING
-        fmARCoreView.startAnchor()
         qrCodeReader.startQRScanner()
         fmQrScanningViewController.didStartQRScanning()
         fmParkingViewController.fmParkingViewDidStartQRScanning()
@@ -381,9 +380,14 @@ class FMParkingView @JvmOverloads constructor(
                 startLocalizing()
             }
 
+            override fun qrCodeScanned() {
+                fmARCoreView.startAnchor()
+            }
+
             override fun deployQRScanning() {
                 state = State.IDLE
                 fmLocationManager.unsetAnchor()
+                fmARCoreView.unsetAnchor()
                 startQRScanning()
             }
         }
