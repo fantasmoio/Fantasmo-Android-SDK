@@ -172,6 +172,7 @@ class FMParkingView @JvmOverloads constructor(
         val statistics = arLayout.findViewWithTag<ConstraintLayout>("StatisticsView")
         if (showStatistics) {
             statistics.visibility = View.VISIBLE
+            fmSessionStatisticsView.reset()
         } else {
             statistics.visibility = View.GONE
         }
