@@ -28,6 +28,10 @@ class GoogleMapsManager(
     private lateinit var anchor: Marker
     private lateinit var anchorRelativePosition: Marker
 
+    private var setCoordinates = false
+    private var lastResultLat = 0.0
+    private var lastResultLng = 0.0
+
     /**
      * Initiates GoogleMap display on UI from savedInstanceState from onCreateView method
      * */
@@ -60,6 +64,9 @@ class GoogleMapsManager(
         }
         googleMap = map
         googleMap.isMyLocationEnabled = true
+        if(setCoordinates){
+            addMarkerFromResult()
+        }
     }
 
     /**
@@ -182,5 +189,26 @@ class GoogleMapsManager(
 
     fun updateAnchor(anchorIsChecked: Boolean) {
         anchorToggleButton = anchorIsChecked
+    }
+
+    private fun addMarkerFromResult() {
+        googleMap.addMarker(
+            MarkerOptions()
+                .position(
+                    LatLng(
+                        lastResultLat,
+                        lastResultLng
+                    )
+                )
+                .title("$lastResultLat, $lastResultLng")
+        )
+        val latLong = LatLng(lastResultLat, lastResultLng)
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLong, 50F))
+    }
+
+    fun setLastResult(lastResultLat: Double, lastResultLng: Double) {
+        setCoordinates = true
+        this.lastResultLat = lastResultLat
+        this.lastResultLng = lastResultLng
     }
 }
