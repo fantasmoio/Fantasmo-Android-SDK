@@ -2,7 +2,7 @@
 
 ## Overview
 
-Supercharge your app with hyper-accurate positioning using just the camera. The Fantasmo SDK is the gateway to the Camera Positiong System (CPS) which provides 6 Degrees-of-Freedom (position and orientation) localization for mobile devices.
+Supercharge your app with hyper-accurate positioning using just the camera. The Fantasmo SDK is the gateway to the Camera Positioning System (CPS) which provides 6 Degrees-of-Freedom (position and orientation) localization for mobile devices.
 
 ## Installation
 
@@ -104,11 +104,7 @@ fmParkingView.isParkingAvailable(latitude, longitude) { isParkingAvailable: Bool
     if (isParkingAvailable) {
         // Create and present FMParkingView here
     } else {
-        Toast.makeText(
-            context?.applicationContext,
-                "No mapped parking spaces nearby.",
-                Toast.LENGTH_LONG
-            ).show()
+        Log.e(TAG,"No mapped parking spaces nearby.")
     }
 }
 ```
