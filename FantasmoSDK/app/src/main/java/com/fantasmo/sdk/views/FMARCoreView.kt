@@ -81,6 +81,7 @@ class FMARCoreView(
             // https://developers.google.com/ar/develop/java/recording-and-playback
             arSession!!.resume()
         } catch (e: CameraNotAvailableException) {
+            Log.e(TAG,"Camera not available. Try restarting the app.")
             return
         }
         surfaceView.onResume()
@@ -94,7 +95,7 @@ class FMARCoreView(
         // Note that the order matters - GLSurfaceView is paused first so that it does not try
         // to query the session. If Session is paused before GLSurfaceView, GLSurfaceView may
         // still call session.update() and get a SessionPausedException.
-        if (arSession == null) {
+        if (arSession != null) {
             displayRotationHelper.onPause()
             surfaceView.onPause()
             arSession!!.pause()
