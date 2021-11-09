@@ -67,6 +67,7 @@ class FMARCoreView(
                 arSession = Session(context)
             } catch (e: Exception) {
                 e.printStackTrace()
+                return
             }
         }
 
@@ -138,7 +139,7 @@ class FMARCoreView(
                 selectedCameraConfig = cameraConfigsList.indexOf(currentCameraConfig)
             }
         }
-        Log.d(
+        Log.i(
             TAG,
             "CurrentCameraConfig CPU image size:$selectedSize"
         )
