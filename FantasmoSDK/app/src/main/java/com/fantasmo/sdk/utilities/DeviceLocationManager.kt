@@ -30,9 +30,10 @@ class DeviceLocationManager(val context: Context?, val deviceLocationListener: D
     }
     private val TAG = DeviceLocationManager::class.java.simpleName
     private var locationManager: LocationManager = context?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-    private var fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+    private var fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context!!)
     private var currentLocation: Location = Location("")
     private val locationInterval = 300L
+    private lateinit var locationCallback : LocationCallback
 
     init {
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -63,7 +64,7 @@ class DeviceLocationManager(val context: Context?, val deviceLocationListener: D
             locationRequest.fastestInterval = locationInterval
             locationRequest.interval = locationInterval
 
-            val locationCallback = object : LocationCallback() {
+            locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
                     currentLocation = locationResult.lastLocation
                     //Set SDK Location
@@ -78,6 +79,10 @@ class DeviceLocationManager(val context: Context?, val deviceLocationListener: D
                 Looper.myLooper()!!
             )
         }
+    }
+
+    fun stopLocationUpdates(){
+        fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 }
 

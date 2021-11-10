@@ -102,6 +102,7 @@ class QRCodeScanner(
     }
 
     private fun displayQRScanResult(value: String) {
+        qrCodeScannerListener.qrCodeScanned()
         qrFound = true
         val stringScan = "QRCodeDetected with value: $value"
         fmQrScanningViewController.didScanQRCode(stringScan)
@@ -130,4 +131,5 @@ class QRCodeScanner(
 interface QRCodeScannerListener {
     fun deployQRScanning()
     fun deployLocalizing()
+    fun qrCodeScanned()
 }
