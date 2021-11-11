@@ -51,6 +51,8 @@ class DemoFragment : Fragment() {
     // FMParkingView accessToken
     private val accessToken = "API_KEY"
 
+    private var hasRequestedEndRide = false
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -81,7 +83,10 @@ class DemoFragment : Fragment() {
 
         endRideButton = currentView.findViewById(R.id.endRideButton)
         endRideButton.setOnClickListener {
-            handleEndRideButton()
+            if(!hasRequestedEndRide){
+                handleEndRideButton()
+                hasRequestedEndRide = true
+            }
         }
 
         return currentView
@@ -145,6 +150,7 @@ class DemoFragment : Fragment() {
                 //visibility has changed
                 Log.d(TAG, "FMParkingView Changed Visibility")
                 controlsLayout.visibility = View.VISIBLE
+                hasRequestedEndRide = false
             }
         }
     }
