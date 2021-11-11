@@ -192,7 +192,9 @@ class FMParkingView @JvmOverloads constructor(
             fmARCoreView.connected = false
             fmLocationManager.stopUpdatingLocation()
             if (usesInternalLocationManager) {
-                internalLocationManager.stopLocationUpdates()
+                if(this::internalLocationManager.isInitialized){
+                    internalLocationManager.stopLocationUpdates()
+                }
             }
 
             if (fmARCoreView.isAnchored()) {
