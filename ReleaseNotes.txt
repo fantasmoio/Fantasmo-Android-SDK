@@ -54,3 +54,22 @@ Version 2.0.1
 Version 2.0.2
 - MW-277 Fix Android SDK crash with blur filter
 - MW-284 Fix Android NullPointerException crash
+
+Version 3.0.0
+- Android SDK Refactor:
+	- MW-314 Moving ARCore and Location management to SDK
+	- MW-315 Create FMParkingView
+	- MW-323 Create Debug Mode View
+	- MW-324 Create Default Behavior
+	- MW-325 Create QRScanning View
+	- MW-326 Create LocalizingView
+	- MW-334 Change DemoApp UI according to SDK refactoring
+	- MW-347 Modify SDK according to Refactoring
+	- MW-385 Make modal disappear 
+	- MW-386 Send hardcoded images
+	- MW-393 The simulation mode imagelocalize fails
+	- MW-391 No way to open maps view
+	- MW-390 Camera feed and app occasionally freezes
+	- MW-414 Clicking X should bring user back to main menu instead of closing app
+	- MW-419 Send GPS coordinates on Parking call
+	- MW-420 End ride can be tapped multiple times

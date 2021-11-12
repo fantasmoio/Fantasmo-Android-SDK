@@ -56,7 +56,7 @@ devMunich {
 }
 ```
 
-You can test by using the pointing the camera to the images on the drawable folder, `"image_on_street_munich.jpg"` and `"image_in_parking_paris.jpg"`.
+You can test by using the pointing the camera to the images on the drawable folder, `"image_on_street.jpg"` and `"image_in_parking.jpg"`.
 
 ## Setting up FMParkingView
 
@@ -79,11 +79,7 @@ fmParkingView.isParkingAvailable(latitude, longitude) { isParkingAvailable: Bool
     if (isParkingAvailable) {
         // Create and present FMParkingView here
     } else {
-        Toast.makeText(
-            context?.applicationContext,
-            "No mapped parking spaces nearby.",
-            Toast.LENGTH_LONG
-        ).show()
+        Log.e(TAG,"No mapped parking spaces nearby.")
     }
 }
 ```    
