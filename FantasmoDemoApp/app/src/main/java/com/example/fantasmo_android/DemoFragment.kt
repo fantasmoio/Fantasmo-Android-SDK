@@ -1,6 +1,7 @@
 package com.example.fantasmo_android
 
 import android.annotation.SuppressLint
+import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -12,6 +13,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
+import com.example.fantasmo_android.helpers.SystemLocationListener
+import com.example.fantasmo_android.helpers.SystemLocationManager
 import com.fantasmo.sdk.FMLocationResult
 import com.fantasmo.sdk.FMResultConfidence
 import com.fantasmo.sdk.models.ErrorResponse
@@ -48,6 +51,9 @@ class DemoFragment : Fragment() {
     // Tell the FMParkingView to use or not its' internal location manager
     private val usesInternalLocationManager = true
 
+    private lateinit var systemLocationManager: SystemLocationManager
+    private lateinit var deviceLocation: Location
+
     // FMParkingView accessToken
     private val accessToken = "API_KEY"
 
@@ -67,6 +73,7 @@ class DemoFragment : Fragment() {
         mapPinButton.setOnClickListener {
             openMap()
         }
+        systemLocationManager = SystemLocationManager(context, systemLocationListener)
 
         resultTextView = currentView.findViewById(R.id.localizationResultView)
         isSimulationSwitch = currentView.findViewById(R.id.simulationModeSwitch)
@@ -106,10 +113,12 @@ class DemoFragment : Fragment() {
 
     private fun handleEndRideButton() {
         // Test location of a parking space in Berlin
-        val latitude = 52.50578283943285
-        val longitude = 13.378954977173915
+        val myLocation = getMyLocation()
         // Before trying to localize with Fantasmo you should check if the user is near a mapped parking space
-        fmParkingView.isParkingAvailable(latitude, longitude) {
+        fmParkingView.isParkingAvailable(
+            myLocation.latitude,
+            myLocation.longitude
+        ) {
             if (it) {
                 startParkingFlow()
             } else {
@@ -118,6 +127,36 @@ class DemoFragment : Fragment() {
                 val stringNotAvailable = "Parking not available near your location."
                 resultTextView.text = stringNotAvailable
             }
+        }
+    }
+
+    private fun getMyLocation(): Location {
+        var location = Location("")
+        if (isSimulationSwitch.isChecked) {
+            location.latitude = 52.50578283943285
+            location.longitude = 13.378954977173915
+        } else {
+            location = deviceLocation
+        }
+        updateEndRideButtonState()
+        return location
+    }
+
+    private val systemLocationListener: SystemLocationListener =
+        object : SystemLocationListener {
+            override fun onLocationUpdate(currentLocation: Location) {
+                deviceLocation = currentLocation
+                updateEndRideButtonState()
+            }
+
+            override fun hasLocation() {
+                updateEndRideButtonState()
+            }
+        }
+
+    private fun updateEndRideButtonState() {
+        if (endRideButton.visibility == View.GONE) {
+            endRideButton.visibility = View.VISIBLE
         }
     }
 
