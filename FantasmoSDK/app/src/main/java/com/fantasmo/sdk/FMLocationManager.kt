@@ -17,6 +17,8 @@ import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.*
 import com.fantasmo.sdk.filters.BehaviorRequester
+import com.fantasmo.sdk.models.tensorflowML.ImageQualityEstimator
+import com.fantasmo.sdk.models.tensorflowML.ImageQualityEstimatorProtocol
 import com.fantasmo.sdk.utilities.LocationFuser
 import com.google.ar.core.Frame
 import kotlinx.coroutines.CoroutineScope
@@ -81,6 +83,7 @@ class FMLocationManager(private val context: Context) {
     private var frameEventAccumulator = FrameFilterRejectionStatistics()
     private var accumulatedARCoreInfo = AccumulatedARCoreInfo()
 
+    private lateinit var imageQualityEstimator : ImageQualityEstimatorProtocol
     /**
      * Connect to the location service.
      *
@@ -92,7 +95,7 @@ class FMLocationManager(private val context: Context) {
         callback: FMLocationListener
     ) {
         Log.d(TAG, "connect: $callback")
-
+        imageQualityEstimator = ImageQualityEstimator.makeEstimator(context)
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(context, token)
@@ -291,6 +294,9 @@ class FMLocationManager(private val context: Context) {
             behaviorRequester.processResult(filterResult)
             accumulatedARCoreInfo.update(arFrame)
             if (filterResult == FMFrameFilterResult.Accepted) {
+                imageQualityEstimator.estimateImageQuality(arFrame){
+                    Log.d(TAG, "ImageEstimationResult: " + it.description())
+                }
                 if (state == State.LOCALIZING) {
                     localize(arFrame)
                 }

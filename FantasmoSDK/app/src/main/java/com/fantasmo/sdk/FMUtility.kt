@@ -25,7 +25,7 @@ class FMUtility {
     companion object {
         private var hasPassedBlurFilter: Boolean = false
         private val TAG = FMUtility::class.java.simpleName
-        private var frameToByteArray : ByteArray? = null
+        var frameToByteArray : ByteArray? = null
         /**
          * Method to get the AR Frame camera image data.
          * @param arFrame the AR Frame to localize.
