@@ -61,9 +61,6 @@ android {
             outputFileName = newName
         }
     }
-    configurations.all {
-        exclude group: 'com.google.flatbuffers', module: 'flatbuffers-java'
-    }
 }
 
 dependencies {
