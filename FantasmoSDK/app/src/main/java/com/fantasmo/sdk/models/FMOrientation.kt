@@ -7,8 +7,8 @@
 package com.fantasmo.sdk.models
 
 import android.util.Log
-import com.google.ar.sceneform.math.Quaternion
-import com.google.ar.sceneform.math.Vector3
+import com.fantasmo.sdk.utilities.math.Quaternion
+import com.fantasmo.sdk.utilities.math.Vector3
 import kotlin.math.PI
 
 /**
@@ -28,10 +28,10 @@ class FMOrientation {
             if (quaternions.isNullOrEmpty()) {
                 return null
             } else {
-                var firstQuaternion = quaternions[0]
+                val firstQuaternion = quaternions[0]
                 var numberOfQuaternionsSummedUp = 1.0f
                 for (i in 1 until quaternions.size) {
-                    var quaternion = quaternions[i]
+                    val quaternion = quaternions[i]
                     if ((quaternion.quaternionDot(firstQuaternion) < 0)) {
                         quaternion.flipSign()
                     }
