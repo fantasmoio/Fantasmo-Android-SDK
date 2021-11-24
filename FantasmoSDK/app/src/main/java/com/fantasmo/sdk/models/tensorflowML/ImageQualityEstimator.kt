@@ -9,7 +9,7 @@ class ImageQualityEstimator {
     companion object{
         fun makeEstimator(context: Context): ImageQualityEstimatorProtocol{
             return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                ImageQualityEstimatorMLKit(context)
+                ImageQualityEstimatorTFLite(context)
             } else {
                 ImageQualityEstimatorDeviceNotSupported()
             }

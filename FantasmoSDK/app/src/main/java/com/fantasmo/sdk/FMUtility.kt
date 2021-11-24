@@ -144,7 +144,7 @@ class FMUtility {
             return Pose.makeRotation(a * axis.x, a * axis.y, a * axis.z, cos(angle/2))
         }
 
-        private fun Bitmap.rotate(degrees: Float): Bitmap {
+        fun Bitmap.rotate(degrees: Float): Bitmap {
             val matrix = Matrix().apply { postRotate(degrees) }
             return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
         }
