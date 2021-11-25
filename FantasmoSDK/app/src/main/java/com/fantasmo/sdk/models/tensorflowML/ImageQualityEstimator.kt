@@ -19,19 +19,10 @@ class ImageQualityEstimator {
 
 interface ImageQualityEstimatorProtocol{
     fun estimateImageQuality(frame:Frame):ImageQualityEstimationResult
-    fun estimateImageQuality(frame:Frame, callback: (ImageQualityEstimationResult) -> Unit)
 }
 
 class ImageQualityEstimatorDeviceNotSupported : ImageQualityEstimatorProtocol{
     override fun estimateImageQuality(frame: Frame) : ImageQualityEstimationResult{
         return ImageQualityEstimationResult.ERROR("Device Not Supported")
-    }
-
-    override fun estimateImageQuality(
-        frame: Frame,
-        callback: (ImageQualityEstimationResult) -> Unit
-    ) {
-        callback(ImageQualityEstimationResult.ERROR("Device Not Supported"))
-        return
     }
 }

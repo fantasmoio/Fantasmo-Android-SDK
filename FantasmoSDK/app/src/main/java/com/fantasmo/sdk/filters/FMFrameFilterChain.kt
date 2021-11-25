@@ -7,7 +7,7 @@ import com.google.ar.core.Frame
 /**
  * Class responsible for filtering frames according the implemented filters
  */
-class FMInputQualityFilter(context: Context) {
+class FMFrameFilterChain(context: Context) {
 
     private val TAG = "FMInputQualityFilter"
 
@@ -25,7 +25,8 @@ class FMInputQualityFilter(context: Context) {
             FMTrackingStateFilter(),
             FMCameraPitchFilter(context),
             FMMovementFilter(),
-            FMBlurFilter(context)
+            FMImageQualityFilter(context)
+            //FMBlurFilter(context)
         )
     } else {
         listOf(

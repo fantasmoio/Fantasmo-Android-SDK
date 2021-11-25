@@ -225,7 +225,7 @@ class FMLocationManagerTest {
 
         val context = mock(Context::class.java)
 
-        val frameFilter = FMInputQualityFilter(instrumentationContext)
+        val frameFilter = FMFrameFilterChain(instrumentationContext)
         frameFilter.filters = listOf(
             FMMovementFilter(),
             FMCameraPitchFilter(context)
@@ -385,7 +385,7 @@ class FMLocationManagerTest {
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
         val context = mock(Context::class.java)
 
-        val filter2 = FMInputQualityFilter(instrumentationContext)
+        val filter2 = FMFrameFilterChain(instrumentationContext)
         filter2.filters = listOf(
             FMMovementFilter(),
             FMCameraPitchFilter(context)
@@ -480,7 +480,7 @@ class FMLocationManagerTest {
 
         val fmBlurFilterRule = FMBlurFilter(instrumentationContext2)
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
-        val filter2 = FMInputQualityFilter(instrumentationContext)
+        val filter2 = FMFrameFilterChain(instrumentationContext)
         filter2.filters = listOf(
             FMMovementFilter(),
             FMCameraPitchFilter(context)
@@ -570,7 +570,7 @@ class FMLocationManagerTest {
 
         val fmBlurFilterRule = FMBlurFilter(instrumentationContext3)
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
-        val filter2 = FMInputQualityFilter(instrumentationContext)
+        val filter2 = FMFrameFilterChain(instrumentationContext)
         filter2.filters = listOf(
             FMMovementFilter(),
             FMCameraPitchFilter(context)

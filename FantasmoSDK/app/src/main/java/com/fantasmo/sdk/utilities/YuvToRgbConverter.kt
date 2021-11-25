@@ -3,8 +3,10 @@ package com.fantasmo.sdk.utilities
 import android.content.Context
 import android.graphics.*
 import android.media.Image
+import android.os.Build
 import android.renderscript.*
 import android.util.Log
+import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
 import com.google.ar.core.Frame
 import com.google.ar.core.exceptions.DeadlineExceededException
@@ -17,6 +19,7 @@ import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 
+@RequiresApi(Build.VERSION_CODES.KITKAT)
 class YuvToRgbConverter(
     val context: Context,
     private val imageHeight: Int,

@@ -8,7 +8,7 @@ package com.fantasmo.sdk
 
 import android.content.Context
 import android.util.Log
-import com.fantasmo.sdk.filters.FMInputQualityFilter
+import com.fantasmo.sdk.filters.FMFrameFilterChain
 import com.fantasmo.sdk.filters.FMFrameFilterResult
 import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.FMZone
@@ -66,7 +66,7 @@ class FMLocationManager(private val context: Context) {
     private var enableFilters = false
 
     // Used to validate frame for sufficient quality before sending to API.
-    private lateinit var frameFilter: FMInputQualityFilter
+    private lateinit var frameFilterChain: FMFrameFilterChain
 
     // Throttler for invalid frames.
     private var behaviorRequester = BehaviorRequester {
@@ -83,7 +83,6 @@ class FMLocationManager(private val context: Context) {
     private var frameEventAccumulator = FrameFilterRejectionStatistics()
     private var accumulatedARCoreInfo = AccumulatedARCoreInfo()
 
-    private lateinit var imageQualityEstimator : ImageQualityEstimatorProtocol
     /**
      * Connect to the location service.
      *
@@ -95,11 +94,10 @@ class FMLocationManager(private val context: Context) {
         callback: FMLocationListener
     ) {
         Log.d(TAG, "connect: $callback")
-        imageQualityEstimator = ImageQualityEstimator.makeEstimator(context)
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(context, token)
-        frameFilter = FMInputQualityFilter(context)
+        frameFilterChain = FMFrameFilterChain(context)
         fmLocationListener?.locationManager(state)
     }
 
@@ -156,7 +154,7 @@ class FMLocationManager(private val context: Context) {
         enableFilters = filtersEnabled
         motionManager.restart()
         accumulatedARCoreInfo.reset()
-        this.frameFilter.restart()
+        this.frameFilterChain.restart()
         this.behaviorRequester.restart()
         this.locationFuser.reset()
         frameEventAccumulator.reset()
@@ -290,13 +288,10 @@ class FMLocationManager(private val context: Context) {
             && currentLocation.latitude > 0.0
             && state != State.STOPPED
         ) {
-            val filterResult = frameFilter.accepts(arFrame)
+            val filterResult = frameFilterChain.accepts(arFrame)
             behaviorRequester.processResult(filterResult)
             accumulatedARCoreInfo.update(arFrame)
             if (filterResult == FMFrameFilterResult.Accepted) {
-                imageQualityEstimator.estimateImageQuality(arFrame){
-                    Log.d(TAG, "ImageEstimationResult: " + it.description())
-                }
                 if (state == State.LOCALIZING) {
                     localize(arFrame)
                 }
