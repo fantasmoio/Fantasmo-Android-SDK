@@ -81,7 +81,7 @@ class FMUtility {
             return baOutputStream
         }
 
-        fun getImageRotationDegrees(context: Context): Float {
+        private fun getImageRotationDegrees(context: Context): Float {
             val rotation: Int = try {
                 context.display?.rotation!!
             } catch (exception: UnsupportedOperationException) {
@@ -144,7 +144,7 @@ class FMUtility {
             return Pose.makeRotation(a * axis.x, a * axis.y, a * axis.z, cos(angle/2))
         }
 
-        fun Bitmap.rotate(degrees: Float): Bitmap {
+        private fun Bitmap.rotate(degrees: Float): Bitmap {
             val matrix = Matrix().apply { postRotate(degrees) }
             return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
         }
