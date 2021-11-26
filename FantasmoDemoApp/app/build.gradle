@@ -78,7 +78,7 @@ dependencies {
     implementation "androidx.navigation:navigation-fragment-ktx:2.3.5"
 
     // Google ARCore
-    implementation 'com.google.ar:core:1.27.0'
+    implementation 'com.google.ar:core:1.28.0'
 
     // Location Services
     implementation 'com.google.android.gms:play-services-location:18.0.0'

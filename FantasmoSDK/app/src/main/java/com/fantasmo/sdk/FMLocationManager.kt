@@ -198,6 +198,11 @@ class FMLocationManager(private val context: Context) {
      * @param arFrame an AR Frame to localize
      */
     private fun localize(arFrame: Frame) {
+        if (!isConnected
+            && currentLocation.latitude > 0.0
+        ) {
+            return
+        }
         Log.d(TAG, "localize: isSimulation $isSimulation")
         coroutineScope.launch {
             state = State.UPLOADING
@@ -280,24 +285,33 @@ class FMLocationManager(private val context: Context) {
         }
     }
 
+    private var isEvaluatingFrame = false
+
     /**
      * Method to check whether the SDK is ready to localize a frame or not.
      */
     fun session(arFrame: Frame) {
-        if (isConnected
-            && currentLocation.latitude > 0.0
-            && state != State.STOPPED
+        if (state != State.STOPPED
+            && !isEvaluatingFrame
         ) {
-            val filterResult = frameFilterChain.accepts(arFrame)
-            behaviorRequester.processResult(filterResult)
-            accumulatedARCoreInfo.update(arFrame)
-            if (filterResult == FMFrameFilterResult.Accepted) {
-                if (state == State.LOCALIZING) {
-                    localize(arFrame)
-                }
-            } else {
-                frameEventAccumulator.accumulate(filterResult.getRejectedReason()!!)
+            // run the frame through the configured filters
+            isEvaluatingFrame = true
+            frameFilterChain.evaluateAsync(arFrame) { filterResult ->
+                processFrame(arFrame, filterResult)
+                isEvaluatingFrame = false
             }
+        }
+    }
+
+    private fun processFrame(arFrame: Frame, filterResult: FMFrameFilterResult) {
+        behaviorRequester.processResult(filterResult)
+        accumulatedARCoreInfo.update(arFrame)
+        if (filterResult == FMFrameFilterResult.Accepted) {
+            if (state == State.LOCALIZING) {
+                localize(arFrame)
+            }
+        } else {
+            frameEventAccumulator.accumulate(filterResult.getRejectedReason()!!)
         }
         fmLocationListener?.locationManager(arFrame, accumulatedARCoreInfo, frameEventAccumulator)
     }

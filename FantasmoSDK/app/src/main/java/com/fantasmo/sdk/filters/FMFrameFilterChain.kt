@@ -75,4 +75,8 @@ class FMFrameFilterChain(context: Context) {
         val elapsed = (System.nanoTime() - lastAcceptTime) / 1_000_000_000
         return elapsed > acceptanceThreshold
     }
+
+    fun evaluateAsync(arFrame: Frame, completion: (FMFrameFilterResult) -> Unit) {
+        completion(accepts(arFrame))
+    }
 }

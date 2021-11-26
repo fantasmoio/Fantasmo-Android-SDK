@@ -36,7 +36,7 @@ class YuvToRgbConverter(
         if (frameToByteArray == null) {
             return null
         } else {
-            GlobalScope.launch(defaultDispatcher){
+            GlobalScope.launch(defaultDispatcher) {
                 val realFrame = FMUtility.acquireFrameImage(frame)
                 FMUtility.setFrame(realFrame)
             }
@@ -54,6 +54,9 @@ class YuvToRgbConverter(
 
             val bitmapLocal = Bitmap.createBitmap(imageWidth, imageHeight, Bitmap.Config.ARGB_8888)
             outData.copyTo(bitmapLocal)
+
+            inData.destroy()
+            outData.destroy()
             return bitmapLocal
         }
     }
@@ -115,13 +118,13 @@ class YuvToRgbConverter(
         val yuvImage = YuvImage(
             compositeByteArray,
             ImageFormat.NV21,
-            240,
-            320,
+            imageWidth,
+            imageHeight,
             null
         )
 
         yuvImage.compressToJpeg(
-            Rect(0, 0, 240, 320),
+            Rect(0, 0, imageWidth, imageHeight),
             100,
             baOutputStream
         )
