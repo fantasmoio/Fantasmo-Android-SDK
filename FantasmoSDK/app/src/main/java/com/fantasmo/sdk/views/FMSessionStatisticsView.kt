@@ -44,6 +44,9 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     private var tooLittleTv: TextView = arLayout.findViewById(R.id.tooLittleTextView)
     private var featuresTv: TextView = arLayout.findViewById(R.id.featuresTextView)
 
+    private var imageQualityModelVersion: TextView = arLayout.findViewById(R.id.imageQualityVersionTextview)
+    private var imageQualityInsufficient: TextView = arLayout.findViewById(R.id.imageQualityInsufficientTextView)
+
     fun updateStats(
         frame: Frame,
         info: AccumulatedARCoreInfo,
@@ -81,6 +84,8 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         tooFastTv.text = rejections.excessiveMotionFrameCount.toString()
         tooLittleTv.text = rejections.insufficientMotionFrameCount.toString()
         featuresTv.text = rejections.insufficientFeatures.toString()
+        imageQualityModelVersion.text = "1.0"
+        imageQualityInsufficient.text = rejections.imageQualityFrameCount.toString()
 
         val stringDistance =
             String.format("%.2f", info.translationAccumulator.totalTranslation) + " m"
