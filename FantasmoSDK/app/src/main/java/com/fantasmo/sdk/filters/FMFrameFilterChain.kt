@@ -25,7 +25,7 @@ class FMFrameFilterChain(context: Context) {
             FMTrackingStateFilter(),
             FMCameraPitchFilter(context),
             FMMovementFilter(),
-            FMImageQualityFilter(context)
+            FMImageQualityFilter(context),
             //FMBlurFilter(context)
         )
     } else {

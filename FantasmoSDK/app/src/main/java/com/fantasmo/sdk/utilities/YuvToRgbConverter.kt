@@ -30,6 +30,13 @@ class YuvToRgbConverter(
     private val yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs))
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
 
+    /**
+     * Converts ARFrame to bitmap format.
+     * It's also responsible for the YUV to RGB conversion needed to give as input to the model.
+     * Uses RenderScript to make the conversion.
+     * @param frame ARFrame from the ARSession
+     * @return Bitmap in RGB format
+     */
     fun toBitmap(frame: Frame): Bitmap? {
         val frameToByteArray = acquireFrameImageML(frame)
 
@@ -62,20 +69,10 @@ class YuvToRgbConverter(
     }
 
     /**
-     * Convert bitmap to byte array using ByteBuffer.
+     * Convert ARFrame to ByteArray.
+     * @param arFrame Frame from the ARSession
+     * @return ByteArray containing the frame information
      */
-    private fun reduceFrame(frameToByteArray: ByteArray): ByteArray {
-        val originalBitmap =
-            BitmapFactory.decodeByteArray(frameToByteArray, 0, frameToByteArray.size)
-        val reducedBitmap =
-            Bitmap.createScaledBitmap(originalBitmap, imageWidth, imageHeight, true)
-
-        val size: Int = reducedBitmap.rowBytes * reducedBitmap.height
-        val byteBuffer = ByteBuffer.allocate(size)
-        reducedBitmap.copyPixelsToBuffer(byteBuffer)
-        return byteBuffer.array()
-    }
-
     private fun acquireFrameImageML(arFrame: Frame): ByteArray? {
         try {
             val cameraImage = arFrame.acquireCameraImage()
@@ -95,6 +92,12 @@ class YuvToRgbConverter(
         return null
     }
 
+    /**
+     * Creates ByteArrayOutputStream from the Image acquired from the
+     * ARFrame and resizes it to the specified model shape.
+     * @param cameraImage Image acquired from ARFrame
+     * @return ByteArrayOutputStream in YUV format
+     */
     private fun createByteArrayOutputStreamML(cameraImage: Image): ByteArrayOutputStream {
         //The camera image received is in YUV YCbCr Format. Get buffers for each of the planes and use
         // them to create a new byte array defined by the size of all three buffers combined

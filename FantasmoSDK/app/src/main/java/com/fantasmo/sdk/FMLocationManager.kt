@@ -17,8 +17,6 @@ import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.*
 import com.fantasmo.sdk.filters.BehaviorRequester
-import com.fantasmo.sdk.models.tensorflowML.ImageQualityEstimator
-import com.fantasmo.sdk.models.tensorflowML.ImageQualityEstimatorProtocol
 import com.fantasmo.sdk.utilities.LocationFuser
 import com.google.ar.core.Frame
 import kotlinx.coroutines.CoroutineScope
