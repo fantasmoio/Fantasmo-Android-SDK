@@ -10,6 +10,7 @@ import com.fantasmo.sdk.fantasmosdk.ml.ImageQualityEstimatorModel
 import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import com.google.ar.core.Frame
 import org.tensorflow.lite.DataType
+import org.tensorflow.lite.gpu.CompatibilityList
 import org.tensorflow.lite.support.model.Model
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 
@@ -24,69 +25,33 @@ class ImageQualityEstimatorTFLite(val context: Context) : ImageQualityEstimatorP
     private val yuvToRgbConverter = YuvToRgbConverter(context, imageHeight, imageWidth)
 
     private val imageQualityModel: ImageQualityEstimatorModel by lazy {
-        // Use CPU Optimization
-        val options = Model.Options.Builder().setNumThreads(4).build()
+        val compatList = CompatibilityList()
+
+        val options = if(compatList.isDelegateSupportedOnThisDevice){
+            Log.d(TAG, "This device is GPU Compatible ")
+            Model.Options.Builder().setDevice(Model.Device.GPU).build()
+        } else {
+            Log.d(TAG, "This device is GPU Incompatible ")
+            Model.Options.Builder().setNumThreads(4).build()
+        }
         ImageQualityEstimatorModel.newInstance(context, options)
     }
 
-    override fun estimateImageQuality(frame: Frame): ImageQualityEstimationResult {
-        return ImageQualityEstimationResult.UNKNOWN
-    }
-
     override fun estimateImageQuality(
-        frame: Frame,
-        callback: (ImageQualityEstimationResult) -> Unit
-    ) {
+        frame: Frame
+    ): ImageQualityEstimationResult {
+
         val bitmapRGB = yuvToRgbConverter.toBitmap(frame)
-
-        if (bitmapRGB == null) {
-            callback(ImageQualityEstimationResult.ERROR("null image"))
-            return
+        return if (bitmapRGB == null) {
+            ImageQualityEstimationResult.ERROR("null image")
         } else {
-            val rgb = getRGBValues2(bitmapRGB.copy(bitmapRGB.config, bitmapRGB.isMutable))
-            processImage(rgb, callback)
+            val rgb = getRGBValues(bitmapRGB)
+            processImage(rgb)
         }
-    }
-
-    // O(N^2) complexity
-    private fun getRGBValues(bitmapRGB: Bitmap): FloatArray {
-        // Image Height * Image Width * 3 RGB Channels
-        val rgb = FloatArray(imageHeight * imageWidth * 3) { 0f }
-        for (y in 0 until imageHeight) {
-            for (x in 0 until imageWidth) {
-                val pixel = bitmapRGB.getPixel(x, y)
-                // Get and convert rgb values to 0.0 - 1.0
-                var r = Color.red(pixel) / 255.0f
-                var g = Color.green(pixel) / 255.0f
-                var b = Color.blue(pixel) / 255.0f
-
-                // subtract mean, stddev normalization
-                r = (r - 0.485f) / 0.229f
-                g = (g - 0.456f) / 0.224f
-                b = (b - 0.406f) / 0.225f
-
-                // rotate 90 degrees clockwise
-                val w = imageHeight - 1 - y
-                val h = x
-
-                // add the rgb values to the input array
-                val rIndex =
-                    0 * imageHeight * imageWidth + h * imageHeight + w
-                val gIndex =
-                    1 * imageHeight * imageWidth + h * imageHeight + w
-                val bIndex =
-                    2 * imageHeight * imageWidth + h * imageHeight + w
-
-                rgb[rIndex] = r
-                rgb[gIndex] = g
-                rgb[bIndex] = b
-            }
-        }
-        return rgb
     }
 
     // O(3N) complexity
-    private fun getRGBValues2(bitmap: Bitmap): FloatArray {
+    private fun getRGBValues(bitmap: Bitmap): FloatArray {
         val pixels = IntArray(imageHeight * imageWidth)
         bitmap.getPixels(pixels, 0, imageWidth, 0, 0, imageWidth, imageHeight)
 
@@ -117,29 +82,27 @@ class ImageQualityEstimatorTFLite(val context: Context) : ImageQualityEstimatorP
             blue = (blue - 0.406f) / 0.225f
             b[index] = blue
         }
-        val rgb = r + g + b
-
-        return rgb
+        return (r + g + b)
     }
 
-    private fun processImage(rgb: FloatArray, callback: (ImageQualityEstimationResult) -> Unit) {
+    private fun processImage(rgb: FloatArray): ImageQualityEstimationResult {
         val tfBuffer = TensorBuffer.createFixedSize(mlShape, DataType.FLOAT32)
         tfBuffer.loadArray(rgb)
 
-        val outputs2 = imageQualityModel.process(tfBuffer)
-        val outputFeature = outputs2.outputFeature0AsTensorBuffer
-        if (outputFeature.floatArray.size == 2) {
-            Log.d(TAG, outputFeature.floatArray.contentToString())
+        val outputs = imageQualityModel.process(tfBuffer)
+        val outputFeature = outputs.outputFeature0AsTensorBuffer
+
+        return if (outputFeature.floatArray.size == 2) {
             val y1Exp = outputFeature.floatArray[0]
             val y2Exp = outputFeature.floatArray[1]
             if (!y1Exp.isNaN() && y1Exp.isFinite() && !y2Exp.isNaN() && y2Exp.isFinite()) {
                 val score = 1 / (1 + y2Exp / y1Exp)
-                callback(ImageQualityEstimationResult.ESTIMATE(score))
+                ImageQualityEstimationResult.ESTIMATE(score)
             } else {
-                callback(ImageQualityEstimationResult.ERROR("Invalid feature values."))
+                ImageQualityEstimationResult.ERROR("Invalid feature values.")
             }
         } else {
-            callback(ImageQualityEstimationResult.ERROR("Invalid feature value."))
+            ImageQualityEstimationResult.ERROR("Invalid feature value.")
         }
     }
 }
