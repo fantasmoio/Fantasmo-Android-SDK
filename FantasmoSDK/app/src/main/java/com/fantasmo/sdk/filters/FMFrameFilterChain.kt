@@ -2,6 +2,7 @@ package com.fantasmo.sdk.filters
 
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import com.google.ar.core.Frame
 
 /**
@@ -9,7 +10,7 @@ import com.google.ar.core.Frame
  */
 class FMFrameFilterChain(context: Context) {
 
-    private val TAG = "FMInputQualityFilter"
+    private val TAG = FMFrameFilterChain::class.java.simpleName
 
     // the last time a frame was accepted
     private var lastAcceptTime: Long = System.nanoTime()
@@ -26,7 +27,7 @@ class FMFrameFilterChain(context: Context) {
             FMCameraPitchFilter(context),
             FMMovementFilter(),
             FMImageQualityFilter(context),
-            //FMBlurFilter(context)
+            FMBlurFilter(context)
         )
     } else {
         listOf(

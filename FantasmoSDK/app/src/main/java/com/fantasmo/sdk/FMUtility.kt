@@ -24,15 +24,16 @@ class FMUtility {
 
     companion object {
         private var hasPassedBlurFilter: Boolean = false
+        private var hasPassedImageQualityFilter: Boolean = false
         private val TAG = FMUtility::class.java.simpleName
-        var frameToByteArray : ByteArray? = null
+        private var frameToByteArray : ByteArray? = null
         /**
          * Method to get the AR Frame camera image data.
          * @param arFrame the AR Frame to localize.
          * @return a ByteArray with the data of the [arFrame]
          */
         fun getImageDataFromARFrame(context: Context, arFrame: Frame): ByteArray {
-            val localBa: ByteArray? = if(!hasPassedBlurFilter){
+            val localBa: ByteArray? = if(!hasPassedBlurFilter && !hasPassedImageQualityFilter){
                 acquireFrameImage(arFrame)
             }else{
                 frameToByteArray
@@ -225,6 +226,9 @@ class FMUtility {
          * @return `ByteArrayOutputStream` or `null` in case of exception
          */
         fun acquireFrameImage(arFrame: Frame): ByteArray? {
+            if(hasPassedImageQualityFilter){
+                return frameToByteArray
+            }
             try {
                 val cameraImage = arFrame.acquireCameraImage()
                 arFrame.acquireCameraImage().close()
@@ -252,6 +256,11 @@ class FMUtility {
          */
         fun setFrame(byteArrayFrame: ByteArray?) {
             hasPassedBlurFilter = byteArrayFrame != null
+            frameToByteArray = byteArrayFrame
+        }
+
+        fun setFrameQualityTest(byteArrayFrame: ByteArray?) {
+            hasPassedImageQualityFilter = byteArrayFrame != null
             frameToByteArray = byteArrayFrame
         }
     }

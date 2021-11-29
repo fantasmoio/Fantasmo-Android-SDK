@@ -1,7 +1,10 @@
 package com.fantasmo.sdk.utilities
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.ImageFormat
+import android.graphics.Rect
+import android.graphics.YuvImage
 import android.media.Image
 import android.os.Build
 import android.renderscript.*
@@ -17,7 +20,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
-import java.nio.ByteBuffer
 
 @RequiresApi(Build.VERSION_CODES.KITKAT)
 class YuvToRgbConverter(
@@ -45,7 +47,7 @@ class YuvToRgbConverter(
         } else {
             GlobalScope.launch(defaultDispatcher) {
                 val realFrame = FMUtility.acquireFrameImage(frame)
-                FMUtility.setFrame(realFrame)
+                FMUtility.setFrameQualityTest(realFrame)
             }
             val yuvType = Type.Builder(rs, Element.U8(rs)).setX(frameToByteArray.size)
             val inData = Allocation.createTyped(rs, yuvType.create(), Allocation.USAGE_SCRIPT)

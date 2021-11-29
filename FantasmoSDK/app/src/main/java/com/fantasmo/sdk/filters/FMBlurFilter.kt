@@ -22,7 +22,7 @@ import kotlin.math.sqrt
  * Prevents from sending blurred images.
  */
 @RequiresApi(Build.VERSION_CODES.KITKAT)
-class FMBlurFilter(private val context: Context) : FMFrameFilter {
+class FMBlurFilter(context: Context) : FMFrameFilter {
 
     private val laplacianMatrix = floatArrayOf(
         0.0f, 1.0f, 0.0f,
@@ -39,6 +39,7 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
 
     private var throughputAverager = MovingAverage(8)
     private var averageThroughput: Double = throughputAverager.average
+    private val rs = RenderScript.create(context)
 
     /**
      * Check frame acceptance.
@@ -98,7 +99,6 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
 
                 val originalBitmap = BitmapFactory.decodeByteArray(byteArrayFrame, 0, byteArrayFrame.size)
                 val reducedBitmap = Bitmap.createScaledBitmap(originalBitmap, reducedWidth, reducedHeight, true)
-                val rs = RenderScript.create(context)
 
                 // Greyscale so we're only dealing with white <--> black pixels,
                 // this is so we only need to detect pixel luminosity
