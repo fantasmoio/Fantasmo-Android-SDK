@@ -33,7 +33,7 @@ class FMUtility {
          * @return a ByteArray with the data of the [arFrame]
          */
         fun getImageDataFromARFrame(context: Context, arFrame: Frame): ByteArray {
-            val localBa: ByteArray? = if(!hasPassedBlurFilter && !hasPassedImageQualityFilter){
+            val localBa: ByteArray? = if(!hasPassedBlurFilter || !hasPassedImageQualityFilter){
                 acquireFrameImage(arFrame)
             }else{
                 frameToByteArray
@@ -259,9 +259,28 @@ class FMUtility {
             frameToByteArray = byteArrayFrame
         }
 
-        fun setFrameQualityTest(byteArrayFrame: ByteArray?) {
-            hasPassedImageQualityFilter = byteArrayFrame != null
-            frameToByteArray = byteArrayFrame
+        /**
+         * This avoids AR frames from being converted twice to `ByteArray`.
+         *
+         * Also prevents outdated frames from throwing `DeadlineExceededException`
+         * after being analyzed on the `ImageQualityFilter`
+         * @param image The image contained in the ARFrame
+         */
+        fun setFrameQualityTest(image: Image?) {
+            if(image!=null){
+                hasPassedImageQualityFilter = true
+                frameToByteArray = createByteArrayOutputStream(image).toByteArray()
+            }
+        }
+
+        /**
+         * Before QRScanning, the flags HasPassedBlurFilter and
+         * HasPassedImageQualityTest must be reseted in order
+         * to enable a new QRCode search
+         */
+        fun setFalse() {
+            hasPassedBlurFilter = false
+            hasPassedImageQualityFilter = false
         }
     }
 

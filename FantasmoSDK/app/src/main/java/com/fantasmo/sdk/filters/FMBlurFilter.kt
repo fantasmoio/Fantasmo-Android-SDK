@@ -40,6 +40,8 @@ class FMBlurFilter(context: Context) : FMFrameFilter {
     private var throughputAverager = MovingAverage(8)
     private var averageThroughput: Double = throughputAverager.average
     private val rs = RenderScript.create(context)
+    private val colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
+    private val convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
 
     /**
      * Check frame acceptance.
@@ -121,7 +123,6 @@ class FMBlurFilter(context: Context) : FMFrameFilter {
                 )
 
                 // Inverts and greyscales the image
-                val colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
                 colorIntrinsic.setGreyscale()
                 colorIntrinsic.forEach(smootherInput, greyscaleTargetAllocation)
                 greyscaleTargetAllocation.copyTo(greyscaleBitmap)
@@ -146,7 +147,6 @@ class FMBlurFilter(context: Context) : FMFrameFilter {
                     Allocation.USAGE_SHARED
                 )
 
-                val convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
                 convolve.setInput(greyscaleInput)
                 convolve.setCoefficients(laplacianMatrix)
                 convolve.forEach(edgesTargetAllocation)

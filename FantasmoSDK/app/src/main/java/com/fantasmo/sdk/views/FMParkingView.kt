@@ -256,6 +256,7 @@ class FMParkingView @JvmOverloads constructor(
             return
         }
         state = State.QRSCANNING
+        FMUtility.setFalse()
         qrCodeReader.startQRScanner()
         fmQrScanningViewController.didStartQRScanning()
         fmParkingViewController.fmParkingViewDidStartQRScanning()
