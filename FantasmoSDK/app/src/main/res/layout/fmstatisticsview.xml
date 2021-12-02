@@ -501,4 +501,26 @@
         app:layout_constraintBottom_toBottomOf="@+id/imageQualityInsufficientText"
         app:layout_constraintStart_toEndOf="@+id/imageQualityInsufficientText"
         app:layout_constraintTop_toTopOf="@+id/imageQualityInsufficientText" />
+
+    <TextView
+        android:id="@+id/lastResultIQText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/fmTransparentWhite"
+        android:text="@string/last_result_iq"
+        android:textColor="@color/black"
+        app:layout_constraintBottom_toBottomOf="@+id/imageQualityInsufficientTextView"
+        app:layout_constraintStart_toEndOf="@+id/imageQualityInsufficientTextView"
+        app:layout_constraintTop_toTopOf="@+id/imageQualityInsufficientTextView" />
+
+    <TextView
+        android:id="@+id/lastResultIQTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/fmTransparentWhite"
+        android:text="@string/_0"
+        android:textColor="@color/black"
+        app:layout_constraintBottom_toBottomOf="@+id/lastResultIQText"
+        app:layout_constraintStart_toEndOf="@+id/lastResultIQText"
+        app:layout_constraintTop_toTopOf="@+id/lastResultIQText" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.fantasmosdk.ml.ImageQualityEstimatorModel
 import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import com.google.ar.core.Frame
@@ -22,9 +21,9 @@ class FMImageQualityFilter(val context: Context) : FMFrameFilter {
     private val imageHeight: Int = 320
     private val imageWidth: Int = 240
 
-    private val scoreThreshold = 0.0
-
-    private var lastImageQualityScore = 0f
+    val scoreThreshold = 0.0
+    var lastImageQualityScore = 0f
+    var modelVersion = "1.0"
 
     private val yuvToRgbConverter = YuvToRgbConverter(context, imageHeight, imageWidth)
 
@@ -49,13 +48,11 @@ class FMImageQualityFilter(val context: Context) : FMFrameFilter {
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
         val bitmapRGB = yuvToRgbConverter.toBitmap(arFrame)
         if (bitmapRGB == null) {
-            Log.d(TAG,"Null Image")
             // The frame being null means it's no longer available to send in the request
             return FMFrameFilterResult.Rejected(FMFilterRejectionReason.IMAGEQUALITYSCOREBELOWTHRESHOLD)
         } else {
             val rgb = getRGBValues(bitmapRGB)
             val iqeResult = processImage(rgb)
-            Log.d(TAG, "ImageEstimationResult: $iqeResult")
             if (iqeResult != null) {
                 lastImageQualityScore = iqeResult
                 return if (iqeResult >= scoreThreshold) {

@@ -47,6 +47,7 @@
     <string name="exit">Exit</string>
     <string name="imagequalitymodelversion">IQModel:</string>
     <string name="_1_0">1.0</string>
-    <string name="insuficient_quality">Insufficient Quality:</string>
+    <string name="insuficient_quality">; Insufficient Quality:</string>
+    <string name="last_result_iq">; Last Result:</string>
 
 </resources>
