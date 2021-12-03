@@ -59,12 +59,19 @@ class MainActivity : AppCompatActivity() {
                         it,
                         Manifest.permission.ACCESS_FINE_LOCATION
                     )
+                } != PackageManager.PERMISSION_GRANTED) &&
+                (this.let {
+                    ActivityCompat.checkSelfPermission(
+                        it,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    )
                 } != PackageManager.PERMISSION_GRANTED)) {
                 this.let {
                     this.requestPermissions(
                         arrayOf(
                             Manifest.permission.CAMERA,
-                            Manifest.permission.ACCESS_FINE_LOCATION
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
                         ),
                         1
                     )

@@ -44,6 +44,7 @@ android {
 
     buildFeatures {
         viewBinding true
+        mlModelBinding true
     }
 
     applicationVariants.all { variant ->
@@ -60,6 +61,11 @@ android {
 
             outputFileName = newName
         }
+    }
+
+    aaptOptions {
+        noCompress "tflite"
+        noCompress "lite"
     }
 }
 
