@@ -92,6 +92,7 @@ android {
 
     aaptOptions {
         noCompress "tflite"
+        noCompress "lite"
     }
     buildFeatures {
         mlModelBinding true
@@ -117,7 +118,6 @@ dependencies {
     // TensorFlow Lite
     implementation 'org.tensorflow:tensorflow-lite-support:0.1.0'
     implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0'
-
     implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
 
     // Layouts

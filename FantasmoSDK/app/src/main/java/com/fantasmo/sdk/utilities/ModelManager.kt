@@ -20,11 +20,11 @@ class ModelManager(val context: Context) {
     private val modelUrl =
         "url/$fileName"
 
-    private var hasModel = false
-
     private val queue = Volley.newRequestQueue(context)
+    private var hasRequestedModel = false
 
     private fun makeRequest() {
+        hasRequestedModel = true
         val stringRequest = ModelRequest(
             Request.Method.GET, modelUrl,
             { response ->
@@ -32,15 +32,15 @@ class ModelManager(val context: Context) {
                     val fileOutputStream = FileOutputStream(File(context.filesDir, fileName))
                     fileOutputStream.write(response)
                     fileOutputStream.close()
-                    Log.d(TAG, "File Written successfully")
+                    Log.d(TAG, "Model File Successfully Downloaded.")
                 } catch (e: IOException) {
-                    Log.e(TAG, "File write failed: $e")
+                    Log.e(TAG, "Model File write failed: $e.")
+                    hasRequestedModel = false
                 }
-                hasModel = true
             },
             {
-                Log.e(TAG, "Error Downloading Model")
-                hasModel = false
+                Log.e(TAG, "Error Downloading Model.")
+                hasRequestedModel = false
             }
         )
 
@@ -48,14 +48,17 @@ class ModelManager(val context: Context) {
     }
 
     fun getInterpreter(): Interpreter? {
-        var result = loadFromAssets()
-        if(result == null){
-            result = loadFromURL()
+        return if(::interpreter.isInitialized){
+            interpreter
+        }else {
+            var result = loadFromAssets()
+            if (result == null) {
+                result = loadFromURL()
+            }
+            result
         }
-        return result
     }
 
-    @Throws(IOException::class)
     private fun loadFromAssets(): Interpreter? {
         val fileName = "image-quality-estimator2.tflite"
         val assetFileName = "model/$fileName"
@@ -68,9 +71,11 @@ class ModelManager(val context: Context) {
             val fileChannel = inputStream.channel
             val mappedByteBuffer =
                 fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
+            interpreter = Interpreter(mappedByteBuffer)
             return Interpreter(mappedByteBuffer)
         } catch (ex: IOException) {
             //file does not exist
+            Log.e(TAG, "Error on getting the model from the Assets folder. Trying to download it")
             null
         }
     }
@@ -78,29 +83,34 @@ class ModelManager(val context: Context) {
     /**
      * Checks if device has GPU acceleration compatibility.
      * In negative case, creates model with 4 dedicated threads
-     * */
-    private lateinit var runtimeInterpreter: Interpreter
-    private var firstRead = false
+     */
+    private lateinit var interpreter: Interpreter
+    private var firstRead = true
 
-    @Throws(IOException::class)
     private fun loadFromURL(): Interpreter? {
-        if (!hasModel) {
-            makeRequest()
-            return null
-        }
-        return try { //if (firstRead) {
-                //File exists so do something with it
-                val file = File(context.filesDir, fileName)
-                firstRead = false
-                Interpreter(file)
-            } catch (ex: IOException) {
-                //file does not exist
-                Log.e(TAG, "Error on Getting the model")
-                null
+        val file = File(context.filesDir, fileName)
+        if (!file.exists()) {
+            if(!hasRequestedModel){
+                Log.e(TAG,"Model file doesn't exist. Downloading it...")
+                makeRequest()
             }
-        /*
+            return null
         } else {
-            runtimeInterpreter
-        }*/
+            // There's no need to read from the file everytime we need to interpret the model
+            return if (!firstRead) {
+                interpreter
+            } else {
+                try {
+                    //Initialize interpreter an keep it in memory
+                    interpreter = Interpreter(file)
+                    firstRead = false
+                    Interpreter(file)
+                } catch (ex: IOException) {
+                    //file does not exist
+                    Log.e(TAG, "Error on reading the model.")
+                    null
+                }
+            }
+        }
     }
 }
