@@ -22,7 +22,7 @@ import kotlin.math.sqrt
  * Prevents from sending blurred images.
  */
 @RequiresApi(Build.VERSION_CODES.KITKAT)
-class FMBlurFilter(private val context: Context) : FMFrameFilter {
+class FMBlurFilter(context: Context) : FMFrameFilter {
 
     private val laplacianMatrix = floatArrayOf(
         0.0f, 1.0f, 0.0f,
@@ -39,6 +39,9 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
 
     private var throughputAverager = MovingAverage(8)
     private var averageThroughput: Double = throughputAverager.average
+    private val rs = RenderScript.create(context)
+    private val colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
+    private val convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
 
     /**
      * Check frame acceptance.
@@ -98,7 +101,6 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
 
                 val originalBitmap = BitmapFactory.decodeByteArray(byteArrayFrame, 0, byteArrayFrame.size)
                 val reducedBitmap = Bitmap.createScaledBitmap(originalBitmap, reducedWidth, reducedHeight, true)
-                val rs = RenderScript.create(context)
 
                 // Greyscale so we're only dealing with white <--> black pixels,
                 // this is so we only need to detect pixel luminosity
@@ -121,7 +123,6 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
                 )
 
                 // Inverts and greyscales the image
-                val colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
                 colorIntrinsic.setGreyscale()
                 colorIntrinsic.forEach(smootherInput, greyscaleTargetAllocation)
                 greyscaleTargetAllocation.copyTo(greyscaleBitmap)
@@ -146,7 +147,6 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
                     Allocation.USAGE_SHARED
                 )
 
-                val convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
                 convolve.setInput(greyscaleInput)
                 convolve.setCoefficients(laplacianMatrix)
                 convolve.forEach(edgesTargetAllocation)

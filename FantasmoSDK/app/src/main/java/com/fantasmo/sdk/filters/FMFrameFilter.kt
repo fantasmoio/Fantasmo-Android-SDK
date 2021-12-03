@@ -9,7 +9,8 @@ enum class FMFilterRejectionReason {
     IMAGETOOBLURRY,
     MOVINGTOOFAST,
     MOVINGTOOLITTLE,
-    INSUFFICIENTFEATURES;
+    INSUFFICIENTFEATURES,
+    IMAGEQUALITYSCOREBELOWTHRESHOLD;
 
     /**
      * Method responsible for mapping a `FMFilterRejectionReason to the end user.
@@ -23,6 +24,7 @@ enum class FMFilterRejectionReason {
             IMAGETOOBLURRY -> FMBehaviorRequest.PANSLOWLY
             MOVINGTOOLITTLE -> FMBehaviorRequest.PANAROUND
             INSUFFICIENTFEATURES -> FMBehaviorRequest.PANAROUND
+            IMAGEQUALITYSCOREBELOWTHRESHOLD -> FMBehaviorRequest.PANAROUND
         }
     }
 }

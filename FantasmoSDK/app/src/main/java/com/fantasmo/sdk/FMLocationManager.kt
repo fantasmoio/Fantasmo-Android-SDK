@@ -7,8 +7,9 @@
 package com.fantasmo.sdk
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
-import com.fantasmo.sdk.filters.FMInputQualityFilter
+import com.fantasmo.sdk.filters.FMFrameFilterChain
 import com.fantasmo.sdk.filters.FMFrameFilterResult
 import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.FMZone
@@ -17,6 +18,7 @@ import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.*
 import com.fantasmo.sdk.filters.BehaviorRequester
+import com.fantasmo.sdk.filters.FMImageQualityFilter
 import com.fantasmo.sdk.utilities.LocationFuser
 import com.google.ar.core.Frame
 import kotlinx.coroutines.CoroutineScope
@@ -64,7 +66,7 @@ class FMLocationManager(private val context: Context) {
     private var enableFilters = false
 
     // Used to validate frame for sufficient quality before sending to API.
-    private lateinit var frameFilter: FMInputQualityFilter
+    private lateinit var frameFilterChain: FMFrameFilterChain
 
     // Throttler for invalid frames.
     private var behaviorRequester = BehaviorRequester {
@@ -92,11 +94,10 @@ class FMLocationManager(private val context: Context) {
         callback: FMLocationListener
     ) {
         Log.d(TAG, "connect: $callback")
-
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(context, token)
-        frameFilter = FMInputQualityFilter(context)
+        frameFilterChain = FMFrameFilterChain(context)
         fmLocationListener?.locationManager(state)
     }
 
@@ -153,7 +154,7 @@ class FMLocationManager(private val context: Context) {
         enableFilters = filtersEnabled
         motionManager.restart()
         accumulatedARCoreInfo.reset()
-        this.frameFilter.restart()
+        this.frameFilterChain.restart()
         this.behaviorRequester.restart()
         this.locationFuser.reset()
         frameEventAccumulator.reset()
@@ -197,6 +198,11 @@ class FMLocationManager(private val context: Context) {
      * @param arFrame an AR Frame to localize
      */
     private fun localize(arFrame: Frame) {
+        if (!isConnected
+            && currentLocation.latitude > 0.0
+        ) {
+            return
+        }
         Log.d(TAG, "localize: isSimulation $isSimulation")
         coroutineScope.launch {
             state = State.UPLOADING
@@ -279,24 +285,40 @@ class FMLocationManager(private val context: Context) {
         }
     }
 
+    private var isEvaluatingFrame = false
+
     /**
      * Method to check whether the SDK is ready to localize a frame or not.
      */
     fun session(arFrame: Frame) {
-        if (isConnected
-            && currentLocation.latitude > 0.0
-            && state != State.STOPPED
+        if (state != State.STOPPED
+            && !isEvaluatingFrame
         ) {
-            val filterResult = frameFilter.accepts(arFrame)
-            behaviorRequester.processResult(filterResult)
-            accumulatedARCoreInfo.update(arFrame)
-            if (filterResult == FMFrameFilterResult.Accepted) {
-                if (state == State.LOCALIZING) {
-                    localize(arFrame)
-                }
-            } else {
-                frameEventAccumulator.accumulate(filterResult.getRejectedReason()!!)
+            // run the frame through the configured filters
+            isEvaluatingFrame = true
+            frameFilterChain.evaluateAsync(arFrame) { filterResult ->
+                processFrame(arFrame, filterResult)
+                isEvaluatingFrame = false
             }
+        }
+    }
+
+    private fun processFrame(arFrame: Frame, filterResult: FMFrameFilterResult) {
+        behaviorRequester.processResult(filterResult)
+        accumulatedARCoreInfo.update(arFrame)
+        if (filterResult == FMFrameFilterResult.Accepted) {
+            if (state == State.LOCALIZING) {
+                localize(arFrame)
+            }
+        } else {
+            frameEventAccumulator.accumulate(filterResult.getRejectedReason()!!)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            val filter = frameFilterChain.filters[3] as FMImageQualityFilter
+            accumulatedARCoreInfo.lastImageQualityScore = filter.lastImageQualityScore
+            accumulatedARCoreInfo.scoreThreshold = filter.scoreThreshold
+            accumulatedARCoreInfo.modelVersion = filter.modelVersion
         }
         fmLocationListener?.locationManager(arFrame, accumulatedARCoreInfo, frameEventAccumulator)
     }
