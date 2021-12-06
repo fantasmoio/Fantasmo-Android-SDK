@@ -18,7 +18,7 @@ class FMFrameFilterChain(context: Context, config: RemoteConfig) {
 
     // number of seconds after which we force acceptance
     private var acceptanceThreshold : Float
-    
+
     var rc = config.updateConfig(context)
 
     /**

@@ -9,6 +9,7 @@ package com.fantasmo.sdk
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.filters.FMFrameFilterChain
 import com.fantasmo.sdk.filters.FMFrameFilterResult
 import com.fantasmo.sdk.models.Coordinate
@@ -66,7 +67,7 @@ class FMLocationManager(private val context: Context) {
     private var enableFilters = false
 
     // Used to validate frame for sufficient quality before sending to API.
-    private lateinit var frameFilterChain: FMFrameFilterChain
+    private var frameFilterChain = FMFrameFilterChain(context, RemoteConfig())
 
     // Throttler for invalid frames.
     private var behaviorRequester = BehaviorRequester {
@@ -97,7 +98,6 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(context, token)
-        frameFilterChain = FMFrameFilterChain(context)
         fmLocationListener?.locationManager(state)
     }
 
@@ -315,10 +315,12 @@ class FMLocationManager(private val context: Context) {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            val filter = frameFilterChain.filters[3] as FMImageQualityFilter
-            accumulatedARCoreInfo.lastImageQualityScore = filter.lastImageQualityScore
-            accumulatedARCoreInfo.scoreThreshold = filter.scoreThreshold
-            accumulatedARCoreInfo.modelVersion = filter.modelVersion
+            if (frameFilterChain.rc!!.isImageQualityFilterEnabled) {
+                val filter = frameFilterChain.filters.last() as FMImageQualityFilter
+                accumulatedARCoreInfo.lastImageQualityScore = filter.lastImageQualityScore
+                accumulatedARCoreInfo.scoreThreshold = filter.scoreThreshold
+                accumulatedARCoreInfo.modelVersion = filter.modelVersion
+            }
         }
         fmLocationListener?.locationManager(arFrame, accumulatedARCoreInfo, frameEventAccumulator)
     }
