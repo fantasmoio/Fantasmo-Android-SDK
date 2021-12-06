@@ -17,7 +17,7 @@ class ModelManager(val context: Context) {
 
     private val TAG = ModelManager::class.java.simpleName
     private val fileName = "image-quality-estimator.tflite"
-    private var modelVersion = "0.1.0"
+    var modelVersion = "0.1.0"
     private val modelUrl =
         "url/$fileName"
 

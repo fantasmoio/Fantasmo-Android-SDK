@@ -6,55 +6,49 @@ import android.graphics.Color
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.fantasmo.sdk.fantasmosdk.ml.ImageQualityEstimatorModel
+import com.fantasmo.sdk.utilities.ModelManager
 import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import com.google.ar.core.Frame
-import org.tensorflow.lite.DataType
-import org.tensorflow.lite.gpu.CompatibilityList
-import org.tensorflow.lite.support.model.Model
-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
+import org.tensorflow.lite.Interpreter
+import java.nio.ByteBuffer
 
 @RequiresApi(Build.VERSION_CODES.KITKAT)
-class FMImageQualityFilter(val context: Context) : FMFrameFilter {
+class FMImageQualityFilter(imageQualityFilterScoreThreshold: Float, val context: Context) :
+    FMFrameFilter {
     private val TAG = FMImageQualityFilter::class.java.simpleName
     private val mlShape = intArrayOf(1, 3, 320, 240)
     private val imageHeight: Int = 320
     private val imageWidth: Int = 240
 
-    val scoreThreshold = 0.0
+    val scoreThreshold = imageQualityFilterScoreThreshold
     var lastImageQualityScore = 0f
-    var modelVersion = "1.0"
 
     private val yuvToRgbConverter = YuvToRgbConverter(context, imageHeight, imageWidth)
 
     /**
      * ImageQualityEstimatorModel initializer.
-     * Checks if device has GPU acceleration compatibility.
-     * In negative case, creates model with 4 dedicated threads
      */
-    private val imageQualityModel: ImageQualityEstimatorModel by lazy {
-        val compatList = CompatibilityList()
-
-        val options = if(compatList.isDelegateSupportedOnThisDevice){
-            Log.d(TAG, "This device is GPU Compatible ")
-            Model.Options.Builder().setDevice(Model.Device.GPU).build()
-        } else {
-            Log.d(TAG, "This device is GPU Incompatible ")
-            Model.Options.Builder().setNumThreads(4).build()
-        }
-        ImageQualityEstimatorModel.newInstance(context, options)
-    }
+    private var modelManager = ModelManager(context)
+    var modelVersion = modelManager.modelVersion
+    private var tfliteModel: Interpreter? = null
 
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
+        tfliteModel = modelManager.getInterpreter()
+        if (tfliteModel == null) {
+            Log.e(TAG, "Failed To Get Model")
+            return FMFrameFilterResult.Accepted
+        }
         val bitmapRGB = yuvToRgbConverter.toBitmap(arFrame)
         if (bitmapRGB == null) {
             // The frame being null means it's no longer available to send in the request
+            Log.e(TAG, "Failed To Create Input Array")
             return FMFrameFilterResult.Rejected(FMFilterRejectionReason.IMAGEQUALITYSCOREBELOWTHRESHOLD)
         } else {
             val rgb = getRGBValues(bitmapRGB)
             val iqeResult = processImage(rgb)
             if (iqeResult != null) {
                 lastImageQualityScore = iqeResult
+                Log.d(TAG, "IQE: $iqeResult")
                 return if (iqeResult >= scoreThreshold) {
                     FMFrameFilterResult.Accepted
                 } else {
@@ -106,29 +100,44 @@ class FMImageQualityFilter(val context: Context) : FMFrameFilter {
         return (r + g + b)
     }
 
+    private val output = floatArrayOf(0f, 0f)
+    private val byteOutputBuffer: ByteBuffer = ByteBuffer.allocate(output.size * Float.SIZE_BYTES)
+
     /**
      * Uses the RGB values floatArray and passes it as input for the TensorFlowLite model
      * @param rgb FloatArray containing RGB values
      * @return ImageQualityEstimationResult
      */
     private fun processImage(rgb: FloatArray): Float? {
-        val tfBuffer = TensorBuffer.createFixedSize(mlShape, DataType.FLOAT32)
-        tfBuffer.loadArray(rgb)
+        val byteInputBuffer: ByteBuffer = ByteBuffer.allocate(rgb.size * Float.SIZE_BYTES)
+        byteInputBuffer.asFloatBuffer().put(rgb)
+        byteInputBuffer.rewind()
 
-        val outputs = imageQualityModel.process(tfBuffer)
-        val outputFeature = outputs.outputFeature0AsTensorBuffer
+        byteOutputBuffer.rewind()
+        byteOutputBuffer.asFloatBuffer().put(output)
 
-        return if (outputFeature.floatArray.size == 2) {
-            val y1Exp = outputFeature.floatArray[0]
-            val y2Exp = outputFeature.floatArray[1]
-            if (!y1Exp.isNaN() && y1Exp.isFinite() && !y2Exp.isNaN() && y2Exp.isFinite()) {
-                val score = 1 / (1 + y2Exp / y1Exp)
-                score
-            } else {
-                null
-            }
+        tfliteModel!!.run(byteInputBuffer, byteOutputBuffer)
+
+        val array = byteOutputBuffer.array()
+        val result = toFloatArray(array)
+        Log.d(TAG, result.contentToString())
+
+        val y1Exp = result[0]
+        val y2Exp = result[1]
+
+        return if (!y1Exp.isNaN() && y1Exp.isFinite() && !y2Exp.isNaN() && y2Exp.isFinite()) {
+            1 / (1 + y2Exp / y1Exp)
         } else {
             null
         }
+    }
+
+    private fun toFloatArray(byteArray: ByteArray): FloatArray {
+        val buffer = ByteBuffer.wrap(byteArray)
+        val result = FloatArray(byteArray.size / Float.SIZE_BYTES)
+        for (i in result.indices) {
+            result[i] = buffer.float
+        }
+        return result
     }
 }
