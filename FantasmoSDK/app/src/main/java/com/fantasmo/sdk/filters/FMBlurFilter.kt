@@ -22,7 +22,12 @@ import kotlin.math.sqrt
  * Prevents from sending blurred images.
  */
 @RequiresApi(Build.VERSION_CODES.KITKAT)
-class FMBlurFilter(context: Context) : FMFrameFilter {
+class FMBlurFilter(
+    blurFilterVarianceThreshold: Float,
+    blurFilterSuddenDropThreshold: Float,
+    blurFilterAverageThroughputThreshold: Float,
+    context: Context
+) : FMFrameFilter {
 
     private val laplacianMatrix = floatArrayOf(
         0.0f, 1.0f, 0.0f,
@@ -30,15 +35,17 @@ class FMBlurFilter(context: Context) : FMFrameFilter {
         0.0f, 1.0f, 0.0f
     )
 
-    private var variance: Double = 0.0
+    private var variance: Float = 0.0f
     private var varianceAverager = MovingAverage()
     private var averageVariance = varianceAverager.average
 
-    private var varianceThreshold = 275.0
-    private var suddenDropThreshold = 0.4
+    private var varianceThreshold = blurFilterVarianceThreshold
+    private var suddenDropThreshold = blurFilterSuddenDropThreshold
+    private var averageThroughputThreshold = blurFilterAverageThroughputThreshold
 
     private var throughputAverager = MovingAverage(8)
-    private var averageThroughput: Double = throughputAverager.average
+    private var averageThroughput: Float = throughputAverager.average
+
     private val rs = RenderScript.create(context)
     private val colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
     private val convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
@@ -62,13 +69,13 @@ class FMBlurFilter(context: Context) : FMFrameFilter {
         isLowVariance = isBelowThreshold || isSuddenDrop
 
         if (isLowVariance) {
-            throughputAverager.addSample(0.0)
+            throughputAverager.addSample(0.0f)
         } else {
-            throughputAverager.addSample(1.0)
+            throughputAverager.addSample(1.0f)
         }
 
         // if not enough images are passing, pass regardless of variance
-        val isBlurry: Boolean = if (averageThroughput < 0.25) {
+        val isBlurry: Boolean = if (averageThroughput < averageThroughputThreshold) {
             false
         } else {
             isLowVariance
@@ -91,16 +98,18 @@ class FMBlurFilter(context: Context) : FMFrameFilter {
      * @param byteArrayFrame frame converted to ByteArray to measure the variance
      * @return variance blurriness value
      * */
-    private suspend fun calculateVariance(byteArrayFrame: ByteArray?): Double {
+    private suspend fun calculateVariance(byteArrayFrame: ByteArray?): Float {
         val reducedHeight = 480
         val reducedWidth = 640
         if (byteArrayFrame == null) {
-            return 0.0
+            return 0.0f
         } else {
             val stdDev = GlobalScope.async {
 
-                val originalBitmap = BitmapFactory.decodeByteArray(byteArrayFrame, 0, byteArrayFrame.size)
-                val reducedBitmap = Bitmap.createScaledBitmap(originalBitmap, reducedWidth, reducedHeight, true)
+                val originalBitmap =
+                    BitmapFactory.decodeByteArray(byteArrayFrame, 0, byteArrayFrame.size)
+                val reducedBitmap =
+                    Bitmap.createScaledBitmap(originalBitmap, reducedWidth, reducedHeight, true)
 
                 // Greyscale so we're only dealing with white <--> black pixels,
                 // this is so we only need to detect pixel luminosity
@@ -178,7 +187,7 @@ class FMBlurFilter(context: Context) : FMFrameFilter {
      * @param bitmap image after edge detection matrix application
      * @return stdDev variable with blurriness value
      * */
-    private fun meanStdDev(bitmap: Bitmap): Double {
+    private fun meanStdDev(bitmap: Bitmap): Float {
         val pixels = IntArray(bitmap.height * bitmap.width)
         bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
 
@@ -204,6 +213,6 @@ class FMBlurFilter(context: Context) : FMFrameFilter {
             stdDevR += (r - avgR).toDouble().pow(2.0)
         }
 
-        return sqrt(stdDevR / pixels.size) * 100
+        return (sqrt(stdDevR / pixels.size) * 100).toFloat()
     }
 }
