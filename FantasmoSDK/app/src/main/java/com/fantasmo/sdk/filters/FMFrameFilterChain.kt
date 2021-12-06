@@ -58,7 +58,7 @@ class FMFrameFilterChain(context: Context, config: RemoteConfig) {
             }
             if(rc!!.isImageQualityFilterEnabled){
                 val imageQualityFilter = FMImageQualityFilter(
-                    rc!!.imageQualityFilterScoreThreshold,
+                    rc!!,
                     context
                 )
                 filters.add(imageQualityFilter)

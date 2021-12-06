@@ -2,6 +2,7 @@ package com.fantasmo.sdk.config
 
 import android.content.Context
 import android.util.Log
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
 
@@ -48,43 +49,42 @@ class RemoteConfig {
     fun updateConfig(context: Context): Config? {
         val jsonFileString = getJsonFromAssets(context)
         if (jsonFileString != null) {
-            val configJsonObject = JSONObject(jsonFileString)
-            val parkingInRadius = configJsonObject.getBoolean("parking_in_radius")
-            if (!parkingInRadius) {
-                val parkingReason = configJsonObject.getString("fantasmo_unavailable_reason")
-                Log.e(TAG, "Failed Parking with Reason:$parkingReason")
-            }
-            val configJSON = configJsonObject.getString("config")
-
-            return getConfig(configJSON)
+            return getConfig(jsonFileString)
         }
-
         return null
     }
 
-    private fun getConfig(configJSON: String): Config {
-        val config = JSONObject(configJSON)
-        val frameAcceptanceThresholdTimeout = config.getString("frame_acceptance_threshold_timeout")
-        val isBehaviorRequesterEnabled = config.getBoolean("is_behavior_requester_enabled")
-        val isTrackingStateFilterEnabled = config.getBoolean("is_tracking_state_filter_enabled")
-        val isMovementFilterEnabled = config.getBoolean("is_movement_filter_enabled")
-        val movementFilterThreshold = config.getString("movement_filter_threshold")
-        val isBlurFilterEnabled = config.getBoolean("is_blur_filter_enabled")
-        val blurFilterVarianceThreshold = config.getString("blur_filter_variance_threshold")
-        val blurFilterSuddenDropThreshold = config.getString("blur_filter_sudden_drop_threshold")
+    private fun getConfig(jsonString: String): Config {
+        val configJSON = JSONObject(jsonString)
+        val frameAcceptanceThresholdTimeout = configJSON.getString("frame_acceptance_threshold_timeout")
+        val isBehaviorRequesterEnabled = configJSON.getBoolean("is_behavior_requester_enabled")
+        val isTrackingStateFilterEnabled = configJSON.getBoolean("is_tracking_state_filter_enabled")
+        val isMovementFilterEnabled = configJSON.getBoolean("is_movement_filter_enabled")
+        val movementFilterThreshold = configJSON.getString("movement_filter_threshold")
+        val isBlurFilterEnabled = configJSON.getBoolean("is_blur_filter_enabled")
+        val blurFilterVarianceThreshold = configJSON.getString("blur_filter_variance_threshold")
+        val blurFilterSuddenDropThreshold = configJSON.getString("blur_filter_sudden_drop_threshold")
         val blurFilterAverageThroughputThreshold =
-            config.getString("blur_filter_average_throughput_threshold")
-        val isCameraPitchFilterEnabled = config.getBoolean("is_camera_pitch_filter_enabled")
-        val cameraPitchFilterMaxUpwardTilt = config.getString("camera_pitch_filter_max_upward_tilt")
+            configJSON.getString("blur_filter_average_throughput_threshold")
+        val isCameraPitchFilterEnabled = configJSON.getBoolean("is_camera_pitch_filter_enabled")
+        val cameraPitchFilterMaxUpwardTilt = configJSON.getString("camera_pitch_filter_max_upward_tilt")
         val cameraPitchFilterMaxDownwardTilt =
-            config.getString("camera_pitch_filter_max_downward_tilt")
-        val isImageQualityFilterEnabled = config.getBoolean("is_image_quality_filter_enabled")
+            configJSON.getString("camera_pitch_filter_max_downward_tilt")
+        val isImageQualityFilterEnabled = configJSON.getBoolean("is_image_quality_filter_enabled")
         val imageQualityFilterScoreThreshold =
-            config.getString("image_quality_filter_score_threshold")
-        val imageQualityFilterModelUri = config.getString("image_quality_filter_model_uri")
-        val imageQualityFilterModelVersion = config.getString("image_quality_filter_model_version")
+            configJSON.getString("image_quality_filter_score_threshold")
 
-        val configObj = Config(
+        var imageQualityFilterModelUri : String? = null
+        var imageQualityFilterModelVersion : String? = null
+        try{
+            imageQualityFilterModelUri = configJSON.getString("image_quality_filter_model_uri")
+            imageQualityFilterModelVersion = configJSON.getString("image_quality_filter_model_version")
+            Log.d(TAG,"New model specified.")
+        }catch (e: JSONException){
+            Log.d(TAG, "No new model specified.")
+        }
+
+        val config = Config(
             frameAcceptanceThresholdTimeout.toFloat(),
             isBehaviorRequesterEnabled,
             isTrackingStateFilterEnabled,
@@ -102,7 +102,7 @@ class RemoteConfig {
             imageQualityFilterModelUri,
             imageQualityFilterModelVersion
         )
-        Log.d(TAG, configObj.toString())
-        return configObj
+        Log.d(TAG, config.toString())
+        return config
     }
 }

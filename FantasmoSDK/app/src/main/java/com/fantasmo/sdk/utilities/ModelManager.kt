@@ -2,8 +2,10 @@ package com.fantasmo.sdk.utilities
 
 import android.content.Context
 import android.util.Log
+import androidx.core.net.toUri
 import com.android.volley.Request
 import com.android.volley.toolbox.Volley
+import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.network.ModelRequest
 import com.fantasmo.sdk.views.common.samplerender.SampleRender
 import org.tensorflow.lite.Interpreter
@@ -12,8 +14,9 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.channels.FileChannel
+import java.nio.file.Paths
 
-class ModelManager(val context: Context) {
+class ModelManager(val context: Context, remoteConfig: RemoteConfig.Config) {
 
     private val TAG = ModelManager::class.java.simpleName
     private val fileName = "image-quality-estimator.tflite"
@@ -23,6 +26,16 @@ class ModelManager(val context: Context) {
 
     private val queue = Volley.newRequestQueue(context)
     private var hasRequestedModel = false
+    private var hasRequestedUpdate = false
+
+    init {
+        if (remoteConfig.imageQualityFilterModelUri != null) {
+            modelUrl = remoteConfig.imageQualityFilterModelUri!!
+            modelVersion = remoteConfig.imageQualityFilterModelVersion!!
+            hasRequestedUpdate = true
+            Log.d(TAG, "Updating model to version $modelVersion")
+        }
+    }
 
     private fun makeRequest() {
         hasRequestedModel = true
@@ -49,9 +62,9 @@ class ModelManager(val context: Context) {
     }
 
     fun getInterpreter(): Interpreter? {
-        return if(::interpreter.isInitialized){
+        return if (::interpreter.isInitialized) {
             interpreter
-        }else {
+        } else {
             var result = loadFromAssets()
             if (result == null) {
                 result = loadFromURL()
@@ -89,10 +102,17 @@ class ModelManager(val context: Context) {
     private var firstRead = true
 
     private fun loadFromURL(): Interpreter? {
+        val localFileName = File(modelUrl).name
+        Log.d(TAG, localFileName)
         val file = File(context.filesDir, fileName)
         if (!file.exists()) {
-            if(!hasRequestedModel){
-                Log.e(TAG,"Model file doesn't exist. Downloading it...")
+            if (!hasRequestedModel) {
+                if (hasRequestedUpdate) {
+                    Log.d(TAG, "New Model update. Downloading it...")
+                    hasRequestedUpdate = false
+                } else {
+                    Log.e(TAG, "Model file doesn't exist. Downloading it...")
+                }
                 makeRequest()
             }
             return null

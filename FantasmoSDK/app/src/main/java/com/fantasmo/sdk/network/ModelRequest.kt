@@ -6,8 +6,11 @@ import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.HttpHeaderParser
 
-class ModelRequest (
-    method: Int, mUrl: String?, listener: Response.Listener<ByteArray>,
+
+open class ModelRequest (
+    method: Int,
+    mUrl: String?,
+    listener: Response.Listener<ByteArray>,
     errorListener: Response.ErrorListener?
 ) : Request<ByteArray?>(method, mUrl, errorListener) {
     private val mListener: Response.Listener<ByteArray>

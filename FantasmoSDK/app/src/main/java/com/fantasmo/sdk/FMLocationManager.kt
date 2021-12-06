@@ -319,7 +319,7 @@ class FMLocationManager(private val context: Context) {
                 val filter = frameFilterChain.filters.last() as FMImageQualityFilter
                 accumulatedARCoreInfo.lastImageQualityScore = filter.lastImageQualityScore
                 accumulatedARCoreInfo.scoreThreshold = filter.scoreThreshold
-                accumulatedARCoreInfo.modelVersion = filter.modelVersion
+                accumulatedARCoreInfo.modelVersion = filter.modelVersion!!
             }
         }
         fmLocationListener?.locationManager(arFrame, accumulatedARCoreInfo, frameEventAccumulator)
