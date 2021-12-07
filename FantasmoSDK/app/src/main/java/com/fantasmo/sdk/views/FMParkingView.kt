@@ -26,7 +26,6 @@ import com.fantasmo.sdk.utilities.QRCodeScanner
 import com.fantasmo.sdk.utilities.QRCodeScannerListener
 
 import com.google.ar.core.Frame
-import com.google.ar.core.TrackingState
 
 /**
  * Manager of the ARCore session. Provides a camera preview with AR capabilities when not connected.
@@ -127,9 +126,13 @@ class FMParkingView @JvmOverloads constructor(
             Log.e(TAG, "Invalid Coordinates")
             return
         }
-        val radius = defaultParkingAvailabilityRadius
         val fmApi = FMApi(context, accessToken)
-        fmApi.sendZoneInRadiusRequest(latitude, longitude, radius, onCompletion)
+        fmApi.sendInitializationRequest(latitude, longitude, onCompletion) {
+            if(it.message!=null){
+                Log.e(TAG, it.message)
+            }
+            onCompletion(false)
+        }
     }
 
     enum class State {

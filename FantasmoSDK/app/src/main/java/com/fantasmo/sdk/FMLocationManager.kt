@@ -67,7 +67,7 @@ class FMLocationManager(private val context: Context) {
     private var enableFilters = false
 
     // Used to validate frame for sufficient quality before sending to API.
-    private var frameFilterChain = FMFrameFilterChain(context, RemoteConfig())
+    private var frameFilterChain = FMFrameFilterChain(context)
 
     // Throttler for invalid frames.
     private var behaviorRequester = BehaviorRequester {
@@ -319,7 +319,7 @@ class FMLocationManager(private val context: Context) {
                 val filter = frameFilterChain.filters.last() as FMImageQualityFilter
                 accumulatedARCoreInfo.lastImageQualityScore = filter.lastImageQualityScore
                 accumulatedARCoreInfo.scoreThreshold = filter.scoreThreshold
-                accumulatedARCoreInfo.modelVersion = filter.modelVersion!!
+                accumulatedARCoreInfo.modelVersion = filter.modelVersion
             }
         }
         fmLocationListener?.locationManager(arFrame, accumulatedARCoreInfo, frameEventAccumulator)
