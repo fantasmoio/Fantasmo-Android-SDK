@@ -9,8 +9,9 @@ import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.models.tensorflowML.ImageQualityModelUpdater
 import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import com.google.ar.core.Frame
+import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
-import java.nio.ByteBuffer
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 
 @RequiresApi(Build.VERSION_CODES.KITKAT)
 class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Context) :
@@ -100,44 +101,30 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
         return (r + g + b)
     }
 
-    private val output = floatArrayOf(0f, 0f)
-    private val byteOutputBuffer: ByteBuffer = ByteBuffer.allocate(output.size * Float.SIZE_BYTES)
-
     /**
      * Uses the RGB values floatArray and passes it as input for the TensorFlowLite model
      * @param rgb FloatArray containing RGB values
      * @return ImageQualityEstimationResult
      */
     private fun processImage(rgb: FloatArray): Float? {
-        val byteInputBuffer: ByteBuffer = ByteBuffer.allocate(rgb.size * Float.SIZE_BYTES)
-        byteInputBuffer.asFloatBuffer().put(rgb)
-        byteInputBuffer.rewind()
+        val tfBuffer = TensorBuffer.createFixedSize(mlShape, DataType.FLOAT32)
+        tfBuffer.loadArray(rgb)
 
-        byteOutputBuffer.rewind()
-        byteOutputBuffer.asFloatBuffer().put(output)
+        val tfBufferOut = TensorBuffer.createFixedSize(intArrayOf(1,2), DataType.FLOAT32)
+        tfBufferOut.loadArray(floatArrayOf(0f, 0f))
 
-        imageQualityModel!!.run(byteInputBuffer, byteOutputBuffer)
-
-        val array = byteOutputBuffer.array()
-        val result = toFloatArray(array)
-        Log.d(TAG, result.contentToString())
-
-        val y1Exp = result[0]
-        val y2Exp = result[1]
-
-        return if (!y1Exp.isNaN() && y1Exp.isFinite() && !y2Exp.isNaN() && y2Exp.isFinite()) {
-            1 / (1 + y2Exp / y1Exp)
+        imageQualityModel!!.run(tfBuffer.buffer, tfBufferOut.buffer)
+        return if (tfBufferOut.floatArray.size == 2) {
+            val y1Exp = tfBufferOut.floatArray[0]
+            val y2Exp = tfBufferOut.floatArray[1]
+            if (!y1Exp.isNaN() && y1Exp.isFinite() && !y2Exp.isNaN() && y2Exp.isFinite()) {
+                val score = 1 / (1 + y2Exp / y1Exp)
+                score
+            } else {
+                null
+            }
         } else {
             null
         }
-    }
-
-    private fun toFloatArray(byteArray: ByteArray): FloatArray {
-        val buffer = ByteBuffer.wrap(byteArray)
-        val result = FloatArray(byteArray.size / Float.SIZE_BYTES)
-        for (i in result.indices) {
-            result[i] = buffer.float
-        }
-        return result
     }
 }
