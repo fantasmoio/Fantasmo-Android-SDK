@@ -48,7 +48,7 @@ class FMNetworkManager(
         onCompletion: (LocalizeResponse) -> Unit,
         onError: (ErrorResponse) -> Unit
     ) {
-        Log.i(TAG,"$url $parameters")
+        Log.i(TAG, "$url $parameters")
         multipartRequest = object : MultiPartRequest(
             Method.POST, url,
             Response.Listener<NetworkResponse> { response ->
@@ -111,7 +111,7 @@ class FMNetworkManager(
         onCompletion: (Boolean) -> Unit,
         onError: (ErrorResponse) -> Unit
     ) {
-        Log.i(TAG,"$url $parameters")
+        Log.i(TAG, "$url $parameters")
         multipartRequest = object : MultiPartRequest(
             Method.POST, url,
             Response.Listener<NetworkResponse> { response ->
@@ -174,21 +174,22 @@ class FMNetworkManager(
                 Log.d(TAG, "Initialization RESPONSE: $response")
                 try {
                     val onCompletionResult = response.getBoolean("parking_in_radius")
-                    if(!onCompletionResult){
+                    if (!onCompletionResult) {
                         val reason = response.getString("fantasmo_unavailable_reason")
-                        val reasonError = ErrorResponse(0,reason)
+                        val reasonError = ErrorResponse(0, reason)
                         onError(reasonError)
-                    }else{
+                    } else {
                         val configString = response.optString("config")
-                        if(configString != ""){
-                            Log.d(TAG,"Received Config.")
+                        if (configString != "") {
+                            Log.d(TAG, "Received Config.")
                             RemoteConfig.updateConfig(configString)
-                        }else{
+                        } else {
                             RemoteConfig.getDefaultConfig(context)
                         }
                     }
                     onCompletion(onCompletionResult)
                 } catch (e: JSONException) {
+                    RemoteConfig.getDefaultConfig(context)
                     e.printStackTrace()
                 }
             },

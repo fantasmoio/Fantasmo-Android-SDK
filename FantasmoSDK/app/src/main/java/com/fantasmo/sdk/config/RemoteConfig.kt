@@ -33,12 +33,12 @@ class RemoteConfig {
         lateinit var remoteConfig: Config
 
         fun updateConfig(jsonString: String) {
-            Log.d(TAG, "Received Remote Config")
+            Log.i(TAG, "Received Remote Config.")
             remoteConfig = getConfigFromJSON(jsonString)
         }
 
         fun getDefaultConfig(context: Context): Config? {
-            Log.d(TAG, "Getting default config.")
+            Log.i(TAG, "Getting default config.")
             val jsonFileString = getJsonFromAssets(context)
             if (jsonFileString != null) {
                 return getConfigFromJSON(jsonFileString)
@@ -93,9 +93,8 @@ class RemoteConfig {
                 imageQualityFilterModelUri = configJSON.getString("image_quality_filter_model_uri")
                 imageQualityFilterModelVersion =
                     configJSON.getString("image_quality_filter_model_version")
-                Log.d(TAG, "New model specified.")
             } catch (e: JSONException) {
-                Log.d(TAG, "No new model specified.")
+                Log.d(TAG, "No model specified in remote config")
             }
 
             val config = Config(
@@ -113,11 +112,11 @@ class RemoteConfig {
                 cameraPitchFilterMaxDownwardTilt.toFloat(),
                 isImageQualityFilterEnabled,
                 imageQualityFilterScoreThreshold.toFloat(),
-                null,
-                null
+                imageQualityFilterModelUri,
+                imageQualityFilterModelVersion
             )
             remoteConfig = config
-            Log.d(TAG, config.toString())
+            Log.d(TAG, "New Config: $config")
             return config
         }
     }

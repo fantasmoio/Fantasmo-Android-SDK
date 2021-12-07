@@ -2,7 +2,6 @@ package com.fantasmo.sdk.filters
 
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import com.fantasmo.sdk.config.RemoteConfig
 import com.google.ar.core.Frame
 
@@ -57,7 +56,7 @@ class FMFrameFilterChain(context: Context) {
             }
             if (rc.isImageQualityFilterEnabled) {
                 val imageQualityFilter = FMImageQualityFilter(
-                    rc,
+                    rc.imageQualityFilterScoreThreshold,
                     context
                 )
                 filters.add(imageQualityFilter)
