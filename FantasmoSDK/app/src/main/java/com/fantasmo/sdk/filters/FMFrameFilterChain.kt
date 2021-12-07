@@ -9,7 +9,7 @@ import com.google.ar.core.Frame
 /**
  * Class responsible for filtering frames according the implemented filters
  */
-class FMFrameFilterChain(context: Context, config: RemoteConfig) {
+class FMFrameFilterChain(context: Context) {
 
     private val TAG = FMFrameFilterChain::class.java.simpleName
 
@@ -17,48 +17,47 @@ class FMFrameFilterChain(context: Context, config: RemoteConfig) {
     private var lastAcceptTime: Long = System.nanoTime()
 
     // number of seconds after which we force acceptance
-    private var acceptanceThreshold : Float
-
-    var rc = config.updateConfig(context)
+    private var acceptanceThreshold: Float
 
     /**
      * List of filter rules to apply on frame received.
      */
     var filters : MutableList<FMFrameFilter> = mutableListOf()
 
+    val rc: RemoteConfig.Config = RemoteConfig.remoteConfig
+
     init {
-        rc = config.updateConfig(context)
-        acceptanceThreshold = rc!!.frameAcceptanceThresholdTimeout
-        if (rc!!.isTrackingStateFilterEnabled){
+        acceptanceThreshold = rc.frameAcceptanceThresholdTimeout
+        if (rc.isTrackingStateFilterEnabled) {
             filters.add(FMTrackingStateFilter())
         }
-        if (rc!!.isCameraPitchFilterEnabled){
+        if (rc.isCameraPitchFilterEnabled) {
             val cameraPitchFilter = FMCameraPitchFilter(
-                rc!!.cameraPitchFilterMaxDownwardTilt,
-                rc!!.cameraPitchFilterMaxUpwardTilt,
+                rc.cameraPitchFilterMaxDownwardTilt,
+                rc.cameraPitchFilterMaxUpwardTilt,
                 context
             )
             filters.add(cameraPitchFilter)
         }
-        if (rc!!.isMovementFilterEnabled){
+        if (rc.isMovementFilterEnabled) {
             val movementFilter = FMMovementFilter(
-                rc!!.movementFilterThreshold
+                rc.movementFilterThreshold
             )
             filters.add(movementFilter)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            if(rc!!.isBlurFilterEnabled){
+            if (rc.isBlurFilterEnabled) {
                 val blurFilter = FMBlurFilter(
-                    rc!!.blurFilterVarianceThreshold,
-                    rc!!.blurFilterSuddenDropThreshold,
-                    rc!!.blurFilterAverageThroughputThreshold,
+                    rc.blurFilterVarianceThreshold,
+                    rc.blurFilterSuddenDropThreshold,
+                    rc.blurFilterAverageThroughputThreshold,
                     context
                 )
                 filters.add(blurFilter)
             }
-            if(rc!!.isImageQualityFilterEnabled){
+            if (rc.isImageQualityFilterEnabled) {
                 val imageQualityFilter = FMImageQualityFilter(
-                    rc!!,
+                    rc,
                     context
                 )
                 filters.add(imageQualityFilter)

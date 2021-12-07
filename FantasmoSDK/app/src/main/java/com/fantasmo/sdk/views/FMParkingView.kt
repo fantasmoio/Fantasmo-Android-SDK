@@ -101,9 +101,6 @@ class FMParkingView @JvmOverloads constructor(
         fmLocationManager = FMLocationManager(context)
     }
 
-    // Default radius in meters used when checking parking availability via `isParkingAvailable()`.
-    private var defaultParkingAvailabilityRadius: Int = 50
-
     /**
      * Check if there's an available parking space near a supplied Location.
      *
@@ -312,7 +309,7 @@ class FMParkingView @JvmOverloads constructor(
         // Connect the FMLocationManager to Fantasmo SDK
         fmLocationManager.connect(accessToken, fmLocationListener)
         // Start getting location updates
-        fmLocationManager.startUpdatingLocation(appSessionId, true)
+        fmLocationManager.startUpdatingLocation(appSessionId)
 
         fmLocalizingViewController.didStartLocalizing()
         fmParkingViewController.fmParkingViewDidStartLocalizing()

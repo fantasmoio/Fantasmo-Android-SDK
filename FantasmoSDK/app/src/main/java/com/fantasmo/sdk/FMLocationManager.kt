@@ -64,15 +64,11 @@ class FMLocationManager(private val context: Context) {
 
     private var isConnected = false
 
-    private var enableFilters = false
-
     // Used to validate frame for sufficient quality before sending to API.
-    private var frameFilterChain = FMFrameFilterChain(context)
+    private lateinit var frameFilterChain : FMFrameFilterChain
 
     // Throttler for invalid frames.
-    private var behaviorRequester = BehaviorRequester {
-        fmLocationListener?.locationManager(didRequestBehavior = it)
-    }
+    private lateinit var behaviorRequester : BehaviorRequester
 
     private var motionManager = MotionManager(context)
 
@@ -98,6 +94,13 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(context, token)
+        val rc = RemoteConfig.remoteConfig
+        frameFilterChain = FMFrameFilterChain(context)
+        if(rc.isBehaviorRequesterEnabled){
+            behaviorRequester = BehaviorRequester {
+                fmLocationListener?.locationManager(didRequestBehavior = it)
+            }
+        }
         fmLocationListener?.locationManager(state)
     }
 
@@ -114,7 +117,8 @@ class FMLocationManager(private val context: Context) {
     }
 
     /**
-     * Starts the generation of updates that report the user’s current location.
+     * Starts the generation of updates that report the user’s current location
+     * enabling FrameFiltering
      * @param appSessionId appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
      */
     fun startUpdatingLocation(appSessionId: String) {
@@ -128,30 +132,6 @@ class FMLocationManager(private val context: Context) {
         this.isConnected = true
         this.state = State.LOCALIZING
         fmLocationListener?.locationManager(state)
-        enableFilters = false
-        motionManager.restart()
-        accumulatedARCoreInfo.reset()
-        this.locationFuser.reset()
-    }
-
-    /**
-     * Starts the generation of updates that report the user’s current location
-     * enabling FrameFiltering
-     * @param appSessionId appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
-     * @param filtersEnabled flag that enables/disables frame filtering
-     */
-    fun startUpdatingLocation(appSessionId: String, filtersEnabled: Boolean) {
-        localizationSessionId = UUID.randomUUID().toString()
-        this.appSessionId = appSessionId
-        Log.d(
-            TAG,
-            "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId"
-        )
-
-        this.isConnected = true
-        this.state = State.LOCALIZING
-        fmLocationListener?.locationManager(state)
-        enableFilters = filtersEnabled
         motionManager.restart()
         accumulatedARCoreInfo.reset()
         this.frameFilterChain.restart()
@@ -315,7 +295,7 @@ class FMLocationManager(private val context: Context) {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            if (frameFilterChain.rc!!.isImageQualityFilterEnabled) {
+            if (frameFilterChain.rc.isImageQualityFilterEnabled) {
                 val filter = frameFilterChain.filters.last() as FMImageQualityFilter
                 accumulatedARCoreInfo.lastImageQualityScore = filter.lastImageQualityScore
                 accumulatedARCoreInfo.scoreThreshold = filter.scoreThreshold

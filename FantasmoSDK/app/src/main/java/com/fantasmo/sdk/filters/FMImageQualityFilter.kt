@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.utilities.ModelManager
 import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import com.google.ar.core.Frame
@@ -13,14 +14,14 @@ import org.tensorflow.lite.Interpreter
 import java.nio.ByteBuffer
 
 @RequiresApi(Build.VERSION_CODES.KITKAT)
-class FMImageQualityFilter(imageQualityFilterScoreThreshold: Float, val context: Context) :
+class FMImageQualityFilter(remoteConfig: RemoteConfig.Config, val context: Context) :
     FMFrameFilter {
     private val TAG = FMImageQualityFilter::class.java.simpleName
     private val mlShape = intArrayOf(1, 3, 320, 240)
     private val imageHeight: Int = 320
     private val imageWidth: Int = 240
 
-    val scoreThreshold = imageQualityFilterScoreThreshold
+    val scoreThreshold = remoteConfig.imageQualityFilterScoreThreshold
     var lastImageQualityScore = 0f
 
     private val yuvToRgbConverter = YuvToRgbConverter(context, imageHeight, imageWidth)
@@ -28,7 +29,7 @@ class FMImageQualityFilter(imageQualityFilterScoreThreshold: Float, val context:
     /**
      * ImageQualityEstimatorModel initializer.
      */
-    private var modelManager = ModelManager(context)
+    private var modelManager = ModelManager(context, remoteConfig)
     var modelVersion = modelManager.modelVersion
     private var tfliteModel: Interpreter? = null
 
