@@ -262,7 +262,12 @@ class CustomDemoFragment : Fragment() {
     private val systemLocationListener: SystemLocationListener =
         object : SystemLocationListener {
             override fun onLocationUpdate(currentLocation: Location) {
-                fmParkingView.updateLocation(currentLocation.latitude, currentLocation.longitude)
+                fmParkingView.updateLocation(
+                    currentLocation.latitude,
+                    currentLocation.longitude,
+                    currentLocation.accuracy,
+                    currentLocation.verticalAccuracyMeters
+                )
             }
         }
 
@@ -361,7 +366,7 @@ class CustomDemoFragment : Fragment() {
 
             override fun didReceiveLocalizationResult(result: FMLocationResult) {
                 Log.d(TAG, "didReceiveLocalizationResult")
-                if(result.confidence == FMResultConfidence.HIGH){
+                if (result.confidence == FMResultConfidence.HIGH) {
                     val stringResult =
                         "Result: ${result.location.coordinate} (${result.confidence})"
                     resultTextView.text = stringResult

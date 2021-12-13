@@ -3,6 +3,7 @@ package com.fantasmo.sdk.views
 import android.app.Activity
 import android.content.Context
 import android.location.Location
+import android.os.Build
 import android.util.AttributeSet
 import android.util.Log
 import android.view.Gravity
@@ -321,14 +322,16 @@ class FMParkingView @JvmOverloads constructor(
      * @param latitude the device current latitude.
      * @param longitude the device current longitude.
      */
-    fun updateLocation(latitude: Double, longitude: Double) {
+    fun updateLocation(latitude: Double, longitude: Double, horizontalAccuracy: Float, verticalAccuracy: Float) {
         if (!usesInternalLocationManager) {
             // Prevents fmLocationManager lateinit property not initialized
             if (this::fmLocationManager.isInitialized) {
                 //Set SDK Location
                 fmLocationManager.setLocation(
                     latitude,
-                    longitude
+                    longitude,
+                    horizontalAccuracy,
+                    verticalAccuracy
                 )
                 fmSessionStatisticsView.updateLocation(latitude, longitude)
             } else {
@@ -446,9 +449,16 @@ class FMParkingView @JvmOverloads constructor(
         object : DeviceLocationListener {
             override fun onLocationUpdate(locationResult: Location) {
                 //Set SDK Location
+                val verticalAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    locationResult.verticalAccuracyMeters
+                } else {
+                    0.0f
+                }
                 fmLocationManager.setLocation(
                     locationResult.latitude,
-                    locationResult.longitude
+                    locationResult.longitude,
+                    locationResult.accuracy,
+                    verticalAccuracy
                 )
                 fmSessionStatisticsView.updateLocation(
                     locationResult.latitude,
