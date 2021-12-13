@@ -3,16 +3,15 @@ package com.fantasmo.sdk.views
 import android.app.Activity
 import android.content.Context
 import android.location.Location
+import android.os.Build
 import android.util.AttributeSet
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
-
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-
 import com.fantasmo.sdk.*
 import com.fantasmo.sdk.fantasmosdk.R
 import com.fantasmo.sdk.models.Coordinate
@@ -25,7 +24,6 @@ import com.fantasmo.sdk.utilities.DeviceLocationListener
 import com.fantasmo.sdk.utilities.DeviceLocationManager
 import com.fantasmo.sdk.utilities.QRCodeScanner
 import com.fantasmo.sdk.utilities.QRCodeScannerListener
-
 import com.google.ar.core.Frame
 
 /**
@@ -110,24 +108,28 @@ class FMParkingView @JvmOverloads constructor(
      * acceptable radius of the supplied location. If `true`, you should construct a `FMParkingView` and
      * attempt to localize. If `false` you should resort to other options.
      *
-     * @param latitude the latitude of the Location to check
-     * @param longitude the longitude of the Location to check
+     * @param location the Location to check
      * @param onCompletion block with a boolean result
      */
     fun isParkingAvailable(
-        latitude: Double,
-        longitude: Double,
+        location: Location,
         onCompletion: (Boolean) -> Unit
     ) {
-        if (!DeviceLocationManager.isValidLatLng(latitude, longitude)) {
+        val verticalAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            location.bearingAccuracyDegrees
+        } else {
+            0.0f
+        }
+        val locationFantasmo =
+            com.fantasmo.sdk.models.Location(location.altitude, Coordinate(location.latitude, location.longitude), 0, location.bearing , location.accuracy, verticalAccuracy)
+        if (!DeviceLocationManager.isValidLatLng(location.latitude, location.longitude)) {
             onCompletion(false)
             Log.e(TAG, "Invalid Coordinates")
             return
         }
         val fmApi = FMApi(context, accessToken)
-        val location =
-            com.fantasmo.sdk.models.Location(0, Coordinate(latitude, longitude), 0, 0, 0, 0)
-        fmApi.sendInitializationRequest(location, onCompletion) {
+
+        fmApi.sendInitializationRequest(locationFantasmo, onCompletion) {
             if (it.message != null) {
                 Log.e(TAG, it.message)
             }
@@ -321,19 +323,17 @@ class FMParkingView @JvmOverloads constructor(
     /**
      * Allows host apps to manually provide a location update.
      * This method can only be used when usesInternalLocationManager is set to false.
-     * @param latitude the device current latitude.
-     * @param longitude the device current longitude.
+     * @param location the device current location.
      */
-    fun updateLocation(latitude: Double, longitude: Double) {
+    fun updateLocation(location: Location) {
         if (!usesInternalLocationManager) {
             // Prevents fmLocationManager lateinit property not initialized
             if (this::fmLocationManager.isInitialized) {
                 //Set SDK Location
                 fmLocationManager.setLocation(
-                    latitude,
-                    longitude
+                    location
                 )
-                fmSessionStatisticsView.updateLocation(latitude, longitude)
+                fmSessionStatisticsView.updateLocation(location.latitude, location.longitude)
             } else {
                 Log.e(
                     TAG,
@@ -450,8 +450,7 @@ class FMParkingView @JvmOverloads constructor(
             override fun onLocationUpdate(locationResult: Location) {
                 //Set SDK Location
                 fmLocationManager.setLocation(
-                    locationResult.latitude,
-                    locationResult.longitude
+                    locationResult
                 )
                 fmSessionStatisticsView.updateLocation(
                     locationResult.latitude,

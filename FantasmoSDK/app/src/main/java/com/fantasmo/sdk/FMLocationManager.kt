@@ -20,6 +20,7 @@ import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.*
 import com.fantasmo.sdk.filters.BehaviorRequester
 import com.fantasmo.sdk.filters.FMImageQualityFilter
+import com.fantasmo.sdk.models.Location
 import com.fantasmo.sdk.utilities.LocationFuser
 import com.google.ar.core.Frame
 import kotlinx.coroutines.CoroutineScope
@@ -53,7 +54,7 @@ class FMLocationManager(private val context: Context) {
     var state = State.STOPPED
 
     var anchorFrame: Frame? = null
-    var currentLocation: android.location.Location = android.location.Location("")
+    var currentLocation: Location = Location()
 
     private var fmLocationListener: FMLocationListener? = null
     private var token: String = ""
@@ -107,12 +108,20 @@ class FMLocationManager(private val context: Context) {
     /**
      * Sets currentLocation with values given by the client application.
      *
-     * @param latitude Location latitude.
-     * @param longitude Location longitude.
+     * @param location Android Location Object.
      */
-    fun setLocation(latitude: Double, longitude: Double) {
-        this.currentLocation.latitude = latitude
-        this.currentLocation.longitude = longitude
+    fun setLocation(location: android.location.Location) {
+        val coordinate = Coordinate(location.latitude, location.longitude)
+        this.currentLocation.coordinate = coordinate
+        this.currentLocation.horizontalAccuracy = location.accuracy
+
+        this.currentLocation.verticalAccuracy =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                location.verticalAccuracyMeters
+            } else {
+                0.0f
+            }
+
         Log.d(TAG, "SetLocation: $currentLocation")
     }
 
@@ -179,7 +188,7 @@ class FMLocationManager(private val context: Context) {
      */
     private fun localize(arFrame: Frame) {
         if (!isConnected
-            && currentLocation.latitude > 0.0
+            && currentLocation.coordinate.latitude > 0.0
         ) {
             return
         }
@@ -246,10 +255,7 @@ class FMLocationManager(private val context: Context) {
         return FMLocalizationRequest(
             isSimulation,
             FMZone.ZoneType.PARKING,
-            Coordinate(
-                currentLocation.latitude,
-                currentLocation.longitude
-            ),
+            currentLocation.coordinate,
             openCVRelativeAnchorPose,
             frameAnalytics
         )

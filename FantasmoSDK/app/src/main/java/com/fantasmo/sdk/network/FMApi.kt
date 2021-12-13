@@ -129,7 +129,7 @@ class FMApi(
     ) {
         fmNetworkManager.sendInitializationRequest(
             "https://mobility-bff-dev.fantasmo.dev/v2/initialize",
-            getInitializationRequest(location),
+            getInitializationParams(location),
             token,
             onCompletion,
             onError
@@ -141,13 +141,13 @@ class FMApi(
      * @param location: Location to search
      * @return a JSONObject with all the location parameters.
      */
-    private fun getInitializationRequest(
+    private fun getInitializationParams(
         location: Location
     ): JSONObject {
 
         val coordinates = JSONObject()
         coordinates.put("latitude",location.coordinate.latitude)
-        coordinates.put("longitude",location.coordinate.latitude)
+        coordinates.put("longitude",location.coordinate.longitude)
         coordinates.put("horizontalAccuracy",location.horizontalAccuracy)
         coordinates.put("verticalAccuracy",location.verticalAccuracy)
 

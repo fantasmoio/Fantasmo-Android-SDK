@@ -116,10 +116,9 @@ class CustomDemoFragment : Fragment() {
 
     private fun handleEndRideButton() {
         // Test location of a parking space in Berlin
-        val latitude = 52.50578283943285
-        val longitude = 13.378954977173915
+        val myLocation = getMyLocation()
         // Before trying to localize with Fantasmo you should check if the user is near a mapped parking space
-        fmParkingView.isParkingAvailable(latitude, longitude) {
+        fmParkingView.isParkingAvailable(myLocation) {
             if (it) {
                 startParkingFlow()
             } else {
@@ -129,6 +128,15 @@ class CustomDemoFragment : Fragment() {
                 resultTextView.text = stringNotAvailable
             }
         }
+    }
+
+    private fun getMyLocation(): Location {
+        val location = Location("")
+        if (isSimulationSwitch.isChecked) {
+            location.latitude = 52.50578283943285
+            location.longitude = 13.378954977173915
+        }
+        return location
     }
 
     private fun startParkingFlow() {
@@ -262,7 +270,9 @@ class CustomDemoFragment : Fragment() {
     private val systemLocationListener: SystemLocationListener =
         object : SystemLocationListener {
             override fun onLocationUpdate(currentLocation: Location) {
-                fmParkingView.updateLocation(currentLocation.latitude, currentLocation.longitude)
+                fmParkingView.updateLocation(
+                    currentLocation
+                )
             }
         }
 
@@ -361,7 +371,7 @@ class CustomDemoFragment : Fragment() {
 
             override fun didReceiveLocalizationResult(result: FMLocationResult) {
                 Log.d(TAG, "didReceiveLocalizationResult")
-                if(result.confidence == FMResultConfidence.HIGH){
+                if (result.confidence == FMResultConfidence.HIGH) {
                     val stringResult =
                         "Result: ${result.location.coordinate} (${result.confidence})"
                     resultTextView.text = stringResult

@@ -116,8 +116,7 @@ class DemoFragment : Fragment() {
         val myLocation = getMyLocation()
         // Before trying to localize with Fantasmo you should check if the user is near a mapped parking space
         fmParkingView.isParkingAvailable(
-            myLocation.latitude,
-            myLocation.longitude
+            myLocation
         ) {
             if (it) {
                 startParkingFlow()
