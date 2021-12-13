@@ -9,27 +9,32 @@ import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
-/** Helper to ask camera permission.  */
-object CameraPermissionHelper {
-    private const val CAMERA_PERMISSION_CODE = 0
+object PermissionsHelper {
+    private const val PERMISSION_CODE = 0
+    private const val LOCATION_PERMISSION = Manifest.permission.ACCESS_FINE_LOCATION
     private const val CAMERA_PERMISSION = Manifest.permission.CAMERA
 
+
+
     /** Check to see we have the necessary permissions for this app.  */
-    fun hasCameraPermission(activity: Activity?): Boolean {
-        return (ContextCompat.checkSelfPermission(activity!!, CAMERA_PERMISSION)
+    fun hasPermission(activity: Activity?): Boolean {
+        return (ContextCompat.checkSelfPermission(activity!!, LOCATION_PERMISSION)
+                == PackageManager.PERMISSION_GRANTED) && (ContextCompat.checkSelfPermission(activity, CAMERA_PERMISSION)
                 == PackageManager.PERMISSION_GRANTED)
     }
 
     /** Check to see we have the necessary permissions for this app, and ask for them if we don't.  */
-    fun requestCameraPermission(activity: Activity?) {
+    fun requestPermission(activity: Activity?) {
         ActivityCompat.requestPermissions(
-            activity!!, arrayOf(CAMERA_PERMISSION), CAMERA_PERMISSION_CODE
+            activity!!, arrayOf(LOCATION_PERMISSION,CAMERA_PERMISSION), PERMISSION_CODE
         )
     }
 
     /** Check to see if we need to show the rationale for this permission.  */
     fun shouldShowRequestPermissionRationale(activity: Activity?): Boolean {
-        return ActivityCompat.shouldShowRequestPermissionRationale(activity!!, CAMERA_PERMISSION)
+        return ActivityCompat.shouldShowRequestPermissionRationale(activity!!,
+            LOCATION_PERMISSION + CAMERA_PERMISSION
+        )
     }
 
     /** Launch Application Setting to grant permission.  */

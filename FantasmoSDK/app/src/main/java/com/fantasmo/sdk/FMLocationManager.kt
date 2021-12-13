@@ -113,6 +113,8 @@ class FMLocationManager(private val context: Context) {
     fun setLocation(location: android.location.Location) {
         val coordinate = Coordinate(location.latitude, location.longitude)
         this.currentLocation.coordinate = coordinate
+        this.currentLocation.altitude = location.altitude
+        this.currentLocation.heading = location.bearing
         this.currentLocation.horizontalAccuracy = location.accuracy
 
         this.currentLocation.verticalAccuracy =
