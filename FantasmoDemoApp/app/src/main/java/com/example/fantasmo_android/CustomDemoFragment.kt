@@ -263,10 +263,7 @@ class CustomDemoFragment : Fragment() {
         object : SystemLocationListener {
             override fun onLocationUpdate(currentLocation: Location) {
                 fmParkingView.updateLocation(
-                    currentLocation.latitude,
-                    currentLocation.longitude,
-                    currentLocation.accuracy,
-                    currentLocation.verticalAccuracyMeters
+                    currentLocation
                 )
             }
         }

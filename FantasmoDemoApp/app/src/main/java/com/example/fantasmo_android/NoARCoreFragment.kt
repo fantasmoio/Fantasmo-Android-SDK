@@ -96,10 +96,7 @@ class NoARCoreFragment : Fragment() {
         object : SystemLocationListener {
             override fun onLocationUpdate(currentLocation: Location) {
                 fmLocationManager.setLocation(
-                    currentLocation.latitude,
-                    currentLocation.longitude,
-                    currentLocation.accuracy,
-                    currentLocation.verticalAccuracyMeters
+                    currentLocation
                 )
             }
         }

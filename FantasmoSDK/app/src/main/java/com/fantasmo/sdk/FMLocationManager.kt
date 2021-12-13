@@ -105,14 +105,20 @@ class FMLocationManager(private val context: Context) {
     /**
      * Sets currentLocation with values given by the client application.
      *
-     * @param latitude Location latitude.
-     * @param longitude Location longitude.
+     * @param location Android Location Object.
      */
-    fun setLocation(latitude: Double, longitude: Double, horizontalAccuracy: Float, verticalAccuracy: Float) {
-        val coordinate = Coordinate(latitude,longitude)
+    fun setLocation(location: android.location.Location) {
+        val coordinate = Coordinate(location.latitude, location.longitude)
         this.currentLocation.coordinate = coordinate
-        this.currentLocation.horizontalAccuracy = horizontalAccuracy
-        this.currentLocation.verticalAccuracy = verticalAccuracy
+        this.currentLocation.horizontalAccuracy = location.accuracy
+
+        this.currentLocation.verticalAccuracy =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                location.verticalAccuracyMeters
+            } else {
+                0.0f
+            }
+
         Log.d(TAG, "SetLocation: $currentLocation")
     }
 

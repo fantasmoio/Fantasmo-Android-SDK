@@ -319,21 +319,17 @@ class FMParkingView @JvmOverloads constructor(
     /**
      * Allows host apps to manually provide a location update.
      * This method can only be used when usesInternalLocationManager is set to false.
-     * @param latitude the device current latitude.
-     * @param longitude the device current longitude.
+     * @param location the device current location.
      */
-    fun updateLocation(latitude: Double, longitude: Double, horizontalAccuracy: Float, verticalAccuracy: Float) {
+    fun updateLocation(location: Location) {
         if (!usesInternalLocationManager) {
             // Prevents fmLocationManager lateinit property not initialized
             if (this::fmLocationManager.isInitialized) {
                 //Set SDK Location
                 fmLocationManager.setLocation(
-                    latitude,
-                    longitude,
-                    horizontalAccuracy,
-                    verticalAccuracy
+                    location
                 )
-                fmSessionStatisticsView.updateLocation(latitude, longitude)
+                fmSessionStatisticsView.updateLocation(location.latitude, location.longitude)
             } else {
                 Log.e(
                     TAG,
@@ -449,16 +445,8 @@ class FMParkingView @JvmOverloads constructor(
         object : DeviceLocationListener {
             override fun onLocationUpdate(locationResult: Location) {
                 //Set SDK Location
-                val verticalAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    locationResult.verticalAccuracyMeters
-                } else {
-                    0.0f
-                }
                 fmLocationManager.setLocation(
-                    locationResult.latitude,
-                    locationResult.longitude,
-                    locationResult.accuracy,
-                    verticalAccuracy
+                    locationResult
                 )
                 fmSessionStatisticsView.updateLocation(
                     locationResult.latitude,
