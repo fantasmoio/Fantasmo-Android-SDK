@@ -98,8 +98,7 @@ class ImageQualityModelUpdater(val context: Context) {
     }
 
     /**
-     * Checks if device has GPU acceleration compatibility.
-     * In negative case, creates model with 4 dedicated threads
+     * Creates TFLite interpreter with the model loaded and ready to be inferred
      */
     private lateinit var interpreter: Interpreter
     private var firstRead = true
@@ -123,7 +122,7 @@ class ImageQualityModelUpdater(val context: Context) {
                 interpreter
             } else {
                 try {
-                    Log.d(TAG, "Model present in App data")
+                    Log.d(TAG, "Model present in App data.")
                     //Initialize interpreter an keep it in memory
                     interpreter = Interpreter(file)
                     firstRead = false

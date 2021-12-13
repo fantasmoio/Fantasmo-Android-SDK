@@ -119,40 +119,17 @@ class FMApi(
     }
 
     /**
-     * Method to build the ZoneInRadius request.
-     * @param latitude: Location latitude to search
-     * @param longitude: Location longitude to search
-     */
-    fun sendZoneInRadiusRequest(
-        latitude: Double,
-        longitude: Double,
-        radius: Int,
-        onCompletion: (Boolean) -> Unit,
-        onError: (ErrorResponse) -> Unit
-    ) {
-        fmNetworkManager.zoneInRadiusRequest(
-            "https://api.fantasmo.io/v1/parking.in.radius",
-            getZoneInRadiusParams(latitude, longitude, radius),
-            token,
-            onCompletion,
-            onError
-        )
-    }
-
-    /**
      * Method to build the Initialize request.
-     * @param latitude: Location latitude to search
-     * @param longitude: Location longitude to search
+     * @param location: Location to search
      */
     fun sendInitializationRequest(
-        latitude: Double,
-        longitude: Double,
+        location: Location,
         onCompletion: (Boolean) -> Unit,
         onError: (ErrorResponse) -> Unit
     ) {
         fmNetworkManager.sendInitializationRequest(
             "https://mobility-bff-dev.fantasmo.dev/v2/initialize",
-            getInitializationRequest(latitude, longitude),
+            getInitializationRequest(location),
             token,
             onCompletion,
             onError
@@ -161,20 +138,18 @@ class FMApi(
 
     /**
      * Generate the initialize HTTP request parameters.
-     * @param latitude: Location latitude to search
-     * @param longitude: Location longitude to search
+     * @param location: Location to search
      * @return a JSONObject with all the location parameters.
      */
     private fun getInitializationRequest(
-        latitude: Double,
-        longitude: Double,
+        location: Location
     ): JSONObject {
 
         val coordinates = JSONObject()
-        coordinates.put("latitude",latitude)
-        coordinates.put("longitude",longitude)
-        coordinates.put("horizontalAccuracy","0.0")
-        coordinates.put("verticalAccuracy","0.0")
+        coordinates.put("latitude",location.coordinate.latitude)
+        coordinates.put("longitude",location.coordinate.latitude)
+        coordinates.put("horizontalAccuracy",location.horizontalAccuracy)
+        coordinates.put("verticalAccuracy",location.verticalAccuracy)
 
         val json = JSONObject()
         json.put("coordinate",coordinates)
@@ -264,31 +239,6 @@ class FMApi(
         }
 
         Log.i(TAG, "getLocalizeParams")
-        return params
-    }
-
-    /**
-     * Generate the zoneInRadius HTTP request parameters.
-     * @param latitude: Location latitude to search
-     * @param longitude: Location longitude to search
-     * @param radius: search radius in meters
-     * @return an HashMap with all the localization parameters.
-     *
-     * Only works with PARKING zones currently
-     */
-    private fun getZoneInRadiusParams(
-        latitude: Double,
-        longitude: Double,
-        radius: Int,
-    ): HashMap<String, String> {
-        val params = hashMapOf<String, String>()
-
-        val coordinates = Coordinate(latitude, longitude)
-
-        params["radius"] = radius.toString()
-        params["coordinate"] = Gson().toJson(coordinates)
-
-        Log.i(TAG, "getZoneInRadiusParams: $params")
         return params
     }
 

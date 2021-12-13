@@ -15,6 +15,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 
 import com.fantasmo.sdk.*
 import com.fantasmo.sdk.fantasmosdk.R
+import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMPose
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
@@ -124,8 +125,10 @@ class FMParkingView @JvmOverloads constructor(
             return
         }
         val fmApi = FMApi(context, accessToken)
-        fmApi.sendInitializationRequest(latitude, longitude, onCompletion) {
-            if(it.message!=null){
+        val location =
+            com.fantasmo.sdk.models.Location(0, Coordinate(latitude, longitude), 0, 0, 0, 0)
+        fmApi.sendInitializationRequest(location, onCompletion) {
+            if (it.message != null) {
                 Log.e(TAG, it.message)
             }
             onCompletion(false)
@@ -192,7 +195,7 @@ class FMParkingView @JvmOverloads constructor(
             fmARCoreView.connected = false
             fmLocationManager.stopUpdatingLocation()
             if (usesInternalLocationManager) {
-                if(this::internalLocationManager.isInitialized){
+                if (this::internalLocationManager.isInitialized) {
                     internalLocationManager.stopLocationUpdates()
                 }
             }

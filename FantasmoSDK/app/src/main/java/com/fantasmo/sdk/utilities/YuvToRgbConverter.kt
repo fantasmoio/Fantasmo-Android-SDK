@@ -48,7 +48,9 @@ class YuvToRgbConverter(
      */
     @Synchronized
     fun toBitmap(frame: Frame): Bitmap? {
-        val output = Bitmap.createBitmap(1920, 1080, Bitmap.Config.ARGB_8888)
+        val height = frame.camera.imageIntrinsics.imageDimensions[0]
+        val width = frame.camera.imageIntrinsics.imageDimensions[1]
+        val output = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val image = acquireFrameImage(frame) ?: return null
 
         // Ensure that the intermediate output byte buffer is allocated
@@ -84,8 +86,7 @@ class YuvToRgbConverter(
         yuvToRgbIntrinsic.setInput(inputAllocation)
         yuvToRgbIntrinsic.forEach(outputAllocation)
         outputAllocation.copyTo(output)
-        val reducedBitmap = Bitmap.createScaledBitmap(output, imageWidth, imageHeight, true)
-        return reducedBitmap
+        return Bitmap.createScaledBitmap(output, imageWidth, imageHeight, true)
     }
 
     /**
