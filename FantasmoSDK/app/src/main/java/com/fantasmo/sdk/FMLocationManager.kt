@@ -20,7 +20,9 @@ import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.*
 import com.fantasmo.sdk.filters.BehaviorRequester
 import com.fantasmo.sdk.filters.FMImageQualityFilter
+import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.Location
+import com.fantasmo.sdk.utilities.DeviceLocationManager
 import com.fantasmo.sdk.utilities.LocationFuser
 import com.google.ar.core.Frame
 import kotlinx.coroutines.CoroutineScope
@@ -66,10 +68,10 @@ class FMLocationManager(private val context: Context) {
     private var isConnected = false
 
     // Used to validate frame for sufficient quality before sending to API.
-    private lateinit var frameFilterChain : FMFrameFilterChain
+    private lateinit var frameFilterChain: FMFrameFilterChain
 
     // Throttler for invalid frames.
-    private lateinit var behaviorRequester : BehaviorRequester
+    private lateinit var behaviorRequester: BehaviorRequester
 
     private var motionManager = MotionManager(context)
 
@@ -97,7 +99,7 @@ class FMLocationManager(private val context: Context) {
         fmApi = FMApi(context, token)
         val rc = RemoteConfig.remoteConfig
         frameFilterChain = FMFrameFilterChain(context)
-        if(rc.isBehaviorRequesterEnabled){
+        if (rc.isBehaviorRequesterEnabled) {
             behaviorRequester = BehaviorRequester {
                 fmLocationListener?.locationManager(didRequestBehavior = it)
             }
@@ -189,9 +191,17 @@ class FMLocationManager(private val context: Context) {
      * @param arFrame an AR Frame to localize
      */
     private fun localize(arFrame: Frame) {
-        if (!isConnected
-            && currentLocation.coordinate.latitude > 0.0
+        if (!isConnected) {
+            return
+        }
+        if (!DeviceLocationManager.isValidLatLng(
+                currentLocation.coordinate.latitude,
+                currentLocation.coordinate.longitude
+            )
         ) {
+            val error = ErrorResponse(0, "Invalid Coordinates")
+            fmLocationListener?.locationManager(error, null)
+            Log.e(TAG,"Invalid Coordinates")
             return
         }
         Log.d(TAG, "localize: isSimulation $isSimulation")

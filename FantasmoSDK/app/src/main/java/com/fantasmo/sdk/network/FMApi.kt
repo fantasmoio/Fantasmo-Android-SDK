@@ -120,7 +120,7 @@ class FMApi(
 
     /**
      * Method to build the Initialize request.
-     * @param location: Location to search
+     * @param location Location to search
      */
     fun sendInitializationRequest(
         location: Location,
@@ -138,7 +138,7 @@ class FMApi(
 
     /**
      * Generate the initialize HTTP request parameters.
-     * @param location: Location to search
+     * @param location Location to search
      * @return a JSONObject with all the location parameters.
      */
     private fun getInitializationParams(
@@ -146,13 +146,13 @@ class FMApi(
     ): JSONObject {
 
         val coordinates = JSONObject()
-        coordinates.put("latitude",location.coordinate.latitude)
-        coordinates.put("longitude",location.coordinate.longitude)
-        coordinates.put("horizontalAccuracy",location.horizontalAccuracy)
-        coordinates.put("verticalAccuracy",location.verticalAccuracy)
+        coordinates.put("latitude", location.coordinate.latitude)
+        coordinates.put("longitude", location.coordinate.longitude)
+        coordinates.put("horizontalAccuracy", location.horizontalAccuracy)
+        coordinates.put("verticalAccuracy", location.verticalAccuracy)
 
         val json = JSONObject()
-        json.put("coordinate",coordinates)
+        json.put("coordinate", coordinates)
         Log.i(TAG, "getInitializationRequest: $json")
         return json
     }
@@ -160,7 +160,7 @@ class FMApi(
     /**
      * Generate the localize HTTP request parameters. Can fail if the jpeg
      * conversion throws an exception.
-     * @param frame: Frame to localize
+     * @param frame Frame to localize
      * @return an HashMap with all the localization parameters.
      */
     private fun getLocalizeParams(
@@ -177,7 +177,7 @@ class FMApi(
         }
 
         val resolution = hashMapOf<String, Int>()
-        val imageResolution = getImageResolution(frame,request)
+        val imageResolution = getImageResolution(frame, request)
         resolution["height"] = imageResolution.height
         resolution["width"] = imageResolution.width
 
@@ -244,30 +244,33 @@ class FMApi(
 
     /**
      * Generate the image data used to perform "localize" HTTP request.
-     * @param arFrame: Frame to localize
-     * @param request: FMLocalizationRequest with information about simulation mode
-     * @return result: ByteArray with image to localize
+     * @param arFrame Frame to localize
+     * @param request FMLocalizationRequest with information about simulation mode
+     * @return result ByteArray with image to localize
      */
     private fun imageData(arFrame: Frame, request: FMLocalizationRequest): ByteArray {
         if (request.isSimulation) {
-            return MockData.imageData(request,context)
+            return MockData.imageData(request, context)
         }
         return FMUtility.getImageDataFromARFrame(context, arFrame)
     }
 
     /**
      * Get the image resolution used to perform "localize" HTTP request.
-     * @param arFrame: Frame to return the resolution from
-     * @param request: Localization request struct
-     * @return result: Resolution of the frame
+     * @param arFrame Frame to return the resolution from
+     * @param request Localization request struct
+     * @return result Resolution of the frame
      */
-    private fun getImageResolution(arFrame: Frame, request: FMLocalizationRequest): FMFrameResolution{
-        if (request.isSimulation){
-            val result = MockData.getImageResolution(request,context)
-            return FMFrameResolution(result[0],result[1])
+    private fun getImageResolution(
+        arFrame: Frame,
+        request: FMLocalizationRequest
+    ): FMFrameResolution {
+        if (request.isSimulation) {
+            val result = MockData.getImageResolution(request, context)
+            return FMFrameResolution(result[0], result[1])
         }
         val height = arFrame.camera.imageIntrinsics.imageDimensions[0]
         val width = arFrame.camera.imageIntrinsics.imageDimensions[1]
-        return FMFrameResolution(height,width)
+        return FMFrameResolution(height, width)
     }
 }

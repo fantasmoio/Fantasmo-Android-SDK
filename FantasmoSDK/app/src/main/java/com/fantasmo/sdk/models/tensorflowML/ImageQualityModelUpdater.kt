@@ -77,7 +77,7 @@ class ImageQualityModelUpdater(val context: Context) {
     }
 
     private fun loadFromAssets(): Interpreter? {
-        val fileName = "image-quality-estimator2.tflite"
+        val fileName = "image-quality-estimator-0.1.0.tflite"
         val assetFileName = "model/$fileName"
         return try {
             //File exists so do something with it

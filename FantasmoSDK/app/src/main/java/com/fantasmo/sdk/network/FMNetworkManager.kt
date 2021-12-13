@@ -181,7 +181,6 @@ class FMNetworkManager(
                     } else {
                         val configString = response.optString("config")
                         if (configString != "") {
-                            Log.d(TAG, "Received Config.")
                             RemoteConfig.updateConfig(configString)
                         } else {
                             RemoteConfig.getDefaultConfig(context)
@@ -216,7 +215,6 @@ class FMNetworkManager(
         if (isInternetAvailable()) {
             requestQueue.add(jsonRequest)
         } else {
-            RemoteConfig.getDefaultConfig(context)
             Log.w(TAG, "No internet connection available")
         }
     }

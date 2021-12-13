@@ -115,13 +115,6 @@ class FMParkingView @JvmOverloads constructor(
         location: Location,
         onCompletion: (Boolean) -> Unit
     ) {
-        val verticalAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            location.bearingAccuracyDegrees
-        } else {
-            0.0f
-        }
-        val locationFantasmo =
-            com.fantasmo.sdk.models.Location(location.altitude, Coordinate(location.latitude, location.longitude), 0, location.bearing , location.accuracy, verticalAccuracy)
         if (!DeviceLocationManager.isValidLatLng(location.latitude, location.longitude)) {
             onCompletion(false)
             Log.e(TAG, "Invalid Coordinates")
@@ -129,6 +122,20 @@ class FMParkingView @JvmOverloads constructor(
         }
         val fmApi = FMApi(context, accessToken)
 
+        val verticalAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            location.bearingAccuracyDegrees
+        } else {
+            0.0f
+        }
+        val locationFantasmo =
+            com.fantasmo.sdk.models.Location(
+                location.altitude,
+                Coordinate(location.latitude, location.longitude),
+                0,
+                location.bearing,
+                location.accuracy,
+                verticalAccuracy
+            )
         fmApi.sendInitializationRequest(locationFantasmo, onCompletion) {
             if (it.message != null) {
                 Log.e(TAG, it.message)

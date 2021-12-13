@@ -116,7 +116,6 @@ class RemoteConfig {
                 imageQualityFilterModelVersion
             )
             remoteConfig = config
-            Log.d(TAG, "New Config: $config")
             return config
         }
     }
