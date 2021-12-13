@@ -19,6 +19,7 @@ import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.network.*
 import com.fantasmo.sdk.filters.BehaviorRequester
 import com.fantasmo.sdk.filters.FMImageQualityFilter
+import com.fantasmo.sdk.models.Location
 import com.fantasmo.sdk.utilities.LocationFuser
 import com.google.ar.core.Frame
 import kotlinx.coroutines.CoroutineScope
@@ -52,7 +53,7 @@ class FMLocationManager(private val context: Context) {
     var state = State.STOPPED
 
     var anchorFrame: Frame? = null
-    var currentLocation: android.location.Location = android.location.Location("")
+    var currentLocation: Location = Location()
 
     private var fmLocationListener: FMLocationListener? = null
     private var token: String = ""
@@ -107,9 +108,11 @@ class FMLocationManager(private val context: Context) {
      * @param latitude Location latitude.
      * @param longitude Location longitude.
      */
-    fun setLocation(latitude: Double, longitude: Double) {
-        this.currentLocation.latitude = latitude
-        this.currentLocation.longitude = longitude
+    fun setLocation(latitude: Double, longitude: Double, horizontalAccuracy: Float, verticalAccuracy: Float) {
+        val coordinate = Coordinate(latitude,longitude)
+        this.currentLocation.coordinate = coordinate
+        this.currentLocation.horizontalAccuracy = horizontalAccuracy
+        this.currentLocation.verticalAccuracy = verticalAccuracy
         Log.d(TAG, "SetLocation: $currentLocation")
     }
 
@@ -199,7 +202,7 @@ class FMLocationManager(private val context: Context) {
      */
     private fun localize(arFrame: Frame) {
         if (!isConnected
-            && currentLocation.latitude > 0.0
+            && currentLocation.coordinate.latitude > 0.0
         ) {
             return
         }
@@ -266,10 +269,7 @@ class FMLocationManager(private val context: Context) {
         return FMLocalizationRequest(
             isSimulation,
             FMZone.ZoneType.PARKING,
-            Coordinate(
-                currentLocation.latitude,
-                currentLocation.longitude
-            ),
+            currentLocation.coordinate,
             openCVRelativeAnchorPose,
             frameAnalytics
         )
