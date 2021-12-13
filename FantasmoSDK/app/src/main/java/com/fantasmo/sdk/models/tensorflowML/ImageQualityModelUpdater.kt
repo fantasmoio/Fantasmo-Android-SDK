@@ -88,7 +88,9 @@ class ImageQualityModelUpdater(val context: Context) {
             val fileChannel = inputStream.channel
             val mappedByteBuffer =
                 fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
-            interpreter = Interpreter(mappedByteBuffer)
+            val options = Interpreter.Options()
+            options.setNumThreads(4)
+            interpreter = Interpreter(mappedByteBuffer, options)
             return Interpreter(mappedByteBuffer)
         } catch (ex: IOException) {
             //file does not exist
@@ -124,9 +126,11 @@ class ImageQualityModelUpdater(val context: Context) {
                 try {
                     Log.d(TAG, "Model present in App data.")
                     //Initialize interpreter an keep it in memory
-                    interpreter = Interpreter(file)
+                    val options = Interpreter.Options()
+                    options.setNumThreads(4)
+                    interpreter = Interpreter(file, options)
                     firstRead = false
-                    Interpreter(file)
+                    Interpreter(file, options)
                 } catch (ex: IOException) {
                     //file does not exist
                     Log.e(TAG, "Error on reading the model.")

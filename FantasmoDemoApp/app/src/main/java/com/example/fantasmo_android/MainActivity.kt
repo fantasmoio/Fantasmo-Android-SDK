@@ -43,10 +43,10 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun checkPermissions(){
+    private fun checkPermissions() {
         if (!PermissionsHelper.hasPermission(this)) {
             PermissionsHelper.requestPermission(this)
-        }else{
+        } else {
             checkGPSEnabled()
         }
     }
@@ -99,7 +99,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * Builds StartDestination on the navigation graph
      */
-    private fun setStartDestination(){
+    private fun setStartDestination() {
         if (arcoreCompatibility) {
             //graph.startDestination = R.id.custom_arcore_fragment
             graph.startDestination = R.id.arcore_fragment
@@ -130,9 +130,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var locationSettingsLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()){
-        result->
-        if(result.resultCode == Activity.RESULT_OK){
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            setStartDestination()
             val intent = result.data
             finish()
             startActivity(intent)
