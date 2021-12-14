@@ -92,9 +92,7 @@ android {
 
     aaptOptions {
         noCompress "tflite"
-    }
-    buildFeatures {
-        mlModelBinding true
+        noCompress "lite"
     }
 }
 
@@ -106,7 +104,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.6'
 
     // ARCore
-    implementation 'com.google.ar:core:1.28.0'
+    implementation 'com.google.ar:core:1.29.0'
 
     // Location Manager
     implementation 'com.google.android.gms:play-services-location:18.0.0'
@@ -117,7 +115,6 @@ dependencies {
     // TensorFlow Lite
     implementation 'org.tensorflow:tensorflow-lite-support:0.1.0'
     implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0'
-
     implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
 
     // Layouts

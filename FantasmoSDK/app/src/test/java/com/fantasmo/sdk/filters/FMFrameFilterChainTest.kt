@@ -90,7 +90,7 @@ class FMFrameFilterChainTest {
         val spyFMBlurFilterRule = Mockito.spy(fmBlurFilterRule)
 
         filter.filters = listOf(
-            FMMovementFilter(),
+            FMMovementFilter(rc!!.movementFilterThreshold),
             FMCameraPitchFilter(instrumentationContext)
         )
 

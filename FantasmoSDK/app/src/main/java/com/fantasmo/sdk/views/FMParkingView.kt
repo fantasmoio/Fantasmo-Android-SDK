@@ -10,12 +10,11 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
-
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-
 import com.fantasmo.sdk.*
 import com.fantasmo.sdk.fantasmosdk.R
+import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMPose
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
@@ -25,9 +24,7 @@ import com.fantasmo.sdk.utilities.DeviceLocationListener
 import com.fantasmo.sdk.utilities.DeviceLocationManager
 import com.fantasmo.sdk.utilities.QRCodeScanner
 import com.fantasmo.sdk.utilities.QRCodeScannerListener
-
 import com.google.ar.core.Frame
-import com.google.ar.core.TrackingState
 
 /**
  * Manager of the ARCore session. Provides a camera preview with AR capabilities when not connected.
@@ -103,9 +100,6 @@ class FMParkingView @JvmOverloads constructor(
         fmLocationManager = FMLocationManager(context)
     }
 
-    // Default radius in meters used when checking parking availability via `isParkingAvailable()`.
-    private var defaultParkingAvailabilityRadius: Int = 50
-
     /**
      * Check if there's an available parking space near a supplied Location.
      *
@@ -114,23 +108,40 @@ class FMParkingView @JvmOverloads constructor(
      * acceptable radius of the supplied location. If `true`, you should construct a `FMParkingView` and
      * attempt to localize. If `false` you should resort to other options.
      *
-     * @param latitude the latitude of the Location to check
-     * @param longitude the longitude of the Location to check
+     * @param location the Location to check
      * @param onCompletion block with a boolean result
      */
     fun isParkingAvailable(
-        latitude: Double,
-        longitude: Double,
+        location: Location,
         onCompletion: (Boolean) -> Unit
     ) {
-        if (!DeviceLocationManager.isValidLatLng(latitude, longitude)) {
+        if (!DeviceLocationManager.isValidLatLng(location.latitude, location.longitude)) {
             onCompletion(false)
             Log.e(TAG, "Invalid Coordinates")
             return
         }
-        val radius = defaultParkingAvailabilityRadius
         val fmApi = FMApi(context, accessToken)
-        fmApi.sendZoneInRadiusRequest(latitude, longitude, radius, onCompletion)
+
+        val verticalAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            location.bearingAccuracyDegrees
+        } else {
+            0.0f
+        }
+        val locationFantasmo =
+            com.fantasmo.sdk.models.Location(
+                location.altitude,
+                Coordinate(location.latitude, location.longitude),
+                0,
+                location.bearing,
+                location.accuracy,
+                verticalAccuracy
+            )
+        fmApi.sendInitializationRequest(locationFantasmo, onCompletion) {
+            if (it.message != null) {
+                Log.e(TAG, it.message)
+            }
+            onCompletion(false)
+        }
     }
 
     enum class State {
@@ -193,7 +204,7 @@ class FMParkingView @JvmOverloads constructor(
             fmARCoreView.connected = false
             fmLocationManager.stopUpdatingLocation()
             if (usesInternalLocationManager) {
-                if(this::internalLocationManager.isInitialized){
+                if (this::internalLocationManager.isInitialized) {
                     internalLocationManager.stopLocationUpdates()
                 }
             }
@@ -310,7 +321,7 @@ class FMParkingView @JvmOverloads constructor(
         // Connect the FMLocationManager to Fantasmo SDK
         fmLocationManager.connect(accessToken, fmLocationListener)
         // Start getting location updates
-        fmLocationManager.startUpdatingLocation(appSessionId, true)
+        fmLocationManager.startUpdatingLocation(appSessionId)
 
         fmLocalizingViewController.didStartLocalizing()
         fmParkingViewController.fmParkingViewDidStartLocalizing()
@@ -413,27 +424,23 @@ class FMParkingView @JvmOverloads constructor(
             }
 
             override fun anchored(frame: Frame): Boolean {
-                frame.let {
-                    fmLocationManager.setAnchor(it)
-                    return true
-                }
+                fmLocationManager.setAnchor(frame)
+                return true
             }
 
             override fun qrCodeScan(frame: Frame) {
                 // If qrScanning, pass the current AR frame to the qrCode reader
                 if (state == State.QRSCANNING) {
-                    frame.let { qrCodeReader.processImage(it) }
+                    qrCodeReader.processImage(frame)
                 }
             }
 
             override fun anchorDelta(frame: Frame): FMPose? {
-                return frame.let { frame2 ->
-                    fmLocationManager.anchorFrame?.let { anchorFrame ->
-                        FMUtility.anchorDeltaPoseForFrame(
-                            frame2,
-                            anchorFrame
-                        )
-                    }
+                return fmLocationManager.anchorFrame?.let { anchorFrame ->
+                    FMUtility.anchorDeltaPoseForFrame(
+                        frame,
+                        anchorFrame
+                    )
                 }
             }
         }

@@ -16,8 +16,7 @@ implementation 'com.google.code.gson:gson:2.8.6'
 implementation 'androidx.core:core-ktx:1.3.2'
 
 // ARCore
-implementation 'com.google.ar:core:1.27.0'
-implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.17.1'
+implementation 'com.google.ar:core:1.29.0'
 
 // Location Services
 implementation 'com.google.android.gms:play-services-location:18.0.0'
@@ -30,8 +29,21 @@ implementation 'androidx.appcompat:appcompat:1.3.1'
 implementation 'com.google.android.material:material:1.4.0'
 implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
 implementation 'androidx.coordinatorlayout:coordinatorlayout:1.1.0'
+
+// TensorFlow Lite
+implementation 'org.tensorflow:tensorflow-lite-support:0.1.0'
+implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0'
+implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
 ```
 ### Building and Importing
+
+On the module-level `build.gradle`, inside the `android` properties you should add the following instruction. This will allow to add a machine learning model and to loaded it when in a Localizing Session.
+```kotlin
+    aaptOptions {
+        noCompress "tflite"
+        noCompress "lite"
+    }
+```
 
 To build the library .aar, the desired Build Variant should be seleted and then build the project. The .aar will be located in /app/build/outputs/aar/
 The Fantasmo SDK .aar file can be imported directly into a project.

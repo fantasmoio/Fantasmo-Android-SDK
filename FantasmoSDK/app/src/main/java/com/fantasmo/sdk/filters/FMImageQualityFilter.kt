@@ -6,55 +6,50 @@ import android.graphics.Color
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.fantasmo.sdk.fantasmosdk.ml.ImageQualityEstimatorModel
+import com.fantasmo.sdk.models.tensorflowML.ImageQualityModelUpdater
 import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import com.google.ar.core.Frame
 import org.tensorflow.lite.DataType
-import org.tensorflow.lite.gpu.CompatibilityList
-import org.tensorflow.lite.support.model.Model
+import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 
 @RequiresApi(Build.VERSION_CODES.KITKAT)
-class FMImageQualityFilter(val context: Context) : FMFrameFilter {
+class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Context) :
+    FMFrameFilter {
     private val TAG = FMImageQualityFilter::class.java.simpleName
     private val mlShape = intArrayOf(1, 3, 320, 240)
     private val imageHeight: Int = 320
     private val imageWidth: Int = 240
 
-    val scoreThreshold = 0.0
+    val scoreThreshold = imageQualityScoreThreshold
     var lastImageQualityScore = 0f
-    var modelVersion = "1.0"
 
     private val yuvToRgbConverter = YuvToRgbConverter(context, imageHeight, imageWidth)
 
     /**
      * ImageQualityEstimatorModel initializer.
-     * Checks if device has GPU acceleration compatibility.
-     * In negative case, creates model with 4 dedicated threads
      */
-    private val imageQualityModel: ImageQualityEstimatorModel by lazy {
-        val compatList = CompatibilityList()
-
-        val options = if(compatList.isDelegateSupportedOnThisDevice){
-            Log.d(TAG, "This device is GPU Compatible ")
-            Model.Options.Builder().setDevice(Model.Device.GPU).build()
-        } else {
-            Log.d(TAG, "This device is GPU Incompatible ")
-            Model.Options.Builder().setNumThreads(4).build()
-        }
-        ImageQualityEstimatorModel.newInstance(context, options)
-    }
+    private var imageQualityModelUpdater = ImageQualityModelUpdater(context)
+    var modelVersion = imageQualityModelUpdater.modelVersion
+    private var imageQualityModel: Interpreter? = null
 
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
+        imageQualityModel = imageQualityModelUpdater.getInterpreter()
+        if (imageQualityModel == null) {
+            Log.e(TAG, "Failed to get Model")
+            return FMFrameFilterResult.Accepted
+        }
         val bitmapRGB = yuvToRgbConverter.toBitmap(arFrame)
         if (bitmapRGB == null) {
             // The frame being null means it's no longer available to send in the request
+            Log.e(TAG, "Failed to create Input Array")
             return FMFrameFilterResult.Rejected(FMFilterRejectionReason.IMAGEQUALITYSCOREBELOWTHRESHOLD)
         } else {
             val rgb = getRGBValues(bitmapRGB)
             val iqeResult = processImage(rgb)
             if (iqeResult != null) {
                 lastImageQualityScore = iqeResult
+                Log.d(TAG, "IQE: $iqeResult")
                 return if (iqeResult >= scoreThreshold) {
                     FMFrameFilterResult.Accepted
                 } else {
@@ -85,6 +80,7 @@ class FMImageQualityFilter(val context: Context) : FMFrameFilter {
 
         //Handle Red Color Space
         for ((index, pixel) in pixels.withIndex()) {
+            // convert rgb values to 0.0 - 1.0
             var red = Color.red(pixel) / 255.0f
             // subtract mean, stddev normalization
             red = (red - 0.485f) / 0.229f
@@ -109,18 +105,19 @@ class FMImageQualityFilter(val context: Context) : FMFrameFilter {
     /**
      * Uses the RGB values floatArray and passes it as input for the TensorFlowLite model
      * @param rgb FloatArray containing RGB values
-     * @return ImageQualityEstimationResult
+     * @return Float result of the model inference
      */
     private fun processImage(rgb: FloatArray): Float? {
         val tfBuffer = TensorBuffer.createFixedSize(mlShape, DataType.FLOAT32)
         tfBuffer.loadArray(rgb)
 
-        val outputs = imageQualityModel.process(tfBuffer)
-        val outputFeature = outputs.outputFeature0AsTensorBuffer
+        val tfBufferOut = TensorBuffer.createFixedSize(intArrayOf(1, 2), DataType.FLOAT32)
+        tfBufferOut.loadArray(floatArrayOf(0f, 0f))
 
-        return if (outputFeature.floatArray.size == 2) {
-            val y1Exp = outputFeature.floatArray[0]
-            val y2Exp = outputFeature.floatArray[1]
+        imageQualityModel!!.run(tfBuffer.buffer, tfBufferOut.buffer)
+        return if (tfBufferOut.floatArray.size == 2) {
+            val y1Exp = tfBufferOut.floatArray[0]
+            val y2Exp = tfBufferOut.floatArray[1]
             if (!y1Exp.isNaN() && y1Exp.isFinite() && !y2Exp.isNaN() && y2Exp.isFinite()) {
                 val score = 1 / (1 + y2Exp / y1Exp)
                 score

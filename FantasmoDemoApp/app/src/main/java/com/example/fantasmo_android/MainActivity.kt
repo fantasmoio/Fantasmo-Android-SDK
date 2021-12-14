@@ -1,20 +1,21 @@
 package com.example.fantasmo_android
 
-import android.Manifest
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Bundle
 import android.os.Handler
 import android.provider.Settings
 import android.util.Log
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph
 import androidx.navigation.fragment.NavHostFragment
+import com.example.fantasmo_android.helpers.PermissionsHelper
 import com.google.ar.core.ArCoreApk
 
 
@@ -37,49 +38,16 @@ class MainActivity : AppCompatActivity() {
 
         val navInflater = navController.navInflater
         graph = navInflater.inflate(R.navigation.main_navigation)
+        checkPermissions()
         checkARCoreCompatibility()
     }
 
-    /**
-     * Checks Camera and Location Permissions
-     * It's also responsible for changing fragments due to ARCore compatibility
-     * */
+
     private fun checkPermissions() {
-        val locationManager: LocationManager =
-            this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            if ((this.let {
-                    ActivityCompat.checkSelfPermission(
-                        it,
-                        Manifest.permission.CAMERA
-                    )
-                } != PackageManager.PERMISSION_GRANTED) &&
-                (this.let {
-                    ActivityCompat.checkSelfPermission(
-                        it,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    )
-                } != PackageManager.PERMISSION_GRANTED)) {
-                this.let {
-                    this.requestPermissions(
-                        arrayOf(
-                            Manifest.permission.CAMERA,
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        ),
-                        1
-                    )
-                }
-            } else {
-                if (arcoreCompatibility) {
-                    //graph.startDestination = R.id.custom_arcore_fragment
-                    graph.startDestination = R.id.arcore_fragment
-                } else {
-                    graph.startDestination = R.id.noarcore_fragment
-                }
-                navController.graph = graph
-            }
+        if (!PermissionsHelper.hasPermission(this)) {
+            PermissionsHelper.requestPermission(this)
         } else {
-            buildAlertMessageNoGps()
+            checkGPSEnabled()
         }
     }
 
@@ -96,20 +64,49 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 1) {
-            if (grantResults.size == 2 &&
-                grantResults[0] == PackageManager.PERMISSION_GRANTED &&
-                grantResults[1] == PackageManager.PERMISSION_GRANTED
-            ) {
-                if (arcoreCompatibility) {
-                    //graph.startDestination = R.id.custom_arcore_fragment
-                    graph.startDestination = R.id.arcore_fragment
-                } else {
-                    graph.startDestination = R.id.noarcore_fragment
-                }
-                navController.graph = graph
+        if (!PermissionsHelper.hasPermission(this)) {
+            // Use toast instead of snackbar here since the activity will exit.
+            Toast.makeText(
+                this,
+                "Permission are needed to run this application",
+                Toast.LENGTH_LONG
+            )
+                .show()
+            if (!PermissionsHelper.shouldShowRequestPermissionRationale(this)) {
+                // Permission denied with checking "Do not ask again".
+                PermissionsHelper.launchPermissionSettings(this)
             }
+            finish()
+        } else {
+            checkGPSEnabled()
         }
+    }
+
+    /**
+     * Checks Camera and Location Permissions
+     * It's also responsible for changing fragments due to ARCore compatibility
+     * */
+    private fun checkGPSEnabled() {
+        val locationManager: LocationManager =
+            this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            setStartDestination()
+        } else {
+            buildAlertMessageNoGps()
+        }
+    }
+
+    /**
+     * Builds StartDestination on the navigation graph
+     */
+    private fun setStartDestination() {
+        if (arcoreCompatibility) {
+            //graph.startDestination = R.id.custom_arcore_fragment
+            graph.startDestination = R.id.arcore_fragment
+        } else {
+            graph.startDestination = R.id.noarcore_fragment
+        }
+        navController.graph = graph
     }
 
     /**
@@ -123,7 +120,7 @@ class MainActivity : AppCompatActivity() {
                 "Yes"
             ) { _, _ ->
                 val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                startActivityForResult(intent, 2)
+                locationSettingsLauncher.launch(intent)
             }
             .setNegativeButton(
                 "No"
@@ -132,21 +129,14 @@ class MainActivity : AppCompatActivity() {
         alert.show()
     }
 
-    /**
-     * After the user has been directed to Settings, restart Activity
-     * @param requestCode: Request sent by startActivityForResult
-     * @param resultCode: Result after activity started
-     * @param data: Intent of the performed activity
-     * */
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        when (requestCode) {
-            2 -> {
-                if (resultCode == 0) {
-                    finish()
-                    startActivity(intent)
-                }
-            }
+    private var locationSettingsLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            setStartDestination()
+            val intent = result.data
+            finish()
+            startActivity(intent)
         }
     }
 
@@ -170,6 +160,5 @@ class MainActivity : AppCompatActivity() {
             arcoreCompatibility = false
             Log.d(TAG, "ARCore is not supported")
         }
-        checkPermissions()
     }
 }

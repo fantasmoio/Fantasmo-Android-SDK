@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import com.example.fantasmo_android.helpers.GoogleMapsManager
+import com.example.fantasmo_android.helpers.SimulationUtils
 import com.example.fantasmo_android.helpers.SystemLocationListener
 import com.example.fantasmo_android.helpers.SystemLocationManager
 
@@ -116,10 +117,9 @@ class CustomDemoFragment : Fragment() {
 
     private fun handleEndRideButton() {
         // Test location of a parking space in Berlin
-        val latitude = 52.50578283943285
-        val longitude = 13.378954977173915
+        val myLocation = getMyLocation()
         // Before trying to localize with Fantasmo you should check if the user is near a mapped parking space
-        fmParkingView.isParkingAvailable(latitude, longitude) {
+        fmParkingView.isParkingAvailable(myLocation) {
             if (it) {
                 startParkingFlow()
             } else {
@@ -129,6 +129,15 @@ class CustomDemoFragment : Fragment() {
                 resultTextView.text = stringNotAvailable
             }
         }
+    }
+
+    private fun getMyLocation(): Location {
+        val location = Location("")
+        if (isSimulationSwitch.isChecked) {
+            location.latitude = SimulationUtils.latitude
+            location.longitude = SimulationUtils.longitude
+        }
+        return location
     }
 
     private fun startParkingFlow() {

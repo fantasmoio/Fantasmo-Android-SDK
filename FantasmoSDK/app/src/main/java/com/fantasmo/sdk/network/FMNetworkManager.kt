@@ -11,12 +11,15 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Log
 import com.android.volley.*
+import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.LocalizeResponse
 import com.fantasmo.sdk.models.ZoneInRadiusResponse
 import com.google.gson.Gson
 import org.json.JSONException
+import org.json.JSONObject
 
 /**
  * Manager for network requests.
@@ -33,7 +36,7 @@ class FMNetworkManager(
         Volley.newRequestQueue(context.applicationContext)
     }
 
-    lateinit var multipartRequest : MultiPartRequest
+    lateinit var multipartRequest: MultiPartRequest
 
     /**
      * Method to upload an image with the given [imageData] and [parameters].
@@ -45,7 +48,7 @@ class FMNetworkManager(
         onCompletion: (LocalizeResponse) -> Unit,
         onError: (ErrorResponse) -> Unit
     ) {
-        Log.i(TAG,"$url $parameters")
+        Log.i(TAG, "$url $parameters")
         multipartRequest = object : MultiPartRequest(
             Method.POST, url,
             Response.Listener<NetworkResponse> { response ->
@@ -105,9 +108,10 @@ class FMNetworkManager(
         url: String,
         parameters: HashMap<String, String>,
         token: String,
-        onCompletion: (Boolean) -> Unit
+        onCompletion: (Boolean) -> Unit,
+        onError: (ErrorResponse) -> Unit
     ) {
-        Log.i(TAG,"$url $parameters")
+        Log.i(TAG, "$url $parameters")
         multipartRequest = object : MultiPartRequest(
             Method.POST, url,
             Response.Listener<NetworkResponse> { response ->
@@ -118,13 +122,18 @@ class FMNetworkManager(
                         Gson().fromJson(resultResponse, ZoneInRadiusResponse::class.java)
                     onCompletion(inRadius.result.toBoolean())
                 } catch (e: JSONException) {
-                    onCompletion(false)
                     e.printStackTrace()
                 }
             },
             Response.ErrorListener { error ->
                 processAndLogError(error)
-                onCompletion(false)
+                if (error.networkResponse != null) {
+                    val errorResult = String(error.networkResponse.data)
+                    val response = Gson().fromJson(errorResult, ErrorResponse::class.java)
+                    onError(response)
+                } else {
+                    onError(ErrorResponse(404, "UnknownError"))
+                }
             }) {
 
             // Overriding getParams() to pass our parameters
@@ -143,6 +152,68 @@ class FMNetworkManager(
         // Adding request to the queue if there is a connection
         if (isInternetAvailable()) {
             requestQueue.add(multipartRequest)
+        } else {
+            Log.w(TAG, "No internet connection available")
+        }
+    }
+
+    /**
+     * Method to send a POST request to check whether a location is in a parking zone.
+     */
+    fun sendInitializationRequest(
+        url: String,
+        parameters: JSONObject,
+        token: String,
+        onCompletion: (Boolean) -> Unit,
+        onError: (ErrorResponse) -> Unit
+    ) {
+        Log.i(TAG, "$url $parameters")
+        val jsonRequest = object : JsonObjectRequest(
+            Method.POST, url, parameters,
+            Response.Listener { response ->
+                Log.d(TAG, "Initialization RESPONSE: $response")
+                try {
+                    val onCompletionResult = response.getBoolean("parking_in_radius")
+                    if (!onCompletionResult) {
+                        val reason = response.getString("fantasmo_unavailable_reason")
+                        val reasonError = ErrorResponse(0, reason)
+                        onError(reasonError)
+                    } else {
+                        val configString = response.optString("config")
+                        if (configString != "") {
+                            RemoteConfig.updateConfig(configString)
+                        } else {
+                            RemoteConfig.getDefaultConfig(context)
+                        }
+                    }
+                    onCompletion(onCompletionResult)
+                } catch (e: JSONException) {
+                    RemoteConfig.getDefaultConfig(context)
+                    e.printStackTrace()
+                }
+            },
+            Response.ErrorListener { error ->
+                processAndLogError(error)
+                if (error.networkResponse != null) {
+                    val errorResult = String(error.networkResponse.data)
+                    val response = Gson().fromJson(errorResult, ErrorResponse::class.java)
+                    onError(response)
+                } else {
+                    onError(ErrorResponse(404, "UnknownError"))
+                }
+            }) {
+
+            // Overriding getHeaders() to pass our parameters
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Fantasmo-Key"] = token
+                return headers
+            }
+        }
+
+        // Adding request to the queue if there is a connection
+        if (isInternetAvailable()) {
+            requestQueue.add(jsonRequest)
         } else {
             Log.w(TAG, "No internet connection available")
         }

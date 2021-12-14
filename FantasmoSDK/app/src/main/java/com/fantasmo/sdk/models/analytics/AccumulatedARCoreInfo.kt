@@ -10,7 +10,7 @@ import com.google.ar.core.Frame
 class AccumulatedARCoreInfo {
 
     var modelVersion: String = ""
-    var scoreThreshold: Double = 0.0
+    var scoreThreshold: Float = 0f
     var lastImageQualityScore: Float = 0f
     var trackingStateFrameStatistics = TrackingStateFrameStatistics()
     var elapsedFrames = 0
@@ -43,7 +43,7 @@ class AccumulatedARCoreInfo {
         translationAccumulator.reset()
         rotationAccumulator.reset()
         modelVersion = ""
-        scoreThreshold = 0.0
+        scoreThreshold = 0f
         lastImageQualityScore = 0f
     }
 }
