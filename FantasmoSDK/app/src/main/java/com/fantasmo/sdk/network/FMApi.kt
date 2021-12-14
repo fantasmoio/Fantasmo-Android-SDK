@@ -152,6 +152,7 @@ class FMApi(
         coordinates.put("verticalAccuracy", location.verticalAccuracy)
 
         val json = JSONObject()
+        json.put("deviceOs","android")
         json.put("coordinate", coordinates)
         Log.i(TAG, "getInitializationRequest: $json")
         return json
