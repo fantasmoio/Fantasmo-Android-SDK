@@ -19,7 +19,7 @@ class FMFrameFilterChain(context: Context) {
     private var acceptanceThreshold: Float
 
     /**
-     * List of filter rules to apply on frame received.
+     * Active frame filters, in order of increasing computational cost
      */
     var filters : MutableList<FMFrameFilter> = mutableListOf()
 

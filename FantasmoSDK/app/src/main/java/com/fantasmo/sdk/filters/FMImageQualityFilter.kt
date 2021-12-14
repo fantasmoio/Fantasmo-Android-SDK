@@ -36,13 +36,13 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
         imageQualityModel = imageQualityModelUpdater.getInterpreter()
         if (imageQualityModel == null) {
-            Log.e(TAG, "Failed To Get Model")
+            Log.e(TAG, "Failed to get Model")
             return FMFrameFilterResult.Accepted
         }
         val bitmapRGB = yuvToRgbConverter.toBitmap(arFrame)
         if (bitmapRGB == null) {
             // The frame being null means it's no longer available to send in the request
-            Log.e(TAG, "Failed To Create Input Array")
+            Log.e(TAG, "Failed to create Input Array")
             return FMFrameFilterResult.Rejected(FMFilterRejectionReason.IMAGEQUALITYSCOREBELOWTHRESHOLD)
         } else {
             val rgb = getRGBValues(bitmapRGB)
@@ -80,6 +80,7 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
 
         //Handle Red Color Space
         for ((index, pixel) in pixels.withIndex()) {
+            // convert rgb values to 0.0 - 1.0
             var red = Color.red(pixel) / 255.0f
             // subtract mean, stddev normalization
             red = (red - 0.485f) / 0.229f
@@ -104,13 +105,13 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
     /**
      * Uses the RGB values floatArray and passes it as input for the TensorFlowLite model
      * @param rgb FloatArray containing RGB values
-     * @return ImageQualityEstimationResult
+     * @return Float result of the model inference
      */
     private fun processImage(rgb: FloatArray): Float? {
         val tfBuffer = TensorBuffer.createFixedSize(mlShape, DataType.FLOAT32)
         tfBuffer.loadArray(rgb)
 
-        val tfBufferOut = TensorBuffer.createFixedSize(intArrayOf(1,2), DataType.FLOAT32)
+        val tfBufferOut = TensorBuffer.createFixedSize(intArrayOf(1, 2), DataType.FLOAT32)
         tfBufferOut.loadArray(floatArrayOf(0f, 0f))
 
         imageQualityModel!!.run(tfBuffer.buffer, tfBufferOut.buffer)

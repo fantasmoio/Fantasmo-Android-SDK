@@ -8,6 +8,8 @@ import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.network.ModelRequest
 import com.fantasmo.sdk.views.common.samplerender.SampleRender
 import org.tensorflow.lite.Interpreter
+import org.tensorflow.lite.gpu.CompatibilityList
+import org.tensorflow.lite.gpu.GpuDelegate
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -18,12 +20,26 @@ class ImageQualityModelUpdater(val context: Context) {
 
     private val TAG = ImageQualityModelUpdater::class.java.simpleName
     private val fileName = "image-quality-estimator.tflite"
-    var modelVersion = "0.1.0"
-    private var modelUrl =
-        "url/$fileName"
+    var modelVersion = "0.0.0"
+    private var modelUrl = ""
     private val queue = Volley.newRequestQueue(context)
     private var hasRequestedModel = false
     private var hasRequestedUpdate = false
+
+    private val compatList = CompatibilityList()
+
+    private val options = Interpreter.Options().apply{
+        if(compatList.isDelegateSupportedOnThisDevice){
+            Log.i(TAG,"Device has GPU support. Using GPU for inference.")
+            // if the device has a supported GPU, add the GPU delegate
+            val delegateOptions = compatList.bestOptionsForThisDevice
+            this.addDelegate(GpuDelegate(delegateOptions))
+        } else {
+            Log.i(TAG,"Device does not have GPU support. Using CPU for inference.")
+            // if the GPU is not supported, run on 4 threads
+            this.setNumThreads(4)
+        }
+    }
 
     init {
         val remoteConfig = RemoteConfig.remoteConfig
@@ -88,10 +104,8 @@ class ImageQualityModelUpdater(val context: Context) {
             val fileChannel = inputStream.channel
             val mappedByteBuffer =
                 fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
-            val options = Interpreter.Options()
-            options.setNumThreads(4)
             interpreter = Interpreter(mappedByteBuffer, options)
-            return Interpreter(mappedByteBuffer)
+            return Interpreter(mappedByteBuffer, options)
         } catch (ex: IOException) {
             //file does not exist
             Log.e(TAG, "Error on getting the model from the Assets folder. Trying to download it")
@@ -126,8 +140,6 @@ class ImageQualityModelUpdater(val context: Context) {
                 try {
                     Log.d(TAG, "Model present in App data.")
                     //Initialize interpreter an keep it in memory
-                    val options = Interpreter.Options()
-                    options.setNumThreads(4)
                     interpreter = Interpreter(file, options)
                     firstRead = false
                     Interpreter(file, options)

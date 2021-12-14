@@ -424,27 +424,23 @@ class FMParkingView @JvmOverloads constructor(
             }
 
             override fun anchored(frame: Frame): Boolean {
-                frame.let {
-                    fmLocationManager.setAnchor(it)
-                    return true
-                }
+                fmLocationManager.setAnchor(frame)
+                return true
             }
 
             override fun qrCodeScan(frame: Frame) {
                 // If qrScanning, pass the current AR frame to the qrCode reader
                 if (state == State.QRSCANNING) {
-                    frame.let { qrCodeReader.processImage(it) }
+                    qrCodeReader.processImage(frame)
                 }
             }
 
             override fun anchorDelta(frame: Frame): FMPose? {
-                return frame.let { frame2 ->
-                    fmLocationManager.anchorFrame?.let { anchorFrame ->
-                        FMUtility.anchorDeltaPoseForFrame(
-                            frame2,
-                            anchorFrame
-                        )
-                    }
+                return fmLocationManager.anchorFrame?.let { anchorFrame ->
+                    FMUtility.anchorDeltaPoseForFrame(
+                        frame,
+                        anchorFrame
+                    )
                 }
             }
         }
