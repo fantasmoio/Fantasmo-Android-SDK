@@ -2,6 +2,7 @@ package com.fantasmo.sdk.views
 
 import android.os.CountDownTimer
 import android.view.View
+import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -16,10 +17,14 @@ class FMQRScanningView(arLayout: CoordinatorLayout, private val fmParkingView: F
     private var fmQRScanningView: ConstraintLayout = arLayout.findViewById(R.id.fmQRView)
     private var qrCodeResultView: TextView = arLayout.findViewById(R.id.qrCodeResultTextView)
     private var closeButton: ImageButton = fmQRScanningView.findViewById(R.id.fmExitButton)
+    private var skipButton: Button = fmQRScanningView.findViewById(R.id.fmSkipButton)
 
     init {
         closeButton.setOnClickListener {
             fmParkingView.dismiss()
+        }
+        skipButton.setOnClickListener {
+            fmParkingView.skipQRScanning()
         }
     }
 
