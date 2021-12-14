@@ -44,7 +44,6 @@ android {
 
     buildFeatures {
         viewBinding true
-        mlModelBinding true
     }
 
     applicationVariants.all { variant ->

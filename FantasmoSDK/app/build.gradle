@@ -94,9 +94,6 @@ android {
         noCompress "tflite"
         noCompress "lite"
     }
-    buildFeatures {
-        mlModelBinding true
-    }
 }
 
 dependencies {
