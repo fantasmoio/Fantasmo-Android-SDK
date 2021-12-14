@@ -28,6 +28,13 @@ class ImageQualityModelUpdater(val context: Context) {
 
     private val compatList = CompatibilityList()
 
+    /**
+     * TFLite interpreter with the model loaded
+     */
+    private lateinit var interpreter: Interpreter
+    private var firstRead = true
+
+    // Optimize model inference performance by delegating to GPU or attributing a number of threads
     private val options = Interpreter.Options().apply{
         if(compatList.isDelegateSupportedOnThisDevice){
             Log.i(TAG,"Device has GPU support. Using GPU for inference.")
@@ -56,7 +63,10 @@ class ImageQualityModelUpdater(val context: Context) {
         }
     }
 
-    private fun makeRequest() {
+    /**
+     * Method to send a GET request in order to update the model.
+     */
+    private fun makeRemoteModelRequest() {
         hasRequestedModel = true
         val stringRequest = ModelRequest(
             Request.Method.GET, modelUrl,
@@ -80,6 +90,14 @@ class ImageQualityModelUpdater(val context: Context) {
         queue.add(stringRequest)
     }
 
+    /**
+     * Method that delivers an `Interpreter` with the model loaded onto it.
+     * First checks if the global interpreter has been loaded into memory.
+     * In negative case, it will check if the model is present in the assets
+     * folder. If it isn't present in the assets, this method will make a
+     * request to get a remote model.
+     * @return `Interpreter` with model loaded
+     */
     fun getInterpreter(): Interpreter? {
         return if (::interpreter.isInitialized) {
             interpreter
@@ -92,6 +110,10 @@ class ImageQualityModelUpdater(val context: Context) {
         }
     }
 
+    /**
+     * Loads a model from the assets folder and returns an `Interpreter`
+     * @return `Interpreter` with the model loaded
+     */
     private fun loadFromAssets(): Interpreter? {
         val fileName = "image-quality-estimator-0.1.0.tflite"
         val assetFileName = "model/$fileName"
@@ -114,11 +136,12 @@ class ImageQualityModelUpdater(val context: Context) {
     }
 
     /**
-     * Creates TFLite interpreter with the model loaded and ready to be inferred
+     * Loads a model from the `RemoteConfig` model uri field and returns an `Interpreter`.
+     * First checks if it has a model present in the app data folder. If it has a model
+     * it will load that model. If it doesn't have it will get from the `RemoteConfig`
+     * model uri
+     * @return `Interpreter` with the model loaded
      */
-    private lateinit var interpreter: Interpreter
-    private var firstRead = true
-
     private fun loadFromURL(): Interpreter? {
         val file = File(context.filesDir, fileName)
         if (!file.exists()) {
@@ -129,7 +152,7 @@ class ImageQualityModelUpdater(val context: Context) {
                 } else {
                     Log.e(TAG, "Model file doesn't exist. Downloading it...")
                 }
-                makeRequest()
+                makeRemoteModelRequest()
             }
             return null
         } else {

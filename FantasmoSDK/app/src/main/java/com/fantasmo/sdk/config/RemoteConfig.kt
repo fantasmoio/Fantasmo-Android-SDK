@@ -32,11 +32,19 @@ class RemoteConfig {
         private val TAG = RemoteConfig::class.java.simpleName
         lateinit var remoteConfig: Config
 
+        /**
+         * Overrides the default config with a remote Config
+         */
         fun updateConfig(jsonString: String) {
             Log.i(TAG, "Received Remote Config.")
             remoteConfig = getConfigFromJSON(jsonString)
         }
 
+        /**
+         * Loads the default config from the assets folder
+         * @param context Application context
+         * @return Config SDK configuration
+         */
         fun getDefaultConfig(context: Context): Config? {
             Log.i(TAG, "Getting default config.")
             val jsonFileString = getJsonFromAssets(context)
@@ -46,6 +54,11 @@ class RemoteConfig {
             return null
         }
 
+        /**
+         * Auxiliary method to read and load a config `.json` file from assets folder
+         * @param context Application context
+         * @return `.json` file converted to string
+         */
         private fun getJsonFromAssets(context: Context): String? {
             val filePath = "config/default-config.json"
             val jsonString: String = try {
@@ -62,6 +75,12 @@ class RemoteConfig {
             return jsonString
         }
 
+        /**
+         * Auxiliary method to parse values from the config `.json`
+         * file and create a Config object
+         * @param jsonString `.json` file converted to String
+         * @return Config object
+         */
         private fun getConfigFromJSON(jsonString: String): Config {
             val configJSON = JSONObject(jsonString)
             val frameAcceptanceThresholdTimeout =

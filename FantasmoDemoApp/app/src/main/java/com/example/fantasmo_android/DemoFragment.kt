@@ -13,6 +13,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
+import com.example.fantasmo_android.helpers.SimulationUtils
 import com.example.fantasmo_android.helpers.SystemLocationListener
 import com.example.fantasmo_android.helpers.SystemLocationManager
 import com.fantasmo.sdk.FMLocationResult
@@ -132,8 +133,8 @@ class DemoFragment : Fragment() {
     private fun getMyLocation(): Location {
         var location = Location("")
         if (isSimulationSwitch.isChecked) {
-            location.latitude = 52.50578283943285
-            location.longitude = 13.378954977173915
+            location.latitude = SimulationUtils.latitude
+            location.longitude = SimulationUtils.longitude
         } else {
             location = deviceLocation
         }
