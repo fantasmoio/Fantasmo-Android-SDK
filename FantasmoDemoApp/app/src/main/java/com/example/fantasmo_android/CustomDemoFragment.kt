@@ -56,6 +56,7 @@ class CustomDemoFragment : Fragment() {
     private lateinit var resultsLayout: ConstraintLayout
     private lateinit var resultTextView: TextView
     private lateinit var mapPinButton: Button
+    private lateinit var skipButton: Button
 
     // Buttons and Views from the QRView
     private lateinit var fmQRView: ConstraintLayout
@@ -74,7 +75,7 @@ class CustomDemoFragment : Fragment() {
     // Control variables for the FMParkingView
     private lateinit var fmParkingView: FMParkingView
     private val usesInternalLocationManager = true
-    private val accessToken = "API_KEY"
+    private val accessToken = SimulationUtils.API_KEY
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -91,6 +92,10 @@ class CustomDemoFragment : Fragment() {
         resultsLayout = currentView.findViewById(R.id.resultsLayout)
         resultTextView = currentView.findViewById(R.id.localizationResultView)
         mapPinButton = currentView.findViewById(R.id.mapPinButton)
+        skipButton = currentView.findViewById(R.id.skipButton)
+        skipButton.setOnClickListener{
+            handleSkipQRScanning()
+        }
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
         // Assign an accessToken
@@ -113,6 +118,10 @@ class CustomDemoFragment : Fragment() {
         }
 
         return currentView
+    }
+
+    private fun handleSkipQRScanning() {
+        fmParkingView.skipQRScanning()
     }
 
     private fun handleEndRideButton() {
