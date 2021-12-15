@@ -116,7 +116,7 @@ class FMLocationManager(private val context: Context) {
         val coordinate = Coordinate(location.latitude, location.longitude)
         this.currentLocation.coordinate = coordinate
         this.currentLocation.altitude = location.altitude
-        this.currentLocation.heading = location.bearing
+        this.currentLocation.timestamp = location.time
         this.currentLocation.horizontalAccuracy = location.accuracy
 
         this.currentLocation.verticalAccuracy =
@@ -267,7 +267,7 @@ class FMLocationManager(private val context: Context) {
         return FMLocalizationRequest(
             isSimulation,
             FMZone.ZoneType.PARKING,
-            currentLocation.coordinate,
+            currentLocation,
             openCVRelativeAnchorPose,
             frameAnalytics
         )

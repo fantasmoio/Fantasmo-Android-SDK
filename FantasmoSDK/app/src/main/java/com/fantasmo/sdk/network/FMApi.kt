@@ -1,5 +1,6 @@
 package com.fantasmo.sdk.network
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.provider.Settings.Secure
@@ -21,7 +22,7 @@ import java.util.*
 class FMLocalizationRequest(
     var isSimulation: Boolean,
     var simulationZone: FMZone.ZoneType,
-    var coordinate: Coordinate,
+    var location: Location,
     var relativeOpenCVAnchorPose: FMPose?,
     var analytics: FMLocalizationAnalytics
 )
@@ -152,7 +153,7 @@ class FMApi(
         coordinates.put("verticalAccuracy", location.verticalAccuracy)
 
         val json = JSONObject()
-        json.put("deviceOs","android")
+        json.put("deviceOs", "android")
         json.put("coordinate", coordinates)
         Log.i(TAG, "getInitializationRequest: $json")
         return json
@@ -164,17 +165,28 @@ class FMApi(
      * @param frame Frame to localize
      * @return an HashMap with all the localization parameters.
      */
+    @SuppressLint("HardwareIds")
     private fun getLocalizeParams(
         frame: Frame,
         request: FMLocalizationRequest
     ): HashMap<String, String> {
         val pose = FMUtility.getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context, frame)
 
-        val coordinates = if (request.isSimulation) {
-            val simulationLocation = FMConfiguration.getConfigLocation()
-            Coordinate(simulationLocation.latitude, simulationLocation.longitude)
+        val location = if (request.isSimulation) {
+            val configLocation = FMConfiguration.getConfigLocation()
+                Location(
+                    configLocation.altitude,
+                    System.currentTimeMillis(),
+                    configLocation.accuracy,
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        configLocation.verticalAccuracyMeters
+                    } else {
+                        0
+                    },
+                    Coordinate(configLocation.latitude, configLocation.longitude)
+                )
         } else {
-            request.coordinate
+            request.location
         }
 
         val resolution = hashMapOf<String, Int>()
@@ -212,7 +224,7 @@ class FMApi(
         params["capturedAt"] = System.currentTimeMillis().toString()
         params["gravity"] = gson.toJson(pose.orientation)
         params["uuid"] = UUID.randomUUID().toString()
-        params["coordinate"] = gson.toJson(coordinates)
+        params["location"] = gson.toJson(location)
         params["intrinsics"] = gson.toJson(intrinsics)
         params["imageResolution"] = gson.toJson(resolution)
 

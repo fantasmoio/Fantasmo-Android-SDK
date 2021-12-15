@@ -130,11 +130,10 @@ class FMParkingView @JvmOverloads constructor(
         val locationFantasmo =
             com.fantasmo.sdk.models.Location(
                 location.altitude,
-                Coordinate(location.latitude, location.longitude),
-                0,
-                location.bearing,
+                location.time,
                 location.accuracy,
-                verticalAccuracy
+                verticalAccuracy,
+                Coordinate(location.latitude, location.longitude)
             )
         fmApi.sendInitializationRequest(locationFantasmo, onCompletion) {
             if (it.message != null) {
