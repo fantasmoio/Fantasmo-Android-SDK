@@ -56,7 +56,7 @@ class DemoFragment : Fragment() {
     private lateinit var deviceLocation: Location
 
     // FMParkingView accessToken
-    private val accessToken = "API_KEY"
+    private val accessToken = SimulationUtils.API_KEY
 
     private var hasRequestedEndRide = false
 
