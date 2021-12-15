@@ -123,7 +123,7 @@ class FMParkingView @JvmOverloads constructor(
         val fmApi = FMApi(context, accessToken)
 
         val verticalAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            location.bearingAccuracyDegrees
+            location.verticalAccuracyMeters
         } else {
             0.0f
         }
