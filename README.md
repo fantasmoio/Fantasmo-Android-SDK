@@ -181,6 +181,8 @@ override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
 ```
 **Important:** If you implement this method, you must call the `onValidQRCode` with a boolean value. A value of `true` indicates the QR code is valid and that localization should start. Passing `false` to this block indicates the code is invalid and instructs the parking view to scan for more QR codes. This block may be called synchronously or asynchronously but must be done so on the main queue.
 
+During a QR code scanning session, it is not possible to turn on the flashlight due to the ARCore nature present in the FMParkingView. ARCore blocks any input regarding turning on/off the flashlight during an AR session, limiting QR code readibility on dark environments.
+
 ### Localizing
 
 During localization, frames are continuously captured and sent to the server. Filtering logic in the SDK will automatically select the best frames, and it will issue behavior requests to the user to help improve the incoming images. Confidence in the location result increases during successive updates and clients can choose to stop localizing by dismissing the view, when a desired confidence level is reached.
