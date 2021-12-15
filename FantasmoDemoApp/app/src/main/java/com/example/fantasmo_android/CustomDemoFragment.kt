@@ -71,6 +71,7 @@ class CustomDemoFragment : Fragment() {
 
     // Host App location Manager to exemplify how to set Location
     private lateinit var systemLocationManager: SystemLocationManager
+    private lateinit var deviceLocation: Location
 
     // Control variables for the FMParkingView
     private lateinit var fmParkingView: FMParkingView
@@ -141,10 +142,12 @@ class CustomDemoFragment : Fragment() {
     }
 
     private fun getMyLocation(): Location {
-        val location = Location("")
+        var location = Location("")
         if (isSimulationSwitch.isChecked) {
             location.latitude = SimulationUtils.latitude
             location.longitude = SimulationUtils.longitude
+        } else {
+            location = deviceLocation
         }
         return location
     }
@@ -280,6 +283,7 @@ class CustomDemoFragment : Fragment() {
     private val systemLocationListener: SystemLocationListener =
         object : SystemLocationListener {
             override fun onLocationUpdate(currentLocation: Location) {
+                deviceLocation = currentLocation
                 fmParkingView.updateLocation(
                     currentLocation
                 )
