@@ -155,7 +155,7 @@ private val fmParkingViewController: FMParkingViewProtocol =
     }
 ```
 
-**Note:** During a QR code scanning session, it is not possible to turn on the flashlight due to the ARCore nature present in the FMParkingView. ARCore blocks any input regarding turning on/off the flashlight during an AR session, limiting QR code readibility on dark environments.
+**Note:** During a QR code scanning session, it is not possible to turn on the flashlight due to ARCore being used on the FMParkingView. ARCore blocks any input regarding turning on/off the flashlight during an AR session, limiting QR code readibility on dark environments.
 
 ### Customizing UI
 
