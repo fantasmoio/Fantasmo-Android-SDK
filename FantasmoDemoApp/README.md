@@ -154,6 +154,14 @@ private val fmParkingViewController: FMParkingViewProtocol =
         }
     }
 ```
+
+If a QR code cannot be scanned and/or you've collected the necessary info from the user manually, then you may skip this step and proceed directly to localization.
+```kotlin
+private fun handleSkipQRScanning() {
+    fmParkingView.skipQRScanning()
+}
+```
+
 ### Customizing UI
 
 The SDK, provides with default views for both the QRScanning and Localizing views. If you want to customize these views, you need to provide with your own view controllers. We provide an example in the `CustomDemoFragment.kt` with the following controllers filled with view management.
