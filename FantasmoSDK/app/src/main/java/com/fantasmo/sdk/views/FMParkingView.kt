@@ -219,6 +219,19 @@ class FMParkingView @JvmOverloads constructor(
         this.visibility = View.GONE
     }
 
+    /**
+     * Skips the QR-code scanning step and starts localizing.
+     * This method can be used if a QR code is illegible or after a code was manually entered by the user.
+     */
+    fun skipQRScanning() {
+        if (state != State.QRSCANNING ){
+            return
+        }
+        // Set an AR anchor now, since we didn't scan a QR code
+        fmARCoreView.startAnchor()
+        startLocalizing()
+    }
+
     fun onResume() {
         fmARCoreView.onResume()
     }

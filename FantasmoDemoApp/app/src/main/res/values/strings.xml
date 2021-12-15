@@ -23,5 +23,6 @@
     <string name="show_debug_statitics">Show Debug Statitics</string>
     <string name="exit">Exit</string>
     <string name="scan_qr_code">Scan QR Code</string>
+    <string name="skip">Skip</string>
 
 </resources>

@@ -172,14 +172,25 @@ If an error occurs you should check that you're correctly providing the location
 
 ### QR Codes
 
-Scanning a QR code is the first and only step before localizing. Because we are trying to localize a vehicle and not the device itself, we need a way to determine the vehicle's position relative to the device. This is accomplished by setting an anchor in the `ARSession` and it's done automatically when the user scans a QR code. The SDK doesn't care about the contents of the QR code and by default will start localizing after any QR code is detected. If your app does care about the contents of the QR code, they can be validated by implementing the `FMParkingViewController` method:
+Scanning a QR code is the first and only step before localizing. Because we are trying to localize a vehicle and not the device itself, we need a way to determine the vehicle's position relative to the device. This is accomplished by setting an anchor in the `ARSession` and it's done automatically when the user scans a QR code. 
+
+The SDK doesn't care about the contents of the QR code and by default will start localizing after any QR code is detected. If your app does care about the contents of the QR code, they can be validated by implementing the `FMParkingViewController` method:
 ```kotlin
 override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
-    // Optional validation of the QR code can be done here
+    // Validation of the QR code can be done here
     onValidQRCode(true)
 }
 ```
 **Important:** If you implement this method, you must call the `onValidQRCode` with a boolean value. A value of `true` indicates the QR code is valid and that localization should start. Passing `false` to this block indicates the code is invalid and instructs the parking view to scan for more QR codes. This block may be called synchronously or asynchronously but must be done so on the main queue.
+
+If a QR code cannot be scanned and/or you've collected the necessary info from the user manually, then you may skip this step and proceed directly to localization.
+```kotlin
+private fun handleSkipQRScanning() {
+    fmParkingView.skipQRScanning()
+}
+```
+
+During a QR code scanning session, it is not possible to turn on the flashlight due to ARCore being used on the FMParkingView. ARCore blocks any input regarding turning on/off the flashlight during an AR session, limiting QR code readibility on dark environments.
 
 ### Localizing
 

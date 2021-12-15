@@ -154,6 +154,15 @@ private val fmParkingViewController: FMParkingViewProtocol =
         }
     }
 ```
+
+If a QR code cannot be scanned and/or you've collected the necessary info from the user manually, then you may skip this step and proceed directly to localization.
+```kotlin
+private fun handleSkipQRScanning() {
+    fmParkingView.skipQRScanning()
+}
+```
+**Note:** During a QR code scanning session, it is not possible to turn on the flashlight due to ARCore being used on the FMParkingView. ARCore blocks any input regarding turning on/off the flashlight during an AR session, limiting QR code readibility on dark environments.
+
 ### Customizing UI
 
 The SDK, provides with default views for both the QRScanning and Localizing views. If you want to customize these views, you need to provide with your own view controllers. We provide an example in the `CustomDemoFragment.kt` with the following controllers filled with view management.
