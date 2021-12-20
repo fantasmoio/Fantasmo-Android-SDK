@@ -120,7 +120,6 @@ class FMParkingView @JvmOverloads constructor(
             Log.e(TAG, "Invalid Coordinates")
             return
         }
-        val fmApi = FMApi(context, accessToken)
 
         val verticalAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             location.verticalAccuracyMeters
@@ -135,6 +134,7 @@ class FMParkingView @JvmOverloads constructor(
                 verticalAccuracy,
                 Coordinate(location.latitude, location.longitude)
             )
+        val fmApi = FMApi(context, accessToken)
         fmApi.sendInitializationRequest(locationFantasmo, onCompletion) {
             if (it.message != null) {
                 Log.e(TAG, it.message)
@@ -218,13 +218,12 @@ class FMParkingView @JvmOverloads constructor(
         fmSessionStatisticsView.reset()
         this.visibility = View.GONE
     }
-
     /**
      * Skips the QR-code scanning step and starts localizing.
      * This method can be used if a QR code is illegible or after a code was manually entered by the user.
      */
     fun skipQRScanning() {
-        if (state != State.QRSCANNING ){
+        if (state != State.QRSCANNING) {
             return
         }
         // Set an AR anchor now, since we didn't scan a QR code
