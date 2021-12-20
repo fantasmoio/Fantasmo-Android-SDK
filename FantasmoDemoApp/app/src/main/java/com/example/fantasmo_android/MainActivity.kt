@@ -132,14 +132,20 @@ class MainActivity : AppCompatActivity() {
                         // Show the dialog by calling startResolutionForResult(), and check the result
                         // in onActivityResult().
                         val resolvableApiException = ex as ResolvableApiException
-                        locationIntentLauncher.launch(IntentSenderRequest.Builder(resolvableApiException.resolution).build())
+                        locationIntentLauncher.launch(
+                            IntentSenderRequest.Builder(
+                                resolvableApiException.resolution
+                            ).build()
+                        )
                     } catch (e: IntentSender.SendIntentException) {
-                        Log.e(TAG,
+                        Log.e(
+                            TAG,
                             "PendingIntent unable to execute request."
                         )
                     }
                     LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE -> {
-                        Log.e(TAG,
+                        Log.e(
+                            TAG,
                             "Something is wrong in your GPS"
                         )
                     }
@@ -153,9 +159,9 @@ class MainActivity : AppCompatActivity() {
      */
     private fun setStartDestination() {
         if (arcoreCompatibility) {
-            if(SimulationUtils.useDemoFragment){
+            if (SimulationUtils.useDemoFragment) {
                 graph.startDestination = R.id.arcore_fragment
-            } else{
+            } else {
                 graph.startDestination = R.id.custom_arcore_fragment
             }
         } else {
@@ -165,12 +171,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var locationIntentLauncher = registerForActivityResult(
-        ActivityResultContracts.StartIntentSenderForResult()){
-            result ->
-            if(result.resultCode == Activity.RESULT_OK){
-                setStartDestination()
-            }
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            setStartDestination()
         }
+    }
 
     /**
      * Checks if device is compatible with Google Play Services for AR

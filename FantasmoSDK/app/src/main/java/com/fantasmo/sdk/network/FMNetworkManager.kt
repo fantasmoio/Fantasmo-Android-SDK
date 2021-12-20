@@ -11,7 +11,6 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Log
 import com.android.volley.*
-import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.models.ErrorResponse
@@ -157,29 +156,28 @@ class FMNetworkManager(
         }
     }
 
-    /**
-     * Method to send a POST request to check whether a location is in a parking zone.
-     */
     fun sendInitializationRequest(
         url: String,
-        parameters: JSONObject,
+        parameters: HashMap<String, String>,
         token: String,
         onCompletion: (Boolean) -> Unit,
         onError: (ErrorResponse) -> Unit
     ) {
         Log.i(TAG, "$url $parameters")
-        val jsonRequest = object : JsonObjectRequest(
-            Method.POST, url, parameters,
-            Response.Listener { response ->
-                Log.d(TAG, "Initialization RESPONSE: $response")
+        multipartRequest = object : MultiPartRequest(
+            Method.POST, url,
+            Response.Listener<NetworkResponse> { response ->
+                val resultResponse = String(response.data)
+                Log.d(TAG, "sendInitializationRequest RESPONSE: $resultResponse")
                 try {
-                    val onCompletionResult = response.getBoolean("parking_in_radius")
+                    val initializeResponse = JSONObject(resultResponse)
+                    val onCompletionResult = initializeResponse.getBoolean("parking_in_radius")
                     if (!onCompletionResult) {
-                        val reason = response.getString("fantasmo_unavailable_reason")
+                        val reason = initializeResponse.getString("fantasmo_unavailable_reason")
                         val reasonError = ErrorResponse(0, reason)
                         onError(reasonError)
                     } else {
-                        val configString = response.optString("config")
+                        val configString = initializeResponse.optString("config")
                         if (configString != "") {
                             RemoteConfig.updateConfig(configString)
                         } else {
@@ -203,6 +201,11 @@ class FMNetworkManager(
                 }
             }) {
 
+            // Overriding getParams() to pass our parameters
+            override fun getParams(): MutableMap<String, String> {
+                return parameters
+            }
+
             // Overriding getHeaders() to pass our parameters
             override fun getHeaders(): MutableMap<String, String> {
                 val headers = HashMap<String, String>()
@@ -213,7 +216,7 @@ class FMNetworkManager(
 
         // Adding request to the queue if there is a connection
         if (isInternetAvailable()) {
-            requestQueue.add(jsonRequest)
+            requestQueue.add(multipartRequest)
         } else {
             Log.w(TAG, "No internet connection available")
         }

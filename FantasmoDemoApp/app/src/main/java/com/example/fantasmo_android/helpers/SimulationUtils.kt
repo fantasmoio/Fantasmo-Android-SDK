@@ -4,6 +4,6 @@ object SimulationUtils {
 
     const val latitude: Double = 52.50578283943285
     const val longitude: Double = 13.378954977173915
-    const val useDemoFragment = false
+    const val useDemoFragment = true
     const val API_KEY = "API_KEY"
 }
