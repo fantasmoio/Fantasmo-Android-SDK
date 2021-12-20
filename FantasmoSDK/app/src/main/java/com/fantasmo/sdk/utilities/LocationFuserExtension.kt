@@ -42,7 +42,7 @@ class LocationFuserExtension {
             y /= locations.size
 
             val coordinate = Coordinate(x, y)
-            return Location(0, coordinate, 0, 0, 0, 0)
+            return Location(0, 0, 0, 0, coordinate)
 
         }
 
@@ -69,7 +69,7 @@ class LocationFuserExtension {
             if (locations.isEmpty()) {
                 Log.e(TAG, "Empty List. Could not compute median!")
                 val coordinate = Coordinate(Double.NaN, Double.NaN)
-                return Location(0, coordinate, 0, 0, 0, 0)
+                return Location(0, 0, 0, 0, coordinate)
             }
 
             // Prevent from throwing convergence error when there's just one location
@@ -137,7 +137,7 @@ class LocationFuserExtension {
             if (iteration == maxIterations) {
                 Log.e(TAG, "Median did not converge after $maxIterations iterations!")
                 val coordinate = Coordinate(Double.NaN, Double.NaN)
-                return Location(0, coordinate, 0, 0, 0, 0)
+                return Location(0, 0, 0, 0, coordinate,)
             }
 
             Log.d(TAG, "ResultFromGeometricMedian: $centroid")
@@ -236,7 +236,7 @@ class LocationFuserExtension {
 
         private fun convertToLocation(location: android.location.Location): Location {
             val coordinate = Coordinate(location.latitude, location.longitude)
-            return Location(location.altitude, coordinate, 0, 0, 0, 0)
+            return Location(location.altitude,  location.time, location.accuracy, 0, coordinate)
         }
 
         private fun convertToAndroidLocation(location: Location): android.location.Location {

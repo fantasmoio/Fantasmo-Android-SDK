@@ -14,8 +14,6 @@ object PermissionsHelper {
     private const val LOCATION_PERMISSION = Manifest.permission.ACCESS_FINE_LOCATION
     private const val CAMERA_PERMISSION = Manifest.permission.CAMERA
 
-
-
     /** Check to see we have the necessary permissions for this app.  */
     fun hasPermission(activity: Activity?): Boolean {
         return (ContextCompat.checkSelfPermission(activity!!, LOCATION_PERMISSION)

@@ -163,16 +163,6 @@ class FMBlurFilter(
 
                 // This is important to be false, otherwise image will be blank
                 edgesBitmap.setHasAlpha(false)
-                val pixels = IntArray(edgesBitmap.height * edgesBitmap.width)
-                edgesBitmap.getPixels(
-                    pixels,
-                    0,
-                    edgesBitmap.width,
-                    0,
-                    0,
-                    edgesBitmap.width,
-                    edgesBitmap.height
-                )
 
                 // Get standard deviation from meanStdDev
                 meanStdDev(edgesBitmap)
