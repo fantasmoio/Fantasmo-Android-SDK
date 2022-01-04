@@ -57,7 +57,7 @@ The Fantasmo SDK .aar file can be imported directly into a project.
 
 Camera-based localization is the process of determining the global position of the device camera from an image. Image frames are acquired from an active `ARSession` and sent to a server for computation. The server computation time is approximately 900 ms. The full round trip time is then dictated by latency of the connection.
 
-Since the camera will likely move after the moment at which the image frame is captured, it is necessary to track the motion of the device continuously during localizaiton to determine the position of the device at the time of response. Tracking is provided by `ARSession`. Conventiently, it is then possible to determine the global position of the device at any point in the tracking session regardless of when the image was captured (though you may incur some drift after excessive motion).
+Since the camera will likely move after the moment at which the image frame is captured, it is necessary to track the motion of the device continuously during localizaiton to determine the position of the device at the time of response. Tracking is provided by `ARSession`. Conveniently, it is then possible to determine the global position of the device at any point in the tracking session regardless of when the image was captured (though you may incur some drift after excessive motion).
 
 ## Usage
 
@@ -110,9 +110,9 @@ And add this to your `layout.xml` file:
 ```
 ### Checking Availability
 
-Before attempting to park and localize with Fantasmo SDK, you should first check if parking is available in the user's current location. You can do this with the method `fmParkingView.isParkingAvailable(latitude: Double, longitude: Double, onCompletion:(Boolean) → Unit)` passing a latitude and longitude of the location. The result block is called with a boolean indicating whether or not the user is near a mapped parking space.
+Before attempting to park and localize with Fantasmo SDK, you should first check if parking is available in the user's current location. You can do this with the method `fmParkingView.isParkingAvailable(location: Location, onCompletion:(Boolean) → Unit)` passing a latitude and longitude of the location. The result block is called with a boolean indicating whether or not the user is near a mapped parking space.
 ```kotlin
-fmParkingView.isParkingAvailable(latitude, longitude) { isParkingAvailable: Boolean
+fmParkingView.isParkingAvailable(location) { isParkingAvailable: Boolean
     if (isParkingAvailable) {
         // Create and present FMParkingView here
     } else {
@@ -142,7 +142,7 @@ After that, when you inflate the layout of your App, initialize the FMParkingVie
 
 ### Providing Location Updates
 
-By default, during localization the `FMParkingView` uses a `LocationManager` internally to get automatic updates of the device's location. If you would like to provide your own location updates, you can set the `usesInternalLocationManager` property to false and manually call `updateLocation(latitude: Double, longitude: Double)` with each update to the location.
+By default, during localization the `FMParkingView` uses a `LocationManager` internally to get automatic updates of the device's location. If you would like to provide your own location updates, you can set the `usesInternalLocationManager` property to false and manually call `updateLocation(location: Location)` with each update to the location.
 ```kotlin
 fmParkingView.connect(sessionId)
 fmParkingView.usesInternalLocationManager = false
@@ -155,9 +155,9 @@ locationRequest.fastestInterval = locationInterval
 locationRequest.interval = locationInterval
 
 val locationCallback = object : LocationCallback() {
-    override fun onLocationResult(locationResult: LocationResult) {
+    override fun onLocationResult(locationResult: Location) {
         // notify the FMParkingView of the location update
-        fmParkingView.updateLocation(locationResult.latitude, locationResult.longitude)      
+        fmParkingView.updateLocation(locationResult)      
     }
 }
 

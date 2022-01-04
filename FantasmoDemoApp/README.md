@@ -87,9 +87,9 @@ After that, to initialize it we only need to do `findViewById` or equivalent and
 
 ## Parking Flow
 
-Before attempting to park and localize with Fantasmo SDK, you should first check if parking is available in the user's current location. You can do this by replicating the following method `fmParkingView.isParkingAvailable(latitude: Double, longitude: Double, onCompletion:(Boolean) → Unit)` passing a latitude and longitude of the location. The result block is called with a boolean indicating whether or not the user is near a mapped parking space.
+Before attempting to park and localize with Fantasmo SDK, you should first check if parking is available in the user's current location. You can do this by replicating the following method `fmParkingView.isParkingAvailable(location: Location, onCompletion:(Boolean) → Unit)` passing a latitude and longitude of the location. The result block is called with a boolean indicating whether or not the user is near a mapped parking space.
 ```kotlin
-fmParkingView.isParkingAvailable(latitude, longitude) { isParkingAvailable: Boolean
+fmParkingView.isParkingAvailable(location) { isParkingAvailable: Boolean
     if (isParkingAvailable) {
         // Create and present FMParkingView here
     } else {
@@ -107,14 +107,14 @@ val sessionId = UUID.randomUUID().toString()
 fmParkingView.connect(sessionId)
 ```
 
-The SDK provides an internal LocationManager and it will give updates on location. If you want to use your own Location Manager, all you have to do is set `fmParkingView.usesInternalLocationManager` to false and call the `fmParkingView.updateLocation(latitude: Double, longitude: Double)` on your location manager in order to get location updates. If you check `CustomDemoFragment.kt` there's an example of how to manage your own location updates: 
+The SDK provides an internal LocationManager and it will give updates on location. If you want to use your own Location Manager, all you have to do is set `fmParkingView.usesInternalLocationManager` to false and call the `fmParkingView.updateLocation(location: Location)` on your location manager in order to get location updates. If you check `CustomDemoFragment.kt` there's an example of how to manage your own location updates: 
 
 ```kotlin
 // Custom Location Manager
 private val systemLocationListener: SystemLocationListener =
     object : SystemLocationListener {
         override fun onLocationUpdate(currentLocation: Location) {
-            fmParkingView.updateLocation(currentLocation.latitude, currentLocation.longitude)
+            fmParkingView.updateLocation(currentLocation)
         }
     }
 ```
