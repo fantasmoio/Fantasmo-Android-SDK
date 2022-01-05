@@ -135,7 +135,7 @@ class FMParkingView @JvmOverloads constructor(
                 Coordinate(location.latitude, location.longitude)
             )
         val fmApi = FMApi(context, accessToken)
-        fmApi.sendInitializationRequest(locationFantasmo, onCompletion) {
+        fmApi.sendIsLocalizationAvailable(locationFantasmo, onCompletion) {
             if (it.message != null) {
                 Log.e(TAG, it.message)
             }

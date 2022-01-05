@@ -23,9 +23,6 @@ import kotlin.math.sqrt
  */
 @RequiresApi(Build.VERSION_CODES.KITKAT)
 class FMBlurFilter(
-    blurFilterVarianceThreshold: Float,
-    blurFilterSuddenDropThreshold: Float,
-    blurFilterAverageThroughputThreshold: Float,
     context: Context
 ) : FMFrameFilter {
 
@@ -39,9 +36,9 @@ class FMBlurFilter(
     private var varianceAverager = MovingAverage()
     private var averageVariance = varianceAverager.average
 
-    private var varianceThreshold = blurFilterVarianceThreshold
-    private var suddenDropThreshold = blurFilterSuddenDropThreshold
-    private var averageThroughputThreshold = blurFilterAverageThroughputThreshold
+    private var varianceThreshold = 275.0
+    private var suddenDropThreshold = 0.4
+    private var averageThroughputThreshold = 0.25
 
     private var throughputAverager = MovingAverage(8)
     private var averageThroughput: Float = throughputAverager.average

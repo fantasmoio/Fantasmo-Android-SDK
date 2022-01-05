@@ -14,14 +14,14 @@ import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 
 @RequiresApi(Build.VERSION_CODES.KITKAT)
-class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Context) :
+class FMImageQualityFilter(val context: Context) :
     FMFrameFilter {
     private val TAG = FMImageQualityFilter::class.java.simpleName
     private val mlShape = intArrayOf(1, 3, 320, 240)
     private val imageHeight: Int = 320
     private val imageWidth: Int = 240
 
-    val scoreThreshold = imageQualityScoreThreshold
+    val scoreThreshold = 0.0
     var lastImageQualityScore = 0f
 
     private val yuvToRgbConverter = YuvToRgbConverter(context, imageHeight, imageWidth)
@@ -30,7 +30,7 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
      * ImageQualityEstimatorModel initializer.
      */
     private var imageQualityModelUpdater = ImageQualityModelUpdater(context)
-    var modelVersion = imageQualityModelUpdater.modelVersion
+    var modelVersion = "0.1.0"
     private var imageQualityModel: Interpreter? = null
 
     override fun accepts(arFrame: Frame): FMFrameFilterResult {

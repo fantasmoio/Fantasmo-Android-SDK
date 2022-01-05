@@ -12,13 +12,11 @@ import android.net.NetworkCapabilities
 import android.util.Log
 import com.android.volley.*
 import com.android.volley.toolbox.Volley
-import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.models.ErrorResponse
+import com.fantasmo.sdk.models.IsLocalizationAvailableResponse
 import com.fantasmo.sdk.models.LocalizeResponse
-import com.fantasmo.sdk.models.ZoneInRadiusResponse
 import com.google.gson.Gson
 import org.json.JSONException
-import org.json.JSONObject
 
 /**
  * Manager for network requests.
@@ -103,90 +101,24 @@ class FMNetworkManager(
     /**
      * Method to send a POST request to check whether a zone is in a provided radius.
      */
-    fun zoneInRadiusRequest(
+    fun isLocalizationAvailableRequest(
         url: String,
         parameters: HashMap<String, String>,
         token: String,
         onCompletion: (Boolean) -> Unit,
-        onError: (ErrorResponse) -> Unit
-    ) {
-        Log.i(TAG, "$url $parameters")
+        onError: (ErrorResponse) -> Unit) {
+        Log.i(TAG,"$url $parameters")
         multipartRequest = object : MultiPartRequest(
             Method.POST, url,
             Response.Listener<NetworkResponse> { response ->
                 val resultResponse = String(response.data)
-                Log.d(TAG, "zoneInRadiusRequest RESPONSE: $resultResponse")
+                Log.d(TAG, "IsLocalizationAvailableRequest RESPONSE: $resultResponse")
                 try {
-                    val inRadius =
-                        Gson().fromJson(resultResponse, ZoneInRadiusResponse::class.java)
-                    onCompletion(inRadius.result.toBoolean())
+                    val isLocalizationAvailableResponse =
+                        Gson().fromJson(resultResponse, IsLocalizationAvailableResponse::class.java)
+                    onCompletion(isLocalizationAvailableResponse.available.toBoolean())
                 } catch (e: JSONException) {
-                    e.printStackTrace()
-                }
-            },
-            Response.ErrorListener { error ->
-                processAndLogError(error)
-                if (error.networkResponse != null) {
-                    val errorResult = String(error.networkResponse.data)
-                    val response = Gson().fromJson(errorResult, ErrorResponse::class.java)
-                    onError(response)
-                } else {
-                    onError(ErrorResponse(404, "UnknownError"))
-                }
-            }) {
-
-            // Overriding getParams() to pass our parameters
-            override fun getParams(): MutableMap<String, String> {
-                return parameters
-            }
-
-            // Overriding getHeaders() to pass our parameters
-            override fun getHeaders(): MutableMap<String, String> {
-                val headers = HashMap<String, String>()
-                headers["Fantasmo-Key"] = token
-                return headers
-            }
-        }
-
-        // Adding request to the queue if there is a connection
-        if (isInternetAvailable()) {
-            requestQueue.add(multipartRequest)
-        } else {
-            Log.w(TAG, "No internet connection available")
-        }
-    }
-
-    fun sendInitializationRequest(
-        url: String,
-        parameters: HashMap<String, String>,
-        token: String,
-        onCompletion: (Boolean) -> Unit,
-        onError: (ErrorResponse) -> Unit
-    ) {
-        Log.i(TAG, "$url $parameters")
-        multipartRequest = object : MultiPartRequest(
-            Method.POST, url,
-            Response.Listener<NetworkResponse> { response ->
-                val resultResponse = String(response.data)
-                Log.d(TAG, "sendInitializationRequest RESPONSE: $resultResponse")
-                try {
-                    val initializeResponse = JSONObject(resultResponse)
-                    val onCompletionResult = initializeResponse.getBoolean("parking_in_radius")
-                    if (!onCompletionResult) {
-                        val reason = initializeResponse.getString("fantasmo_unavailable_reason")
-                        val reasonError = ErrorResponse(0, reason)
-                        onError(reasonError)
-                    } else {
-                        val configString = initializeResponse.optString("config")
-                        if (configString != "") {
-                            RemoteConfig.updateConfig(configString)
-                        } else {
-                            RemoteConfig.getDefaultConfig(context)
-                        }
-                    }
-                    onCompletion(onCompletionResult)
-                } catch (e: JSONException) {
-                    RemoteConfig.getDefaultConfig(context)
+                    onCompletion(false)
                     e.printStackTrace()
                 }
             },
