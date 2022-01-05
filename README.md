@@ -70,7 +70,7 @@ Try out the `FantasmoDemoApp` project or implement the code below.
  */
 private val fmParkingViewController: FMParkingViewProtocol =
     object : FMParkingViewProtocol {
-        override fun fmParkingView(qrCode: String, shouldContinue: (Boolean) -> Unit) {
+        override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
             // Handle QR Code result
         }
 
