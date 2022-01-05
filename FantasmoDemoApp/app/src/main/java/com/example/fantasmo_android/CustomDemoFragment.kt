@@ -94,7 +94,7 @@ class CustomDemoFragment : Fragment() {
         mapPinButton = currentView.findViewById(R.id.mapPinButton)
         enterQRButton = currentView.findViewById(R.id.enterQRCodeButton)
         enterQRButton.setOnClickListener{
-            handlEnterQRCode()
+            handleEnterQRCode()
         }
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
@@ -120,7 +120,7 @@ class CustomDemoFragment : Fragment() {
         return currentView
     }
 
-    private fun handlEnterQRCode() {
+    private fun handleEnterQRCode() {
         val builder: AlertDialog.Builder = AlertDialog.Builder(context)
         // Get the layout inflater
         val inflater = LayoutInflater.from(context).inflate(R.layout.custom_enterqr_dialog, null)
@@ -133,7 +133,8 @@ class CustomDemoFragment : Fragment() {
             .setPositiveButton(
                 "Submit"
             ) { _, _ ->
-                Log.d("Dialog", editTextQR.text.toString())
+                Log.d(TAG, editTextQR.text.toString())
+                //Example of how to enter a QRCode manually
                 fmParkingView.enterQRCode(editTextQR.text.toString())
             }
             .setNegativeButton(
@@ -350,10 +351,7 @@ class CustomDemoFragment : Fragment() {
             override fun fmParkingView(qrCode: Barcode, continueBlock: (Boolean) -> Unit) {
                 Log.d(TAG, "QR Code Scan Successful From Barcode")
                 // Optional validation of the QR code can be done here
-                // Note: If you choose to implement this method, you must call the `onValidQRCode` with the validation result
-                // show dialogue to accept or refuse
-                // Optional validation of the QR code can be done here
-                // Note: If you choose to implement this method, you must call the `shouldApprove` with the validation result
+                // Note: If you choose to implement this method, you must call the `continueBlock` with the validation result
                 // show dialogue to accept or refuse
                 val builder1: AlertDialog.Builder = AlertDialog.Builder(context)
                 builder1.setTitle("QR Code Scan result")
@@ -382,7 +380,7 @@ class CustomDemoFragment : Fragment() {
             override fun fmParkingView(qrCodeString: String, continueBlock: (Boolean) -> Unit) {
                 Log.d(TAG, "QR Code Scan Successful From String")
                 // Optional validation of the QR code can be done here
-                // Note: If you choose to implement this method, you must call the `shouldApprove` with the validation result
+                // Note: If you choose to implement this method, you must call the `continueBlock` with the validation result
                 // show dialogue to accept or refuse
                 val builder1: AlertDialog.Builder = AlertDialog.Builder(context)
                 builder1.setTitle("QR Code Scan result")
