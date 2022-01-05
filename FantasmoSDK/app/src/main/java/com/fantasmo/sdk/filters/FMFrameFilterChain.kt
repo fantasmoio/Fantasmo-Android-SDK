@@ -2,7 +2,6 @@ package com.fantasmo.sdk.filters
 
 import android.content.Context
 import android.os.Build
-import com.fantasmo.sdk.config.RemoteConfig
 import com.google.ar.core.Frame
 
 /**
@@ -16,52 +15,28 @@ class FMFrameFilterChain(context: Context) {
     private var lastAcceptTime: Long = System.nanoTime()
 
     // number of seconds after which we force acceptance
-    private var acceptanceThreshold: Float
+    private var acceptanceThreshold = 1.0
+
+    var isImageQualityFilterEnabled = false
 
     /**
-     * Active frame filters, in order of increasing computational cost
+     * List of filter rules to apply on frame received.
      */
-    var filters : MutableList<FMFrameFilter> = mutableListOf()
-
-    val rc: RemoteConfig.Config = RemoteConfig.remoteConfig
-
-    init {
-        acceptanceThreshold = rc.frameAcceptanceThresholdTimeout
-        if (rc.isTrackingStateFilterEnabled) {
-            filters.add(FMTrackingStateFilter())
-        }
-        if (rc.isCameraPitchFilterEnabled) {
-            val cameraPitchFilter = FMCameraPitchFilter(
-                rc.cameraPitchFilterMaxDownwardTilt,
-                rc.cameraPitchFilterMaxUpwardTilt,
-                context
-            )
-            filters.add(cameraPitchFilter)
-        }
-        if (rc.isMovementFilterEnabled) {
-            val movementFilter = FMMovementFilter(
-                rc.movementFilterThreshold
-            )
-            filters.add(movementFilter)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            if (rc.isBlurFilterEnabled) {
-                val blurFilter = FMBlurFilter(
-                    rc.blurFilterVarianceThreshold,
-                    rc.blurFilterSuddenDropThreshold,
-                    rc.blurFilterAverageThroughputThreshold,
-                    context
-                )
-                filters.add(blurFilter)
-            }
-            if (rc.isImageQualityFilterEnabled) {
-                val imageQualityFilter = FMImageQualityFilter(
-                    rc.imageQualityFilterScoreThreshold,
-                    context
-                )
-                filters.add(imageQualityFilter)
-            }
-        }
+    var filters = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+        isImageQualityFilterEnabled = true
+        listOf(
+            FMTrackingStateFilter(),
+            FMCameraPitchFilter(context),
+            FMMovementFilter(),
+            FMImageQualityFilter(context),
+            FMBlurFilter(context)
+        )
+    } else {
+        listOf(
+            FMTrackingStateFilter(),
+            FMCameraPitchFilter(context),
+            FMMovementFilter()
+        )
     }
 
     /**
