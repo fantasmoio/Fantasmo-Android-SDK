@@ -50,5 +50,7 @@
     <string name="insuficient_quality">; Insufficient Quality:</string>
     <string name="last_result_iq">; Last Result:</string>
     <string name="skip">Skip</string>
+    <string name="enter_manually">Enter Manually</string>
+    <string name="enter_qr_code">Enter QR Code</string>
 
 </resources>

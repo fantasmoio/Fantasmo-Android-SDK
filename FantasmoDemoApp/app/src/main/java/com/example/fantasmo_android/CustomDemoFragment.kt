@@ -12,7 +12,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Switch
 import android.widget.TextView
-import android.widget.Toast
 
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -32,6 +31,7 @@ import com.fantasmo.sdk.views.FMParkingViewProtocol
 import com.fantasmo.sdk.views.FMQRScanningViewProtocol
 
 import com.google.android.gms.maps.MapView
+import com.google.mlkit.vision.barcode.Barcode
 import java.util.*
 
 /**
@@ -122,7 +122,7 @@ class CustomDemoFragment : Fragment() {
     }
 
     private fun handleSkipQRScanning() {
-        fmParkingView.skipQRScanning()
+        //fmParkingView.skipQRScanning()
     }
 
     private fun handleEndRideButton() {
@@ -303,21 +303,29 @@ class CustomDemoFragment : Fragment() {
                 Log.d(TAG, "fmParkingViewDidStopQRScanning")
             }
 
-            override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
+            override fun fmParkingView(qrCode: Barcode, continueBlock: (Boolean) -> Unit) {
+                Log.d(TAG, "QR Code Scan Successful From Barcode")
+                val validQRCode = qrCode.rawValue!=null
+                // Optional validation of the QR code can be done here
+                // Note: If you choose to implement this method, you must call the `onValidQRCode` with the validation result
+                // show dialogue to accept or refuse
+                continueBlock(validQRCode)
+            }
+            override fun fmParkingView(qrCodeString: String, continueBlock: (Boolean) -> Unit) {
                 Log.d(TAG, "fmParkingView ShouldContinue")
                 // Optional validation of the QR code can be done here
                 // Note: If you choose to implement this method, you must call the `shouldApprove` with the validation result
                 // show dialogue to accept or refuse
                 val builder1: AlertDialog.Builder = AlertDialog.Builder(context)
                 builder1.setTitle("QR Code Scan result")
-                builder1.setMessage(qrCode)
+                builder1.setMessage(qrCodeString)
                 builder1.setCancelable(true)
 
                 builder1.setPositiveButton(
                     "Yes"
                 ) { dialog, _ ->
                     dialog.cancel()
-                    onValidQRCode(true)
+                    continueBlock(true)
                     Log.d(TAG, "QR Code Accepted")
                 }
 
@@ -325,7 +333,7 @@ class CustomDemoFragment : Fragment() {
                     "No"
                 ) { dialog, _ ->
                     dialog.cancel()
-                    onValidQRCode(false)
+                    continueBlock(false)
                     Log.d(TAG, "QR Code Refused")
                 }
 
