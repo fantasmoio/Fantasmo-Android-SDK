@@ -228,7 +228,7 @@ class DemoFragment : Fragment() {
                 Log.d(TAG, "QR Code Scan Successful From String")
                 val validQRCode = qrCodeString.isNotEmpty()
                 // Optional validation of the QR code can be done here
-                // Note: If you choose to implement this method, you must call the `onValidQRCode` with the validation result
+                // Note: If you choose to implement this method, you must call the `continueBlock` with the validation result
                 // show dialogue to accept or refuse
                 continueBlock(validQRCode)
             }
@@ -237,7 +237,7 @@ class DemoFragment : Fragment() {
                 Log.d(TAG, "QR Code Scan Successful From Barcode")
                 val validQRCode = qrCode.rawValue!=null
                 // Optional validation of the QR code can be done here
-                // Note: If you choose to implement this method, you must call the `onValidQRCode` with the validation result
+                // Note: If you choose to implement this method, you must call the `continueBlock` with the validation result
                 // show dialogue to accept or refuse
                 continueBlock(validQRCode)
             }

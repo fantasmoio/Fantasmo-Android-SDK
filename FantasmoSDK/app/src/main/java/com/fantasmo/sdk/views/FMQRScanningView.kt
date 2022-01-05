@@ -19,7 +19,11 @@ import com.fantasmo.sdk.fantasmosdk.R
 /**
  * Default View for the QR Code Scanning session.
  */
-class FMQRScanningView(private val context: Context, arLayout: CoordinatorLayout, private val fmParkingView: FMParkingView){
+class FMQRScanningView(
+    private val context: Context,
+    arLayout: CoordinatorLayout,
+    private val fmParkingView: FMParkingView
+) {
 
     private var fmQRScanningView: ConstraintLayout = arLayout.findViewById(R.id.fmQRView)
     private var qrCodeResultView: TextView = arLayout.findViewById(R.id.qrCodeResultTextView)
@@ -75,11 +79,11 @@ class FMQRScanningView(private val context: Context, arLayout: CoordinatorLayout
         }.start()
     }
 
-    private fun handleManualEntryButton(){
+    private fun handleManualEntryButton() {
         val builder: AlertDialog.Builder = AlertDialog.Builder(context)
         // Get the layout inflater
-        val inflater = LayoutInflater.from(context).inflate(R.layout.fmenterqr_dialog,null)
-        val editTextQR: EditText = inflater.findViewById(R.id.editTextQRCode)
+        val inflater = LayoutInflater.from(context).inflate(R.layout.fmenterqr_dialog, null)
+        val editTextQR: EditText = inflater.findViewById(R.id.fmEditTextQRCode)
 
         // Inflate and set the layout for the dialog
         builder.setView(inflater!!)
