@@ -131,11 +131,22 @@ private val fmParkingViewController: FMParkingViewProtocol =
         override fun fmParkingViewDidStopQRScanning() {
         }
 
-        override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
+        override fun fmParkingView(qrCode: Barcode, continueBlock: (Boolean) -> Unit) {
+            Log.d(TAG, "QR Code Scan Successful From Barcode")
+            val validQRCode = qrCode.rawValue!=null
             // Optional validation of the QR code can be done here
-            // Note: If you choose to implement this method, you must call the `onValidQRCode` with the validation 
-            // result show dialogue to accept or refuse
-            onValidQRCode(true)
+            // Note: If you choose to implement this method, you must call the `continueBlock` with the validation result
+            // show dialogue to accept or refuse
+            continueBlock(validQRCode)
+        }
+
+        override fun fmParkingView(qrCodeString: String, continueBlock: (Boolean) -> Unit) {
+            Log.d(TAG, "QR Code Scan Successful From String")
+            val validQRCode = qrCodeString.isNotEmpty()
+            // Optional validation of the QR code can be done here
+            // Note: If you choose to implement this method, you must call the `continueBlock` with the validation result
+            // show dialogue to accept or refuse
+            continueBlock(validQRCode)
         }
 
         override fun fmParkingViewDidStartLocalizing() {
@@ -155,12 +166,18 @@ private val fmParkingViewController: FMParkingViewProtocol =
     }
 ```
 
-If a QR code cannot be scanned and/or you've collected the necessary info from the user manually, then you may skip this step and proceed directly to localization.
+### Manual QR Code Entry
+If a code is unable to be scanned, you may want to have the user enter it manually. When using the default QR code scanning UI, this feature is implemented for you. Simply tap the *Enter Manually* button and enter the code into the prompt. If you are using a custom UI, then you should prompt the user to enter the code and pass the string to the `enterQRCode(qrCodeString: String)` method of your parking view controller.
+
+Validating a manually-entered QR code is also optional and works the same as a validating a scanned one. Implement the following method in your `FMParkingViewController`.
 ```kotlin
-private fun handleSkipQRScanning() {
-    fmParkingView.skipQRScanning()
+override fun fmParkingView(qrCodeString: String, continueBlock: (Boolean) -> Unit) {
+    val validQRCode = qrCodeString.isNotEmpty()
+    // Validation of the QR code can be done here
+    continueBlock(validQRCode)
 }
 ```
+
 **Note:** During a QR code scanning session, it is not possible to turn on the flashlight due to ARCore being used on the FMParkingView. ARCore blocks any input regarding turning on/off the flashlight during an AR session, limiting QR code readability on dark environments.
 
 ### Customizing UI
