@@ -8,12 +8,12 @@ import android.view.Display
 import android.view.Surface
 import android.view.WindowManager
 import com.fantasmo.sdk.models.*
+import com.fantasmo.sdk.utilities.math.Vector3
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
 import com.google.ar.core.exceptions.DeadlineExceededException
 import com.google.ar.core.exceptions.NotYetAvailableException
 import com.google.ar.core.exceptions.ResourceExhaustedException
-import com.google.ar.sceneform.math.Vector3
 import java.io.ByteArrayOutputStream
 import kotlin.math.*
 
@@ -253,6 +253,14 @@ class FMUtility {
         fun setFrame(byteArrayFrame: ByteArray?) {
             hasPassedBlurFilter = byteArrayFrame != null
             frameToByteArray = byteArrayFrame
+        }
+
+        /**
+         * Before QRScanning, the flag HasPassedImageQualityTest
+         * must be reseted in order to enable a new QRCode search
+         */
+        fun setFalse() {
+            hasPassedBlurFilter = false
         }
     }
 

@@ -12,8 +12,11 @@ import com.google.ar.core.Frame
  * Class responsible for filtering frames due to critical angles.
  * Prevents from sending ground and sky images which have no characteristics
  * to determine location
+ * Initializes with maximum values for tilting phone up or down in degrees
  */
-class FMCameraPitchFilter(private val context: Context) : FMFrameFilter {
+class FMCameraPitchFilter(
+    private val context: Context
+) : FMFrameFilter {
 
     // Maximum values for tilting phone up or down
     private val lookDownThreshold = -65.0 // In degrees

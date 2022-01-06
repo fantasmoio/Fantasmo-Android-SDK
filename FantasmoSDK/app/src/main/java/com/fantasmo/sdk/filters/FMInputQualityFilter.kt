@@ -9,7 +9,7 @@ import com.google.ar.core.Frame
  */
 class FMInputQualityFilter(context: Context) {
 
-    private val TAG = "FMInputQualityFilter"
+    private val TAG = FMInputQualityFilter::class.java.simpleName
 
     // the last time a frame was accepted
     private var lastAcceptTime: Long = System.nanoTime()
@@ -31,7 +31,7 @@ class FMInputQualityFilter(context: Context) {
         listOf(
             FMTrackingStateFilter(),
             FMCameraPitchFilter(context),
-            FMMovementFilter(),
+            FMMovementFilter()
         )
     }
 
@@ -73,5 +73,9 @@ class FMInputQualityFilter(context: Context) {
         //convert to seconds (timestamp is in nanoseconds)
         val elapsed = (System.nanoTime() - lastAcceptTime) / 1_000_000_000
         return elapsed > acceptanceThreshold
+    }
+
+    fun evaluateAsync(arFrame: Frame, completion: (FMFrameFilterResult) -> Unit) {
+        completion(accepts(arFrame))
     }
 }

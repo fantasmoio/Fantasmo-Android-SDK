@@ -7,16 +7,20 @@
 package com.fantasmo.sdk
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
+import com.fantasmo.sdk.filters.BehaviorRequester
 import com.fantasmo.sdk.filters.FMInputQualityFilter
 import com.fantasmo.sdk.filters.FMFrameFilterResult
 import com.fantasmo.sdk.models.Coordinate
+import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
+import com.fantasmo.sdk.models.Location
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
-import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
+import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.network.*
-import com.fantasmo.sdk.filters.BehaviorRequester
+import com.fantasmo.sdk.utilities.DeviceLocationManager
 import com.fantasmo.sdk.utilities.LocationFuser
 import com.google.ar.core.Frame
 import kotlinx.coroutines.CoroutineScope
@@ -50,7 +54,7 @@ class FMLocationManager(private val context: Context) {
     var state = State.STOPPED
 
     var anchorFrame: Frame? = null
-    var currentLocation: android.location.Location = android.location.Location("")
+    var currentLocation: Location = Location()
 
     private var fmLocationListener: FMLocationListener? = null
     private var token: String = ""
@@ -60,8 +64,6 @@ class FMLocationManager(private val context: Context) {
     var isSimulation = false
 
     private var isConnected = false
-
-    private var enableFilters = false
 
     // Used to validate frame for sufficient quality before sending to API.
     private lateinit var frameFilter: FMInputQualityFilter
@@ -92,7 +94,6 @@ class FMLocationManager(private val context: Context) {
         callback: FMLocationListener
     ) {
         Log.d(TAG, "connect: $callback")
-
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(context, token)
@@ -103,17 +104,28 @@ class FMLocationManager(private val context: Context) {
     /**
      * Sets currentLocation with values given by the client application.
      *
-     * @param latitude Location latitude.
-     * @param longitude Location longitude.
+     * @param location Android Location Object.
      */
-    fun setLocation(latitude: Double, longitude: Double) {
-        this.currentLocation.latitude = latitude
-        this.currentLocation.longitude = longitude
+    fun setLocation(location: android.location.Location) {
+        val coordinate = Coordinate(location.latitude, location.longitude)
+        this.currentLocation.coordinate = coordinate
+        this.currentLocation.altitude = location.altitude
+        this.currentLocation.timestamp = location.time
+        this.currentLocation.horizontalAccuracy = location.accuracy
+
+        this.currentLocation.verticalAccuracy =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                location.verticalAccuracyMeters
+            } else {
+                0.0f
+            }
+
         Log.d(TAG, "SetLocation: $currentLocation")
     }
 
     /**
-     * Starts the generation of updates that report the user’s current location.
+     * Starts the generation of updates that report the user’s current location
+     * enabling FrameFiltering
      * @param appSessionId appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
      */
     fun startUpdatingLocation(appSessionId: String) {
@@ -127,30 +139,6 @@ class FMLocationManager(private val context: Context) {
         this.isConnected = true
         this.state = State.LOCALIZING
         fmLocationListener?.locationManager(state)
-        enableFilters = false
-        motionManager.restart()
-        accumulatedARCoreInfo.reset()
-        this.locationFuser.reset()
-    }
-
-    /**
-     * Starts the generation of updates that report the user’s current location
-     * enabling FrameFiltering
-     * @param appSessionId appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
-     * @param filtersEnabled flag that enables/disables frame filtering
-     */
-    fun startUpdatingLocation(appSessionId: String, filtersEnabled: Boolean) {
-        localizationSessionId = UUID.randomUUID().toString()
-        this.appSessionId = appSessionId
-        Log.d(
-            TAG,
-            "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId"
-        )
-
-        this.isConnected = true
-        this.state = State.LOCALIZING
-        fmLocationListener?.locationManager(state)
-        enableFilters = filtersEnabled
         motionManager.restart()
         accumulatedARCoreInfo.reset()
         this.frameFilter.restart()
@@ -197,6 +185,19 @@ class FMLocationManager(private val context: Context) {
      * @param arFrame an AR Frame to localize
      */
     private fun localize(arFrame: Frame) {
+        if (!isConnected) {
+            return
+        }
+        if (!DeviceLocationManager.isValidLatLng(
+                currentLocation.coordinate.latitude,
+                currentLocation.coordinate.longitude
+            )
+        ) {
+            val error = ErrorResponse(0, "Invalid Coordinates")
+            fmLocationListener?.locationManager(error, null)
+            Log.e(TAG,"Invalid Coordinates")
+            return
+        }
         Log.d(TAG, "localize: isSimulation $isSimulation")
         coroutineScope.launch {
             state = State.UPLOADING
@@ -260,10 +261,7 @@ class FMLocationManager(private val context: Context) {
         return FMLocalizationRequest(
             isSimulation,
             FMZone.ZoneType.PARKING,
-            Coordinate(
-                currentLocation.latitude,
-                currentLocation.longitude
-            ),
+            currentLocation,
             openCVRelativeAnchorPose,
             frameAnalytics
         )
@@ -279,24 +277,33 @@ class FMLocationManager(private val context: Context) {
         }
     }
 
+    private var isEvaluatingFrame = false
+
     /**
      * Method to check whether the SDK is ready to localize a frame or not.
      */
     fun session(arFrame: Frame) {
-        if (isConnected
-            && currentLocation.latitude > 0.0
-            && state != State.STOPPED
+        if (state != State.STOPPED
+            && !isEvaluatingFrame
         ) {
-            val filterResult = frameFilter.accepts(arFrame)
-            behaviorRequester.processResult(filterResult)
-            accumulatedARCoreInfo.update(arFrame)
-            if (filterResult == FMFrameFilterResult.Accepted) {
-                if (state == State.LOCALIZING) {
-                    localize(arFrame)
-                }
-            } else {
-                frameEventAccumulator.accumulate(filterResult.getRejectedReason()!!)
+            // run the frame through the configured filters
+            isEvaluatingFrame = true
+            frameFilter.evaluateAsync(arFrame) { filterResult ->
+                processFrame(arFrame, filterResult)
+                isEvaluatingFrame = false
             }
+        }
+    }
+
+    private fun processFrame(arFrame: Frame, filterResult: FMFrameFilterResult) {
+        behaviorRequester.processResult(filterResult)
+        accumulatedARCoreInfo.update(arFrame)
+        if (filterResult == FMFrameFilterResult.Accepted) {
+            if (state == State.LOCALIZING) {
+                localize(arFrame)
+            }
+        } else {
+            frameEventAccumulator.accumulate(filterResult.getRejectedReason()!!)
         }
         fmLocationListener?.locationManager(arFrame, accumulatedARCoreInfo, frameEventAccumulator)
     }

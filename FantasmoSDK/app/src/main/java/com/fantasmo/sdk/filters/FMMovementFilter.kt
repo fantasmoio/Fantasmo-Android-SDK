@@ -7,6 +7,7 @@ import kotlin.math.abs
 /**
  * Class responsible for filtering frames due to the lack of movement.
  * Prevents from sending repeated values to the backend.
+ * Initializes with sideways movement Threshold in meters
  */
 class FMMovementFilter : FMFrameFilter {
     // Sideways movement threshold

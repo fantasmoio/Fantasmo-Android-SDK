@@ -9,17 +9,17 @@ package com.fantasmo.sdk.models
 /**
  * Represents a Location.
  * @property altitude
- * @property coordinate
- * @property floor
- * @property heading
+ * @property timestamp
  * @property horizontalAccuracy
  * @property verticalAccuracy
+ * @property coordinate
  */
 data class Location(
-    val altitude: Any?,
-    val coordinate: Coordinate,
-    val floor: Any?,
-    val heading: Any?,
-    val horizontalAccuracy: Any?,
-    val verticalAccuracy: Any?
-)
+    var altitude: Any?,
+    var timestamp: Any?,
+    var horizontalAccuracy: Any?,
+    var verticalAccuracy: Any?,
+    var coordinate: Coordinate
+) {
+    constructor() : this(0, 0, 0, 0, Coordinate(0.0, 0.0))
+}

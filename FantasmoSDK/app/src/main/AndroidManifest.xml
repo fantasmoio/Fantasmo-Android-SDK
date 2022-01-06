@@ -10,10 +10,12 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <application>
+    <application
+        android:requestLegacyExternalStorage="true">
         <!-- "AR Optional" app, contains non-AR features that can be used when
              "Google Play Services for AR" (ARCore) is not available. -->
         <meta-data android:name="com.google.ar.core" android:value="optional" />
+
     </application>
 
 

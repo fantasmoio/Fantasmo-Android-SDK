@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import com.example.fantasmo_android.helpers.GoogleMapsManager
+import com.example.fantasmo_android.helpers.SimulationUtils
 import com.example.fantasmo_android.helpers.SystemLocationListener
 import com.example.fantasmo_android.helpers.SystemLocationManager
 
@@ -55,6 +56,7 @@ class CustomDemoFragment : Fragment() {
     private lateinit var resultsLayout: ConstraintLayout
     private lateinit var resultTextView: TextView
     private lateinit var mapPinButton: Button
+    private lateinit var skipButton: Button
 
     // Buttons and Views from the QRView
     private lateinit var fmQRView: ConstraintLayout
@@ -69,11 +71,12 @@ class CustomDemoFragment : Fragment() {
 
     // Host App location Manager to exemplify how to set Location
     private lateinit var systemLocationManager: SystemLocationManager
+    private lateinit var deviceLocation: Location
 
     // Control variables for the FMParkingView
     private lateinit var fmParkingView: FMParkingView
     private val usesInternalLocationManager = true
-    private val accessToken = "API_KEY"
+    private val accessToken = SimulationUtils.API_KEY
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -90,6 +93,10 @@ class CustomDemoFragment : Fragment() {
         resultsLayout = currentView.findViewById(R.id.resultsLayout)
         resultTextView = currentView.findViewById(R.id.localizationResultView)
         mapPinButton = currentView.findViewById(R.id.mapPinButton)
+        skipButton = currentView.findViewById(R.id.skipButton)
+        skipButton.setOnClickListener{
+            handleSkipQRScanning()
+        }
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
         // Assign an accessToken
@@ -114,12 +121,15 @@ class CustomDemoFragment : Fragment() {
         return currentView
     }
 
+    private fun handleSkipQRScanning() {
+        fmParkingView.skipQRScanning()
+    }
+
     private fun handleEndRideButton() {
         // Test location of a parking space in Berlin
-        val latitude = 52.50578283943285
-        val longitude = 13.378954977173915
+        val myLocation = getMyLocation()
         // Before trying to localize with Fantasmo you should check if the user is near a mapped parking space
-        fmParkingView.isParkingAvailable(latitude, longitude) {
+        fmParkingView.isParkingAvailable(myLocation) {
             if (it) {
                 startParkingFlow()
             } else {
@@ -129,6 +139,17 @@ class CustomDemoFragment : Fragment() {
                 resultTextView.text = stringNotAvailable
             }
         }
+    }
+
+    private fun getMyLocation(): Location {
+        var location = Location("")
+        if (isSimulationSwitch.isChecked) {
+            location.latitude = SimulationUtils.latitude
+            location.longitude = SimulationUtils.longitude
+        } else {
+            location = deviceLocation
+        }
+        return location
     }
 
     private fun startParkingFlow() {
@@ -262,7 +283,10 @@ class CustomDemoFragment : Fragment() {
     private val systemLocationListener: SystemLocationListener =
         object : SystemLocationListener {
             override fun onLocationUpdate(currentLocation: Location) {
-                fmParkingView.updateLocation(currentLocation.latitude, currentLocation.longitude)
+                deviceLocation = currentLocation
+                fmParkingView.updateLocation(
+                    currentLocation
+                )
             }
         }
 
@@ -361,7 +385,7 @@ class CustomDemoFragment : Fragment() {
 
             override fun didReceiveLocalizationResult(result: FMLocationResult) {
                 Log.d(TAG, "didReceiveLocalizationResult")
-                if(result.confidence == FMResultConfidence.HIGH){
+                if (result.confidence == FMResultConfidence.HIGH) {
                     val stringResult =
                         "Result: ${result.location.coordinate} (${result.confidence})"
                     resultTextView.text = stringResult

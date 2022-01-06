@@ -126,6 +126,12 @@ class FMARCoreView(
         config.focusMode = Config.FocusMode.AUTO
         config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
         config.planeFindingMode = Config.PlaneFindingMode.DISABLED
+        config.instantPlacementMode =  Config.InstantPlacementMode.DISABLED
+        config.augmentedFaceMode = Config.AugmentedFaceMode.DISABLED
+        config.cloudAnchorMode = Config.CloudAnchorMode.DISABLED
+        config.lightEstimationMode = Config.LightEstimationMode.DISABLED
+        config.depthMode = Config.DepthMode.DISABLED
+        config.augmentedImageDatabase = null
 
         var selectedSize = Size(0, 0)
         var selectedCameraConfig = 0

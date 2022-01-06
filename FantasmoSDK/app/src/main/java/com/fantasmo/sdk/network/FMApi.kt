@@ -1,5 +1,6 @@
 package com.fantasmo.sdk.network
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.provider.Settings.Secure
@@ -20,7 +21,7 @@ import java.util.*
 class FMLocalizationRequest(
     var isSimulation: Boolean,
     var simulationZone: FMZone.ZoneType,
-    var coordinate: Coordinate,
+    var location: Location,
     var relativeOpenCVAnchorPose: FMPose?,
     var analytics: FMLocalizationAnalytics
 )
@@ -117,47 +118,86 @@ class FMApi(
         }
     }
 
-    /**
-     * Method to build the ZoneInRadius request.
-     * @param latitude: Location latitude to search
-     * @param longitude: Location longitude to search
-     * @param radius: search radius in meters
-     */
-    fun sendZoneInRadiusRequest(
-        latitude: Double,
-        longitude: Double,
-        radius: Int,
-        onCompletion: (Boolean) -> Unit
+    fun sendIsLocalizationAvailable(
+        location: Location,
+        onCompletion: (Boolean) -> Unit,
+        onError: (ErrorResponse) -> Unit
     ) {
-        fmNetworkManager.zoneInRadiusRequest(
-            "https://api.fantasmo.io/v1/parking.in.radius",
-            getZoneInRadiusParams(latitude, longitude, radius),
+        fmNetworkManager.isLocalizationAvailableRequest(
+            "https://mobility-bff-dev.fantasmo.dev/v2/isLocalizationAvailable",
+            getIsLocalizationAvailableParams(location),
             token,
-            onCompletion
+            onCompletion,
+            onError
         )
+    }
+
+    private fun getIsLocalizationAvailableParams(
+        location: Location,
+    ): HashMap<String, String> {
+        val params = hashMapOf<String, String>()
+
+        params["location"] = Gson().toJson(location)
+
+        Log.i(TAG, "getIsLocalizationAvailableParams: $params")
+        return params
+    }
+
+    /**
+     * Generate the initialize HTTP request parameters.
+     * @param location Location to search
+     * @return an HashMap with all the location parameters.
+     */
+    private fun getInitializationParams(
+        location: Location
+    ): HashMap<String, String> {
+        val locationParams = hashMapOf<String, String>()
+
+        locationParams["latitude"] = location.coordinate.latitude.toString()
+        locationParams["longitude"] = location.coordinate.longitude.toString()
+        locationParams["horizontalAccuracy"] = location.horizontalAccuracy.toString()
+        locationParams["verticalAccuracy"] = location.verticalAccuracy.toString()
+
+        val params = hashMapOf<String, String>()
+        params["deviceOs"] = "android"
+        val gson = Gson()
+        params["coordinate"] = gson.toJson(locationParams)
+        Log.i(TAG, "getInitializationRequest: $params")
+        return params
     }
 
     /**
      * Generate the localize HTTP request parameters. Can fail if the jpeg
      * conversion throws an exception.
-     * @param frame: Frame to localize
+     * @param frame Frame to localize
      * @return an HashMap with all the localization parameters.
      */
+    @SuppressLint("HardwareIds")
     private fun getLocalizeParams(
         frame: Frame,
         request: FMLocalizationRequest
     ): HashMap<String, String> {
         val pose = FMUtility.getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context, frame)
 
-        val coordinates = if (request.isSimulation) {
-            val simulationLocation = FMConfiguration.getConfigLocation()
-            Coordinate(simulationLocation.latitude, simulationLocation.longitude)
+        val location = if (request.isSimulation) {
+            val configLocation = FMConfiguration.getConfigLocation()
+            Location(
+                configLocation.altitude,
+                System.currentTimeMillis(),
+                configLocation.accuracy,
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    configLocation.verticalAccuracyMeters
+                } else {
+                    0
+                },
+                Coordinate(configLocation.latitude, configLocation.longitude)
+            )
         } else {
-            request.coordinate
+            request.location
         }
 
         val resolution = hashMapOf<String, Int>()
-        val imageResolution = getImageResolution(frame,request)
+        val imageResolution = getImageResolution(frame, request)
         resolution["height"] = imageResolution.height
         resolution["width"] = imageResolution.width
 
@@ -191,7 +231,7 @@ class FMApi(
         params["capturedAt"] = System.currentTimeMillis().toString()
         params["gravity"] = gson.toJson(pose.orientation)
         params["uuid"] = UUID.randomUUID().toString()
-        params["coordinate"] = gson.toJson(coordinates)
+        params["location"] = gson.toJson(location)
         params["intrinsics"] = gson.toJson(intrinsics)
         params["imageResolution"] = gson.toJson(resolution)
 
@@ -223,56 +263,34 @@ class FMApi(
     }
 
     /**
-     * Generate the zoneInRadius HTTP request parameters.
-     * @param latitude: Location latitude to search
-     * @param longitude: Location longitude to search
-     * @param radius: search radius in meters
-     * @return an HashMap with all the localization parameters.
-     *
-     * Only works with PARKING zones currently
-     */
-    private fun getZoneInRadiusParams(
-        latitude: Double,
-        longitude: Double,
-        radius: Int,
-    ): HashMap<String, String> {
-        val params = hashMapOf<String, String>()
-
-        val coordinates = Coordinate(latitude, longitude)
-
-        params["radius"] = radius.toString()
-        params["coordinate"] = Gson().toJson(coordinates)
-
-        Log.i(TAG, "getZoneInRadiusParams: $params")
-        return params
-    }
-
-    /**
      * Generate the image data used to perform "localize" HTTP request.
-     * @param arFrame: Frame to localize
-     * @param request: FMLocalizationRequest with information about simulation mode
-     * @return result: ByteArray with image to localize
+     * @param arFrame Frame to localize
+     * @param request FMLocalizationRequest with information about simulation mode
+     * @return result ByteArray with image to localize
      */
     private fun imageData(arFrame: Frame, request: FMLocalizationRequest): ByteArray {
         if (request.isSimulation) {
-            return MockData.imageData(request,context)
+            return MockData.imageData(request, context)
         }
         return FMUtility.getImageDataFromARFrame(context, arFrame)
     }
 
     /**
      * Get the image resolution used to perform "localize" HTTP request.
-     * @param arFrame: Frame to return the resolution from
-     * @param request: Localization request struct
-     * @return result: Resolution of the frame
+     * @param arFrame Frame to return the resolution from
+     * @param request Localization request struct
+     * @return result Resolution of the frame
      */
-    private fun getImageResolution(arFrame: Frame, request: FMLocalizationRequest): FMFrameResolution{
-        if (request.isSimulation){
-            val result = MockData.getImageResolution(request,context)
-            return FMFrameResolution(result[0],result[1])
+    private fun getImageResolution(
+        arFrame: Frame,
+        request: FMLocalizationRequest
+    ): FMFrameResolution {
+        if (request.isSimulation) {
+            val result = MockData.getImageResolution(request, context)
+            return FMFrameResolution(result[0], result[1])
         }
         val height = arFrame.camera.imageIntrinsics.imageDimensions[0]
         val width = arFrame.camera.imageIntrinsics.imageDimensions[1]
-        return FMFrameResolution(height,width)
+        return FMFrameResolution(height, width)
     }
 }

@@ -22,7 +22,9 @@ import kotlin.math.sqrt
  * Prevents from sending blurred images.
  */
 @RequiresApi(Build.VERSION_CODES.KITKAT)
-class FMBlurFilter(private val context: Context) : FMFrameFilter {
+class FMBlurFilter(
+    context: Context
+) : FMFrameFilter {
 
     private val laplacianMatrix = floatArrayOf(
         0.0f, 1.0f, 0.0f,
@@ -30,15 +32,20 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
         0.0f, 1.0f, 0.0f
     )
 
-    private var variance: Double = 0.0
+    private var variance: Float = 0.0f
     private var varianceAverager = MovingAverage()
     private var averageVariance = varianceAverager.average
 
     private var varianceThreshold = 275.0
     private var suddenDropThreshold = 0.4
+    private var averageThroughputThreshold = 0.25
 
     private var throughputAverager = MovingAverage(8)
-    private var averageThroughput: Double = throughputAverager.average
+    private var averageThroughput: Float = throughputAverager.average
+
+    private val rs = RenderScript.create(context)
+    private val colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
+    private val convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
 
     /**
      * Check frame acceptance.
@@ -59,13 +66,13 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
         isLowVariance = isBelowThreshold || isSuddenDrop
 
         if (isLowVariance) {
-            throughputAverager.addSample(0.0)
+            throughputAverager.addSample(0.0f)
         } else {
-            throughputAverager.addSample(1.0)
+            throughputAverager.addSample(1.0f)
         }
 
         // if not enough images are passing, pass regardless of variance
-        val isBlurry: Boolean = if (averageThroughput < 0.25) {
+        val isBlurry: Boolean = if (averageThroughput < averageThroughputThreshold) {
             false
         } else {
             isLowVariance
@@ -88,17 +95,18 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
      * @param byteArrayFrame frame converted to ByteArray to measure the variance
      * @return variance blurriness value
      * */
-    private suspend fun calculateVariance(byteArrayFrame: ByteArray?): Double {
+    private suspend fun calculateVariance(byteArrayFrame: ByteArray?): Float {
         val reducedHeight = 480
         val reducedWidth = 640
         if (byteArrayFrame == null) {
-            return 0.0
+            return 0.0f
         } else {
             val stdDev = GlobalScope.async {
 
-                val originalBitmap = BitmapFactory.decodeByteArray(byteArrayFrame, 0, byteArrayFrame.size)
-                val reducedBitmap = Bitmap.createScaledBitmap(originalBitmap, reducedWidth, reducedHeight, true)
-                val rs = RenderScript.create(context)
+                val originalBitmap =
+                    BitmapFactory.decodeByteArray(byteArrayFrame, 0, byteArrayFrame.size)
+                val reducedBitmap =
+                    Bitmap.createScaledBitmap(originalBitmap, reducedWidth, reducedHeight, true)
 
                 // Greyscale so we're only dealing with white <--> black pixels,
                 // this is so we only need to detect pixel luminosity
@@ -121,7 +129,6 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
                 )
 
                 // Inverts and greyscales the image
-                val colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
                 colorIntrinsic.setGreyscale()
                 colorIntrinsic.forEach(smootherInput, greyscaleTargetAllocation)
                 greyscaleTargetAllocation.copyTo(greyscaleBitmap)
@@ -146,7 +153,6 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
                     Allocation.USAGE_SHARED
                 )
 
-                val convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
                 convolve.setInput(greyscaleInput)
                 convolve.setCoefficients(laplacianMatrix)
                 convolve.forEach(edgesTargetAllocation)
@@ -154,16 +160,6 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
 
                 // This is important to be false, otherwise image will be blank
                 edgesBitmap.setHasAlpha(false)
-                val pixels = IntArray(edgesBitmap.height * edgesBitmap.width)
-                edgesBitmap.getPixels(
-                    pixels,
-                    0,
-                    edgesBitmap.width,
-                    0,
-                    0,
-                    edgesBitmap.width,
-                    edgesBitmap.height
-                )
 
                 // Get standard deviation from meanStdDev
                 meanStdDev(edgesBitmap)
@@ -178,7 +174,7 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
      * @param bitmap image after edge detection matrix application
      * @return stdDev variable with blurriness value
      * */
-    private fun meanStdDev(bitmap: Bitmap): Double {
+    private fun meanStdDev(bitmap: Bitmap): Float {
         val pixels = IntArray(bitmap.height * bitmap.width)
         bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
 
@@ -204,6 +200,6 @@ class FMBlurFilter(private val context: Context) : FMFrameFilter {
             stdDevR += (r - avgR).toDouble().pow(2.0)
         }
 
-        return sqrt(stdDevR / pixels.size) * 100
+        return (sqrt(stdDevR / pixels.size) * 100).toFloat()
     }
 }

@@ -20,8 +20,7 @@ implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 implementation "androidx.navigation:navigation-fragment-ktx:2.3.5"
 
 // Google ARCore
-implementation 'com.google.ar:core:1.27.0'
-implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.17.1'
+implementation 'com.google.ar:core:1.29.0'
 
 // Location Services
 implementation 'com.google.android.gms:play-services-location:18.0.0'
@@ -33,6 +32,7 @@ implementation 'com.google.mlkit:barcode-scanning:17.0.0'
 //GSON for JSON parse and Volley for networking
 implementation 'com.google.code.gson:gson:2.8.6'
 implementation 'com.android.volley:volley:1.2.0'
+
 ```
 
 ## Permissions and requirements
@@ -73,9 +73,9 @@ After that, to initialize it we only need to do `findViewById` or equivalent and
 
 ## Parking Flow
 
-Before attempting to park and localize with Fantasmo SDK, you should first check if parking is available in the user's current location. You can do this by replicating the following method `fmParkingView.isParkingAvailable(latitude: Double, longitude: Double, onCompletion:(Boolean) → Unit)` passing a latitude and longitude of the location. The result block is called with a boolean indicating whether or not the user is near a mapped parking space.
+Before attempting to park and localize with Fantasmo SDK, you should first check if parking is available in the user's current location. You can do this by replicating the following method `fmParkingView.isParkingAvailable(location: Location, onCompletion:(Boolean) → Unit)` passing a latitude and longitude of the location. The result block is called with a boolean indicating whether or not the user is near a mapped parking space.
 ```kotlin
-fmParkingView.isParkingAvailable(latitude, longitude) { isParkingAvailable: Boolean
+fmParkingView.isParkingAvailable(location) { isParkingAvailable: Boolean
     if (isParkingAvailable) {
         // Create and present FMParkingView here
     } else {
@@ -93,14 +93,14 @@ val sessionId = UUID.randomUUID().toString()
 fmParkingView.connect(sessionId)
 ```
 
-The SDK provides an internal LocationManager and it will give updates on location. If you want to use your own Location Manager, all you have to do is set `fmParkingView.usesInternalLocationManager` to false and call the `fmParkingView.updateLocation(latitude: Double, longitude: Double)` on your location manager in order to get location updates. If you check `CustomDemoFragment.kt` there's an example of how to manage your own location updates: 
+The SDK provides an internal LocationManager and it will give updates on location. If you want to use your own Location Manager, all you have to do is set `fmParkingView.usesInternalLocationManager` to false and call the `fmParkingView.updateLocation(location: Location)` on your location manager in order to get location updates. If you check `CustomDemoFragment.kt` there's an example of how to manage your own location updates: 
 
 ```kotlin
 // Custom Location Manager
 private val systemLocationListener: SystemLocationListener =
     object : SystemLocationListener {
         override fun onLocationUpdate(currentLocation: Location) {
-            fmParkingView.updateLocation(currentLocation.latitude, currentLocation.longitude)
+            fmParkingView.updateLocation(currentLocation)
         }
     }
 ```
@@ -140,6 +140,15 @@ private val fmParkingViewController: FMParkingViewProtocol =
         }
     }
 ```
+
+If a QR code cannot be scanned and/or you've collected the necessary info from the user manually, then you may skip this step and proceed directly to localization.
+```kotlin
+private fun handleSkipQRScanning() {
+    fmParkingView.skipQRScanning()
+}
+```
+**Note:** During a QR code scanning session, it is not possible to turn on the flashlight due to ARCore being used on the FMParkingView. ARCore blocks any input regarding turning on/off the flashlight during an AR session, limiting QR code readability on dark environments.
+
 ### Customizing UI
 
 The SDK, provides with default views for both the QRScanning and Localizing views. If you want to customize these views, you need to provide with your own view controllers. We provide an example in the `CustomDemoFragment.kt` with the following controllers filled with view management.

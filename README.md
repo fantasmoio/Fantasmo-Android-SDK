@@ -16,8 +16,7 @@ implementation 'com.google.code.gson:gson:2.8.6'
 implementation 'androidx.core:core-ktx:1.3.2'
 
 // ARCore
-implementation 'com.google.ar:core:1.27.0'
-implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.17.1'
+implementation 'com.google.ar:core:1.29.0'
 
 // Location Services
 implementation 'com.google.android.gms:play-services-location:18.0.0'
@@ -31,7 +30,6 @@ implementation 'com.google.android.material:material:1.4.0'
 implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
 implementation 'androidx.coordinatorlayout:coordinatorlayout:1.1.0'
 ```
-### Building and Importing
 
 To build the library .aar, the desired Build Variant should be seleted and then build the project. The .aar will be located in /app/build/outputs/aar/
 The Fantasmo SDK .aar file can be imported directly into a project.
@@ -45,7 +43,7 @@ The Fantasmo SDK .aar file can be imported directly into a project.
 
 Camera-based localization is the process of determining the global position of the device camera from an image. Image frames are acquired from an active `ARSession` and sent to a server for computation. The server computation time is approximately 900 ms. The full round trip time is then dictated by latency of the connection.
 
-Since the camera will likely move after the moment at which the image frame is captured, it is necessary to track the motion of the device continuously during localizaiton to determine the position of the device at the time of response. Tracking is provided by `ARSession`. Conventiently, it is then possible to determine the global position of the device at any point in the tracking session regardless of when the image was captured (though you may incur some drift after excessive motion).
+Since the camera will likely move after the moment at which the image frame is captured, it is necessary to track the motion of the device continuously during localizaiton to determine the position of the device at the time of response. Tracking is provided by `ARSession`. Conveniently, it is then possible to determine the global position of the device at any point in the tracking session regardless of when the image was captured (though you may incur some drift after excessive motion).
 
 ## Usage
 
@@ -58,7 +56,7 @@ Try out the `FantasmoDemoApp` project or implement the code below.
  */
 private val fmParkingViewController: FMParkingViewProtocol =
     object : FMParkingViewProtocol {
-        override fun fmParkingView(qrCode: String, shouldContinue: (Boolean) -> Unit) {
+        override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
             // Handle QR Code result
         }
 
@@ -98,9 +96,9 @@ And add this to your `layout.xml` file:
 ```
 ### Checking Availability
 
-Before attempting to park and localize with Fantasmo SDK, you should first check if parking is available in the user's current location. You can do this with the method `fmParkingView.isParkingAvailable(latitude: Double, longitude: Double, onCompletion:(Boolean) → Unit)` passing a latitude and longitude of the location. The result block is called with a boolean indicating whether or not the user is near a mapped parking space.
+Before attempting to park and localize with Fantasmo SDK, you should first check if parking is available in the user's current location. You can do this with the method `fmParkingView.isParkingAvailable(location: Location, onCompletion:(Boolean) → Unit)` passing a latitude and longitude of the location. The result block is called with a boolean indicating whether or not the user is near a mapped parking space.
 ```kotlin
-fmParkingView.isParkingAvailable(latitude, longitude) { isParkingAvailable: Boolean
+fmParkingView.isParkingAvailable(location) { isParkingAvailable: Boolean
     if (isParkingAvailable) {
         // Create and present FMParkingView here
     } else {
@@ -130,7 +128,7 @@ After that, when you inflate the layout of your App, initialize the FMParkingVie
 
 ### Providing Location Updates
 
-By default, during localization the `FMParkingView` uses a `LocationManager` internally to get automatic updates of the device's location. If you would like to provide your own location updates, you can set the `usesInternalLocationManager` property to false and manually call `updateLocation(latitude: Double, longitude: Double)` with each update to the location.
+By default, during localization the `FMParkingView` uses a `LocationManager` internally to get automatic updates of the device's location. If you would like to provide your own location updates, you can set the `usesInternalLocationManager` property to false and manually call `updateLocation(location: Location)` with each update to the location.
 ```kotlin
 fmParkingView.connect(sessionId)
 fmParkingView.usesInternalLocationManager = false
@@ -143,9 +141,9 @@ locationRequest.fastestInterval = locationInterval
 locationRequest.interval = locationInterval
 
 val locationCallback = object : LocationCallback() {
-    override fun onLocationResult(locationResult: LocationResult) {
+    override fun onLocationResult(locationResult: Location) {
         // notify the FMParkingView of the location update
-        fmParkingView.updateLocation(locationResult.latitude, locationResult.longitude)      
+        fmParkingView.updateLocation(locationResult)      
     }
 }
 
@@ -160,14 +158,25 @@ If an error occurs you should check that you're correctly providing the location
 
 ### QR Codes
 
-Scanning a QR code is the first and only step before localizing. Because we are trying to localize a vehicle and not the device itself, we need a way to determine the vehicle's position relative to the device. This is accomplished by setting an anchor in the `ARSession` and it's done automatically when the user scans a QR code. The SDK doesn't care about the contents of the QR code and by default will start localizing after any QR code is detected. If your app does care about the contents of the QR code, they can be validated by implementing the `FMParkingViewController` method:
+Scanning a QR code is the first and only step before localizing. Because we are trying to localize a vehicle and not the device itself, we need a way to determine the vehicle's position relative to the device. This is accomplished by setting an anchor in the `ARSession` and it's done automatically when the user scans a QR code. 
+
+The SDK doesn't care about the contents of the QR code and by default will start localizing after any QR code is detected. If your app does care about the contents of the QR code, they can be validated by implementing the `FMParkingViewController` method:
 ```kotlin
 override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
-    // Optional validation of the QR code can be done here
+    // Validation of the QR code can be done here
     onValidQRCode(true)
 }
 ```
 **Important:** If you implement this method, you must call the `onValidQRCode` with a boolean value. A value of `true` indicates the QR code is valid and that localization should start. Passing `false` to this block indicates the code is invalid and instructs the parking view to scan for more QR codes. This block may be called synchronously or asynchronously but must be done so on the main queue.
+
+If a QR code cannot be scanned and/or you've collected the necessary info from the user manually, then you may skip this step and proceed directly to localization.
+```kotlin
+private fun handleSkipQRScanning() {
+    fmParkingView.skipQRScanning()
+}
+```
+
+During a QR code scanning session, it is not possible to turn on the flashlight due to ARCore being used on the FMParkingView. ARCore blocks any input regarding turning on/off the flashlight during an AR session, limiting QR code readability on dark environments.
 
 ### Localizing
 

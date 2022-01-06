@@ -37,6 +37,7 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     private var excessiveMotionTv: TextView = arLayout.findViewById(R.id.excessiveMotionTextView)
     private var insufficientFeaturesTv: TextView =
         arLayout.findViewById(R.id.insufficientFeaturesTextView)
+
     private var pitchLowTv: TextView = arLayout.findViewById(R.id.pitchLowTextView)
     private var pitchHighTv: TextView = arLayout.findViewById(R.id.pitchHighTextView)
     private var blurryTv: TextView = arLayout.findViewById(R.id.blurryTextView)
