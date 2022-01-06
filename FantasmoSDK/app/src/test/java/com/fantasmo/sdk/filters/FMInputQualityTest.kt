@@ -19,12 +19,12 @@ import org.robolectric.annotation.Config
 @Config(sdk = [Build.VERSION_CODES.O_MR1])
 @RunWith(RobolectricTestRunner::class)
 @ExperimentalCoroutinesApi
-class FMFrameFilterChainTest {
+class FMInputQualityFilterTest {
 
     @Test
     fun testShouldForceAcceptTrue() {
         val context = Mockito.mock(Context::class.java)
-        val filter = FMFrameFilterChain(context)
+        val filter = FMInputQualityFilter(context)
         val frame = Mockito.mock(Frame::class.java)
         val camera = Mockito.mock(Camera::class.java)
         Mockito.`when`(frame.camera).thenReturn(camera)
@@ -42,7 +42,7 @@ class FMFrameFilterChainTest {
     @Test
     fun testShouldForceAcceptFalse() {
         val context = Mockito.mock(Context::class.java)
-        val filter = FMFrameFilterChain(context)
+        val filter = FMInputQualityFilter(context)
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
@@ -84,13 +84,13 @@ class FMFrameFilterChainTest {
     @Test
     fun testFrameCheck() {
         val instrumentationContext = InstrumentationRegistry.getInstrumentation().context
-        val filter = FMFrameFilterChain(instrumentationContext)
+        val filter = FMInputQualityFilter(instrumentationContext)
 
         val fmBlurFilterRule = FMBlurFilter(instrumentationContext)
         val spyFMBlurFilterRule = Mockito.spy(fmBlurFilterRule)
 
         filter.filters = listOf(
-            FMMovementFilter(rc!!.movementFilterThreshold),
+            FMMovementFilter(),
             FMCameraPitchFilter(instrumentationContext)
         )
 

@@ -14,8 +14,6 @@ class FrameFilterRejectionStatistics {
     var insufficientMotionFrameCount = 0
     var insufficientFeatures = 0
     var excessiveMotionFrameCount = 0
-    var imageQualityFrameCount = 0
-
 
     /**
      * During shouldLocalize call, frames are filtered from rejected and accepted.
@@ -43,9 +41,6 @@ class FrameFilterRejectionStatistics {
             }
             FMFilterRejectionReason.INSUFFICIENTFEATURES -> {
                 insufficientFeatures += 1
-            }
-            FMFilterRejectionReason.IMAGEQUALITYSCOREBELOWTHRESHOLD -> {
-                imageQualityFrameCount += 1
             }
         }
     }

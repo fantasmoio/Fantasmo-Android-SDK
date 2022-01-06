@@ -225,9 +225,9 @@ class FMLocationManagerTest {
 
         val context = mock(Context::class.java)
 
-        val frameFilter = FMFrameFilterChain(instrumentationContext)
+        val frameFilter = FMInputQualityFilter(instrumentationContext)
         frameFilter.filters = listOf(
-            FMMovementFilter(rc!!.movementFilterThreshold),
+            FMMovementFilter(),
             FMCameraPitchFilter(context)
         )
         val fieldFrameFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
@@ -385,9 +385,9 @@ class FMLocationManagerTest {
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
         val context = mock(Context::class.java)
 
-        val filter2 = FMFrameFilterChain(instrumentationContext)
+        val filter2 = FMInputQualityFilter(instrumentationContext)
         filter2.filters = listOf(
-            FMMovementFilter(rc!!.movementFilterThreshold),
+            FMMovementFilter(),
             FMCameraPitchFilter(context)
         )
         val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
@@ -480,9 +480,9 @@ class FMLocationManagerTest {
 
         val fmBlurFilterRule = FMBlurFilter(instrumentationContext2)
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
-        val filter2 = FMFrameFilterChain(instrumentationContext)
+        val filter2 = FMInputQualityFilter(instrumentationContext)
         filter2.filters = listOf(
-            FMMovementFilter(rc!!.movementFilterThreshold),
+            FMMovementFilter(),
             FMCameraPitchFilter(context)
         )
         val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
@@ -570,9 +570,9 @@ class FMLocationManagerTest {
 
         val fmBlurFilterRule = FMBlurFilter(instrumentationContext3)
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
-        val filter2 = FMFrameFilterChain(instrumentationContext)
+        val filter2 = FMInputQualityFilter(instrumentationContext)
         filter2.filters = listOf(
-            FMMovementFilter(rc!!.movementFilterThreshold),
+            FMMovementFilter(),
             FMCameraPitchFilter(context)
         )
         val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")

@@ -7,9 +7,9 @@ import com.google.ar.core.Frame
 /**
  * Class responsible for filtering frames according the implemented filters
  */
-class FMFrameFilterChain(context: Context) {
+class FMInputQualityFilter(context: Context) {
 
-    private val TAG = FMFrameFilterChain::class.java.simpleName
+    private val TAG = FMInputQualityFilter::class.java.simpleName
 
     // the last time a frame was accepted
     private var lastAcceptTime: Long = System.nanoTime()
@@ -28,7 +28,6 @@ class FMFrameFilterChain(context: Context) {
             FMTrackingStateFilter(),
             FMCameraPitchFilter(context),
             FMMovementFilter(),
-            FMImageQualityFilter(context),
             FMBlurFilter(context)
         )
     } else {

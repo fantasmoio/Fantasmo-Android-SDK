@@ -10,9 +10,8 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import com.fantasmo.sdk.filters.BehaviorRequester
-import com.fantasmo.sdk.filters.FMFrameFilterChain
+import com.fantasmo.sdk.filters.FMInputQualityFilter
 import com.fantasmo.sdk.filters.FMFrameFilterResult
-import com.fantasmo.sdk.filters.FMImageQualityFilter
 import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMZone
@@ -67,7 +66,7 @@ class FMLocationManager(private val context: Context) {
     private var isConnected = false
 
     // Used to validate frame for sufficient quality before sending to API.
-    private lateinit var frameFilterChain: FMFrameFilterChain
+    private lateinit var frameFilterChain: FMInputQualityFilter
 
     // Throttler for invalid frames.
     private lateinit var behaviorRequester: BehaviorRequester
@@ -96,7 +95,7 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(context, token)
-        frameFilterChain = FMFrameFilterChain(context)
+        frameFilterChain = FMInputQualityFilter(context)
         behaviorRequester = BehaviorRequester {
             fmLocationListener?.locationManager(didRequestBehavior = it)
         }
@@ -306,15 +305,6 @@ class FMLocationManager(private val context: Context) {
             }
         } else {
             frameEventAccumulator.accumulate(filterResult.getRejectedReason()!!)
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            if (frameFilterChain.isImageQualityFilterEnabled) {
-                val filter = frameFilterChain.filters[3] as FMImageQualityFilter
-                accumulatedARCoreInfo.lastImageQualityScore = filter.lastImageQualityScore
-                accumulatedARCoreInfo.scoreThreshold = filter.scoreThreshold.toFloat()
-                accumulatedARCoreInfo.modelVersion = filter.modelVersion
-            }
         }
         fmLocationListener?.locationManager(arFrame, accumulatedARCoreInfo, frameEventAccumulator)
     }

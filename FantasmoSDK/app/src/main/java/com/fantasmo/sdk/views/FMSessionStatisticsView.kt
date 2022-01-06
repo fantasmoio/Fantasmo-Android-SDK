@@ -37,16 +37,13 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     private var excessiveMotionTv: TextView = arLayout.findViewById(R.id.excessiveMotionTextView)
     private var insufficientFeaturesTv: TextView =
         arLayout.findViewById(R.id.insufficientFeaturesTextView)
+
     private var pitchLowTv: TextView = arLayout.findViewById(R.id.pitchLowTextView)
     private var pitchHighTv: TextView = arLayout.findViewById(R.id.pitchHighTextView)
     private var blurryTv: TextView = arLayout.findViewById(R.id.blurryTextView)
     private var tooFastTv: TextView = arLayout.findViewById(R.id.tooFastTextView)
     private var tooLittleTv: TextView = arLayout.findViewById(R.id.tooLittleTextView)
     private var featuresTv: TextView = arLayout.findViewById(R.id.featuresTextView)
-
-    private var imageQualityModelVersion: TextView = arLayout.findViewById(R.id.imageQualityVersionTextview)
-    private var imageQualityInsufficient: TextView = arLayout.findViewById(R.id.imageQualityInsufficientTextView)
-    private var imageQualityLastResult: TextView = arLayout.findViewById(R.id.lastResultIQTextView)
 
     fun updateStats(
         frame: Frame,
@@ -85,10 +82,6 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         tooFastTv.text = rejections.excessiveMotionFrameCount.toString()
         tooLittleTv.text = rejections.insufficientMotionFrameCount.toString()
         featuresTv.text = rejections.insufficientFeatures.toString()
-
-        imageQualityModelVersion.text = info.modelVersion
-        imageQualityLastResult.text = info.lastImageQualityScore.toString()
-        imageQualityInsufficient.text = rejections.imageQualityFrameCount.toString()
 
         val stringDistance =
             String.format("%.2f", info.translationAccumulator.totalTranslation) + " m"
