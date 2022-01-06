@@ -61,7 +61,7 @@ android {
             outputFileName = newName
         }
     }
-    
+
 }
 
 dependencies {

@@ -131,10 +131,9 @@ class FMNetworkManagerTest {
             "https://api.fantasmo.io/v1/parking.in.radius",
             getZoneInRadiusParams(10),
             token,
-            {
-            },
-            onError
-        )
+        ) {
+        }
+
         assertNotNull(reqZoneIsInRadius)
         assertNotNull(fmNetworkManager.multipartRequest)
 

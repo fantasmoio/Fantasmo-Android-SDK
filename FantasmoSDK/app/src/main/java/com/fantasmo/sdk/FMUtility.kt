@@ -254,6 +254,14 @@ class FMUtility {
             hasPassedBlurFilter = byteArrayFrame != null
             frameToByteArray = byteArrayFrame
         }
+
+        /**
+         * Before QRScanning, the flag HasPassedImageQualityTest
+         * must be reseted in order to enable a new QRCode search
+         */
+        fun setFalse() {
+            hasPassedBlurFilter = false
+        }
     }
 
     object Constants {

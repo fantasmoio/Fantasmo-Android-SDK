@@ -17,13 +17,10 @@ class FMInputQualityFilter(context: Context) {
     // number of seconds after which we force acceptance
     private var acceptanceThreshold = 1.0
 
-    var isImageQualityFilterEnabled = false
-
     /**
      * List of filter rules to apply on frame received.
      */
     var filters = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-        isImageQualityFilterEnabled = true
         listOf(
             FMTrackingStateFilter(),
             FMCameraPitchFilter(context),

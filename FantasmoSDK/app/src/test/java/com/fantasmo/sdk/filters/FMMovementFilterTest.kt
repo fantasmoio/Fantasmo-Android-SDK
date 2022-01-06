@@ -12,7 +12,7 @@ class FMMovementFilterTest {
 
     @Test
     fun testMovementFilterAccepts() {
-        val filter = FMMovementFilter(rc!!.movementFilterThreshold)
+        val filter = FMMovementFilter()
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
@@ -39,7 +39,7 @@ class FMMovementFilterTest {
 
     @Test
     fun testMovementFilterRejects() {
-        val filter = FMMovementFilter(rc!!.movementFilterThreshold)
+        val filter = FMMovementFilter()
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
