@@ -21,6 +21,7 @@ import com.fantasmo.sdk.FMResultConfidence
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.views.FMParkingView
 import com.fantasmo.sdk.views.FMParkingViewProtocol
+import com.google.mlkit.vision.barcode.Barcode
 import java.util.*
 
 /**
@@ -223,12 +224,22 @@ class DemoFragment : Fragment() {
      */
     private val fmParkingViewController: FMParkingViewProtocol =
         object : FMParkingViewProtocol {
-            override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
-                Log.d(TAG, "QR Code Scan Successful")
+            override fun fmParkingView(qrCodeString: String, continueBlock: (Boolean) -> Unit) {
+                Log.d(TAG, "QR Code Scan Successful From String")
+                val validQRCode = qrCodeString.isNotEmpty()
                 // Optional validation of the QR code can be done here
-                // Note: If you choose to implement this method, you must call the `onValidQRCode` with the validation result
+                // Note: If you choose to implement this method, you must call the `continueBlock` with the validation result
                 // show dialogue to accept or refuse
-                onValidQRCode(true)
+                continueBlock(validQRCode)
+            }
+
+            override fun fmParkingView(qrCode: Barcode, continueBlock: (Boolean) -> Unit) {
+                Log.d(TAG, "QR Code Scan Successful From Barcode")
+                val validQRCode = qrCode.rawValue!=null
+                // Optional validation of the QR code can be done here
+                // Note: If you choose to implement this method, you must call the `continueBlock` with the validation result
+                // show dialogue to accept or refuse
+                continueBlock(validQRCode)
             }
 
             override fun fmParkingView(result: FMLocationResult) {

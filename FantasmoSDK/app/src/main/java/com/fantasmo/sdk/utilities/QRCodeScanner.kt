@@ -77,9 +77,7 @@ class QRCodeScanner(
                     barcodeScanner.process(inputImage)
                         .addOnSuccessListener { barcodes ->
                             barcodes.forEach {
-                                val value = it.rawValue!!
-                                Log.d(TAG, value)
-                                displayQRScanResult(value)
+                                displayQRScanBarcodeResult(it)
                             }
                         }
                         .addOnFailureListener {
@@ -101,12 +99,12 @@ class QRCodeScanner(
         }
     }
 
-    private fun displayQRScanResult(value: String) {
+    private fun displayQRScanBarcodeResult(qrCode: Barcode){
         qrCodeScannerListener.qrCodeScanned()
         qrFound = true
-        val stringScan = "QRCodeDetected with value: $value"
+        val stringScan = "QRCodeDetected with value: ${qrCode.rawValue}"
         fmQrScanningViewController.didScanQRCode(stringScan)
-        fmParkingViewController.fmParkingView(value) {
+        fmParkingViewController.fmParkingView(qrCode) {
             if (it) {
                 Log.d(TAG, "QR CODE ACCEPTED")
                 qrCodeScannerListener.deployLocalizing()

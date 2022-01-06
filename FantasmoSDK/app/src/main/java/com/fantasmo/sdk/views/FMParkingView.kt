@@ -165,7 +165,7 @@ class FMParkingView @JvmOverloads constructor(
 
         appSessionId = sessionId
 
-        fmQRScanningView = FMQRScanningView(arLayout, this)
+        fmQRScanningView = FMQRScanningView(context, arLayout, this)
 
         fmLocalizingView = FMLocalizingView(arLayout, this)
 
@@ -217,18 +217,6 @@ class FMParkingView @JvmOverloads constructor(
         }
         fmSessionStatisticsView.reset()
         this.visibility = View.GONE
-    }
-    /**
-     * Skips the QR-code scanning step and starts localizing.
-     * This method can be used if a QR code is illegible or after a code was manually entered by the user.
-     */
-    fun skipQRScanning() {
-        if (state != State.QRSCANNING) {
-            return
-        }
-        // Set an AR anchor now, since we didn't scan a QR code
-        fmARCoreView.startAnchor()
-        startLocalizing()
     }
 
     fun onResume() {
@@ -336,6 +324,30 @@ class FMParkingView @JvmOverloads constructor(
 
         fmLocalizingViewController.didStartLocalizing()
         fmParkingViewController.fmParkingViewDidStartLocalizing()
+    }
+
+    /**
+     * Provide a manually-entered QR code string and proceed to localization.
+     *
+     * If validation of the entered string is needed, it should be done in `fmparkingView(_:didEnterQRCodeString:continueBlock:)`
+     * of your `FMParkingView`. This method does nothing if the QR-code scanner is inactive, or if another code is being
+     * validated.
+     */
+    fun enterQRCode(string: String) {
+        if (state != State.QRSCANNING) {
+            return
+        }
+        // Set an AR anchor now
+        fmARCoreView.startAnchor()
+        fmParkingViewController.fmParkingView(string){
+            if (it) {
+                Log.d(TAG, "QR CODE ACCEPTED")
+                qrCodeScannerListener.deployLocalizing()
+            } else {
+                Log.d(TAG, "QR CODE REFUSED")
+                qrCodeScannerListener.deployQRScanning()
+            }
+        }
     }
 
     /**
