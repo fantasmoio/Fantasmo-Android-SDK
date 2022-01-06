@@ -24,7 +24,6 @@ class FMUtility {
 
     companion object {
         private var hasPassedBlurFilter: Boolean = false
-        private var hasPassedImageQualityFilter: Boolean = false
         private val TAG = FMUtility::class.java.simpleName
         private var frameToByteArray : ByteArray? = null
         /**
@@ -33,7 +32,7 @@ class FMUtility {
          * @return a ByteArray with the data of the [arFrame]
          */
         fun getImageDataFromARFrame(context: Context, arFrame: Frame): ByteArray {
-            val localBa: ByteArray? = if(!hasPassedBlurFilter || !hasPassedImageQualityFilter){
+            val localBa: ByteArray? = if(!hasPassedBlurFilter){
                 acquireFrameImage(arFrame)
             }else{
                 frameToByteArray
@@ -226,9 +225,6 @@ class FMUtility {
          * @return `ByteArrayOutputStream` or `null` in case of exception
          */
         fun acquireFrameImage(arFrame: Frame): ByteArray? {
-            if(hasPassedImageQualityFilter){
-                return frameToByteArray
-            }
             try {
                 val cameraImage = arFrame.acquireCameraImage()
                 arFrame.acquireCameraImage().close()
@@ -257,30 +253,6 @@ class FMUtility {
         fun setFrame(byteArrayFrame: ByteArray?) {
             hasPassedBlurFilter = byteArrayFrame != null
             frameToByteArray = byteArrayFrame
-        }
-
-        /**
-         * This avoids AR frames from being converted twice to `ByteArray`.
-         *
-         * Also prevents outdated frames from throwing `DeadlineExceededException`
-         * after being analyzed on the `ImageQualityFilter`
-         * @param image The image contained in the ARFrame
-         */
-        fun setFrameQualityTest(image: Image?) {
-            if(image!=null){
-                hasPassedImageQualityFilter = true
-                frameToByteArray = createByteArrayOutputStream(image).toByteArray()
-            }
-        }
-
-        /**
-         * Before QRScanning, the flags HasPassedBlurFilter and
-         * HasPassedImageQualityTest must be reseted in order
-         * to enable a new QRCode search
-         */
-        fun setFalse() {
-            hasPassedBlurFilter = false
-            hasPassedImageQualityFilter = false
         }
     }
 

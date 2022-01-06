@@ -33,20 +33,6 @@ implementation 'com.google.mlkit:barcode-scanning:17.0.0'
 implementation 'com.google.code.gson:gson:2.8.6'
 implementation 'com.android.volley:volley:1.2.0'
 
-// TensorFlow Lite
-implementation 'org.tensorflow:tensorflow-lite-support:0.1.0'
-implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0'
-implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
-```
-
-## Building
-
-On the module-level `build.gradle`, inside the `android` properties you should add the following instruction. This will allow to add a machine learning model and to loaded it when in a Localizing Session.
-```kotlin
-    aaptOptions {
-        noCompress "tflite"
-        noCompress "lite"
-    }
 ```
 
 ## Permissions and requirements

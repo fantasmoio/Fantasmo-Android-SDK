@@ -66,10 +66,12 @@ class FMLocationManager(private val context: Context) {
     private var isConnected = false
 
     // Used to validate frame for sufficient quality before sending to API.
-    private lateinit var frameFilterChain: FMInputQualityFilter
+    private lateinit var frameFilter: FMInputQualityFilter
 
     // Throttler for invalid frames.
-    private lateinit var behaviorRequester: BehaviorRequester
+    private var behaviorRequester = BehaviorRequester {
+        fmLocationListener?.locationManager(didRequestBehavior = it)
+    }
 
     private var motionManager = MotionManager(context)
 
@@ -95,10 +97,7 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(context, token)
-        frameFilterChain = FMInputQualityFilter(context)
-        behaviorRequester = BehaviorRequester {
-            fmLocationListener?.locationManager(didRequestBehavior = it)
-        }
+        frameFilter = FMInputQualityFilter(context)
         fmLocationListener?.locationManager(state)
     }
 
@@ -142,7 +141,7 @@ class FMLocationManager(private val context: Context) {
         fmLocationListener?.locationManager(state)
         motionManager.restart()
         accumulatedARCoreInfo.reset()
-        this.frameFilterChain.restart()
+        this.frameFilter.restart()
         this.behaviorRequester.restart()
         this.locationFuser.reset()
         frameEventAccumulator.reset()
@@ -289,7 +288,7 @@ class FMLocationManager(private val context: Context) {
         ) {
             // run the frame through the configured filters
             isEvaluatingFrame = true
-            frameFilterChain.evaluateAsync(arFrame) { filterResult ->
+            frameFilter.evaluateAsync(arFrame) { filterResult ->
                 processFrame(arFrame, filterResult)
                 isEvaluatingFrame = false
             }
