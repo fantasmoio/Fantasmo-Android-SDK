@@ -73,3 +73,10 @@ Version 3.0.0
 	- MW-414 Clicking X should bring user back to main menu instead of closing app
 	- MW-419 Send GPS coordinates on Parking call
 	- MW-420 End ride can be tapped multiple times
+
+Version 3.0.1
+- MW-504 Add Accuracy values
+- MW-512 Feature Allow skipping the qr code (replaced)
+- MW-510 Add FlashLight toggle button to default QR Code scanner
+- MW-513 Send location instead of coordinates for image localize
+- MW-524 Feature Allow manual entry of a qr code
