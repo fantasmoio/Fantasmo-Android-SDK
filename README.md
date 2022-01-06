@@ -191,12 +191,6 @@ override fun fmParkingView(qrCodeString: String, continueBlock: (Boolean) -> Uni
 
 During a QR code scanning session, it is not possible to turn on the flashlight due to ARCore being used on the FMParkingView. ARCore blocks any input regarding turning on/off the flashlight during an AR session, limiting QR code readability on dark environments.
 
-If a QR code cannot be scanned and/or you've collected the necessary info from the user manually, then you may skip this step and proceed directly to localization.
-```kotlin
-private fun handleSkipQRScanning() {
-    fmParkingView.skipQRScanning()
-}
-```
 
 During a QR code scanning session, it is not possible to turn on the flashlight due to ARCore being used on the FMParkingView. ARCore blocks any input regarding turning on/off the flashlight during an AR session, limiting QR code readability on dark environments.
 
