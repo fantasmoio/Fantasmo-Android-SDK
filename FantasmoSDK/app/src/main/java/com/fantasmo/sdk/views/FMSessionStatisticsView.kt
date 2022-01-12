@@ -175,5 +175,9 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         tooFastTv.text = stringZero
         tooLittleTv.text = stringZero
         featuresTv.text = stringZero
+
+        imageQualityModelVersion.text = stringClear
+        imageQualityLastResult.text = stringZero
+        imageQualityInsufficient.text = stringZero
     }
 }
