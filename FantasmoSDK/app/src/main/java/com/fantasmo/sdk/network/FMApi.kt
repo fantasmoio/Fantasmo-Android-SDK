@@ -13,7 +13,6 @@ import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.models.analytics.MagneticField
 import com.google.ar.core.Frame
 import com.google.gson.Gson
-import org.json.JSONObject
 import java.util.*
 
 /**
@@ -170,17 +169,11 @@ class FMApi(
     private fun getInitializationParams(
         location: Location
     ): HashMap<String, String> {
-        val locationParams = hashMapOf<String, String>()
-
-        locationParams["latitude"] = location.coordinate.latitude.toString()
-        locationParams["longitude"] = location.coordinate.longitude.toString()
-        locationParams["horizontalAccuracy"] = location.horizontalAccuracy.toString()
-        locationParams["verticalAccuracy"] = location.verticalAccuracy.toString()
-
         val params = hashMapOf<String, String>()
-        params["deviceOs"] = "android"
         val gson = Gson()
-        params["coordinate"] = gson.toJson(locationParams)
+        params["deviceOs"] = "android"
+        params["location"] = gson.toJson(location)
+
         Log.i(TAG, "getInitializationRequest: $params")
         return params
     }
