@@ -3,6 +3,7 @@ package com.fantasmo.sdk.views
 import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMLocationResult
 import com.fantasmo.sdk.models.ErrorResponse
+import com.google.mlkit.vision.barcode.Barcode
 
 interface FMParkingViewProtocol {
 
@@ -19,14 +20,27 @@ interface FMParkingViewProtocol {
     /**
      * Called when a QR code is scanned. This method can be used to perform optional validation of the QR code before localization starts.
      *
-     * If you implement this method, you *must* eventually call the `onValidQRCode` with a boolean value. A value of `true` indicates
+     * If you implement this method, you *must* eventually call the `continueBlock` with a boolean value. A value of `true` indicates
      * the code is valid and that localization should start. Passing `false` to this block indicates the code is invalid and instructs
      * the parking view to scan for more QR codes. This block may be called synchronously or asynchronously but must be done so on the
-     * main queue. The default implementation of this method does nothing and will start localizing after any QR code is detected.
-     * @param qrCode the scanned QR code value as String
-     * @param onValidQRCode a block to be called with a boolean value indicating whether or not to continue to localization.
+     * main queue. The default implementation of this method does nothing and simply calls `continueBlock(true)`.
+     * @param qrCode the scanned QR code as `Barcode`
+     * @param continueBlock a block to be called with a boolean value indicating whether or not to continue to localization.
      */
-    fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit){}
+    fun fmParkingView(qrCode: Barcode, continueBlock: (Boolean) -> Unit) {}
+
+    /**
+     * Called when a QR code is manually entered via `enterQRCode(string:)`.
+     *
+     * This method can be used to perform optional validation of the QR code string and decide if localization should start.
+     * If you implement this method, you *must* eventually call the `continueBlock` with a boolean value. A value of `true` indicates
+     * the code entered is valid and that localization should start. Passing `false` to this block indicates the code is invalid and
+     * will allow the user to scan, or manually enter another code. This block may be called synchronously or asynchronously but must
+     * be done so on the main queue. The default implementation does no validation and simply calls `continueBlock(true)`.
+     * @param qrCodeString the manually entered QR code string
+     * @param continueBlock a block to be called with a boolean value indicating whether or not to continue to localization.
+     */
+    fun fmParkingView(qrCodeString: String, continueBlock: (Boolean) -> Unit){}
 
     /**
      * Called when localization has started and the registered `FMLocalizingViewProtocol` is presented.

@@ -77,10 +77,10 @@
         app:layout_constraintVertical_bias="0.100000024" />
 
     <Button
-        android:id="@+id/skipButton"
+        android:id="@+id/enterQRCodeButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/skip"
+        android:text="@string/enter_manually"
         app:backgroundTint="@color/customBlack"
         app:layout_constraintBottom_toBottomOf="@+id/view6"
         app:layout_constraintEnd_toEndOf="@+id/view3"

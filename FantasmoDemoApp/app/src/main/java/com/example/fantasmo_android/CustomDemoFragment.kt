@@ -6,13 +6,11 @@ import android.location.Location
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.Switch
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -32,6 +30,7 @@ import com.fantasmo.sdk.views.FMParkingViewProtocol
 import com.fantasmo.sdk.views.FMQRScanningViewProtocol
 
 import com.google.android.gms.maps.MapView
+import com.google.mlkit.vision.barcode.Barcode
 import java.util.*
 
 /**
@@ -56,7 +55,7 @@ class CustomDemoFragment : Fragment() {
     private lateinit var resultsLayout: ConstraintLayout
     private lateinit var resultTextView: TextView
     private lateinit var mapPinButton: Button
-    private lateinit var skipButton: Button
+    private lateinit var enterQRButton: Button
 
     // Buttons and Views from the QRView
     private lateinit var fmQRView: ConstraintLayout
@@ -93,9 +92,10 @@ class CustomDemoFragment : Fragment() {
         resultsLayout = currentView.findViewById(R.id.resultsLayout)
         resultTextView = currentView.findViewById(R.id.localizationResultView)
         mapPinButton = currentView.findViewById(R.id.mapPinButton)
-        skipButton = currentView.findViewById(R.id.skipButton)
-        skipButton.setOnClickListener{
-            handleSkipQRScanning()
+
+        enterQRButton = currentView.findViewById(R.id.enterQRCodeButton)
+        enterQRButton.setOnClickListener{
+            handleEnterQRCode()
         }
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
@@ -121,8 +121,54 @@ class CustomDemoFragment : Fragment() {
         return currentView
     }
 
-    private fun handleSkipQRScanning() {
-        fmParkingView.skipQRScanning()
+    private fun handleEnterQRCode() {
+        val builder: AlertDialog.Builder = AlertDialog.Builder(context)
+        // Get the layout inflater
+        val inflater = LayoutInflater.from(context).inflate(R.layout.custom_enterqr_dialog, null)
+        val editTextQR: EditText = inflater.findViewById(R.id.editTextQRCode)
+
+        // Inflate and set the layout for the dialog
+        builder.setView(inflater!!)
+            // Add action buttons
+            .setCancelable(false)
+            .setPositiveButton(
+                "Submit"
+            ) { _, _ ->
+                Log.d(TAG, editTextQR.text.toString())
+                //Example of how to enter a QRCode manually
+                fmParkingView.enterQRCode(editTextQR.text.toString())
+            }
+            .setNegativeButton(
+                "Cancel"
+            ) { dialog, _ ->
+                dialog.cancel()
+            }
+        val alert: AlertDialog = builder.create()
+        alert.show()
+        alert.withCenteredButtons()
+    }
+
+    private fun AlertDialog.withCenteredButtons() {
+        val positive = getButton(AlertDialog.BUTTON_POSITIVE)
+        val negative = getButton(AlertDialog.BUTTON_NEGATIVE)
+
+        //Disable the material spacer view in case there is one
+        val parent = positive.parent as? LinearLayout
+        parent?.gravity = Gravity.CENTER_HORIZONTAL
+        val leftSpacer = parent?.getChildAt(1)
+        leftSpacer?.visibility = View.GONE
+
+        //Force the default buttons to center
+        val layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+
+        layoutParams.weight = 1f
+        layoutParams.gravity = Gravity.CENTER
+
+        positive.layoutParams = layoutParams
+        negative.layoutParams = layoutParams
     }
 
     private fun handleEndRideButton() {
@@ -303,21 +349,21 @@ class CustomDemoFragment : Fragment() {
                 Log.d(TAG, "fmParkingViewDidStopQRScanning")
             }
 
-            override fun fmParkingView(qrCode: String, onValidQRCode: (Boolean) -> Unit) {
-                Log.d(TAG, "fmParkingView ShouldContinue")
+            override fun fmParkingView(qrCode: Barcode, continueBlock: (Boolean) -> Unit) {
+                Log.d(TAG, "QR Code Scan Successful From Barcode")
                 // Optional validation of the QR code can be done here
-                // Note: If you choose to implement this method, you must call the `shouldApprove` with the validation result
+                // Note: If you choose to implement this method, you must call the `continueBlock` with the validation result
                 // show dialogue to accept or refuse
                 val builder1: AlertDialog.Builder = AlertDialog.Builder(context)
                 builder1.setTitle("QR Code Scan result")
-                builder1.setMessage(qrCode)
+                builder1.setMessage(qrCode.rawValue)
                 builder1.setCancelable(true)
 
                 builder1.setPositiveButton(
                     "Yes"
                 ) { dialog, _ ->
                     dialog.cancel()
-                    onValidQRCode(true)
+                    continueBlock(true)
                     Log.d(TAG, "QR Code Accepted")
                 }
 
@@ -325,13 +371,41 @@ class CustomDemoFragment : Fragment() {
                     "No"
                 ) { dialog, _ ->
                     dialog.cancel()
-                    onValidQRCode(false)
+                    continueBlock(false)
                     Log.d(TAG, "QR Code Refused")
                 }
 
                 val alert11: AlertDialog = builder1.create()
                 alert11.show()
+            }
+            override fun fmParkingView(qrCodeString: String, continueBlock: (Boolean) -> Unit) {
+                Log.d(TAG, "QR Code Scan Successful From String")
+                // Optional validation of the QR code can be done here
+                // Note: If you choose to implement this method, you must call the `continueBlock` with the validation result
+                // show dialogue to accept or refuse
+                val builder1: AlertDialog.Builder = AlertDialog.Builder(context)
+                builder1.setTitle("QR Code Scan result")
+                builder1.setMessage(qrCodeString)
+                builder1.setCancelable(true)
 
+                builder1.setPositiveButton(
+                    "Yes"
+                ) { dialog, _ ->
+                    dialog.cancel()
+                    continueBlock(true)
+                    Log.d(TAG, "QR Code Accepted")
+                }
+
+                builder1.setNegativeButton(
+                    "No"
+                ) { dialog, _ ->
+                    dialog.cancel()
+                    continueBlock(false)
+                    Log.d(TAG, "QR Code Refused")
+                }
+
+                val alert11: AlertDialog = builder1.create()
+                alert11.show()
             }
 
             override fun fmParkingViewDidStartLocalizing() {

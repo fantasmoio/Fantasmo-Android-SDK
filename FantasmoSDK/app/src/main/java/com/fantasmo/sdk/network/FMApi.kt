@@ -119,6 +119,31 @@ class FMApi(
         }
     }
 
+    fun sendIsLocalizationAvailable(
+        location: Location,
+        onCompletion: (Boolean) -> Unit,
+        onError: (ErrorResponse) -> Unit
+    ) {
+        fmNetworkManager.isLocalizationAvailableRequest(
+            "https://mobility-bff-dev.fantasmo.dev/v2/isLocalizationAvailable",
+            getIsLocalizationAvailableParams(location),
+            token,
+            onCompletion,
+            onError
+        )
+    }
+
+    private fun getIsLocalizationAvailableParams(
+        location: Location,
+    ): HashMap<String, String> {
+        val params = hashMapOf<String, String>()
+
+        params["location"] = Gson().toJson(location)
+
+        Log.i(TAG, "getIsLocalizationAvailableParams: $params")
+        return params
+    }
+
     /**
      * Method to build the Initialize request.
      * @param location Location to search

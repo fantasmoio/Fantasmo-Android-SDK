@@ -24,5 +24,6 @@
     <string name="exit">Exit</string>
     <string name="scan_qr_code">Scan QR Code</string>
     <string name="skip">Skip</string>
+    <string name="enter_manually">Enter Manually</string>
 
 </resources>
