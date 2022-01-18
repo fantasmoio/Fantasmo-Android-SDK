@@ -98,7 +98,7 @@ class FMBlurFilter(
      * @param byteArrayFrame frame converted to ByteArray to measure the variance
      * @return variance blurriness value
      * */
-    private suspend fun calculateVariance(byteArrayFrame: ByteArray?): Float {
+    suspend fun calculateVariance(byteArrayFrame: ByteArray?): Float {
         val reducedHeight = 480
         val reducedWidth = 640
         if (byteArrayFrame == null) {

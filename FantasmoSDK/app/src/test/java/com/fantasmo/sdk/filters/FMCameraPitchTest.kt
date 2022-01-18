@@ -3,6 +3,7 @@ package com.fantasmo.sdk.filters
 import android.content.Context
 import android.view.Display
 import android.view.Surface
+import com.fantasmo.sdk.config.RemoteConfigTest
 import com.google.ar.core.Camera
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
@@ -15,7 +16,10 @@ class FMCameraPitchTest {
     @Test
     fun testPitchFilterAccepts() {
         val context = Mockito.mock(Context::class.java)
-        val filter = FMCameraPitchFilter(context)
+        val filter = FMCameraPitchFilter(
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
+            context)
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
@@ -54,7 +58,10 @@ class FMCameraPitchTest {
     @Test
     fun testPitchFilterRejectsPortraitHIGH() {
         val context = Mockito.mock(Context::class.java)
-        val filter = FMCameraPitchFilter(context)
+        val filter = FMCameraPitchFilter(
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
+            context)
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
@@ -91,7 +98,10 @@ class FMCameraPitchTest {
     @Test
     fun testPitchFilterRejectsPortraitLOW() {
         val context = Mockito.mock(Context::class.java)
-        val filter = FMCameraPitchFilter(context)
+        val filter = FMCameraPitchFilter(
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
+            context)
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
@@ -128,7 +138,10 @@ class FMCameraPitchTest {
     @Test
     fun testPitchFilterRejectsReversePortraitHIGH() {
         val context = Mockito.mock(Context::class.java)
-        val filter = FMCameraPitchFilter(context)
+        val filter = FMCameraPitchFilter(
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
+            context)
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
@@ -165,7 +178,10 @@ class FMCameraPitchTest {
     @Test
     fun testPitchFilterRejectsReversePortraitLOW() {
         val context = Mockito.mock(Context::class.java)
-        val filter = FMCameraPitchFilter(context)
+        val filter = FMCameraPitchFilter(
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
+            context)
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
@@ -202,7 +218,10 @@ class FMCameraPitchTest {
     @Test
     fun testPitchFilterRejectsLandscapeHIGH() {
         val context = Mockito.mock(Context::class.java)
-        val filter = FMCameraPitchFilter(context)
+        val filter = FMCameraPitchFilter(
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
+            context)
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
@@ -239,7 +258,10 @@ class FMCameraPitchTest {
     @Test
     fun testPitchFilterRejectsLandscapeLOW() {
         val context = Mockito.mock(Context::class.java)
-        val filter = FMCameraPitchFilter(context)
+        val filter = FMCameraPitchFilter(
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
+            context)
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
@@ -276,7 +298,10 @@ class FMCameraPitchTest {
     @Test
     fun testPitchFilterRejectsReverseLandscapeHIGH() {
         val context = Mockito.mock(Context::class.java)
-        val filter = FMCameraPitchFilter(context)
+        val filter = FMCameraPitchFilter(
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
+            context)
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
@@ -313,7 +338,10 @@ class FMCameraPitchTest {
     @Test
     fun testPitchFilterRejectsReverseLandscapeLOW() {
         val context = Mockito.mock(Context::class.java)
-        val filter = FMCameraPitchFilter(context)
+        val filter = FMCameraPitchFilter(
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
+            RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
+            context)
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
