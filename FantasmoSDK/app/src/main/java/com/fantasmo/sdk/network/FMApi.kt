@@ -118,6 +118,10 @@ class FMApi(
         }
     }
 
+    /**
+     * Method to build the IsLocalizationAvailable request.
+     * @param location Location to search
+     */
     fun sendIsLocalizationAvailable(
         location: Location,
         onCompletion: (Boolean) -> Unit,
@@ -132,6 +136,11 @@ class FMApi(
         )
     }
 
+    /**
+     * Generate the isLocalizationAvailable HTTP request parameters.
+     * @param location Location to search
+     * @return an HashMap with all the location parameters.
+     */
     private fun getIsLocalizationAvailableParams(
         location: Location,
     ): HashMap<String, String> {
