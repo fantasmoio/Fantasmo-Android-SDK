@@ -10,6 +10,7 @@ import java.io.IOException
 class RemoteConfig {
 
     data class Config(
+        var remoteConfigId: String,
         var frameAcceptanceThresholdTimeout: Float,
         var isBehaviorRequesterEnabled: Boolean,
         var isTrackingStateFilterEnabled: Boolean,
@@ -83,6 +84,7 @@ class RemoteConfig {
          */
         private fun getConfigFromJSON(jsonString: String): Config {
             val configJSON = JSONObject(jsonString)
+            val remoteConfigId = configJSON.optString("remote_config_id")
             val frameAcceptanceThresholdTimeout =
                 configJSON.getString("frame_acceptance_threshold_timeout")
             val isBehaviorRequesterEnabled = configJSON.getBoolean("is_behavior_requester_enabled")
@@ -117,6 +119,7 @@ class RemoteConfig {
             }
 
             val config = Config(
+                remoteConfigId,
                 frameAcceptanceThresholdTimeout.toFloat(),
                 isBehaviorRequesterEnabled,
                 isTrackingStateFilterEnabled,
