@@ -35,7 +35,16 @@ class FMLocalizationAnalytics(
     var frameEvents: FMFrameEvent,
     var rotationSpread: FMRotationSpread,
     var totalDistance: Float,
-    var magneticField: MagneticField
+    var magneticField: MagneticField,
+    var imageQualityFilterInfo: FMImageQualityFilterInfo?
+)
+
+/**
+ * Class to hold ImageQuality Filter Statistics
+ */
+class FMImageQualityFilterInfo(
+    var modelVersion: String,
+    var lastImageQualityScore: Float
 )
 
 /**
