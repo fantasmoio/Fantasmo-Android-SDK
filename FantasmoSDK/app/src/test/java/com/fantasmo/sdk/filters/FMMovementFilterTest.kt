@@ -1,5 +1,6 @@
 package com.fantasmo.sdk.filters
 
+import com.fantasmo.sdk.config.RemoteConfigTest
 import com.google.ar.core.Camera
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
@@ -12,7 +13,7 @@ class FMMovementFilterTest {
 
     @Test
     fun testMovementFilterAccepts() {
-        val filter = FMMovementFilter(rc!!.movementFilterThreshold)
+        val filter = FMMovementFilter(RemoteConfigTest.remoteConfig.movementFilterThreshold)
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
@@ -39,13 +40,13 @@ class FMMovementFilterTest {
 
     @Test
     fun testMovementFilterRejects() {
-        val filter = FMMovementFilter(rc!!.movementFilterThreshold)
+        val filter = FMMovementFilter(RemoteConfigTest.remoteConfig.movementFilterThreshold)
         val frame = Mockito.mock(Frame::class.java)
         val pose = Pose(
             floatArrayOf(
-                (-0.01).toFloat(),
-                (-0.01).toFloat(),
-                0.01F
+                (-0.001).toFloat(),
+                (-0.001).toFloat(),
+                0.001F
             ),
             floatArrayOf(
                 0.01F, 0.01F, 0.01F,

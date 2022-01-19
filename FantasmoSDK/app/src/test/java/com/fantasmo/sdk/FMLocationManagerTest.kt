@@ -7,13 +7,19 @@ import android.os.Build
 import android.view.Display
 import android.view.Surface
 import androidx.test.platform.app.InstrumentationRegistry
+import com.fantasmo.sdk.config.RemoteConfig
+import com.fantasmo.sdk.config.RemoteConfigTest
 import com.fantasmo.sdk.filters.*
-import com.fantasmo.sdk.models.*
+import com.fantasmo.sdk.models.ErrorResponse
+import com.fantasmo.sdk.models.FMOrientation
+import com.fantasmo.sdk.models.FMPose
+import com.fantasmo.sdk.models.FMPosition
+import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
+import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.google.ar.core.*
-import com.google.ar.core.Pose
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
@@ -60,6 +66,8 @@ class FMLocationManagerTest {
     private val height = 480
     private val width = 640
 
+    private val location = android.location.Location("")
+
     private val token = "API_KEY"
 
     @Before
@@ -67,12 +75,16 @@ class FMLocationManagerTest {
         context = mock(Context::class.java)
         instrumentationContext = InstrumentationRegistry.getInstrumentation().context
 
+        RemoteConfig.remoteConfig = RemoteConfigTest.remoteConfig
+
+        location.latitude = latitude
+        location.longitude = longitude
         fmLocationManager = FMLocationManager(instrumentationContext)
 
         fmLocationManager.connect(token, fmLocationListener)
         val fieldCoroutineScope = fmLocationManager.javaClass.getDeclaredField("coroutineScope")
         fieldCoroutineScope.isAccessible = true
-        fieldCoroutineScope.set(fmLocationManager,testScope)
+        fieldCoroutineScope.set(fmLocationManager, testScope)
 
         spyMotionManager = MotionManager(instrumentationContext)
         val methodDisableSensor = spyMotionManager.javaClass.getDeclaredMethod("disableSensor")
@@ -81,7 +93,7 @@ class FMLocationManagerTest {
 
         val fieldMotionManager = fmLocationManager.javaClass.getDeclaredField("motionManager")
         fieldMotionManager.isAccessible = true
-        fieldMotionManager.set(fmLocationManager,spyMotionManager)
+        fieldMotionManager.set(fmLocationManager, spyMotionManager)
 
         spyFMLocationManager = spy(fmLocationManager)
 
@@ -95,8 +107,8 @@ class FMLocationManagerTest {
     }
 
     @Test
-    fun testSetLocation(){
-        fmLocationManager.setLocation(latitude, longitude)
+    fun testSetLocation() {
+        fmLocationManager.setLocation(location)
         assertNotNull(fmLocationManager.currentLocation)
     }
 
@@ -193,12 +205,41 @@ class FMLocationManagerTest {
         assertEquals(expectedFMPose.orientation.w, anchorDeltaPose.orientation.w)
     }
 
-    // Should Localize
+    /**
+     * Asserts counters to check if they are not
+     * being updated because filters are disabled
+     */
     @Test
     fun testShouldLocalizeFiltersDisabled() {
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample", false)
+        RemoteConfig.remoteConfig = RemoteConfigTest.remoteConfigDisabledFilters
+        val instrumentationContext = InstrumentationRegistry.getInstrumentation().context
+        val fmLocationManager = FMLocationManager(instrumentationContext)
+        fmLocationManager.connect(token, fmLocationListener)
+
+        val fieldMotionManager = fmLocationManager.javaClass.getDeclaredField("motionManager")
+        fieldMotionManager.isAccessible = true
+        fieldMotionManager.set(fmLocationManager, spyMotionManager)
+
+        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
+
+        val fieldCoroutineScope = fmLocationManager.javaClass.getDeclaredField("coroutineScope")
+        fieldCoroutineScope.isAccessible = true
+        fieldCoroutineScope.set(fmLocationManager, testScope)
+
+        val spyFMLocationManager = spy(fmLocationManager)
+
+        val spyFMApi = spy(spyFMLocationManager.fmApi)
+        val spyFMNetworkManager = spy(spyFMApi.fmNetworkManager)
+
         fmLocationManager.isSimulation = false
-        fmLocationManager.setLocation(latitude, longitude)
+
+        fmLocationManager.setLocation(location)
+
+        val filter2 = FMFrameFilterChain(instrumentationContext)
+
+        val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilterChain")
+        testFilter.isAccessible = true
+        testFilter.set(spyFMLocationManager, filter2)
 
         val frame = mock(Frame::class.java)
         val camera = mock(Camera::class.java)
@@ -210,29 +251,57 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(cameraPose)
         `when`(frame.androidSensorPose).thenReturn(cameraPose)
 
-        assertEquals(true, fmLocationManager.session(frame))
+        val accumulatedARCoreInfo = AccumulatedARCoreInfo()
+        val fieldAccumulatedARCoreInfo = fmLocationManager.javaClass.getDeclaredField("accumulatedARCoreInfo")
+        fieldAccumulatedARCoreInfo.isAccessible = true
+        fieldAccumulatedARCoreInfo.set(fmLocationManager,accumulatedARCoreInfo)
+        fmLocationManager.session(frame)
+        assertEquals(1, accumulatedARCoreInfo.elapsedFrames)
+
+        val frameFilterStats = FrameFilterRejectionStatistics()
+        val fieldFrameStatistics = fmLocationManager.javaClass.getDeclaredField("frameEventAccumulator")
+        fieldFrameStatistics.isAccessible = true
+        fieldFrameStatistics.set(fmLocationManager,frameFilterStats)
+        val field = frameFilterStats.javaClass.getDeclaredField("totalFrameCount")
+        field.isAccessible = true
+        val fieldValue = field.get(frameFilterStats)
+
+        assertEquals(0, fieldValue)
     }
 
+    /**
+     * Asserts counters are being updated as a frame is accepted for localization
+     */
     @Test
     fun testShouldLocalizeFrameAccepted() {
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample",true)
+        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
         fmLocationManager.isSimulation = false
-        fmLocationManager.setLocation(latitude, longitude)
+        fmLocationManager.setLocation(location)
 
         val instrumentationContext = InstrumentationRegistry.getInstrumentation().context
-        val fmBlurFilterRule = FMBlurFilter(instrumentationContext)
+        val fmBlurFilterRule = FMBlurFilter(
+            RemoteConfigTest.remoteConfig.blurFilterVarianceThreshold,
+            RemoteConfigTest.remoteConfig.blurFilterSuddenDropThreshold,
+            RemoteConfigTest.remoteConfig.blurFilterAverageThroughputThreshold,
+            instrumentationContext
+        )
         val spyFMBlurFilterRule = spy(fmBlurFilterRule)
 
         val context = mock(Context::class.java)
 
         val frameFilter = FMFrameFilterChain(instrumentationContext)
         frameFilter.filters = listOf(
-            FMMovementFilter(rc!!.movementFilterThreshold),
-            FMCameraPitchFilter(context)
-        )
-        val fieldFrameFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
+            FMMovementFilter(RemoteConfigTest.remoteConfig.movementFilterThreshold),
+            FMCameraPitchFilter(
+                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
+                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
+                context
+            )
+        ) as MutableList<FMFrameFilter>
+
+        val fieldFrameFilter = fmLocationManager.javaClass.getDeclaredField("frameFilterChain")
         fieldFrameFilter.isAccessible = true
-        fieldFrameFilter.set(fmLocationManager,frameFilter)
+        fieldFrameFilter.set(fmLocationManager, frameFilter)
 
         val frame = mock(Frame::class.java)
         val camera = mock(Camera::class.java)
@@ -257,14 +326,32 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
-        assertEquals(true, fmLocationManager.session(frame))
+        val accumulatedARCoreInfo = AccumulatedARCoreInfo()
+        val fieldAccumulatedARCoreInfo = fmLocationManager.javaClass.getDeclaredField("accumulatedARCoreInfo")
+        fieldAccumulatedARCoreInfo.isAccessible = true
+        fieldAccumulatedARCoreInfo.set(fmLocationManager,accumulatedARCoreInfo)
+        fmLocationManager.session(frame)
+        assertEquals(1, accumulatedARCoreInfo.elapsedFrames)
+
+        val frameFilterStats = FrameFilterRejectionStatistics()
+        val fieldFrameStatistics = fmLocationManager.javaClass.getDeclaredField("frameEventAccumulator")
+        fieldFrameStatistics.isAccessible = true
+        fieldFrameStatistics.set(fmLocationManager,frameFilterStats)
+        val field = frameFilterStats.javaClass.getDeclaredField("totalFrameCount")
+        field.isAccessible = true
+        val fieldValue = field.get(frameFilterStats)
+
+        assertEquals(0, fieldValue)
     }
 
+    /**
+     * Asserts counters are being updated as a frame is not accepted for localization
+     */
     @Test
     fun testShouldLocalizeFrameRejected() {
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample",true)
-        fmLocationManager.isSimulation = false
-        fmLocationManager.setLocation(latitude, longitude)
+        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
+        fmLocationManager.isSimulation = true
+        fmLocationManager.setLocation(location)
 
         val frame = mock(Frame::class.java)
         val camera = mock(Camera::class.java)
@@ -290,7 +377,41 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
-        assertEquals(false, fmLocationManager.session(frame))
+        val frameFilter = FMFrameFilterChain(instrumentationContext)
+        frameFilter.filters = listOf(
+            FMMovementFilter(RemoteConfigTest.remoteConfig.movementFilterThreshold),
+            FMCameraPitchFilter(
+                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
+                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
+                context
+            )
+        ) as MutableList<FMFrameFilter>
+
+        val fieldFrameFilter = fmLocationManager.javaClass.getDeclaredField("frameFilterChain")
+        fieldFrameFilter.isAccessible = true
+        fieldFrameFilter.set(fmLocationManager, frameFilter)
+
+        val lastAcceptTime = System.nanoTime()
+        val fieldLastAcceptTime = frameFilter.javaClass.getDeclaredField("lastAcceptTime")
+        fieldLastAcceptTime.isAccessible = true
+        fieldLastAcceptTime.set(frameFilter, lastAcceptTime)
+
+        val accumulatedARCoreInfo = AccumulatedARCoreInfo()
+        val fieldAccumulatedARCoreInfo = fmLocationManager.javaClass.getDeclaredField("accumulatedARCoreInfo")
+        fieldAccumulatedARCoreInfo.isAccessible = true
+        fieldAccumulatedARCoreInfo.set(fmLocationManager,accumulatedARCoreInfo)
+        fmLocationManager.session(frame)
+        assertEquals(1, accumulatedARCoreInfo.elapsedFrames)
+
+        val frameFilterStats = FrameFilterRejectionStatistics()
+        val fieldFrameStatistics = fmLocationManager.javaClass.getDeclaredField("frameEventAccumulator")
+        fieldFrameStatistics.isAccessible = true
+        fieldFrameStatistics.set(fmLocationManager,frameFilterStats)
+        val field = frameFilterStats.javaClass.getDeclaredField("totalFrameCount")
+        field.isAccessible = true
+        val fieldValue = field.get(frameFilterStats)
+
+        assertEquals(0, fieldValue)
     }
 
     // Localize Test Batch
@@ -305,35 +426,18 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(cameraPose)
         `when`(frame.androidSensorPose).thenReturn(cameraPose)
 
-        fmLocationManager.localize(frame)
+        fmLocationManager.session(frame)
 
         assertEquals(FMLocationManager.State.STOPPED, fmLocationManager.state)
-    }
-
-    @Test
-    fun testLocalizeZeroCoords(){
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
-        fmLocationManager.isSimulation = false
-        val frame = mock(Frame::class.java)
-        val camera = mock(Camera::class.java)
-        `when`(frame.camera).thenReturn(camera)
-        `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
-        val cameraPose = getAcceptedPose()
-        `when`(frame.camera.pose).thenReturn(cameraPose)
-        `when`(frame.androidSensorPose).thenReturn(cameraPose)
-
-        fmLocationManager.localize(frame)
-
-        assertEquals(FMLocationManager.State.LOCALIZING, fmLocationManager.state)
     }
 
     // Localize Test with mocked Frame
     @Test
     fun testLocalizeFrameRejected() {
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample",true)
+        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
         fmLocationManager.isSimulation = false
 
-        fmLocationManager.setLocation(latitude, longitude)
+        fmLocationManager.setLocation(location)
 
         val frame = mock(Frame::class.java)
         val camera = mock(Camera::class.java)
@@ -351,7 +455,7 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
         testScope.runBlockingTest {
-            spyFMLocationManager.localize(frame)
+            spyFMLocationManager.session(frame)
         }
         verify(spyFMLocationManager, times(1)).fmApi
     }
@@ -364,13 +468,13 @@ class FMLocationManagerTest {
 
         val fieldMotionManager = fmLocationManager.javaClass.getDeclaredField("motionManager")
         fieldMotionManager.isAccessible = true
-        fieldMotionManager.set(fmLocationManager,spyMotionManager)
+        fieldMotionManager.set(fmLocationManager, spyMotionManager)
 
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample",true)
+        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
 
         val fieldCoroutineScope = fmLocationManager.javaClass.getDeclaredField("coroutineScope")
         fieldCoroutineScope.isAccessible = true
-        fieldCoroutineScope.set(fmLocationManager,testScope)
+        fieldCoroutineScope.set(fmLocationManager, testScope)
 
         val spyFMLocationManager = spy(fmLocationManager)
 
@@ -379,20 +483,42 @@ class FMLocationManagerTest {
 
         fmLocationManager.isSimulation = false
 
-        fmLocationManager.setLocation(latitude, longitude)
+        fmLocationManager.setLocation(location)
 
-        val fmBlurFilterRule = FMBlurFilter(instrumentationContext)
-        val spyFMBlurFilterRule = spy(fmBlurFilterRule)
+        val fmBlurFilter = FMBlurFilter(
+            RemoteConfigTest.remoteConfig.blurFilterVarianceThreshold,
+            RemoteConfigTest.remoteConfig.blurFilterSuddenDropThreshold,
+            RemoteConfigTest.remoteConfig.blurFilterAverageThroughputThreshold,
+            instrumentationContext
+        )
+
+        val fieldRenderScriptContext = fmBlurFilter.javaClass.getDeclaredField("rs")
+        fieldRenderScriptContext.isAccessible = true
+        fieldRenderScriptContext.set(fmBlurFilter, null)
+
+        val fieldColorIntrinsic = fmBlurFilter.javaClass.getDeclaredField("colorIntrinsic")
+        fieldColorIntrinsic.isAccessible = true
+        fieldColorIntrinsic.set(fmBlurFilter, null)
+
+        val fieldConvolve = fmBlurFilter.javaClass.getDeclaredField("convolve")
+        fieldConvolve.isAccessible = true
+        fieldConvolve.set(fmBlurFilter, null)
+
+        val spyFMBlurFilterRule = spy(fmBlurFilter)
         val context = mock(Context::class.java)
 
         val filter2 = FMFrameFilterChain(instrumentationContext)
         filter2.filters = listOf(
-            FMMovementFilter(rc!!.movementFilterThreshold),
-            FMCameraPitchFilter(context)
-        )
-        val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
+            FMMovementFilter(RemoteConfigTest.remoteConfig.movementFilterThreshold),
+            FMCameraPitchFilter(
+                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
+                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
+                context)
+        ) as MutableList<FMFrameFilter>
+
+        val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilterChain")
         testFilter.isAccessible = true
-        testFilter.set(spyFMLocationManager,filter2)
+        testFilter.set(spyFMLocationManager, filter2)
 
         val frame = mock(Frame::class.java)
 
@@ -438,21 +564,21 @@ class FMLocationManagerTest {
 
         val intrinsics = mock(CameraIntrinsics::class.java)
         `when`(frame.camera.imageIntrinsics).thenReturn(intrinsics)
-        val imageDimensions = intArrayOf(height,width)
+        val imageDimensions = intArrayOf(height, width)
         `when`(frame.camera.imageIntrinsics.imageDimensions).thenReturn(imageDimensions)
 
         `when`(frame.camera.imageIntrinsics.focalLength).thenReturn(focalLength)
         `when`(frame.camera.imageIntrinsics.principalPoint).thenReturn(principalPoint)
 
-        testScope.runBlockingTest {
-            spyFMLocationManager.localize(frame)
-        }
+        spyFMLocationManager.session(frame)
 
         verify(spyFMLocationManager, times(2)).fmApi
         verify(spyFMApi, times(1)).fmNetworkManager
     }
 
-    //Localize with FMApi call
+    /**
+     * Localize with FMApi call
+     */
     @Test
     fun testLocalizeSimulationFMApi() {
         val instrumentationContext2 = InstrumentationRegistry.getInstrumentation().context
@@ -461,13 +587,13 @@ class FMLocationManagerTest {
 
         val testMotionManager = fmLocationManager.javaClass.getDeclaredField("motionManager")
         testMotionManager.isAccessible = true
-        testMotionManager.set(fmLocationManager,spyMotionManager)
+        testMotionManager.set(fmLocationManager, spyMotionManager)
 
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample",true)
+        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
 
         val testCoroutineScope = fmLocationManager.javaClass.getDeclaredField("coroutineScope")
         testCoroutineScope.isAccessible = true
-        testCoroutineScope.set(fmLocationManager,testScope)
+        testCoroutineScope.set(fmLocationManager, testScope)
 
         val spyFMLocationManager = spy(fmLocationManager)
 
@@ -476,18 +602,20 @@ class FMLocationManagerTest {
 
         fmLocationManager.isSimulation = false
 
-        fmLocationManager.setLocation(latitude, longitude)
+        fmLocationManager.setLocation(location)
 
-        val fmBlurFilterRule = FMBlurFilter(instrumentationContext2)
-        val spyFMBlurFilterRule = spy(fmBlurFilterRule)
         val filter2 = FMFrameFilterChain(instrumentationContext)
         filter2.filters = listOf(
-            FMMovementFilter(rc!!.movementFilterThreshold),
-            FMCameraPitchFilter(context)
-        )
-        val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
+            FMMovementFilter(RemoteConfigTest.remoteConfig.movementFilterThreshold),
+            FMCameraPitchFilter(
+                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
+                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
+                context)
+        ) as MutableList<FMFrameFilter>
+
+        val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilterChain")
         testFilter.isAccessible = true
-        testFilter.set(spyFMLocationManager,filter2)
+        testFilter.set(spyFMLocationManager, filter2)
 
         val frame = mock(Frame::class.java)
         val camera = mock(Camera::class.java)
@@ -531,14 +659,11 @@ class FMLocationManagerTest {
         `when`(frame.camera.imageIntrinsics.focalLength).thenReturn(focalLength)
         `when`(frame.camera.imageIntrinsics.principalPoint).thenReturn(principalPoint)
 
-        val imageDimensions = intArrayOf(height,width)
+        val imageDimensions = intArrayOf(height, width)
         `when`(frame.camera.imageIntrinsics.imageDimensions).thenReturn(imageDimensions)
 
-        testScope.runBlockingTest {
-            spyFMLocationManager.localize(frame)
-        }
+        spyFMLocationManager.session(frame)
 
-        verify(spyFMLocationManager, times(1)).localize(frame)
         verify(spyFMLocationManager, times(1)).session(frame)
         verify(spyFMLocationManager, times(2)).fmApi
         verify(spyFMApi2, times(1)).fmNetworkManager
@@ -552,13 +677,13 @@ class FMLocationManagerTest {
 
         val field = fmLocationManager.javaClass.getDeclaredField("motionManager")
         field.isAccessible = true
-        field.set(fmLocationManager,spyMotionManager)
+        field.set(fmLocationManager, spyMotionManager)
 
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample",true)
+        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
 
         val testCoroutineScope = fmLocationManager.javaClass.getDeclaredField("coroutineScope")
         testCoroutineScope.isAccessible = true
-        testCoroutineScope.set(fmLocationManager,testScope)
+        testCoroutineScope.set(fmLocationManager, testScope)
 
         val spyFMLocationManager = spy(fmLocationManager)
 
@@ -566,18 +691,21 @@ class FMLocationManagerTest {
         val spyFMNetworkManager3 = spy(spyFMApi3.fmNetworkManager)
 
         fmLocationManager.isSimulation = false
-        fmLocationManager.setLocation(latitude, longitude)
+        fmLocationManager.setLocation(location)
 
-        val fmBlurFilterRule = FMBlurFilter(instrumentationContext3)
-        val spyFMBlurFilterRule = spy(fmBlurFilterRule)
         val filter2 = FMFrameFilterChain(instrumentationContext)
         filter2.filters = listOf(
-            FMMovementFilter(rc!!.movementFilterThreshold),
-            FMCameraPitchFilter(context)
-        )
-        val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
+            FMMovementFilter(RemoteConfigTest.remoteConfig.movementFilterThreshold),
+            FMCameraPitchFilter(
+                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
+                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
+                context
+            )
+        ) as MutableList<FMFrameFilter>
+
+        val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilterChain")
         testFilter.isAccessible = true
-        testFilter.set(spyFMLocationManager,filter2)
+        testFilter.set(spyFMLocationManager, filter2)
 
         val frame = mock(Frame::class.java)
         val camera = mock(Camera::class.java)
@@ -621,14 +749,11 @@ class FMLocationManagerTest {
         `when`(frame.camera.imageIntrinsics.focalLength).thenReturn(focalLength)
         `when`(frame.camera.imageIntrinsics.principalPoint).thenReturn(principalPoint)
 
-        val imageDimensions = intArrayOf(height,width)
+        val imageDimensions = intArrayOf(height, width)
         `when`(frame.camera.imageIntrinsics.imageDimensions).thenReturn(imageDimensions)
 
-        testScope.runBlockingTest {
-            spyFMLocationManager.localize(frame)
-        }
+        spyFMLocationManager.session(frame)
 
-        verify(spyFMLocationManager, times(1)).localize(frame)
         verify(spyFMLocationManager, times(1)).session(frame)
         verify(spyFMLocationManager, times(2)).fmApi
         verify(spyFMApi3, times(1)).fmNetworkManager
@@ -658,10 +783,10 @@ class FMLocationManagerTest {
                 0.6F
             ),
             floatArrayOf(
-                0.45F, //PITCHTOOHIGH
-                0.03F,
-                0.5F,
-                -0.005F
+                0.25F,
+                0.01F,
+                0.01F,
+                (-0.01).toFloat()
             )
         )
     }

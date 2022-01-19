@@ -13,7 +13,6 @@ import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.models.analytics.MagneticField
 import com.google.ar.core.Frame
 import com.google.gson.Gson
-import org.json.JSONObject
 import java.util.*
 
 /**
@@ -120,6 +119,40 @@ class FMApi(
     }
 
     /**
+     * Method to build the IsLocalizationAvailable request.
+     * @param location Location to search
+     */
+    fun sendIsLocalizationAvailable(
+        location: Location,
+        onCompletion: (Boolean) -> Unit,
+        onError: (ErrorResponse) -> Unit
+    ) {
+        fmNetworkManager.isLocalizationAvailableRequest(
+            "https://mobility-bff-dev.fantasmo.dev/v2/isLocalizationAvailable",
+            getIsLocalizationAvailableParams(location),
+            token,
+            onCompletion,
+            onError
+        )
+    }
+
+    /**
+     * Generate the isLocalizationAvailable HTTP request parameters.
+     * @param location Location to search
+     * @return an HashMap with all the location parameters.
+     */
+    private fun getIsLocalizationAvailableParams(
+        location: Location,
+    ): HashMap<String, String> {
+        val params = hashMapOf<String, String>()
+
+        params["location"] = Gson().toJson(location)
+
+        Log.i(TAG, "getIsLocalizationAvailableParams: $params")
+        return params
+    }
+
+    /**
      * Method to build the Initialize request.
      * @param location Location to search
      */
@@ -145,17 +178,11 @@ class FMApi(
     private fun getInitializationParams(
         location: Location
     ): HashMap<String, String> {
-        val locationParams = hashMapOf<String, String>()
-
-        locationParams["latitude"] = location.coordinate.latitude.toString()
-        locationParams["longitude"] = location.coordinate.longitude.toString()
-        locationParams["horizontalAccuracy"] = location.horizontalAccuracy.toString()
-        locationParams["verticalAccuracy"] = location.verticalAccuracy.toString()
-
         val params = hashMapOf<String, String>()
-        params["deviceOs"] = "android"
         val gson = Gson()
-        params["coordinate"] = gson.toJson(locationParams)
+        params["deviceOs"] = "android"
+        params["location"] = gson.toJson(location)
+
         Log.i(TAG, "getInitializationRequest: $params")
         return params
     }

@@ -10,18 +10,18 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import com.fantasmo.sdk.config.RemoteConfig
+import com.fantasmo.sdk.filters.BehaviorRequester
 import com.fantasmo.sdk.filters.FMFrameFilterChain
 import com.fantasmo.sdk.filters.FMFrameFilterResult
-import com.fantasmo.sdk.models.Coordinate
-import com.fantasmo.sdk.models.FMZone
-import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
-import com.fantasmo.sdk.models.analytics.MotionManager
-import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
-import com.fantasmo.sdk.network.*
-import com.fantasmo.sdk.filters.BehaviorRequester
 import com.fantasmo.sdk.filters.FMImageQualityFilter
+import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.ErrorResponse
+import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
+import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
+import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
+import com.fantasmo.sdk.models.analytics.MotionManager
+import com.fantasmo.sdk.network.*
 import com.fantasmo.sdk.utilities.DeviceLocationManager
 import com.fantasmo.sdk.utilities.LocationFuser
 import com.google.ar.core.Frame
@@ -83,6 +83,8 @@ class FMLocationManager(private val context: Context) {
     private var frameEventAccumulator = FrameFilterRejectionStatistics()
     private var accumulatedARCoreInfo = AccumulatedARCoreInfo()
 
+    private lateinit var rc: RemoteConfig.Config
+
     /**
      * Connect to the location service.
      *
@@ -97,7 +99,7 @@ class FMLocationManager(private val context: Context) {
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(context, token)
-        val rc = RemoteConfig.remoteConfig
+        rc = RemoteConfig.remoteConfig
         frameFilterChain = FMFrameFilterChain(context)
         if (rc.isBehaviorRequesterEnabled) {
             behaviorRequester = BehaviorRequester {
@@ -148,7 +150,9 @@ class FMLocationManager(private val context: Context) {
         motionManager.restart()
         accumulatedARCoreInfo.reset()
         this.frameFilterChain.restart()
-        this.behaviorRequester.restart()
+        if (rc.isBehaviorRequesterEnabled) {
+            this.behaviorRequester.restart()
+        }
         this.locationFuser.reset()
         frameEventAccumulator.reset()
     }
@@ -302,7 +306,9 @@ class FMLocationManager(private val context: Context) {
     }
 
     private fun processFrame(arFrame: Frame, filterResult: FMFrameFilterResult) {
-        behaviorRequester.processResult(filterResult)
+        if (rc.isBehaviorRequesterEnabled) {
+            behaviorRequester.processResult(filterResult)
+        }
         accumulatedARCoreInfo.update(arFrame)
         if (filterResult == FMFrameFilterResult.Accepted) {
             if (state == State.LOCALIZING) {
