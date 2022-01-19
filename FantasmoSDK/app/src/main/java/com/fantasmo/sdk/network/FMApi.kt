@@ -282,7 +282,7 @@ class FMApi(
         params["rotationSpread"] = gson.toJson(request.analytics.rotationSpread)
         params["magneticData"] = gson.toJson(request.analytics.magneticField)
 
-        if(request.analytics.imageQualityFilterInfo != null){
+        if(request.analytics.imageQualityFilterInfo != null && !request.isSimulation){
             params["imageQualityModelVersion"] = request.analytics.imageQualityFilterInfo!!.modelVersion
             params["imageQualityScore"] = request.analytics.imageQualityFilterInfo!!.lastImageQualityScore.toString()
         }
