@@ -92,7 +92,6 @@ class CustomDemoFragment : Fragment() {
         resultsLayout = currentView.findViewById(R.id.resultsLayout)
         resultTextView = currentView.findViewById(R.id.localizationResultView)
         mapPinButton = currentView.findViewById(R.id.mapPinButton)
-
         enterQRButton = currentView.findViewById(R.id.enterQRCodeButton)
         enterQRButton.setOnClickListener{
             handleEnterQRCode()
