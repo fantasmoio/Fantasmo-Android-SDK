@@ -138,7 +138,8 @@ class FMLocationManager(private val context: Context) {
     /**
      * Starts the generation of updates that report the user’s current location
      * enabling FrameFiltering
-     * @param appSessionId appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
+     * @param appSessionId sessionId supplied by the SDK client and used for billing and tracking an entire parking session
+     * @param appSessionTags sessionTags supplied by the SDK client and used to label and group parking sessions that have something in common
      */
     fun startUpdatingLocation(appSessionId: String, appSessionTags: List<String>?) {
         localizationSessionId = UUID.randomUUID().toString()
@@ -146,7 +147,7 @@ class FMLocationManager(private val context: Context) {
         this.appSessionTags = appSessionTags
         Log.d(
             TAG,
-            "startUpdatingLocation with AppSessionId:$appSessionId and AppSessionTags:$appSessionTags and LocalizationSessionId:$localizationSessionId"
+            "startUpdatingLocation with AppSessionId:$appSessionId, AppSessionTags:$appSessionTags and LocalizationSessionId:$localizationSessionId"
         )
 
         this.isConnected = true

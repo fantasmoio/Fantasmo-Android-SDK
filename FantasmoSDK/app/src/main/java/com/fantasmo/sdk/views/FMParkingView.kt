@@ -63,7 +63,10 @@ class FMParkingView @JvmOverloads constructor(
      * Token used to provide access to the Fantasmo API
      */
     lateinit var accessToken: String
+
+    // App Session Id supplied by the SDK client
     private lateinit var appSessionId: String
+    // App Session Tags supplied by the SDK client
     private var appSessionTags: List<String>? = null
 
     private lateinit var fmLocationManager: FMLocationManager
