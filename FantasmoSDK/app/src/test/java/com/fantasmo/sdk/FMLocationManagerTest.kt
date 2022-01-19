@@ -10,19 +10,22 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.config.RemoteConfigTest
 import com.fantasmo.sdk.filters.*
-import com.fantasmo.sdk.models.*
+import com.fantasmo.sdk.models.ErrorResponse
+import com.fantasmo.sdk.models.FMOrientation
+import com.fantasmo.sdk.models.FMPose
+import com.fantasmo.sdk.models.FMPosition
+import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
+import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.google.ar.core.*
-import com.google.ar.core.Pose
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.*
@@ -203,12 +206,10 @@ class FMLocationManagerTest {
     }
 
     /**
-     * Should Localize
-     * Ignoring Tests due to Renderscript failure
-     * Cannot replicate context to create Renderscript environment
-     * using Robolectric and Mockito testing libraries
+     * Asserts counters to check if they are not
+     * being updated because filters are disabled
      */
-    @Ignore
+    @Test
     fun testShouldLocalizeFiltersDisabled() {
         RemoteConfig.remoteConfig = RemoteConfigTest.remoteConfigDisabledFilters
         val instrumentationContext = InstrumentationRegistry.getInstrumentation().context
@@ -236,7 +237,7 @@ class FMLocationManagerTest {
 
         val filter2 = FMFrameFilterChain(instrumentationContext)
 
-        val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
+        val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilterChain")
         testFilter.isAccessible = true
         testFilter.set(spyFMLocationManager, filter2)
 
@@ -250,15 +251,28 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(cameraPose)
         `when`(frame.androidSensorPose).thenReturn(cameraPose)
 
-        assertEquals(true, fmLocationManager.session(frame))
+        val accumulatedARCoreInfo = AccumulatedARCoreInfo()
+        val fieldAccumulatedARCoreInfo = fmLocationManager.javaClass.getDeclaredField("accumulatedARCoreInfo")
+        fieldAccumulatedARCoreInfo.isAccessible = true
+        fieldAccumulatedARCoreInfo.set(fmLocationManager,accumulatedARCoreInfo)
+        fmLocationManager.session(frame)
+        assertEquals(1, accumulatedARCoreInfo.elapsedFrames)
+
+        val frameFilterStats = FrameFilterRejectionStatistics()
+        val fieldFrameStatistics = fmLocationManager.javaClass.getDeclaredField("frameEventAccumulator")
+        fieldFrameStatistics.isAccessible = true
+        fieldFrameStatistics.set(fmLocationManager,frameFilterStats)
+        val field = frameFilterStats.javaClass.getDeclaredField("totalFrameCount")
+        field.isAccessible = true
+        val fieldValue = field.get(frameFilterStats)
+
+        assertEquals(0, fieldValue)
     }
 
     /**
-     * Ignoring Tests due to Renderscript failure
-     * Cannot replicate context to create Renderscript environment
-     * using Robolectric and Mockito testing libraries
+     * Asserts counters are being updated as a frame is accepted for localization
      */
-    @Ignore
+    @Test
     fun testShouldLocalizeFrameAccepted() {
         fmLocationManager.startUpdatingLocation("AppSessionIdExample")
         fmLocationManager.isSimulation = false
@@ -285,7 +299,7 @@ class FMLocationManagerTest {
             )
         ) as MutableList<FMFrameFilter>
 
-        val fieldFrameFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
+        val fieldFrameFilter = fmLocationManager.javaClass.getDeclaredField("frameFilterChain")
         fieldFrameFilter.isAccessible = true
         fieldFrameFilter.set(fmLocationManager, frameFilter)
 
@@ -312,13 +326,31 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
-        assertEquals(true, fmLocationManager.session(frame))
+        val accumulatedARCoreInfo = AccumulatedARCoreInfo()
+        val fieldAccumulatedARCoreInfo = fmLocationManager.javaClass.getDeclaredField("accumulatedARCoreInfo")
+        fieldAccumulatedARCoreInfo.isAccessible = true
+        fieldAccumulatedARCoreInfo.set(fmLocationManager,accumulatedARCoreInfo)
+        fmLocationManager.session(frame)
+        assertEquals(1, accumulatedARCoreInfo.elapsedFrames)
+
+        val frameFilterStats = FrameFilterRejectionStatistics()
+        val fieldFrameStatistics = fmLocationManager.javaClass.getDeclaredField("frameEventAccumulator")
+        fieldFrameStatistics.isAccessible = true
+        fieldFrameStatistics.set(fmLocationManager,frameFilterStats)
+        val field = frameFilterStats.javaClass.getDeclaredField("totalFrameCount")
+        field.isAccessible = true
+        val fieldValue = field.get(frameFilterStats)
+
+        assertEquals(0, fieldValue)
     }
 
+    /**
+     * Asserts counters are being updated as a frame is not accepted for localization
+     */
     @Test
     fun testShouldLocalizeFrameRejected() {
         fmLocationManager.startUpdatingLocation("AppSessionIdExample")
-        fmLocationManager.isSimulation = false
+        fmLocationManager.isSimulation = true
         fmLocationManager.setLocation(location)
 
         val frame = mock(Frame::class.java)
@@ -344,11 +376,42 @@ class FMLocationManagerTest {
 
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
-        val fieldIsEvaluatingFrame = fmLocationManager.javaClass.getDeclaredField("isEvaluatingFrame")
-        fieldIsEvaluatingFrame.isAccessible = true
-        val result = fieldIsEvaluatingFrame.get(fmLocationManager)
 
-        assertEquals(false, result)
+        val frameFilter = FMFrameFilterChain(instrumentationContext)
+        frameFilter.filters = listOf(
+            FMMovementFilter(RemoteConfigTest.remoteConfig.movementFilterThreshold),
+            FMCameraPitchFilter(
+                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
+                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
+                context
+            )
+        ) as MutableList<FMFrameFilter>
+
+        val fieldFrameFilter = fmLocationManager.javaClass.getDeclaredField("frameFilterChain")
+        fieldFrameFilter.isAccessible = true
+        fieldFrameFilter.set(fmLocationManager, frameFilter)
+
+        val lastAcceptTime = System.nanoTime()
+        val fieldLastAcceptTime = frameFilter.javaClass.getDeclaredField("lastAcceptTime")
+        fieldLastAcceptTime.isAccessible = true
+        fieldLastAcceptTime.set(frameFilter, lastAcceptTime)
+
+        val accumulatedARCoreInfo = AccumulatedARCoreInfo()
+        val fieldAccumulatedARCoreInfo = fmLocationManager.javaClass.getDeclaredField("accumulatedARCoreInfo")
+        fieldAccumulatedARCoreInfo.isAccessible = true
+        fieldAccumulatedARCoreInfo.set(fmLocationManager,accumulatedARCoreInfo)
+        fmLocationManager.session(frame)
+        assertEquals(1, accumulatedARCoreInfo.elapsedFrames)
+
+        val frameFilterStats = FrameFilterRejectionStatistics()
+        val fieldFrameStatistics = fmLocationManager.javaClass.getDeclaredField("frameEventAccumulator")
+        fieldFrameStatistics.isAccessible = true
+        fieldFrameStatistics.set(fmLocationManager,frameFilterStats)
+        val field = frameFilterStats.javaClass.getDeclaredField("totalFrameCount")
+        field.isAccessible = true
+        val fieldValue = field.get(frameFilterStats)
+
+        assertEquals(0, fieldValue)
     }
 
     // Localize Test Batch
@@ -397,12 +460,7 @@ class FMLocationManagerTest {
         verify(spyFMLocationManager, times(1)).fmApi
     }
 
-    /**
-     * Ignoring Tests due to Renderscript failure
-     * Cannot replicate context to create Renderscript environment
-     * using Robolectric and Mockito testing libraries
-     */
-    @Ignore
+    @Test
     fun testLocalizeFrameAccepted() {
         val instrumentationContext = InstrumentationRegistry.getInstrumentation().context
         val fmLocationManager = FMLocationManager(instrumentationContext)
@@ -427,13 +485,26 @@ class FMLocationManagerTest {
 
         fmLocationManager.setLocation(location)
 
-        val fmBlurFilterRule = FMBlurFilter(
+        val fmBlurFilter = FMBlurFilter(
             RemoteConfigTest.remoteConfig.blurFilterVarianceThreshold,
             RemoteConfigTest.remoteConfig.blurFilterSuddenDropThreshold,
             RemoteConfigTest.remoteConfig.blurFilterAverageThroughputThreshold,
             instrumentationContext
         )
-        val spyFMBlurFilterRule = spy(fmBlurFilterRule)
+
+        val fieldRenderScriptContext = fmBlurFilter.javaClass.getDeclaredField("rs")
+        fieldRenderScriptContext.isAccessible = true
+        fieldRenderScriptContext.set(fmBlurFilter, null)
+
+        val fieldColorIntrinsic = fmBlurFilter.javaClass.getDeclaredField("colorIntrinsic")
+        fieldColorIntrinsic.isAccessible = true
+        fieldColorIntrinsic.set(fmBlurFilter, null)
+
+        val fieldConvolve = fmBlurFilter.javaClass.getDeclaredField("convolve")
+        fieldConvolve.isAccessible = true
+        fieldConvolve.set(fmBlurFilter, null)
+
+        val spyFMBlurFilterRule = spy(fmBlurFilter)
         val context = mock(Context::class.java)
 
         val filter2 = FMFrameFilterChain(instrumentationContext)
@@ -445,7 +516,7 @@ class FMLocationManagerTest {
                 context)
         ) as MutableList<FMFrameFilter>
 
-        val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
+        val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilterChain")
         testFilter.isAccessible = true
         testFilter.set(spyFMLocationManager, filter2)
 
@@ -499,9 +570,7 @@ class FMLocationManagerTest {
         `when`(frame.camera.imageIntrinsics.focalLength).thenReturn(focalLength)
         `when`(frame.camera.imageIntrinsics.principalPoint).thenReturn(principalPoint)
 
-        testScope.runBlockingTest {
-            spyFMLocationManager.session(frame)
-        }
+        spyFMLocationManager.session(frame)
 
         verify(spyFMLocationManager, times(2)).fmApi
         verify(spyFMApi, times(1)).fmNetworkManager
@@ -509,11 +578,8 @@ class FMLocationManagerTest {
 
     /**
      * Localize with FMApi call
-     * Ignoring Tests due to Renderscript failure
-     * Cannot replicate context to create Renderscript environment
-     * using Robolectric and Mockito testing libraries
      */
-    @Ignore
+    @Test
     fun testLocalizeSimulationFMApi() {
         val instrumentationContext2 = InstrumentationRegistry.getInstrumentation().context
         val fmLocationManager = FMLocationManager(instrumentationContext2)
@@ -538,13 +604,6 @@ class FMLocationManagerTest {
 
         fmLocationManager.setLocation(location)
 
-        val fmBlurFilterRule = FMBlurFilter(
-            RemoteConfigTest.remoteConfig.blurFilterVarianceThreshold,
-            RemoteConfigTest.remoteConfig.blurFilterSuddenDropThreshold,
-            RemoteConfigTest.remoteConfig.blurFilterAverageThroughputThreshold,
-            instrumentationContext2
-        )
-        val spyFMBlurFilterRule = spy(fmBlurFilterRule)
         val filter2 = FMFrameFilterChain(instrumentationContext)
         filter2.filters = listOf(
             FMMovementFilter(RemoteConfigTest.remoteConfig.movementFilterThreshold),
@@ -554,7 +613,7 @@ class FMLocationManagerTest {
                 context)
         ) as MutableList<FMFrameFilter>
 
-        val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
+        val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilterChain")
         testFilter.isAccessible = true
         testFilter.set(spyFMLocationManager, filter2)
 
@@ -603,22 +662,14 @@ class FMLocationManagerTest {
         val imageDimensions = intArrayOf(height, width)
         `when`(frame.camera.imageIntrinsics.imageDimensions).thenReturn(imageDimensions)
 
-        testScope.runBlockingTest {
-            spyFMLocationManager.session(frame)
-        }
+        spyFMLocationManager.session(frame)
 
-        //verify(spyFMLocationManager, times(1)).session(frame)
         verify(spyFMLocationManager, times(1)).session(frame)
         verify(spyFMLocationManager, times(2)).fmApi
         verify(spyFMApi2, times(1)).fmNetworkManager
     }
 
-    /**
-     * Ignoring Tests due to Renderscript failure
-     * Cannot replicate context to create Renderscript environment
-     * using Robolectric and Mockito testing libraries
-     */
-    @Ignore
+    @Test
     fun testLocalizeNoSimulationFMApi() {
         val instrumentationContext3 = InstrumentationRegistry.getInstrumentation().context
         val fmLocationManager = FMLocationManager(instrumentationContext3)
@@ -642,13 +693,6 @@ class FMLocationManagerTest {
         fmLocationManager.isSimulation = false
         fmLocationManager.setLocation(location)
 
-        val fmBlurFilterRule = FMBlurFilter(
-            RemoteConfigTest.remoteConfig.blurFilterVarianceThreshold,
-            RemoteConfigTest.remoteConfig.blurFilterSuddenDropThreshold,
-            RemoteConfigTest.remoteConfig.blurFilterAverageThroughputThreshold,
-            instrumentationContext3
-        )
-        val spyFMBlurFilterRule = spy(fmBlurFilterRule)
         val filter2 = FMFrameFilterChain(instrumentationContext)
         filter2.filters = listOf(
             FMMovementFilter(RemoteConfigTest.remoteConfig.movementFilterThreshold),
@@ -659,7 +703,7 @@ class FMLocationManagerTest {
             )
         ) as MutableList<FMFrameFilter>
 
-        val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilter")
+        val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilterChain")
         testFilter.isAccessible = true
         testFilter.set(spyFMLocationManager, filter2)
 
@@ -708,11 +752,8 @@ class FMLocationManagerTest {
         val imageDimensions = intArrayOf(height, width)
         `when`(frame.camera.imageIntrinsics.imageDimensions).thenReturn(imageDimensions)
 
-        testScope.runBlockingTest {
-            spyFMLocationManager.session(frame)
-        }
+        spyFMLocationManager.session(frame)
 
-        //verify(spyFMLocationManager, times(1)).localize(frame)
         verify(spyFMLocationManager, times(1)).session(frame)
         verify(spyFMLocationManager, times(2)).fmApi
         verify(spyFMApi3, times(1)).fmNetworkManager
@@ -742,10 +783,10 @@ class FMLocationManagerTest {
                 0.6F
             ),
             floatArrayOf(
-                0.45F, //PITCHTOOHIGH
-                0.03F,
-                0.5F,
-                -0.005F
+                0.25F,
+                0.01F,
+                0.01F,
+                (-0.01).toFloat()
             )
         )
     }

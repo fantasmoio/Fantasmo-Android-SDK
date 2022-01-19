@@ -26,7 +26,7 @@ class FMBlurFilter(
     blurFilterVarianceThreshold: Float,
     blurFilterSuddenDropThreshold: Float,
     blurFilterAverageThroughputThreshold: Float,
-    context: Context
+    val context: Context
 ) : FMFrameFilter {
 
     private val laplacianMatrix = floatArrayOf(
@@ -46,9 +46,9 @@ class FMBlurFilter(
     private var throughputAverager = MovingAverage(8)
     private var averageThroughput: Float = throughputAverager.average
 
-    private val rs = RenderScript.create(context)
-    private val colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
-    private val convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
+    private lateinit var rs : RenderScript
+    private lateinit var colorIntrinsic : ScriptIntrinsicColorMatrix
+    private lateinit var convolve : ScriptIntrinsicConvolve3x3
 
     /**
      * Check frame acceptance.
@@ -57,6 +57,13 @@ class FMBlurFilter(
      */
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
         val byteArrayFrame = FMUtility.acquireFrameImage(arFrame)
+
+        if(!::rs.isInitialized){
+            rs = RenderScript.create(context)
+            colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
+            convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
+        }
+
         GlobalScope.launch(Dispatchers.Default) { // launches coroutine in cpu thread
             variance = calculateVariance(byteArrayFrame)
         }
