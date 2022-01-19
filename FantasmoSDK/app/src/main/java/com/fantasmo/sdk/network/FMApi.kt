@@ -30,8 +30,9 @@ class FMLocalizationRequest(
  * Class to hold all the Localization Analytics
  */
 class FMLocalizationAnalytics(
-    var appSessionId: String,
-    var localizationSessionId: String,
+    var appSessionId: String?,
+    var appSessionTags: List<String>?,
+    var localizationSessionId: String?,
     var frameEvents: FMFrameEvent,
     var rotationSpread: FMRotationSpread,
     var totalDistance: Float,
@@ -264,8 +265,11 @@ class FMApi(
         params["sdkVersion"] = fantasmoSdkVersion
 
         // session identifiers
-        params["appSessionId"] = request.analytics.appSessionId
-        params["localizationSessionId"] = request.analytics.localizationSessionId
+        params["appSessionId"] = request.analytics.appSessionId!!
+        val appSessionTags = request.analytics.appSessionTags
+        params["appSessionTags"] = gson.toJson(appSessionTags)
+
+        params["localizationSessionId"] = request.analytics.localizationSessionId!!
 
         // other analytics
         params["frameEventCounts"] = gson.toJson(frameEventCounts)
