@@ -282,6 +282,11 @@ class FMApi(
         params["rotationSpread"] = gson.toJson(request.analytics.rotationSpread)
         params["magneticData"] = gson.toJson(request.analytics.magneticField)
 
+        if(request.analytics.imageQualityFilterInfo != null){
+            params["imageQualityModelVersion"] = request.analytics.imageQualityFilterInfo!!.modelVersion
+            params["imageQualityScore"] = request.analytics.imageQualityFilterInfo!!.lastImageQualityScore.toString()
+        }
+
         // calculate and send reference frame if anchoring
         val relativeOpenCVAnchorPose = request.relativeOpenCVAnchorPose
         if (relativeOpenCVAnchorPose != null) {

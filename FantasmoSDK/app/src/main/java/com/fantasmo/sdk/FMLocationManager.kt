@@ -205,7 +205,7 @@ class FMLocationManager(private val context: Context) {
         ) {
             val error = ErrorResponse(0, "Invalid Coordinates")
             fmLocationListener?.locationManager(error, null)
-            Log.e(TAG,"Invalid Coordinates")
+            Log.e(TAG, "Invalid Coordinates")
             return
         }
         Log.d(TAG, "localize: isSimulation $isSimulation")
@@ -253,13 +253,21 @@ class FMLocationManager(private val context: Context) {
             accumulatedARCoreInfo.rotationAccumulator.yaw[2],
             accumulatedARCoreInfo.rotationAccumulator.roll[2]
         )
+        val imageQualityFilterInfo: FMImageQualityFilterInfo? =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && frameFilterChain.rc.isImageQualityFilterEnabled) {
+                val filter = frameFilterChain.filters.last() as FMImageQualityFilter
+                FMImageQualityFilterInfo(filter.modelVersion, filter.lastImageQualityScore)
+            } else {
+                null
+            }
         val frameAnalytics = FMLocalizationAnalytics(
             appSessionId,
             localizationSessionId,
             frameEvents,
             rotationSpread,
             accumulatedARCoreInfo.translationAccumulator.totalTranslation,
-            motionManager.magneticField
+            motionManager.magneticField,
+            imageQualityFilterInfo
         )
         val openCVRelativeAnchorPose = anchorFrame?.let { anchorFrame ->
             FMUtility.anchorDeltaPoseForFrame(
