@@ -259,7 +259,8 @@ class FMLocationManager(private val context: Context) {
             frameEvents,
             rotationSpread,
             accumulatedARCoreInfo.translationAccumulator.totalTranslation,
-            motionManager.magneticField
+            motionManager.magneticField,
+            rc.remoteConfigId
         )
         val openCVRelativeAnchorPose = anchorFrame?.let { anchorFrame ->
             FMUtility.anchorDeltaPoseForFrame(
