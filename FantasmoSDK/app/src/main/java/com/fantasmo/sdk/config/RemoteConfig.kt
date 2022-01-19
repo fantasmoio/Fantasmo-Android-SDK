@@ -2,6 +2,7 @@ package com.fantasmo.sdk.config
 
 import android.content.Context
 import android.util.Log
+import com.fantasmo.sdk.FMUtility
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
@@ -84,7 +85,11 @@ class RemoteConfig {
          */
         private fun getConfigFromJSON(jsonString: String): Config {
             val configJSON = JSONObject(jsonString)
-            val remoteConfigId = configJSON.optString("remote_config_id")
+            val remoteConfigId = if(configJSON.optString("remote_config_id")!=""){
+                configJSON.optString("remote_config_id")
+            }else {
+                FMUtility.Constants.defaultConfigId
+            }
             val frameAcceptanceThresholdTimeout =
                 configJSON.getString("frame_acceptance_threshold_timeout")
             val isBehaviorRequesterEnabled = configJSON.getBoolean("is_behavior_requester_enabled")
