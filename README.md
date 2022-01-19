@@ -101,7 +101,8 @@ fmParkingView.accessToken = "API_KEY"
 
 // Present FMParkingView with a sessionId
 val sessionId = UUID.randomUUID().toString()
-fmParkingView.connect(sessionId)
+val sessionTags = listOf("berlin", "e-scooter") //optional tags
+fmParkingView.connect(sessionId, sessionTags)
 ```
 
 And add this to your `layout.xml` file:
@@ -124,9 +125,11 @@ fmParkingView.isParkingAvailable(location) { isParkingAvailable: Boolean
     }
 }
 ```
-### Providing a `sessionId`
+### Providing `sessionId` and `sessionTags`
 
-The `sessionId` parameter allows you to associate localization results with your own session identifier. Typically this would be a UUID string, but it can also follow your own format. For example, a scooter parking session might take multiple localization attempts. For analytics and billing purposes, this identifier allows you to link multiple attempts with a single parking session.
+The `sessionId` parameter allows you to associate localization results with your own session identifier. Typically this would be a UUID string, but it can also follow your own format. For example, a scooter parking session might take multiple localization attempts. For analytics and billing purposes, this identifier allows you to link multiple attempts with a single parking session. This string is currently limited to 64 characters.
+
+Similar to `sessionId`, you may also provide a list of `sessionTags`. This optional parameter can be used to label and group parking sessions that have something in common. For example sessions that take place in the same city might have the city name as a tag. These are used for analytics purposes only and will be included in your usage reports. Each tag must be a string and there is currently no limit to the number of tags a session can have.
 
 ### Initialization
 
