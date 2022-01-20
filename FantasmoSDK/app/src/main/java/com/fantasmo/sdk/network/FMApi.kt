@@ -199,22 +199,7 @@ class FMApi(
     ): HashMap<String, String> {
         val pose = FMUtility.getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context, frame)
 
-        val location = if (request.isSimulation) {
-            val configLocation = FMConfiguration.getConfigLocation()
-            Location(
-                configLocation.altitude,
-                System.currentTimeMillis(),
-                configLocation.accuracy,
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    configLocation.verticalAccuracyMeters
-                } else {
-                    0
-                },
-                Coordinate(configLocation.latitude, configLocation.longitude)
-            )
-        } else {
-            request.location
-        }
+        val location = request.location
 
         val resolution = hashMapOf<String, Int>()
         val imageResolution = getImageResolution(frame, request)
@@ -264,7 +249,14 @@ class FMApi(
             params["referenceFrame"] = gson.toJson(relativeOpenCVAnchorPose)
         }
 
+        // add device and host app info
         params += getDeviceAndHostAppInfo()
+
+        // add fixed simulated data if simulating
+        if (request.isSimulation){
+            params += MockData.params(request)
+        }
+
         Log.i(TAG, "getLocalizeParams")
         return params
     }
