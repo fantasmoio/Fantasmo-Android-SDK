@@ -114,7 +114,7 @@ And add this to your `layout.xml` file:
 ```
 ### Checking Availability
 
-Before attempting to park and localize with Fantasmo SDK, you should first check if parking is available in the user's current location. You can do this with the method `fmParkingView.isParkingAvailable(location: Location, onCompletion:(Boolean) → Unit)` passing a latitude and longitude of the location. The result block is called with a boolean indicating whether or not the user is near a mapped parking space.
+Before attempting to park and localize with Fantasmo SDK, you should first check if parking is available in the user's current location. You can do this with the method `fmParkingView.isParkingAvailable(location: Location, onCompletion:(Boolean) → Unit)` passing an Android [Location](https://developer.android.com/reference/kotlin/android/location/Location) object. The result block is called with a boolean indicating whether or not the user is near a mapped parking space.
 ```kotlin
 fmParkingView.isParkingAvailable(location) { isParkingAvailable: Boolean
     if (isParkingAvailable) {
@@ -196,6 +196,7 @@ override fun fmParkingView(qrCodeString: String, continueBlock: (Boolean) -> Uni
     val validQRCode = qrCodeString.isNotEmpty()
     // Validation of the QR code can be done here
     continueBlock(validQRCode)
+
 }
 ```
 

@@ -14,8 +14,8 @@ import com.android.volley.*
 import com.android.volley.toolbox.Volley
 import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.models.ErrorResponse
+import com.fantasmo.sdk.models.IsLocalizationAvailableResponse
 import com.fantasmo.sdk.models.LocalizeResponse
-import com.fantasmo.sdk.models.ZoneInRadiusResponse
 import com.google.gson.Gson
 import org.json.JSONException
 import org.json.JSONObject
@@ -103,24 +103,24 @@ class FMNetworkManager(
     /**
      * Method to send a POST request to check whether a zone is in a provided radius.
      */
-    fun zoneInRadiusRequest(
+    fun isLocalizationAvailableRequest(
         url: String,
         parameters: HashMap<String, String>,
         token: String,
         onCompletion: (Boolean) -> Unit,
-        onError: (ErrorResponse) -> Unit
-    ) {
-        Log.i(TAG, "$url $parameters")
+        onError: (ErrorResponse) -> Unit) {
+        Log.i(TAG,"$url $parameters")
         multipartRequest = object : MultiPartRequest(
             Method.POST, url,
             Response.Listener<NetworkResponse> { response ->
                 val resultResponse = String(response.data)
-                Log.d(TAG, "zoneInRadiusRequest RESPONSE: $resultResponse")
+                Log.d(TAG, "IsLocalizationAvailableRequest RESPONSE: $resultResponse")
                 try {
-                    val inRadius =
-                        Gson().fromJson(resultResponse, ZoneInRadiusResponse::class.java)
-                    onCompletion(inRadius.result.toBoolean())
+                    val isLocalizationAvailableResponse =
+                        Gson().fromJson(resultResponse, IsLocalizationAvailableResponse::class.java)
+                    onCompletion(isLocalizationAvailableResponse.available.toBoolean())
                 } catch (e: JSONException) {
+                    onCompletion(false)
                     e.printStackTrace()
                 }
             },

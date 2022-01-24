@@ -15,11 +15,16 @@ import com.google.ar.core.Frame
  * Initializes with maximum values for tilting phone up or down in degrees
  */
 class FMCameraPitchFilter(
-    private val lookDownThreshold: Float,
-    private val lookUpThreshold: Float,
+    lookDownThreshold: Float,
+    lookUpThreshold: Float,
     private val context: Context
 ) : FMFrameFilter {
 
+    private val interval = if(lookDownThreshold < 0){
+        lookDownThreshold..lookUpThreshold
+    }else {
+        (-lookDownThreshold)..lookUpThreshold
+    }
     /**
      * Check frame acceptance.
      * @param arFrame Frame to be evaluated
@@ -75,7 +80,7 @@ class FMCameraPitchFilter(
         val eulerAngles = convertToDegrees(convertQuaternionToEuler(rotationQuaternion))
         return when {
             // If it's looking Up or Down and it's in threshold
-            (eulerAngles[2] in (-lookDownThreshold)..lookUpThreshold) -> {
+            (eulerAngles[2] in interval) -> {
                 FMFrameFilterResult.Accepted
             }
             // If it's looking Up

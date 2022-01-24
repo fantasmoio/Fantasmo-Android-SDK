@@ -35,14 +35,14 @@ class ImageQualityModelUpdater(val context: Context) {
     private var firstRead = true
 
     // Optimize model inference performance by delegating to GPU or attributing a number of threads
-    private val options = Interpreter.Options().apply{
-        if(compatList.isDelegateSupportedOnThisDevice){
-            Log.i(TAG,"Device has GPU support. Using GPU for inference.")
+    private val options = Interpreter.Options().apply {
+        if (compatList.isDelegateSupportedOnThisDevice) {
+            Log.i(TAG, "Device has GPU support. Using GPU for inference.")
             // if the device has a supported GPU, add the GPU delegate
             val delegateOptions = compatList.bestOptionsForThisDevice
             this.addDelegate(GpuDelegate(delegateOptions))
         } else {
-            Log.i(TAG,"Device does not have GPU support. Using CPU for inference.")
+            Log.i(TAG, "Device does not have GPU support. Using CPU for inference.")
             // if the GPU is not supported, run on 4 threads
             this.setNumThreads(4)
         }
