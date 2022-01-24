@@ -1,7 +1,9 @@
 package com.fantasmo.sdk.utilities
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
 import android.util.Log
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.views.FMParkingViewProtocol
@@ -70,9 +72,8 @@ class QRCodeScanner(
                 if (byteArray == null) {
                     state = State.IDLE
                 } else {
-                    val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
                     val inputImage =
-                        InputImage.fromBitmap(bitmap!!, 0)
+                        InputImage.fromByteArray(byteArray, FMUtility.imageWidth, FMUtility.imageHeight, 0, ImageFormat.NV21)
 
                     barcodeScanner.process(inputImage)
                         .addOnSuccessListener { barcodes ->

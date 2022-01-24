@@ -16,13 +16,11 @@ import kotlin.math.pow
 
 @RequiresApi(Build.VERSION_CODES.KITKAT)
 class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter {
-    private val MAX_NUMBER_OF_LOOPS = 10
 
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
-        val byteArrayFrame = FMUtility.acquireFrameImage(arFrame)
-        var newByteArrayFrame : ByteArray?
+        var byteArrayFrame = FMUtility.acquireFrameImage(arFrame)
         GlobalScope.launch(Dispatchers.Default) { // launches coroutine in cpu thread
-            newByteArrayFrame = applyAutoGammaCorrection(byteArrayFrame, 0.3f)
+            byteArrayFrame = applyAutoGammaCorrection(byteArrayFrame, 0.3f)
         }
         FMUtility.setFrame(byteArrayFrame)
         return FMFrameFilterResult.Accepted
@@ -43,47 +41,14 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
             return null
         } else {
             val autoGammaCorrection = GlobalScope.async {
-
-                val originalBitmap =
-                    BitmapFactory.decodeByteArray(byteArrayFrame, 0, byteArrayFrame.size)
                 val rs = RenderScript.create(context)
 
-                // Greyscale so we're only dealing with white <--> black pixels,
-                // this is so we only need to detect pixel luminosity
-                val greyscaleBitmap = Bitmap.createBitmap(
-                    originalBitmap.width,
-                    originalBitmap.height,
-                    originalBitmap.config
-                )
-                val bitmapInput = Allocation.createFromBitmap(
-                    rs,
-                    originalBitmap,
-                    Allocation.MipmapControl.MIPMAP_NONE,
-                    Allocation.USAGE_SHARED
-                )
-                val greyscaleTargetAllocation = Allocation.createFromBitmap(
-                    rs,
-                    greyscaleBitmap,
-                    Allocation.MipmapControl.MIPMAP_NONE,
-                    Allocation.USAGE_SHARED
-                )
-
-                // Inverts and greyscales the image
-                val colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
-                colorIntrinsic.setGreyscale()
-                colorIntrinsic.forEach(bitmapInput, greyscaleTargetAllocation)
-                greyscaleTargetAllocation.copyTo(greyscaleBitmap)
-
-                val histogramInput = Allocation.createFromBitmap(
-                    rs,
-                    greyscaleBitmap,
-                    Allocation.MipmapControl.MIPMAP_NONE,
-                    Allocation.USAGE_SHARED
-                )
+                val luminanceInput = Allocation.createSized(rs, Element.U8(rs), FMUtility.imageWidth * FMUtility.imageHeight)
+                luminanceInput.copyFrom(byteArrayFrame)
                 val histogramIntrinsic = ScriptIntrinsicHistogram.create(rs, Element.U8(rs))
                 val histogramOutput = Allocation.createSized(rs, Element.U32(rs), 256)
-            histogramIntrinsic.setOutput(histogramOutput)
-                histogramIntrinsic.forEach(histogramInput)
+                histogramIntrinsic.setOutput(histogramOutput)
+                histogramIntrinsic.forEach(luminanceInput)
                 val histogram = IntArray(256)
                 histogramOutput.copyTo(histogram)
 
@@ -113,9 +78,6 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
                         if (meanBrightness >= meanRange[0] && meanBrightness <= meanRange[1]) {
                             break
                         }
-                        if(numOfLoops >= MAX_NUMBER_OF_LOOPS) {
-                            break
-                        }
                         if (meanBrightness < meanT) {
                             gamma -= step
                         } else {
@@ -138,27 +100,14 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
                         colorLUT.setBlue(i, finalBins[i])
                         colorLUT.setRed(i, finalBins[i])
                         colorLUT.setGreen(i, finalBins[i])
-                        colorLUT.setAlpha(i, i)
+                        colorLUT.setAlpha(i, finalBins[i])
                     }
-                    val finalInput = Allocation.createFromBitmap(
-                        rs,
-                        originalBitmap,
-                        Allocation.MipmapControl.MIPMAP_NONE,
-                        Allocation.USAGE_SHARED
-                    )
-                    val finalBitmap = Bitmap.createBitmap(
-                        originalBitmap.width,
-                        originalBitmap.height,
-                        originalBitmap.config
-                    )
-                    val finalOutput = Allocation.createFromBitmap(
-                        rs,
-                        finalBitmap,
-                        Allocation.MipmapControl.MIPMAP_NONE,
-                        Allocation.USAGE_SHARED
+                    val finalInput = Allocation.createSized(rs, Element.U8_4(rs), FMUtility.imageWidth * FMUtility.imageHeight / 4)
+                    val finalOutput = Allocation.createSized(
+                        rs, Element.U8_4(rs), FMUtility.imageWidth * FMUtility.imageHeight / 4
                     )
                     colorLUT.forEach(finalInput, finalOutput)
-                    val finalArray = ByteArray(finalOutput.bytesSize)
+                    val finalArray = byteArrayFrame.clone()
                     finalOutput.copyTo(finalArray)
                     finalArray
                 }

@@ -26,7 +26,7 @@ class FMBlurFilter(
     blurFilterVarianceThreshold: Float,
     blurFilterSuddenDropThreshold: Float,
     blurFilterAverageThroughputThreshold: Float,
-    context: Context
+    val context: Context
 ) : FMFrameFilter {
 
     private val laplacianMatrix = floatArrayOf(
@@ -46,9 +46,9 @@ class FMBlurFilter(
     private var throughputAverager = MovingAverage(8)
     private var averageThroughput: Float = throughputAverager.average
 
-    private val rs = RenderScript.create(context)
-    private val colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
-    private val convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
+    private lateinit var rs : RenderScript
+    private lateinit var histogram: ScriptIntrinsicHistogram
+    private lateinit var convolve : ScriptIntrinsicConvolve3x3
 
     /**
      * Check frame acceptance.
@@ -57,6 +57,13 @@ class FMBlurFilter(
      */
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
         val byteArrayFrame = FMUtility.acquireFrameImage(arFrame)
+
+        if(!::rs.isInitialized){
+            rs = RenderScript.create(context)
+            histogram = ScriptIntrinsicHistogram.create(rs, Element.U8(rs))
+            convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
+        }
+
         GlobalScope.launch(Dispatchers.Default) { // launches coroutine in cpu thread
             variance = calculateVariance(byteArrayFrame)
         }
@@ -98,43 +105,20 @@ class FMBlurFilter(
      * @param byteArrayFrame frame converted to ByteArray to measure the variance
      * @return variance blurriness value
      * */
-    private suspend fun calculateVariance(byteArrayFrame: ByteArray?): Float {
+    suspend fun calculateVariance(byteArrayFrame: ByteArray?): Float {
         val reducedHeight = 480
         val reducedWidth = 640
         if (byteArrayFrame == null) {
             return 0.0f
         } else {
             val stdDev = GlobalScope.async {
-
-                val originalBitmap =
-                    BitmapFactory.decodeByteArray(byteArrayFrame, 0, byteArrayFrame.size)
+                val inputBitmap = Bitmap.createBitmap(FMUtility.imageWidth, FMUtility.imageHeight, Bitmap.Config.ALPHA_8)
+                val inputAllocation = Allocation.createFromBitmap(rs, inputBitmap)
+                inputAllocation.copyFrom(byteArrayFrame)
+                inputAllocation.copyTo(inputBitmap)
+                inputAllocation.destroy()
                 val reducedBitmap =
-                    Bitmap.createScaledBitmap(originalBitmap, reducedWidth, reducedHeight, true)
-
-                // Greyscale so we're only dealing with white <--> black pixels,
-                // this is so we only need to detect pixel luminosity
-                val greyscaleBitmap = Bitmap.createBitmap(
-                    reducedBitmap.width,
-                    reducedBitmap.height,
-                    reducedBitmap.config
-                )
-                val smootherInput = Allocation.createFromBitmap(
-                    rs,
-                    reducedBitmap,
-                    Allocation.MipmapControl.MIPMAP_NONE,
-                    Allocation.USAGE_SHARED
-                )
-                val greyscaleTargetAllocation = Allocation.createFromBitmap(
-                    rs,
-                    greyscaleBitmap,
-                    Allocation.MipmapControl.MIPMAP_NONE,
-                    Allocation.USAGE_SHARED
-                )
-
-                // Inverts and greyscales the image
-                colorIntrinsic.setGreyscale()
-                colorIntrinsic.forEach(smootherInput, greyscaleTargetAllocation)
-                greyscaleTargetAllocation.copyTo(greyscaleBitmap)
+                    Bitmap.createScaledBitmap(inputBitmap, reducedWidth, reducedHeight, true)
 
                 // Run edge detection algorithm using a laplacian matrix convolution
                 // Apply 3x3 convolution to detect edges
@@ -143,9 +127,9 @@ class FMBlurFilter(
                     reducedBitmap.height,
                     reducedBitmap.config
                 )
-                val greyscaleInput = Allocation.createFromBitmap(
+                val reducedInput = Allocation.createFromBitmap(
                     rs,
-                    greyscaleBitmap,
+                    reducedBitmap,
                     Allocation.MipmapControl.MIPMAP_NONE,
                     Allocation.USAGE_SHARED
                 )
@@ -156,14 +140,12 @@ class FMBlurFilter(
                     Allocation.USAGE_SHARED
                 )
 
-                convolve.setInput(greyscaleInput)
+                convolve.setInput(reducedInput)
                 convolve.setCoefficients(laplacianMatrix)
                 convolve.forEach(edgesTargetAllocation)
                 edgesTargetAllocation.copyTo(edgesBitmap)
-
-                // This is important to be false, otherwise image will be blank
-                edgesBitmap.setHasAlpha(false)
-
+                reducedInput.destroy()
+                edgesTargetAllocation.destroy()
                 // Get standard deviation from meanStdDev
                 meanStdDev(edgesBitmap)
             }
@@ -178,31 +160,18 @@ class FMBlurFilter(
      * @return stdDev variable with blurriness value
      * */
     private fun meanStdDev(bitmap: Bitmap): Float {
-        val pixels = IntArray(bitmap.height * bitmap.width)
-        bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
-
-        var count = 0
-
-        // When converted to greyscale, Red, Green and Blue have the same value
-        var sumR = 0f
-
-        for (pixel in pixels) {
-            val r = Color.red(pixel)
-            sumR += r
-            if (r == 0) {
-                count++
-            }
-        }
-
-        val avgR = sumR / (pixels.size)
-
-        var stdDevR = 0.0
-
-        for (pixel in pixels) {
-            val r = Color.red(pixel)
-            stdDevR += (r - avgR).toDouble().pow(2.0)
-        }
-
-        return (sqrt(stdDevR / pixels.size) * 100).toFloat()
+        val inputAllocation = Allocation.createFromBitmap(rs, bitmap, Allocation.MipmapControl.MIPMAP_NONE, Allocation.USAGE_SHARED)
+        val bins = IntArray(256)
+        val binsAllocation = Allocation.createSized(rs, Element.U32(rs), 256)
+        histogram.setOutput(binsAllocation)
+        histogram.forEach(inputAllocation)
+        binsAllocation.copyTo(bins)
+        inputAllocation.destroy()
+        binsAllocation.destroy()
+        var avg = 0.0
+        bins.forEachIndexed { index, bin -> avg += index * bin / (256.0 * bitmap.byteCount) }
+        var stdDev = 0.0
+        bins.forEachIndexed { index, bin -> stdDev += (index * bin / (256.0 * bitmap.byteCount)) - avg}
+        return (sqrt(stdDev) * 100.0).toFloat()
     }
 }

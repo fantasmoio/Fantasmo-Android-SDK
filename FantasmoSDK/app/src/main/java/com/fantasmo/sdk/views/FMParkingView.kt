@@ -398,7 +398,8 @@ class FMParkingView @JvmOverloads constructor(
 
             override fun locationManager(didChangeState: FMLocationManager.State) {
                 (context as Activity).runOnUiThread {
-                    fmSessionStatisticsView.updateState(didChangeState)
+                    if(showStatistics)
+                        fmSessionStatisticsView.updateState(didChangeState)
                 }
             }
 
@@ -408,7 +409,8 @@ class FMParkingView @JvmOverloads constructor(
                 rejections: FrameFilterRejectionStatistics
             ) {
                 (context as Activity).runOnUiThread {
-                    fmSessionStatisticsView.updateStats(didUpdateFrame, info, rejections)
+                    if (showStatistics)
+                        fmSessionStatisticsView.updateStats(didUpdateFrame, info, rejections)
                 }
             }
         }
@@ -478,10 +480,11 @@ class FMParkingView @JvmOverloads constructor(
                 fmLocationManager.setLocation(
                     locationResult
                 )
-                fmSessionStatisticsView.updateLocation(
-                    locationResult.latitude,
-                    locationResult.longitude
-                )
+                if (showStatistics)
+                    fmSessionStatisticsView.updateLocation(
+                        locationResult.latitude,
+                        locationResult.longitude
+                    )
             }
         }
 }

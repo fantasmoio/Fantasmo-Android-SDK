@@ -3,6 +3,8 @@ package com.fantasmo.sdk
 import android.content.Context
 import android.graphics.*
 import android.media.Image
+import android.renderscript.Allocation
+import android.renderscript.RenderScript
 import android.util.Log
 import android.view.Display
 import android.view.Surface
@@ -27,6 +29,11 @@ class FMUtility {
         private var hasPassedImageQualityFilter: Boolean = false
         private val TAG = FMUtility::class.java.simpleName
         private var frameToByteArray : ByteArray? = null
+        public var imageWidth : Int = 0
+            private set
+        public var imageHeight : Int = 0
+            private set
+        public var imageYStride : Int = 1
         /**
          * Method to get the AR Frame camera image data.
          * @param arFrame the AR Frame to localize.
@@ -53,7 +60,8 @@ class FMUtility {
             val cameraPlaneY = cameraImage.planes[0].buffer
             val cameraPlaneU = cameraImage.planes[1].buffer
             val cameraPlaneV = cameraImage.planes[2].buffer
-
+           // imageHeight = cameraImage.
+            imageYStride = cameraImage.planes[0].rowStride
             //Use the buffers to create a new byteArray that
             val compositeByteArray =
                 ByteArray(cameraPlaneY.capacity() + cameraPlaneU.capacity() + cameraPlaneV.capacity())
@@ -80,6 +88,26 @@ class FMUtility {
                 baOutputStream
             )
             return baOutputStream
+        }
+
+        private fun createYUVByteArray(cameraImage: Image): ByteArray {
+            //The camera image received is in YUV YCbCr Format. Get buffers for each of the planes and use
+            // them to create a new byte array defined by the size of all three buffers combined
+            val cameraPlaneY = cameraImage.planes[0].buffer
+            val cameraPlaneU = cameraImage.planes[1].buffer
+            val cameraPlaneV = cameraImage.planes[2].buffer
+            //Use the buffers to create a new byteArray that
+            val compositeByteArray =
+                ByteArray(cameraPlaneY.capacity() + cameraPlaneU.capacity() + cameraPlaneV.capacity())
+
+            cameraPlaneY.get(compositeByteArray, 0, cameraPlaneY.capacity())
+            cameraPlaneU.get(compositeByteArray, cameraPlaneY.capacity(), cameraPlaneU.capacity())
+            cameraPlaneV.get(
+                compositeByteArray,
+                cameraPlaneY.capacity() + cameraPlaneU.capacity(),
+                cameraPlaneV.capacity()
+            )
+            return compositeByteArray
         }
 
         private fun getImageRotationDegrees(context: Context): Float {
@@ -231,12 +259,13 @@ class FMUtility {
             }
             try {
                 val cameraImage = arFrame.acquireCameraImage()
-                arFrame.acquireCameraImage().close()
+                imageHeight = cameraImage.height
+                imageWidth = cameraImage.width
 
-                val baOutputStream = createByteArrayOutputStream(cameraImage)
+                val yuvByteArray = createYUVByteArray(cameraImage)
                 // Release the image
                 cameraImage.close()
-                return baOutputStream.toByteArray()
+                return yuvByteArray
             } catch (e: NotYetAvailableException) {
                 Log.e(TAG, "FrameNotYetAvailable")
             } catch (e: DeadlineExceededException) {
@@ -247,7 +276,7 @@ class FMUtility {
             return null
         }
 
-        /**
+             /**
          * This avoids AR frames from being converted twice to `ByteArray`.
          *
          * Also prevents outdated frames from throwing `DeadlineExceededException`
@@ -269,7 +298,7 @@ class FMUtility {
         fun setFrameQualityTest(image: Image?) {
             if(image!=null){
                 hasPassedImageQualityFilter = true
-                frameToByteArray = createByteArrayOutputStream(image).toByteArray()
+                frameToByteArray = createYUVByteArray(image)
             }
         }
 
