@@ -66,6 +66,9 @@ class FMLocationManagerTest {
     private val height = 480
     private val width = 640
 
+    private val sessionId = "AppSessionIdExample"
+    private val sessionTags = listOf("android-sdk-test-harness")
+
     private val location = android.location.Location("")
 
     private val token = "API_KEY"
@@ -116,7 +119,7 @@ class FMLocationManagerTest {
     fun connectAndStart() {
         fmLocationManager.connect(token, fmLocationListener)
 
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
+        fmLocationManager.startUpdatingLocation(sessionId, sessionTags)
         val fieldIsConnected = fmLocationManager.javaClass.getDeclaredField("isConnected")
         fieldIsConnected.isAccessible = true
         val result = fieldIsConnected.get(fmLocationManager)
@@ -220,7 +223,7 @@ class FMLocationManagerTest {
         fieldMotionManager.isAccessible = true
         fieldMotionManager.set(fmLocationManager, spyMotionManager)
 
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
+        fmLocationManager.startUpdatingLocation(sessionId, sessionTags)
 
         val fieldCoroutineScope = fmLocationManager.javaClass.getDeclaredField("coroutineScope")
         fieldCoroutineScope.isAccessible = true
@@ -274,7 +277,7 @@ class FMLocationManagerTest {
      */
     @Test
     fun testShouldLocalizeFrameAccepted() {
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
+        fmLocationManager.startUpdatingLocation(sessionId, sessionTags)
         fmLocationManager.isSimulation = false
         fmLocationManager.setLocation(location)
 
@@ -349,7 +352,7 @@ class FMLocationManagerTest {
      */
     @Test
     fun testShouldLocalizeFrameRejected() {
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
+        fmLocationManager.startUpdatingLocation(sessionId, sessionTags)
         fmLocationManager.isSimulation = true
         fmLocationManager.setLocation(location)
 
@@ -434,7 +437,7 @@ class FMLocationManagerTest {
     // Localize Test with mocked Frame
     @Test
     fun testLocalizeFrameRejected() {
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
+        fmLocationManager.startUpdatingLocation(sessionId, sessionTags)
         fmLocationManager.isSimulation = false
 
         fmLocationManager.setLocation(location)
@@ -470,7 +473,7 @@ class FMLocationManagerTest {
         fieldMotionManager.isAccessible = true
         fieldMotionManager.set(fmLocationManager, spyMotionManager)
 
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
+        fmLocationManager.startUpdatingLocation(sessionId, sessionTags)
 
         val fieldCoroutineScope = fmLocationManager.javaClass.getDeclaredField("coroutineScope")
         fieldCoroutineScope.isAccessible = true
@@ -589,7 +592,7 @@ class FMLocationManagerTest {
         testMotionManager.isAccessible = true
         testMotionManager.set(fmLocationManager, spyMotionManager)
 
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
+        fmLocationManager.startUpdatingLocation(sessionId, sessionTags)
 
         val testCoroutineScope = fmLocationManager.javaClass.getDeclaredField("coroutineScope")
         testCoroutineScope.isAccessible = true
@@ -679,7 +682,7 @@ class FMLocationManagerTest {
         field.isAccessible = true
         field.set(fmLocationManager, spyMotionManager)
 
-        fmLocationManager.startUpdatingLocation("AppSessionIdExample")
+        fmLocationManager.startUpdatingLocation(sessionId, sessionTags)
 
         val testCoroutineScope = fmLocationManager.javaClass.getDeclaredField("coroutineScope")
         testCoroutineScope.isAccessible = true

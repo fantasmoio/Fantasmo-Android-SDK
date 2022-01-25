@@ -30,12 +30,23 @@ class FMLocalizationRequest(
  * Class to hold all the Localization Analytics
  */
 class FMLocalizationAnalytics(
-    var appSessionId: String,
-    var localizationSessionId: String,
+    var appSessionId: String?,
+    var appSessionTags: List<String>?,
+    var localizationSessionId: String?,
     var frameEvents: FMFrameEvent,
     var rotationSpread: FMRotationSpread,
     var totalDistance: Float,
-    var magneticField: MagneticField
+    var magneticField: MagneticField,
+    var imageQualityFilterInfo: FMImageQualityFilterInfo?,
+    var remoteConfigId: String
+)
+
+/**
+ * Class to hold ImageQuality Filter Statistics
+ */
+class FMImageQualityFilterInfo(
+    var modelVersion: String,
+    var lastImageQualityScore: Float
 )
 
 /**
@@ -234,14 +245,24 @@ class FMApi(
         params["imageResolution"] = gson.toJson(resolution)
 
         // session identifiers
-        params["appSessionId"] = request.analytics.appSessionId
-        params["localizationSessionId"] = request.analytics.localizationSessionId
+        params["appSessionId"] = request.analytics.appSessionId!!
+        val appSessionTags = request.analytics.appSessionTags
+        params["appSessionTags"] = gson.toJson(appSessionTags)
+
+        params["localizationSessionId"] = request.analytics.localizationSessionId!!
 
         // other analytics
         params["frameEventCounts"] = gson.toJson(frameEventCounts)
         params["totalDistance"] = request.analytics.totalDistance.toString()
         params["rotationSpread"] = gson.toJson(request.analytics.rotationSpread)
         params["magneticData"] = gson.toJson(request.analytics.magneticField)
+
+        if(request.analytics.imageQualityFilterInfo != null && !request.isSimulation){
+            params["imageQualityModelVersion"] = request.analytics.imageQualityFilterInfo!!.modelVersion
+            params["imageQualityScore"] = request.analytics.imageQualityFilterInfo!!.lastImageQualityScore.toString()
+        }
+
+        params["remoteConfigId"] = gson.toJson(request.analytics.remoteConfigId)
 
         // calculate and send reference frame if anchoring
         val relativeOpenCVAnchorPose = request.relativeOpenCVAnchorPose
