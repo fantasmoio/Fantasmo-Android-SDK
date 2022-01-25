@@ -129,7 +129,7 @@ class FMNetworkManagerTest {
     @Test
     fun testZoneInRadiusRequest() {
         fmNetworkManager.isLocalizationAvailableRequest(
-            FMConfiguration.getInitializeURL(),
+            FMConfiguration.getIsLocalizationAvailableURL(),
             getIsLocalizationAvailableParams(),
             token,
             {
