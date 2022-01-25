@@ -4,6 +4,7 @@ class RemoteConfigTest {
 
     companion object {
         val remoteConfig = RemoteConfig.Config(
+            remoteConfigId = "default-android_17.01.22",
             frameAcceptanceThresholdTimeout = 1.0f,
             isBehaviorRequesterEnabled = false,
             isTrackingStateFilterEnabled = true,
@@ -23,6 +24,7 @@ class RemoteConfigTest {
         )
 
         val remoteConfigDisabledFilters = RemoteConfig.Config(
+            remoteConfigId = "default-android_17.01.22",
             frameAcceptanceThresholdTimeout = 1.0f,
             isBehaviorRequesterEnabled = false,
             isTrackingStateFilterEnabled = false,
