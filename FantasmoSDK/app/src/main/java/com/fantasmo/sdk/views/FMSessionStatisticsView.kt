@@ -5,6 +5,8 @@ import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMLocationResult
+import com.fantasmo.sdk.config.RemoteConfig.Companion.remoteConfig
+import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.fantasmosdk.R
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
@@ -17,6 +19,7 @@ import com.google.ar.core.TrackingFailureReason
 class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
 
     private val TAG = FMSessionStatisticsView::class.java.simpleName
+    private var sdkVersion: TextView = arLayout.findViewById(R.id.fantasmoSDKView)
     private var statusTv: TextView = arLayout.findViewById(R.id.statusTextView)
     private var lastResultTv: TextView = arLayout.findViewById(R.id.lastResultTextView)
     private var localizeTimeTv: TextView = arLayout.findViewById(R.id.localizeTimeTextView)
@@ -30,6 +33,8 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     private var cameraAnglesTv: TextView = arLayout.findViewById(R.id.cameraAnglesTextView)
     private var cameraAnglesSpreadTv: TextView =
         arLayout.findViewById(R.id.cameraAnglesSpreadTextView)
+
+    private var remoteConfigTv: TextView = arLayout.findViewById(R.id.remoteConfigTextView)
 
     private var normalTv: TextView = arLayout.findViewById(R.id.normalTextView)
     private var limitedTv: TextView = arLayout.findViewById(R.id.limitedTextView)
@@ -150,9 +155,13 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     }
 
     fun reset() {
+        val fantasmo = "Fantasmo SDK: " + BuildConfig.VERSION_NAME
+        sdkVersion.text = fantasmo
         val stringZero = "0"
         val stringZeroS = "0,0s"
         val stringClear = ""
+
+        remoteConfigTv.text = remoteConfig.remoteConfigId
 
         lastResultTv.text = stringZero
         localizeTimeTv.text = stringZeroS
