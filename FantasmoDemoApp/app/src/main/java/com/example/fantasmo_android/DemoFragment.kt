@@ -45,9 +45,6 @@ class DemoFragment : Fragment() {
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var showStatisticsSwitch: Switch
 
-    @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private lateinit var scanQRCodeSwitch: Switch
-
     private lateinit var endRideButton: Button
 
     // Control variables for the FMParkingView
@@ -83,7 +80,6 @@ class DemoFragment : Fragment() {
         resultTextView = currentView.findViewById(R.id.localizationResultView)
         isSimulationSwitch = currentView.findViewById(R.id.simulationModeSwitch)
         showStatisticsSwitch = currentView.findViewById(R.id.showStatisticsSwitch)
-        scanQRCodeSwitch = currentView.findViewById(R.id.scanQRCodeSwitch)
 
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
         // Assign an accessToken
@@ -171,9 +167,6 @@ class DemoFragment : Fragment() {
 
         // Enable Debug Mode to display session statistics
         fmParkingView.showStatistics = showStatisticsSwitch.isChecked
-
-        // Skips QR Code Scanning Session
-        fmParkingView.enableQRCodeScanner = scanQRCodeSwitch.isChecked
 
         // Present the FMParkingView to start
         fmParkingView.connect(sessionId, sessionTags)
