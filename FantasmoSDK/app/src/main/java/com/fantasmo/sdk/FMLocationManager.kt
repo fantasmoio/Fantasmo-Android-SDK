@@ -259,6 +259,13 @@ class FMLocationManager(private val context: Context) {
             accumulatedARCoreInfo.rotationAccumulator.yaw[2],
             accumulatedARCoreInfo.rotationAccumulator.roll[2]
         )
+        val imageQualityFilterInfo: FMImageQualityFilterInfo? =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && frameFilterChain.rc.isImageQualityFilterEnabled) {
+                val filter = frameFilterChain.filters.last() as FMImageQualityFilter
+                FMImageQualityFilterInfo(filter.modelVersion, filter.lastImageQualityScore)
+            } else {
+                null
+            }
         val frameAnalytics = FMLocalizationAnalytics(
             appSessionId,
             appSessionTags,
@@ -267,6 +274,7 @@ class FMLocationManager(private val context: Context) {
             rotationSpread,
             accumulatedARCoreInfo.translationAccumulator.totalTranslation,
             motionManager.magneticField,
+            imageQualityFilterInfo,
             rc.remoteConfigId
         )
         val openCVRelativeAnchorPose = anchorFrame?.let { anchorFrame ->
