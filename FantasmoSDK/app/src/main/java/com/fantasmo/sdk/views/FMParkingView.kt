@@ -210,6 +210,8 @@ class FMParkingView @JvmOverloads constructor(
             startQRScanning()
         }
         else {
+            // Set an AR anchor now
+            fmARCoreView.startAnchor()
             state = State.QRSCANNING
             startLocalizing()
         }
