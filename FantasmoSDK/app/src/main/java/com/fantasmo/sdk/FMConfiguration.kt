@@ -17,6 +17,20 @@ class FMConfiguration {
         }
 
         /**
+         * API is_localization_available url
+         */
+        fun getIsLocalizationAvailableURL(): String {
+            return BuildConfig.FM_LOCALIZATION_AVAILABLE_URL
+        }
+
+        /**
+         * API initialize url
+         */
+        fun getInitializeURL(): String {
+            return BuildConfig.FM_INITIALIZE_URL
+        }
+
+        /**
          * Current location
          */
         fun getConfigLocation(): Location {
