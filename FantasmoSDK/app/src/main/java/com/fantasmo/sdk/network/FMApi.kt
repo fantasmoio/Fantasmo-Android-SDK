@@ -30,13 +30,15 @@ class FMLocalizationRequest(
  * Class to hold all the Localization Analytics
  */
 class FMLocalizationAnalytics(
-    var appSessionId: String,
-    var localizationSessionId: String,
+    var appSessionId: String?,
+    var appSessionTags: List<String>?,
+    var localizationSessionId: String?,
     var frameEvents: FMFrameEvent,
     var rotationSpread: FMRotationSpread,
     var totalDistance: Float,
     var magneticField: MagneticField,
-    var imageQualityFilterInfo: FMImageQualityFilterInfo?
+    var imageQualityFilterInfo: FMImageQualityFilterInfo?,
+    var remoteConfigId: String
 )
 
 /**
@@ -273,8 +275,11 @@ class FMApi(
         params["sdkVersion"] = fantasmoSdkVersion
 
         // session identifiers
-        params["appSessionId"] = request.analytics.appSessionId
-        params["localizationSessionId"] = request.analytics.localizationSessionId
+        params["appSessionId"] = request.analytics.appSessionId!!
+        val appSessionTags = request.analytics.appSessionTags
+        params["appSessionTags"] = gson.toJson(appSessionTags)
+
+        params["localizationSessionId"] = request.analytics.localizationSessionId!!
 
         // other analytics
         params["frameEventCounts"] = gson.toJson(frameEventCounts)
@@ -286,6 +291,8 @@ class FMApi(
             params["imageQualityModelVersion"] = request.analytics.imageQualityFilterInfo!!.modelVersion
             params["imageQualityScore"] = request.analytics.imageQualityFilterInfo!!.lastImageQualityScore.toString()
         }
+
+        params["remoteConfigId"] = gson.toJson(request.analytics.remoteConfigId)
 
         // calculate and send reference frame if anchoring
         val relativeOpenCVAnchorPose = request.relativeOpenCVAnchorPose

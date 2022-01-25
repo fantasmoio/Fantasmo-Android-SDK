@@ -198,10 +198,13 @@ class CustomDemoFragment : Fragment() {
     }
 
     private fun startParkingFlow() {
-        // Display `FMParkingView` and initialize `sessionId`. This is typically a UUID string
+        // Display `FMParkingView` and initialize `sessionId` and `sessionTags`. This is typically a UUID string
         // but it can also follow your own format. It is used for analytics and billing purposes and
         // should represent a single parking session.
         val sessionId = UUID.randomUUID().toString()
+
+        // Optional list used mainly to label and group parking sessions that have something in common.
+        val sessionTags = listOf("android-sdk-test-harness")
 
         // Assign a controller
         fmParkingView.fmParkingViewController = fmParkingViewController
@@ -219,7 +222,7 @@ class CustomDemoFragment : Fragment() {
         fmParkingView.registerLocalizingViewController(fmLocalizingViewController)
 
         // Present the FMParkingView
-        fmParkingView.connect(sessionId)
+        fmParkingView.connect(sessionId, sessionTags)
 
         useOwnLocationProvider()
 

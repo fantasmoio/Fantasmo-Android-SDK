@@ -104,7 +104,8 @@ After this, we are ready to connect to the Fantasmo SDK. We need to provide a co
 ```kotlin
 fmParkingView.fmParkingViewController = fmParkingViewController
 val sessionId = UUID.randomUUID().toString()
-fmParkingView.connect(sessionId)
+val sessionTags = listOf("berlin", "e-scooter") //optional tags
+fmParkingView.connect(sessionId, sessionTags)
 ```
 
 The SDK provides an internal LocationManager and it will give updates on location. If you want to use your own Location Manager, all you have to do is set `fmParkingView.usesInternalLocationManager` to false and call the `fmParkingView.updateLocation(location: Location)` on your location manager in order to get location updates. If you check `CustomDemoFragment.kt` there's an example of how to manage your own location updates: 
