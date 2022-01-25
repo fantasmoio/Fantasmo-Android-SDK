@@ -85,9 +85,9 @@ class RemoteConfig {
          */
         private fun getConfigFromJSON(jsonString: String): Config {
             val configJSON = JSONObject(jsonString)
-            val remoteConfigId = if(configJSON.optString("remote_config_id")!=""){
+            val remoteConfigId = if (configJSON.optString("remote_config_id") != "") {
                 configJSON.optString("remote_config_id")
-            }else {
+            } else {
                 FMUtility.Constants.defaultConfigId
             }
             val frameAcceptanceThresholdTimeout =
