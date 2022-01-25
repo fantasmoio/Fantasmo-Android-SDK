@@ -80,6 +80,10 @@ class FMLocationManager(private val context: Context) {
 
     // App Session Id supplied by the SDK client
     private lateinit var appSessionId: String
+
+    // App Session Tags supplied by the SDK client
+    private var appSessionTags : List<String>? = null
+
     private var frameEventAccumulator = FrameFilterRejectionStatistics()
     private var accumulatedARCoreInfo = AccumulatedARCoreInfo()
 
@@ -134,14 +138,16 @@ class FMLocationManager(private val context: Context) {
     /**
      * Starts the generation of updates that report the user’s current location
      * enabling FrameFiltering
-     * @param appSessionId appSessionId supplied by the SDK client and used for billing and tracking an entire parking session
+     * @param appSessionId sessionId supplied by the SDK client and used for billing and tracking an entire parking session
+     * @param appSessionTags sessionTags supplied by the SDK client and used to label and group parking sessions that have something in common
      */
-    fun startUpdatingLocation(appSessionId: String) {
+    fun startUpdatingLocation(appSessionId: String, appSessionTags: List<String>?) {
         localizationSessionId = UUID.randomUUID().toString()
         this.appSessionId = appSessionId
+        this.appSessionTags = appSessionTags
         Log.d(
             TAG,
-            "startUpdatingLocation with AppSessionId:$appSessionId and LocalizationSessionId:$localizationSessionId"
+            "startUpdatingLocation with AppSessionId:$appSessionId, AppSessionTags:$appSessionTags and LocalizationSessionId:$localizationSessionId"
         )
 
         this.isConnected = true
@@ -205,7 +211,7 @@ class FMLocationManager(private val context: Context) {
         ) {
             val error = ErrorResponse(0, "Invalid Coordinates")
             fmLocationListener?.locationManager(error, null)
-            Log.e(TAG,"Invalid Coordinates")
+            Log.e(TAG, "Invalid Coordinates")
             return
         }
         Log.d(TAG, "localize: isSimulation $isSimulation")
@@ -255,6 +261,7 @@ class FMLocationManager(private val context: Context) {
         )
         val frameAnalytics = FMLocalizationAnalytics(
             appSessionId,
+            appSessionTags,
             localizationSessionId,
             frameEvents,
             rotationSpread,

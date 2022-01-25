@@ -63,7 +63,11 @@ class FMParkingView @JvmOverloads constructor(
      * Token used to provide access to the Fantasmo API
      */
     lateinit var accessToken: String
+
+    // App Session Id supplied by the SDK client
     private lateinit var appSessionId: String
+    // App Session Tags supplied by the SDK client
+    private var appSessionTags: List<String>? = null
 
     private lateinit var fmLocationManager: FMLocationManager
     private var fmSessionStatisticsView: FMSessionStatisticsView
@@ -158,12 +162,20 @@ class FMParkingView @JvmOverloads constructor(
      * session might involve multiple localization attempts. For analytics and billing purposes this identifier allows
      * you to link a set of attempts with a single parking session.
      *
+     * The `sessionTags` parameter is an optional list of tags for the parking session. This parameter can be used to
+     * label and group parking sessions that have something in common. For example parking sessions that take place
+     * in the same city might have the city's name as a tag. These are used for analytics purposes only and will be
+     * included in usage reports. Each tag must be a string and there is no limit to the number of tags a session can have.
+     *
      * @param sessionId an identifier for the parking session
+     * @param sessionTags an optional list of tags for the parking session
      */
-    fun connect(sessionId: String) {
+    fun connect(sessionId: String, sessionTags: List<String>?) {
         this.visibility = View.VISIBLE
 
         appSessionId = sessionId
+
+        appSessionTags = sessionTags
 
         fmQRScanningView = FMQRScanningView(context, arLayout, this)
 
@@ -320,7 +332,7 @@ class FMParkingView @JvmOverloads constructor(
         // Connect the FMLocationManager to Fantasmo SDK
         fmLocationManager.connect(accessToken, fmLocationListener)
         // Start getting location updates
-        fmLocationManager.startUpdatingLocation(appSessionId)
+        fmLocationManager.startUpdatingLocation(appSessionId, appSessionTags)
 
         fmLocalizingViewController.didStartLocalizing()
         fmParkingViewController.fmParkingViewDidStartLocalizing()
