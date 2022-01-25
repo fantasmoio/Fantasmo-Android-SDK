@@ -33,7 +33,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/end_ride"
-            android:visibility="gone"
             app:backgroundTint="@color/black"
             app:layout_constraintBottom_toTopOf="@+id/simulationModeSwitch"
             app:layout_constraintEnd_toEndOf="parent"

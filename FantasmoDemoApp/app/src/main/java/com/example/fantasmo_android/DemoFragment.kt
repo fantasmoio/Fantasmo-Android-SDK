@@ -143,7 +143,6 @@ class DemoFragment : Fragment() {
         } else {
             location = deviceLocation
         }
-        updateEndRideButtonState()
         return location
     }
 
@@ -151,19 +150,8 @@ class DemoFragment : Fragment() {
         object : SystemLocationListener {
             override fun onLocationUpdate(currentLocation: Location) {
                 deviceLocation = currentLocation
-                updateEndRideButtonState()
-            }
-
-            override fun hasLocation() {
-                updateEndRideButtonState()
             }
         }
-
-    private fun updateEndRideButtonState() {
-        if (endRideButton.visibility == View.GONE) {
-            endRideButton.visibility = View.VISIBLE
-        }
-    }
 
     private fun startParkingFlow() {
         // Display `FMParkingView` and initialize `sessionId` and `sessionTags`. This is typically a UUID string
