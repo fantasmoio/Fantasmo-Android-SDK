@@ -63,11 +63,9 @@ class FMNetworkManager(
                 }
             },
             Response.ErrorListener { error ->
-                processAndLogError(error)
+                val response = processAndLogError(error)
 
-                if (error.networkResponse != null) {
-                    val errorResult = String(error.networkResponse.data)
-                    val response = Gson().fromJson(errorResult, ErrorResponse::class.java)
+                if (response != null) {
                     onError(response)
                 } else {
                     onError(ErrorResponse(404, "UnknownError"))
@@ -126,10 +124,8 @@ class FMNetworkManager(
                 }
             },
             Response.ErrorListener { error ->
-                processAndLogError(error)
-                if (error.networkResponse != null) {
-                    val errorResult = String(error.networkResponse.data)
-                    val response = Gson().fromJson(errorResult, ErrorResponse::class.java)
+                val response = processAndLogError(error)
+                if (response != null) {
                     onError(response)
                 } else {
                     onError(ErrorResponse(404, "UnknownError"))
@@ -192,10 +188,8 @@ class FMNetworkManager(
                 }
             },
             Response.ErrorListener { error ->
-                processAndLogError(error)
-                if (error.networkResponse != null) {
-                    val errorResult = String(error.networkResponse.data)
-                    val response = Gson().fromJson(errorResult, ErrorResponse::class.java)
+                val response = processAndLogError(error)
+                if (response != null) {
                     onError(response)
                 } else {
                     onError(ErrorResponse(404, "UnknownError"))
@@ -226,9 +220,10 @@ class FMNetworkManager(
     /**
      * Method to process and log network error.
      */
-    private fun processAndLogError(error: VolleyError) {
+    private fun processAndLogError(error: VolleyError) : ErrorResponse? {
         val networkResponse = error.networkResponse
         var errorMessage = "Unknown error"
+        var response : ErrorResponse? = null
         if (networkResponse == null) {
             if (error.javaClass == TimeoutError::class.java) {
                 errorMessage = "Request timeout"
@@ -238,20 +233,21 @@ class FMNetworkManager(
         } else {
             val errorResult = String(networkResponse.data)
             try {
-                val response = Gson().fromJson(errorResult, ErrorResponse::class.java)
+                response = Gson().fromJson(errorResult, ErrorResponse::class.java)
+                var debugMessage = response.message ?: response.detail ?: ""
 
                 when (networkResponse.statusCode) {
                     404 -> {
                         errorMessage = "Resource not found"
                     }
                     401 -> {
-                        errorMessage = "${response.message} Authentication error"
+                        errorMessage = "$debugMessage Authentication error"
                     }
                     400 -> {
-                        errorMessage = "${response.message} Wrong parameters"
+                        errorMessage = "$debugMessage Wrong parameters"
                     }
                     500 -> {
-                        errorMessage = "${response.message} Something is wrong"
+                        errorMessage = "$debugMessage Something is wrong"
                     }
                 }
             } catch (e: JSONException) {
@@ -261,6 +257,7 @@ class FMNetworkManager(
             }
         }
         Log.e(TAG, "Network Error: $errorMessage")
+        return response
     }
 
     /**
