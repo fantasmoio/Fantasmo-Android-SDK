@@ -325,5 +325,7 @@ class FMUtility {
         const val PixelBufferWidth: Int = 1920
         const val PixelBufferHeight: Int = 1440
         const val PixelBufferPlaneCount: Int = 2
+
+        const val defaultConfigId = "default-android_17.01.22"
     }
 }

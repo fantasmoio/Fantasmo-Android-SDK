@@ -92,7 +92,7 @@ class DemoFragment : Fragment() {
 
         endRideButton = currentView.findViewById(R.id.endRideButton)
         endRideButton.setOnClickListener {
-            if(!hasRequestedEndRide){
+            if (!hasRequestedEndRide) {
                 handleEndRideButton()
                 hasRequestedEndRide = true
             }
@@ -139,7 +139,6 @@ class DemoFragment : Fragment() {
         } else {
             location = deviceLocation
         }
-        updateEndRideButtonState()
         return location
     }
 
@@ -147,25 +146,17 @@ class DemoFragment : Fragment() {
         object : SystemLocationListener {
             override fun onLocationUpdate(currentLocation: Location) {
                 deviceLocation = currentLocation
-                updateEndRideButtonState()
-            }
-
-            override fun hasLocation() {
-                updateEndRideButtonState()
             }
         }
-
-    private fun updateEndRideButtonState() {
-        if (endRideButton.visibility == View.GONE) {
-            endRideButton.visibility = View.VISIBLE
-        }
-    }
 
     private fun startParkingFlow() {
-        // Display `FMParkingView` and initialize `sessionId`. This is typically a UUID string
+        // Display `FMParkingView` and initialize `sessionId` and `sessionTags`. This is typically a UUID string
         // but it can also follow your own format. It is used for analytics and billing purposes and
         // should represent a single parking session.
         val sessionId = UUID.randomUUID().toString()
+
+        // Optional list used mainly to label and group parking sessions that have something in common.
+        val sessionTags = listOf("android-sdk-test-harness")
 
         // Assign a controller
         fmParkingView.fmParkingViewController = fmParkingViewController
@@ -178,7 +169,7 @@ class DemoFragment : Fragment() {
         fmParkingView.showStatistics = showStatisticsSwitch.isChecked
 
         // Present the FMParkingView to start
-        fmParkingView.connect(sessionId)
+        fmParkingView.connect(sessionId, sessionTags)
 
         resultsLayout.visibility = View.GONE
         controlsLayout.visibility = View.GONE
@@ -235,7 +226,7 @@ class DemoFragment : Fragment() {
 
             override fun fmParkingView(qrCode: Barcode, continueBlock: (Boolean) -> Unit) {
                 Log.d(TAG, "QR Code Scan Successful From Barcode")
-                val validQRCode = qrCode.rawValue!=null
+                val validQRCode = qrCode.rawValue != null
                 // Optional validation of the QR code can be done here
                 // Note: If you choose to implement this method, you must call the `continueBlock` with the validation result
                 // show dialogue to accept or refuse

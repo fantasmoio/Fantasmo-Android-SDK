@@ -30,12 +30,23 @@ class FMLocalizationRequest(
  * Class to hold all the Localization Analytics
  */
 class FMLocalizationAnalytics(
-    var appSessionId: String,
-    var localizationSessionId: String,
+    var appSessionId: String?,
+    var appSessionTags: List<String>?,
+    var localizationSessionId: String?,
     var frameEvents: FMFrameEvent,
     var rotationSpread: FMRotationSpread,
     var totalDistance: Float,
-    var magneticField: MagneticField
+    var magneticField: MagneticField,
+    var imageQualityFilterInfo: FMImageQualityFilterInfo?,
+    var remoteConfigId: String
+)
+
+/**
+ * Class to hold ImageQuality Filter Statistics
+ */
+class FMImageQualityFilterInfo(
+    var modelVersion: String,
+    var lastImageQualityScore: Float
 )
 
 /**
@@ -180,7 +191,7 @@ class FMApi(
     ): HashMap<String, String> {
         val params = hashMapOf<String, String>()
         val gson = Gson()
-        params["deviceOs"] = "android"
+        params += getDeviceAndHostAppInfo()
         params["location"] = gson.toJson(location)
 
         Log.i(TAG, "getInitializationRequest: $params")
@@ -193,29 +204,13 @@ class FMApi(
      * @param frame Frame to localize
      * @return an HashMap with all the localization parameters.
      */
-    @SuppressLint("HardwareIds")
     private fun getLocalizeParams(
         frame: Frame,
         request: FMLocalizationRequest
     ): HashMap<String, String> {
         val pose = FMUtility.getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context, frame)
 
-        val location = if (request.isSimulation) {
-            val configLocation = FMConfiguration.getConfigLocation()
-            Location(
-                configLocation.altitude,
-                System.currentTimeMillis(),
-                configLocation.accuracy,
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    configLocation.verticalAccuracyMeters
-                } else {
-                    0
-                },
-                Coordinate(configLocation.latitude, configLocation.longitude)
-            )
-        } else {
-            request.location
-        }
+        val location = request.location
 
         val resolution = hashMapOf<String, Int>()
         val imageResolution = getImageResolution(frame, request)
@@ -240,13 +235,6 @@ class FMApi(
         frameEventCounts["lossOfTracking"] = events.lossOfTracking.toString()
         frameEventCounts["total"] = events.total.toString()
 
-        val androidId = Secure.getString(context.contentResolver, Secure.ANDROID_ID)
-        val manufacturer = Build.MANUFACTURER // Samsung
-        val model = Build.MODEL  // SM-G780
-        val deviceModel = "$manufacturer $model" // Samsung SM-G780
-        val deviceOsVersion = Build.VERSION.SDK_INT.toString() // "30" (Android 11)
-        val fantasmoSdkVersion = BuildConfig.VERSION_NAME // "1.0.5"
-
         val params = hashMapOf<String, String>()
         val gson = Gson()
         params["capturedAt"] = System.currentTimeMillis().toString()
@@ -256,16 +244,12 @@ class FMApi(
         params["intrinsics"] = gson.toJson(intrinsics)
         params["imageResolution"] = gson.toJson(resolution)
 
-        // device characteristics
-        params["udid"] = androidId
-        params["deviceModel"] = deviceModel
-        params["deviceOs"] = "android"
-        params["deviceOsVersion"] = deviceOsVersion
-        params["sdkVersion"] = fantasmoSdkVersion
-
         // session identifiers
-        params["appSessionId"] = request.analytics.appSessionId
-        params["localizationSessionId"] = request.analytics.localizationSessionId
+        params["appSessionId"] = request.analytics.appSessionId!!
+        val appSessionTags = request.analytics.appSessionTags
+        params["appSessionTags"] = gson.toJson(appSessionTags)
+
+        params["localizationSessionId"] = request.analytics.localizationSessionId!!
 
         // other analytics
         params["frameEventCounts"] = gson.toJson(frameEventCounts)
@@ -273,10 +257,25 @@ class FMApi(
         params["rotationSpread"] = gson.toJson(request.analytics.rotationSpread)
         params["magneticData"] = gson.toJson(request.analytics.magneticField)
 
+        if(request.analytics.imageQualityFilterInfo != null && !request.isSimulation){
+            params["imageQualityModelVersion"] = request.analytics.imageQualityFilterInfo!!.modelVersion
+            params["imageQualityScore"] = request.analytics.imageQualityFilterInfo!!.lastImageQualityScore.toString()
+        }
+
+        params["remoteConfigId"] = gson.toJson(request.analytics.remoteConfigId)
+
         // calculate and send reference frame if anchoring
         val relativeOpenCVAnchorPose = request.relativeOpenCVAnchorPose
         if (relativeOpenCVAnchorPose != null) {
             params["referenceFrame"] = gson.toJson(relativeOpenCVAnchorPose)
+        }
+
+        // add device and host app info
+        params += getDeviceAndHostAppInfo()
+
+        // add fixed simulated data if simulating
+        if (request.isSimulation){
+            params += MockData.params(request)
         }
 
         Log.i(TAG, "getLocalizeParams")
@@ -313,5 +312,28 @@ class FMApi(
         val height = arFrame.camera.imageIntrinsics.imageDimensions[0]
         val width = arFrame.camera.imageIntrinsics.imageDimensions[1]
         return FMFrameResolution(height, width)
+    }
+
+    /**
+     * Returns a dictionary of common device and host app info that can be added to request parameters
+     */
+    @SuppressLint("HardwareIds")
+    private fun getDeviceAndHostAppInfo(): HashMap<String,String>{
+        val androidId = Secure.getString(context.contentResolver, Secure.ANDROID_ID)
+        val manufacturer = Build.MANUFACTURER // Samsung
+        val model = Build.MODEL  // SM-G780
+        val deviceModel = "$manufacturer $model" // Samsung SM-G780
+        val deviceOsVersion = Build.VERSION.SDK_INT.toString() // "30" (Android 11)
+        val fantasmoSdkVersion = BuildConfig.VERSION_NAME // "1.0.5"
+
+        val params = hashMapOf<String, String>()
+        // device characteristics
+        params["udid"] = androidId
+        params["deviceModel"] = deviceModel
+        params["deviceOs"] = "android"
+        params["deviceOsVersion"] = deviceOsVersion
+        params["sdkVersion"] = fantasmoSdkVersion
+
+        return params
     }
 }
