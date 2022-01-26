@@ -17,6 +17,7 @@ import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.IsLocalizationAvailableResponse
 import com.fantasmo.sdk.models.LocalizeResponse
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -255,6 +256,8 @@ class FMNetworkManager(
                 }
             } catch (e: JSONException) {
                 Log.e(TAG, "JSONException: ${e.message}")
+            } catch (e: JsonSyntaxException) {
+                Log.e(TAG, "JSONSyntaxException: ${e.message}")
             }
         }
         Log.e(TAG, "Network Error: $errorMessage")
