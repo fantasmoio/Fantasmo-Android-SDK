@@ -25,18 +25,18 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField "String", "VERSION_NAME", "\"$versionName\""
-        buildConfigField "String", "FM_API_BASE_URL", "\"https://api.fantasmo.io/v1/image.localize\""
-        buildConfigField "String", "FM_LOCALIZATION_AVAILABLE_URL", "\"https://mobility-bff.fantasmo.dev/v2/isLocalizationAvailable\""
-        buildConfigField "String", "FM_INITIALIZE_URL","\"https://mobility-bff.fantasmo.dev/v2/initialize\""
+        buildConfigField "String", "FM_API_BASE_URL", "\"https://api.fantasmo.io\""
         buildConfigField "String", "FM_GPS_LAT_LONG", "\"48.12863302178715,11.572371166069702\""
     }
 
     buildTypes {
         debug{
+            buildConfigField "String", "FM_API_BASE_URL", "\"https://api-dev.fantasmo.io\""
             minifyEnabled = false
             shrinkResources false
         }
         release {
+            buildConfigField "String", "FM_API_BASE_URL", "\"https://api.fantasmo.io\""
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -51,18 +51,6 @@ android {
 
     flavorDimensions "env"
     productFlavors {
-        buildTypes{
-            release{
-                buildConfigField "String", "FM_API_BASE_URL", "\"https://api.fantasmo.io/v1/image.localize\""
-                buildConfigField "String", "FM_LOCALIZATION_AVAILABLE_URL", "\"https://mobility-bff.fantasmo.dev/v2/isLocalizationAvailable\""
-                buildConfigField "String", "FM_INITIALIZE_URL","\"https://mobility-bff.fantasmo.dev/v2/initialize\""
-            }
-            debug{
-                buildConfigField "String", "FM_API_BASE_URL", "\"https://api-dev.fantasmo.io/v1/image.localize\""
-                buildConfigField "String", "FM_LOCALIZATION_AVAILABLE_URL", "\"https://mobility-bff-dev.fantasmo.dev/v2/isLocalizationAvailable\""
-                buildConfigField "String", "FM_INITIALIZE_URL","\"https://mobility-bff-dev.fantasmo.dev/v2/initialize\""
-            }
-        }
         prod{
             dimension "env"
             buildConfigField "String", "VERSION_NAME", "\"$defaultConfig.versionName\""
