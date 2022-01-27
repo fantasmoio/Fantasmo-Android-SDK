@@ -11,7 +11,6 @@ import kotlin.math.abs
 class FMMovementFilter(private val movementFilterThreshold: Float) : FMFrameFilter {
     // Previous frame translation
     private var lastTransform: FloatArray = FloatArray(16){0f}
-    private var lastTimestamp = 0L
     /**
      * Check frame acceptance.
      * @param arFrame Frame to be evaluated
@@ -22,10 +21,8 @@ class FMMovementFilter(private val movementFilterThreshold: Float) : FMFrameFilt
         arFrame.camera.pose.toMatrix(newTransform, 0)
         return if (exceededThreshold(newTransform)) {
             lastTransform = newTransform
-            lastTimestamp = arFrame.timestamp
             FMFrameFilterResult.Accepted
         } else {
-            lastTimestamp = arFrame.timestamp
             FMFrameFilterResult.Rejected(FMFilterRejectionReason.MOVINGTOOLITTLE)
         }
     }
