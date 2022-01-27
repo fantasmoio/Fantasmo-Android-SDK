@@ -85,9 +85,9 @@ class FMApi(
     private val context: Context,
     private val token: String,
 ) {
-    var fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), context)
+    var fmNetworkManager = FMNetworkManager(context)
 
-    private val TAG = "FMApi"
+    private val TAG = FMApi::class.java.simpleName
 
     /**
      * Method to build the Localize request.
@@ -100,6 +100,7 @@ class FMApi(
     ) {
         try {
             fmNetworkManager.uploadImage(
+                FMConfiguration.getServerURL(),
                 imageData(arFrame, request),
                 getLocalizeParams(arFrame, request),
                 token,
@@ -139,7 +140,7 @@ class FMApi(
         onError: (ErrorResponse) -> Unit
     ) {
         fmNetworkManager.isLocalizationAvailableRequest(
-            "https://mobility-bff-dev.fantasmo.dev/v2/isLocalizationAvailable",
+            FMConfiguration.getIsLocalizationAvailableURL(),
             getIsLocalizationAvailableParams(location),
             token,
             onCompletion,
@@ -173,7 +174,7 @@ class FMApi(
         onError: (ErrorResponse) -> Unit
     ) {
         fmNetworkManager.sendInitializationRequest(
-            "https://mobility-bff-dev.fantasmo.dev/v2/initialize",
+            FMConfiguration.getInitializeURL(),
             getInitializationParams(location),
             token,
             onCompletion,
