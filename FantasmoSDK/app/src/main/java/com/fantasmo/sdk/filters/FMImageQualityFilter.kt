@@ -67,39 +67,39 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
      * @return FloatArray containing RGB values in float precision
      */
     private fun getRGBValues(bitmap: Bitmap): FloatArray {
-        val pixels = IntArray(imageHeight * imageWidth)
-        // O(3N) complexity
-        bitmap.getPixels(pixels, 0, imageWidth, 0, 0, imageWidth, imageHeight)
+        // Image Height * Image Width * 3 RGB Channels
+        val rgb = FloatArray(imageHeight * imageWidth * 3) { 0f }
+        for (y in 0 until imageHeight) {
+            for (x in 0 until imageWidth) {
+                val pixel = bitmap.getPixel(x, y)
+                // Get and convert rgb values to 0.0 - 1.0
+                var r = Color.red(pixel) / 255.0f
+                var g = Color.green(pixel) / 255.0f
+                var b = Color.blue(pixel) / 255.0f
 
-        // Store all the RED color space
-        val r = FloatArray(imageHeight * imageWidth) { 0f }
-        // Store all the GREEN color space
-        val g = FloatArray(imageHeight * imageWidth) { 0f }
-        // Store all the BLUE color space
-        val b = FloatArray(imageHeight * imageWidth) { 0f }
+                // subtract mean, stddev normalization
+                r = (r - 0.485f) / 0.229f
+                g = (g - 0.456f) / 0.224f
+                b = (b - 0.406f) / 0.225f
 
-        //Handle Red Color Space
-        for ((index, pixel) in pixels.withIndex()) {
-            // convert rgb values to 0.0 - 1.0
-            var red = Color.red(pixel) / 255.0f
-            // subtract mean, stddev normalization
-            red = (red - 0.485f) / 0.229f
-            // add the rgb values to the input array
-            r[index] = red
+                // rotate 90 degrees clockwise
+                val w = imageHeight - 1 - y
+                val h = x
+
+                // add the rgb values to the input array
+                val rIndex =
+                    0 * imageHeight * imageWidth + h * imageHeight + w
+                val gIndex =
+                    1 * imageHeight * imageWidth + h * imageHeight + w
+                val bIndex =
+                    2 * imageHeight * imageWidth + h * imageHeight + w
+
+                rgb[rIndex] = r
+                rgb[gIndex] = g
+                rgb[bIndex] = b
+            }
         }
-        //Handle Green Color Space
-        for ((index, pixel) in pixels.withIndex()) {
-            var green = Color.green(pixel) / 255.0f
-            green = (green - 0.456f) / 0.224f
-            g[index] = green
-        }
-        //Handle Blue Color Space
-        for ((index, pixel) in pixels.withIndex()) {
-            var blue = Color.blue(pixel) / 255.0f
-            blue = (blue - 0.406f) / 0.225f
-            b[index] = blue
-        }
-        return (r + g + b)
+        return rgb
     }
 
     /**
