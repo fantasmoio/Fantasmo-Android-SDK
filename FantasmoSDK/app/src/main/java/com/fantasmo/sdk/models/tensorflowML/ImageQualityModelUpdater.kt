@@ -25,6 +25,7 @@ class ImageQualityModelUpdater(val context: Context) {
     private val queue = Volley.newRequestQueue(context)
     private var hasRequestedModel = false
     private var hasRequestedUpdate = false
+    private var hasTriedAssets = false
 
     private val compatList = CompatibilityList()
 
@@ -102,11 +103,11 @@ class ImageQualityModelUpdater(val context: Context) {
         return if (::interpreter.isInitialized) {
             interpreter
         } else {
-            var result = loadFromAssets()
-            if (result == null) {
-                result = loadFromURL()
+            if (!hasTriedAssets){
+                loadFromAssets()
+            } else {
+                loadFromURL()
             }
-            result
         }
     }
 
@@ -115,6 +116,7 @@ class ImageQualityModelUpdater(val context: Context) {
      * @return `Interpreter` with the model loaded
      */
     private fun loadFromAssets(): Interpreter? {
+        hasTriedAssets = true
         val fileName = "image-quality-estimator-0.1.0.tflite"
         val assetFileName = "model/$fileName"
         return try {
