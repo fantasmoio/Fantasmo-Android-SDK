@@ -12,6 +12,7 @@ package com.fantasmo.sdk.models
  * @property message
  */
 data class ErrorResponse(
-    val code: Int,
-    val message: String?
+    val code: Int = 0,
+    val message: String? = null,
+    val detail: String? = null
 )
