@@ -108,8 +108,9 @@ class FMNetworkManager(
         parameters: HashMap<String, String>,
         token: String,
         onCompletion: (Boolean) -> Unit,
-        onError: (ErrorResponse) -> Unit) {
-        Log.i(TAG,"$url $parameters")
+        onError: (ErrorResponse) -> Unit
+    ) {
+        Log.i(TAG, "$url $parameters")
         multipartRequest = object : MultiPartRequest(
             Method.POST, url,
             Response.Listener<NetworkResponse> { response ->
@@ -178,16 +179,11 @@ class FMNetworkManager(
                         onError(reasonError)
                     } else {
                         val configString = initializeResponse.optString("config")
-                        if (configString != "") {
-                            RemoteConfig.updateConfig(configString)
-                        } else {
-                            RemoteConfig.getDefaultConfig(context)
-                        }
+                        RemoteConfig.updateConfig(context, configString)
                     }
                     onCompletion(onCompletionResult)
                 } catch (e: JSONException) {
-                    RemoteConfig.getDefaultConfig(context)
-                    e.printStackTrace()
+                    onError(ErrorResponse(0, "JSONException"))
                 }
             },
             Response.ErrorListener { error ->
