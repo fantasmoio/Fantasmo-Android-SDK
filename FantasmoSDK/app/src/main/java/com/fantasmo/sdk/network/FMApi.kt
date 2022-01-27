@@ -85,9 +85,9 @@ class FMApi(
     private val context: Context,
     private val token: String,
 ) {
-    var fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), context)
+    var fmNetworkManager = FMNetworkManager(context)
 
-    private val TAG = "FMApi"
+    private val TAG = FMApi::class.java.simpleName
 
     /**
      * Method to build the Localize request.
@@ -100,6 +100,7 @@ class FMApi(
     ) {
         try {
             fmNetworkManager.uploadImage(
+                FMConfiguration.getServerURL(),
                 imageData(arFrame, request),
                 getLocalizeParams(arFrame, request),
                 token,
@@ -139,7 +140,7 @@ class FMApi(
         onError: (ErrorResponse) -> Unit
     ) {
         fmNetworkManager.isLocalizationAvailableRequest(
-            "https://mobility-bff-dev.fantasmo.dev/v2/isLocalizationAvailable",
+            FMConfiguration.getIsLocalizationAvailableURL(),
             getIsLocalizationAvailableParams(location),
             token,
             onCompletion,
@@ -173,7 +174,7 @@ class FMApi(
         onError: (ErrorResponse) -> Unit
     ) {
         fmNetworkManager.sendInitializationRequest(
-            "https://mobility-bff-dev.fantasmo.dev/v2/initialize",
+            FMConfiguration.getInitializeURL(),
             getInitializationParams(location),
             token,
             onCompletion,
@@ -257,9 +258,11 @@ class FMApi(
         params["rotationSpread"] = gson.toJson(request.analytics.rotationSpread)
         params["magneticData"] = gson.toJson(request.analytics.magneticField)
 
-        if(request.analytics.imageQualityFilterInfo != null && !request.isSimulation){
-            params["imageQualityModelVersion"] = request.analytics.imageQualityFilterInfo!!.modelVersion
-            params["imageQualityScore"] = request.analytics.imageQualityFilterInfo!!.lastImageQualityScore.toString()
+        if (request.analytics.imageQualityFilterInfo != null) {
+            params["imageQualityModelVersion"] =
+                request.analytics.imageQualityFilterInfo!!.modelVersion
+            params["imageQualityScore"] =
+                request.analytics.imageQualityFilterInfo!!.lastImageQualityScore.toString()
         }
 
         params["remoteConfigId"] = gson.toJson(request.analytics.remoteConfigId)
@@ -274,7 +277,7 @@ class FMApi(
         params += getDeviceAndHostAppInfo()
 
         // add fixed simulated data if simulating
-        if (request.isSimulation){
+        if (request.isSimulation) {
             params += MockData.params(request)
         }
 
@@ -318,7 +321,7 @@ class FMApi(
      * Returns a dictionary of common device and host app info that can be added to request parameters
      */
     @SuppressLint("HardwareIds")
-    private fun getDeviceAndHostAppInfo(): HashMap<String,String>{
+    private fun getDeviceAndHostAppInfo(): HashMap<String, String> {
         val androidId = Secure.getString(context.contentResolver, Secure.ANDROID_ID)
         val manufacturer = Build.MANUFACTURER // Samsung
         val model = Build.MODEL  // SM-G780

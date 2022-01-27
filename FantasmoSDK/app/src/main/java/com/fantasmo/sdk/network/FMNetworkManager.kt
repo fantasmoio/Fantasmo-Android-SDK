@@ -25,10 +25,9 @@ import org.json.JSONObject
  * Manager for network requests.
  */
 class FMNetworkManager(
-    val url: String,
     private val context: Context
 ) {
-    private val TAG = "FMNetworkManager"
+    private val TAG = FMNetworkManager::class.java.simpleName
 
     private val requestQueue: RequestQueue by lazy {
         // applicationContext is key, it keeps you from leaking the
@@ -42,6 +41,7 @@ class FMNetworkManager(
      * Method to upload an image with the given [imageData] and [parameters].
      */
     fun uploadImage(
+        url: String,
         imageData: ByteArray,
         parameters: HashMap<String, String>,
         token: String,
@@ -234,11 +234,14 @@ class FMNetworkManager(
             val errorResult = String(networkResponse.data)
             try {
                 response = Gson().fromJson(errorResult, ErrorResponse::class.java)
-                var debugMessage = response.message ?: response.detail ?: ""
+                val debugMessage = response.message ?: response.detail ?: ""
 
                 when (networkResponse.statusCode) {
                     404 -> {
                         errorMessage = "Resource not found"
+                    }
+                    403 -> {
+                        errorMessage = "Forbidden"
                     }
                     401 -> {
                         errorMessage = "$debugMessage Authentication error"

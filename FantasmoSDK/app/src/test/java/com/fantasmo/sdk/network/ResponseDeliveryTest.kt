@@ -1,6 +1,7 @@
 package com.fantasmo.sdk.network
 
 import com.android.volley.*
+import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.utils.CacheTestUtils
 import com.fantasmo.sdk.utils.ImmediateResponseDelivery
 import com.fantasmo.sdk.models.*
@@ -135,7 +136,7 @@ class ResponseDeliveryTest {
 
     private fun mockMultiPartRequest() {
         mRequest = object : MultiPartRequest(
-            Method.POST, "https://mobility-bff-dev.fantasmo.dev/v2/isLocalizationAvailable",
+            Method.POST, FMConfiguration.getIsLocalizationAvailableURL(),
             {
             },
             {

@@ -13,7 +13,21 @@ class FMConfiguration {
          * API base url
          */
         fun getServerURL(): String {
-            return BuildConfig.FM_API_BASE_URL
+            return BuildConfig.FM_API_BASE_URL + "/v1/image.localize"
+        }
+
+        /**
+         * API is_localization_available url
+         */
+        fun getIsLocalizationAvailableURL(): String {
+            return BuildConfig.FM_API_BASE_URL + "/v2/isLocalizationAvailable"
+        }
+
+        /**
+         * API initialize url
+         */
+        fun getInitializeURL(): String {
+            return BuildConfig.FM_API_BASE_URL + "/v2/initialize"
         }
 
         /**
