@@ -44,18 +44,17 @@ class RemoteConfig {
                 getConfig(context)!!
             } else {
                 Log.i(TAG, "Received Valid Remote Config.")
+                try {
+                    val file = File(context.filesDir, fileName)
+                    val fileWriter = FileWriter(file)
+                    val bufferedWriter = BufferedWriter(fileWriter)
+                    bufferedWriter.write(jsonString)
+                    bufferedWriter.close()
+                    Log.i(TAG, "Successfully saved new remote config.")
+                } catch (e: IOException) {
+                    Log.e(TAG, "Remote Config File write failed: $e.")
+                }
                 getConfigFromJSON(jsonString)!!
-            }
-
-            try {
-                val file = File(context.filesDir, fileName)
-                val fileWriter = FileWriter(file)
-                val bufferedWriter = BufferedWriter(fileWriter)
-                bufferedWriter.write(jsonString)
-                bufferedWriter.close()
-                Log.i(TAG, "Successfully saved new remote config.")
-            } catch (e: IOException) {
-                Log.e(TAG, "Remote Config File write failed: $e.")
             }
         }
 
@@ -207,7 +206,7 @@ class RemoteConfig {
                     imageQualityFilterModelUri,
                     imageQualityFilterModelVersion
                 )
-                remoteConfig = config
+
                 return config
 
             } catch (e: JSONException) {
