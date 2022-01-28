@@ -258,9 +258,11 @@ class FMApi(
         params["rotationSpread"] = gson.toJson(request.analytics.rotationSpread)
         params["magneticData"] = gson.toJson(request.analytics.magneticField)
 
-        if(request.analytics.imageQualityFilterInfo != null){
-            params["imageQualityModelVersion"] = request.analytics.imageQualityFilterInfo!!.modelVersion
-            params["imageQualityScore"] = String.format("%.5f", request.analytics.imageQualityFilterInfo!!.lastImageQualityScore)
+        if (request.analytics.imageQualityFilterInfo != null) {
+            params["imageQualityModelVersion"] =
+                request.analytics.imageQualityFilterInfo!!.modelVersion
+            params["imageQualityScore"] =
+                String.format("%.5f", request.analytics.imageQualityFilterInfo!!.lastImageQualityScore)
         }
 
         params["remoteConfigId"] = gson.toJson(request.analytics.remoteConfigId)
@@ -275,7 +277,7 @@ class FMApi(
         params += getDeviceAndHostAppInfo()
 
         // add fixed simulated data if simulating
-        if (request.isSimulation){
+        if (request.isSimulation) {
             params += MockData.params(request)
         }
 
@@ -319,7 +321,7 @@ class FMApi(
      * Returns a dictionary of common device and host app info that can be added to request parameters
      */
     @SuppressLint("HardwareIds")
-    private fun getDeviceAndHostAppInfo(): HashMap<String,String>{
+    private fun getDeviceAndHostAppInfo(): HashMap<String, String> {
         val androidId = Secure.getString(context.contentResolver, Secure.ANDROID_ID)
         val manufacturer = Build.MANUFACTURER // Samsung
         val model = Build.MODEL  // SM-G780
