@@ -42,7 +42,8 @@ class RemoteConfig {
          * @param jsonString `Json` read from the request response
          */
         fun updateConfig(context: Context, jsonString: String) {
-            remoteConfig = if (getConfigFromJSON(jsonString) == null) {
+            val config = getConfigFromJSON(jsonString)
+            remoteConfig = if (config == null) {
                 getConfig(context)!!
             } else {
                 Log.i(TAG, "Received Valid Remote Config.")
@@ -56,12 +57,12 @@ class RemoteConfig {
                 } catch (e: IOException) {
                     Log.e(TAG, "Remote Config File write failed: $e.")
                 }
-                getConfigFromJSON(jsonString)!!
+                config
             }
         }
 
         /**
-         * Loads a valid `Config` from the both the assets or filesDir folder
+         * Loads a valid `Config` from both the assets or filesDir folder
          * @param context Application context
          * @return `Config` to be used throughout the SDK
          */
