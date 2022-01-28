@@ -37,7 +37,9 @@ class RemoteConfig {
         lateinit var remoteConfig: Config
 
         /**
-         * Updates current config
+         * Updates current `Config`
+         * @param context Application context
+         * @param jsonString `Json` read from the request response
          */
         fun updateConfig(context: Context, jsonString: String) {
             remoteConfig = if (getConfigFromJSON(jsonString) == null) {
@@ -59,9 +61,9 @@ class RemoteConfig {
         }
 
         /**
-         * Loads a valid config from the both the assets or filesDir folder
+         * Loads a valid `Config` from the both the assets or filesDir folder
          * @param context Application context
-         * @return Config SDK configuration
+         * @return `Config` to be used throughout the SDK
          */
         private fun getConfig(context: Context): Config? {
             val file = File(context.filesDir, fileName)
@@ -73,9 +75,9 @@ class RemoteConfig {
         }
 
         /**
-         * Loads the default config from the assets folder
+         * Loads the default `Config` from the assets folder
          * @param context Application context
-         * @return Config SDK configuration
+         * @return Default `Config` saved in the assets folder
          */
         private fun getAssetDefaultConfig(context: Context): Config? {
             Log.i(TAG, "Getting default config.")
@@ -87,9 +89,9 @@ class RemoteConfig {
         }
 
         /**
-         * Loads a valid config from the both the assets or filesDir folder
-         * @param file Previous Saved Config
-         * @return Config SDK configuration
+         * Loads a valid `Config` from the both the assets or filesDir folder
+         * @param file Previous Saved Config File
+         * @return Previous valid saved `Config`
          */
         private fun getPreviousSavedConfig(file: File): Config? {
             Log.i(TAG, "Getting previously saved config.")
@@ -135,9 +137,9 @@ class RemoteConfig {
 
         /**
          * Auxiliary method to parse values from the config `.json`
-         * file and create a Config object
+         * file and create a `Config` object
          * @param jsonString `.json` file converted to String
-         * @return Config object
+         * @return `Config` object
          */
         private fun getConfigFromJSON(jsonString: String): Config? {
             val configJSON = JSONObject(jsonString)
