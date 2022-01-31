@@ -17,8 +17,10 @@ class FMMovementFilter(private val movementFilterThreshold: Float) : FMFrameFilt
      * @return Accepts frame or Rejects frame with MovingTooLittle failure
      */
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
+
         val newTransform = FloatArray(16)
-        arFrame.camera.pose.toMatrix(newTransform, 0)
+        arFrame.androidSensorPose.toMatrix(newTransform, 0)
+        
         return if (exceededThreshold(newTransform)) {
             lastTransform = newTransform
             FMFrameFilterResult.Accepted
