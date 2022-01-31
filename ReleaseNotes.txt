@@ -80,3 +80,14 @@ Version 3.0.1
 - MW-510 Add FlashLight toggle button to default QR Code scanner
 - MW-513 Send location instead of coordinates for image localize
 - MW-524 Feature Allow manual entry of a qr code
+
+Version 3.1.0
+- MW-429 Prototype and test recall predictor in the Android SDK
+- MW-477 Add remote config to Android app
+- MW-529 Chore: Ensure simulation mode also sends all metric and optional fields
+- MW-546 Android 3.1.0 sends requests to bff-dev instead of api-dev
+- MW-536 Backport 3.0.1 changes to 3.1.0
+- MW-537 Send image quality scores and model version to localize endpoint
+- MW-538 Add freeform tags to SDK API and send them to server
+- MW-547 End Ride button hidden for a while when opening SDK
+- MW-557 TooLittle frame count increases nearly 1to1 with every frame
