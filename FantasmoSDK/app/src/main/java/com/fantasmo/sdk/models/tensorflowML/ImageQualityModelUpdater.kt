@@ -91,9 +91,8 @@ class ImageQualityModelUpdater(val context: Context) {
     /**
      * Method that delivers an `Interpreter` with the model loaded onto it.
      * First checks if the global interpreter has been loaded into memory.
-     * In negative case, it will check if the model is present in the assets
-     * folder. If it isn't present in the assets, this method will make a
-     * request to get a remote model.
+     * In negative case, it will check for updates and load those updates
+     * into memory.
      * @return `Interpreter` with model loaded
      */
     fun getInterpreter(): Interpreter? {
