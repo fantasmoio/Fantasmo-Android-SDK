@@ -6,26 +6,22 @@ import com.android.volley.Request
 import com.android.volley.toolbox.Volley
 import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.network.ModelRequest
-import com.fantasmo.sdk.views.common.samplerender.SampleRender
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.CompatibilityList
 import org.tensorflow.lite.gpu.GpuDelegate
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
-import java.nio.channels.FileChannel
 
 class ImageQualityModelUpdater(val context: Context) {
 
     private val TAG = ImageQualityModelUpdater::class.java.simpleName
-    private val fileName = "image-quality-estimator.tflite"
+    private var fileName = "image-quality-estimator.tflite"
     var modelVersion = "0.0.0"
     private var modelUrl = ""
     private val queue = Volley.newRequestQueue(context)
     private var hasRequestedModel = false
     private var hasRequestedUpdate = false
-    private var hasTriedAssets = false
 
     private val compatList = CompatibilityList()
 
@@ -57,8 +53,9 @@ class ImageQualityModelUpdater(val context: Context) {
         ) {
             modelUrl = remoteConfig.imageQualityFilterModelUri!!
             modelVersion = remoteConfig.imageQualityFilterModelVersion!!
+            fileName = "image-quality-estimator-$modelVersion.tflite"
             hasRequestedUpdate = true
-            Log.d(TAG, "Updating model to version $modelVersion")
+            Log.d(TAG, "Received model version: $modelVersion")
         } else {
             Log.d(TAG, "No model specified in remote config")
         }
@@ -67,7 +64,7 @@ class ImageQualityModelUpdater(val context: Context) {
     /**
      * Method to send a GET request in order to update the model.
      */
-    private fun makeRemoteModelRequest() {
+    private fun downloadModel() {
         hasRequestedModel = true
         val stringRequest = ModelRequest(
             Request.Method.GET, modelUrl,
@@ -103,37 +100,7 @@ class ImageQualityModelUpdater(val context: Context) {
         return if (::interpreter.isInitialized) {
             interpreter
         } else {
-            if (!hasTriedAssets){
-                loadFromAssets()
-            } else {
-                loadFromURL()
-            }
-        }
-    }
-
-    /**
-     * Loads a model from the assets folder and returns an `Interpreter`
-     * @return `Interpreter` with the model loaded
-     */
-    private fun loadFromAssets(): Interpreter? {
-        hasTriedAssets = true
-        val fileName = "image-quality-estimator-0.1.0.tflite"
-        val assetFileName = "model/$fileName"
-        return try {
-            //File exists so do something with it
-            val fileDescriptor = SampleRender.getAssets().openFd(assetFileName)
-            val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
-            val startOffset = fileDescriptor.startOffset
-            val declaredLength = fileDescriptor.declaredLength
-            val fileChannel = inputStream.channel
-            val mappedByteBuffer =
-                fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
-            interpreter = Interpreter(mappedByteBuffer, options)
-            return Interpreter(mappedByteBuffer, options)
-        } catch (ex: IOException) {
-            //file does not exist
-            Log.e(TAG, "Error on getting the model from the Assets folder. Trying to download it")
-            null
+            checkForUpdates()
         }
     }
 
@@ -144,17 +111,17 @@ class ImageQualityModelUpdater(val context: Context) {
      * model uri
      * @return `Interpreter` with the model loaded
      */
-    private fun loadFromURL(): Interpreter? {
+    private fun checkForUpdates(): Interpreter? {
         val file = File(context.filesDir, fileName)
         if (!file.exists()) {
             if (!hasRequestedModel) {
                 if (hasRequestedUpdate) {
-                    Log.d(TAG, "New Model update. Downloading it...")
+                    Log.d(TAG, "New Model version: $modelVersion. Downloading it...")
                     hasRequestedUpdate = false
                 } else {
                     Log.e(TAG, "Model file doesn't exist. Downloading it...")
                 }
-                makeRemoteModelRequest()
+                downloadModel()
             }
             return null
         } else {
@@ -163,7 +130,7 @@ class ImageQualityModelUpdater(val context: Context) {
                 interpreter
             } else {
                 try {
-                    Log.d(TAG, "Model present in App data.")
+                    Log.d(TAG, "Model file present in App data.")
                     //Initialize interpreter an keep it in memory
                     interpreter = Interpreter(file, options)
                     firstRead = false
