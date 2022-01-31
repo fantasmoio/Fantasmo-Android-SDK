@@ -262,7 +262,7 @@ class FMApi(
             params["imageQualityModelVersion"] =
                 request.analytics.imageQualityFilterInfo!!.modelVersion
             params["imageQualityScore"] =
-                request.analytics.imageQualityFilterInfo!!.lastImageQualityScore.toString()
+                String.format("%.5f", request.analytics.imageQualityFilterInfo!!.lastImageQualityScore)
         }
 
         params["remoteConfigId"] = gson.toJson(request.analytics.remoteConfigId)
