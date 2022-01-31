@@ -16,8 +16,8 @@ import java.io.IOException
 class ImageQualityModelUpdater(val context: Context) {
 
     private val TAG = ImageQualityModelUpdater::class.java.simpleName
-    private var fileName = "image-quality-estimator.tflite"
-    var modelVersion = "0.0.0"
+    private var fileName = ""
+    var modelVersion = ""
     private var modelUrl = ""
     private val queue = Volley.newRequestQueue(context)
     private var hasRequestedModel = false
@@ -42,22 +42,6 @@ class ImageQualityModelUpdater(val context: Context) {
             Log.i(TAG, "Device does not have GPU support. Using CPU for inference.")
             // if the GPU is not supported, run on 4 threads
             this.setNumThreads(4)
-        }
-    }
-
-    init {
-        val remoteConfig = RemoteConfig.remoteConfig
-        if (remoteConfig.imageQualityFilterModelUri != null &&
-            remoteConfig.imageQualityFilterModelVersion != null &&
-            remoteConfig.imageQualityFilterModelVersion != modelVersion
-        ) {
-            modelUrl = remoteConfig.imageQualityFilterModelUri!!
-            modelVersion = remoteConfig.imageQualityFilterModelVersion!!
-            fileName = "image-quality-estimator-$modelVersion.tflite"
-            hasRequestedUpdate = true
-            Log.d(TAG, "Received model version: $modelVersion")
-        } else {
-            Log.d(TAG, "No model specified in remote config")
         }
     }
 
@@ -90,16 +74,30 @@ class ImageQualityModelUpdater(val context: Context) {
 
     /**
      * Method that delivers an `Interpreter` with the model loaded onto it.
-     * First checks if the global interpreter has been loaded into memory.
-     * In negative case, it will check for updates and load those updates
-     * into memory.
+     * Checks if there's a config change. If true, it will request a new
+     * model. Else if there's no config change it will try to load a interpreter
+     * that has been loaded into memory. In negative case, it will check if the
+     * updates are loaded and use those instead.
      * @return `Interpreter` with model loaded
      */
     fun getInterpreter(): Interpreter? {
-        return if (::interpreter.isInitialized) {
-            interpreter
+        val remoteConfig = RemoteConfig.remoteConfig
+        if (remoteConfig.imageQualityFilterModelUri != null &&
+            remoteConfig.imageQualityFilterModelVersion != null &&
+            remoteConfig.imageQualityFilterModelVersion != modelVersion
+        ) {
+            modelUrl = remoteConfig.imageQualityFilterModelUri!!
+            modelVersion = remoteConfig.imageQualityFilterModelVersion!!
+            fileName = "image-quality-estimator-$modelVersion.tflite"
+            hasRequestedUpdate = true
+            Log.d(TAG, "Received model version: $modelVersion")
+            return checkForUpdates()
         } else {
-            checkForUpdates()
+            return if (::interpreter.isInitialized) {
+                interpreter
+            } else {
+                checkForUpdates()
+            }
         }
     }
 
