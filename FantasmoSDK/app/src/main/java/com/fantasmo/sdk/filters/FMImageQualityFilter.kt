@@ -82,21 +82,9 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
                 g = (g - 0.456f) / 0.224f
                 b = (b - 0.406f) / 0.225f
 
-                // rotate 90 degrees clockwise
-                val w = imageHeight - 1 - y
-                val h = x
-
-                // add the rgb values to the input array
-                val rIndex =
-                    0 * imageHeight * imageWidth + h * imageHeight + w
-                val gIndex =
-                    1 * imageHeight * imageWidth + h * imageHeight + w
-                val bIndex =
-                    2 * imageHeight * imageWidth + h * imageHeight + w
-
-                rgb[rIndex] = r
-                rgb[gIndex] = g
-                rgb[bIndex] = b
+                rgb[x + imageWidth * y] = r
+                rgb[imageHeight * imageWidth + imageWidth * y + x] = g
+                rgb[ 2 * imageHeight * imageWidth + imageWidth * y + x] = b
             }
         }
         return rgb

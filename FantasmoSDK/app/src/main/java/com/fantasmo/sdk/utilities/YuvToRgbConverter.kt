@@ -44,7 +44,6 @@ class YuvToRgbConverter(
      * @param frame ARFrame from the ARSession
      * @return Bitmap in RGB format
      */
-    @Synchronized
     fun toBitmap(frame: Frame): Bitmap? {
         val width = frame.camera.imageIntrinsics.imageDimensions[0]
         val height = frame.camera.imageIntrinsics.imageDimensions[1]
@@ -95,7 +94,7 @@ class YuvToRgbConverter(
         yuvToRgbIntrinsic.forEach(outputAllocation)
         outputAllocation.copyTo(output)
 
-        return output
+        return Bitmap.createScaledBitmap(output, imageWidth, imageHeight, true)
     }
 
     /**
