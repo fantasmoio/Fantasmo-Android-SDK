@@ -53,6 +53,8 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     private var imageQualityInsufficient: TextView = arLayout.findViewById(R.id.imageQualityInsufficientTextView)
     private var imageQualityLastResult: TextView = arLayout.findViewById(R.id.lastResultIQTextView)
 
+    private var frameErrorTv: TextView = arLayout.findViewById(R.id.frameErrorTextView)
+
     fun updateStats(
         frame: Frame,
         info: AccumulatedARCoreInfo,
@@ -94,6 +96,8 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         imageQualityModelVersion.text = info.modelVersion
         imageQualityLastResult.text = info.lastImageQualityScore.toString()
         imageQualityInsufficient.text = rejections.imageQualityFrameCount.toString()
+
+        frameErrorTv.text = rejections.frameErrorCount.toString()
 
         val stringDistance =
             String.format("%.2f", info.translationAccumulator.totalTranslation) + " m"
@@ -184,6 +188,7 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         tooFastTv.text = stringZero
         tooLittleTv.text = stringZero
         featuresTv.text = stringZero
+        frameErrorTv.text = stringZero
 
         imageQualityModelVersion.text = stringClear
         imageQualityLastResult.text = stringZero
