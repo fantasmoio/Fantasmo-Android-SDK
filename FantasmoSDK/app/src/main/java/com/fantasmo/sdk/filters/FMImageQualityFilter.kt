@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.models.tensorflowML.ImageQualityModelUpdater
 import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import com.google.ar.core.Frame
@@ -16,7 +17,7 @@ import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 @RequiresApi(Build.VERSION_CODES.KITKAT)
 class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Context) :
     FMFrameFilter {
-    private val TAG = FMImageQualityFilter::class.java.simpleName
+    override val TAG = FMImageQualityFilter::class.java.simpleName
     private val mlShape = intArrayOf(1, 3, 320, 240)
     private val imageHeight: Int = 320
     private val imageWidth: Int = 240
@@ -24,7 +25,7 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
     val scoreThreshold = imageQualityScoreThreshold
     var lastImageQualityScore = 0f
 
-    private val yuvToRgbConverter = YuvToRgbConverter(context, imageHeight, imageWidth)
+    private val yuvToRgbConverter = YuvToRgbConverter(context)
 
     /**
      * ImageQualityEstimatorModel initializer.
@@ -39,7 +40,7 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
             Log.e(TAG, "Failed to get Model")
             return FMFrameFilterResult.Accepted
         }
-        val bitmapRGB = yuvToRgbConverter.toBitmap(arFrame)
+        val bitmapRGB = FMUtility.acquireFrameImage(arFrame)?.let { yuvToRgbConverter.toBitmap(it, imageWidth, imageHeight) }
         if (bitmapRGB == null) {
             // The frame being null means it's no longer available to send in the request
             Log.e(TAG, "Failed to create Input Array")

@@ -9,6 +9,7 @@ import com.google.ar.core.TrackingState
  * Prevents from sending frames that were broken during ARSession
  */
 class FMTrackingStateFilter : FMFrameFilter {
+    override val TAG = FMTrackingStateFilter::class.java.simpleName
 
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
         if (arFrame.camera.trackingState == TrackingState.TRACKING) {

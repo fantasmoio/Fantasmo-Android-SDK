@@ -3,6 +3,7 @@ package com.fantasmo.sdk.filters
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.YuvImage
 import android.os.Build
 import androidx.annotation.RequiresApi
 import android.renderscript.*
@@ -12,17 +13,29 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import java.nio.Buffer
+import java.nio.ByteBuffer
 import kotlin.math.pow
 
 @RequiresApi(Build.VERSION_CODES.KITKAT)
 class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter {
+    override val TAG = FMAutoGammaCorrectionFilter::class.java.simpleName
+
+    private lateinit var rs : RenderScript
+    private lateinit var histogramIntrinsic: ScriptIntrinsicHistogram
+    private lateinit var colorLUT : ScriptIntrinsicLUT
 
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
-        var byteArrayFrame = FMUtility.acquireFrameImage(arFrame)
-        GlobalScope.launch(Dispatchers.Default) { // launches coroutine in cpu thread
-            byteArrayFrame = applyAutoGammaCorrection(byteArrayFrame, 0.3f)
+        var yuvImage = FMUtility.acquireFrameImage(arFrame)
+        if(!::rs.isInitialized){
+            rs = RenderScript.create(context)
+            histogramIntrinsic = ScriptIntrinsicHistogram.create(rs, Element.U8(rs))
+            colorLUT = ScriptIntrinsicLUT.create(rs, Element.U8_4(rs))
         }
-        FMUtility.setFrame(byteArrayFrame)
+        GlobalScope.launch(Dispatchers.Default) { // launches coroutine in cpu thread
+            yuvImage = applyAutoGammaCorrection(yuvImage, 0.3f)
+        }
+        FMUtility.setFrame(yuvImage)
         return FMFrameFilterResult.Accepted
     }
 
@@ -36,21 +49,22 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
      * @return variance blurriness value
      * */
     @RequiresApi(Build.VERSION_CODES.KITKAT)
-        public suspend fun applyAutoGammaCorrection(byteArrayFrame: ByteArray?, meanT: Float): ByteArray? {
-        if (byteArrayFrame == null) {
+        public suspend fun applyAutoGammaCorrection(yuvImage: YuvImage?, meanT: Float): YuvImage? {
+        if (yuvImage == null) {
             return null
         } else {
             val autoGammaCorrection = GlobalScope.async {
                 val rs = RenderScript.create(context)
-
                 val luminanceInput = Allocation.createSized(rs, Element.U8(rs), FMUtility.imageWidth * FMUtility.imageHeight)
-                luminanceInput.copyFrom(byteArrayFrame)
-                val histogramIntrinsic = ScriptIntrinsicHistogram.create(rs, Element.U8(rs))
+                luminanceInput.copyFrom(yuvImage.yuvData)
                 val histogramOutput = Allocation.createSized(rs, Element.U32(rs), 256)
                 histogramIntrinsic.setOutput(histogramOutput)
                 histogramIntrinsic.forEach(luminanceInput)
                 val histogram = IntArray(256)
                 histogramOutput.copyTo(histogram)
+
+                luminanceInput.destroy()
+                histogramOutput.destroy()
 
                 val originalBinValues = DoubleArray(256)
                 for (i in 0..255) {
@@ -64,7 +78,7 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
                 }
 
                 if (meanBrightness > meanT) {
-                    byteArrayFrame
+                    yuvImage
                 }
                 else {
                     val meanRange: DoubleArray = doubleArrayOf(meanT - meanT / 100.0, meanT + meanT / 100.0)
@@ -94,9 +108,6 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
                     var finalBins = IntArray(256)
                     for (i in 0..255) {
                         finalBins[i] = (correctedBinValues[i] * 256.0).toInt()
-                    }
-                    val colorLUT = ScriptIntrinsicLUT.create(rs, Element.U8_4(rs))
-                    for (i in 0..255) {
                         colorLUT.setBlue(i, finalBins[i])
                         colorLUT.setRed(i, finalBins[i])
                         colorLUT.setGreen(i, finalBins[i])
@@ -107,9 +118,10 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
                         rs, Element.U8_4(rs), FMUtility.imageWidth * FMUtility.imageHeight / 4
                     )
                     colorLUT.forEach(finalInput, finalOutput)
-                    val finalArray = byteArrayFrame.clone()
+                    val finalArray = ByteArray(yuvImage.yuvData.size)
                     finalOutput.copyTo(finalArray)
-                    finalArray
+                    yuvImage.yuvData.copyInto(finalArray, yuvImage.width * yuvImage.height, yuvImage.width * yuvImage.height, yuvImage.yuvData.size - 1)
+                    YuvImage(finalArray, yuvImage.yuvFormat, yuvImage.width, yuvImage.height, yuvImage.strides)
                 }
             }
             return autoGammaCorrection.await()

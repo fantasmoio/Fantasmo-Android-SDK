@@ -9,6 +9,8 @@ import kotlin.math.abs
  * Initializes with sideways movement Threshold in meters
  */
 class FMMovementFilter(private val movementFilterThreshold: Float) : FMFrameFilter {
+    override val TAG = FMMovementFilter::class.java.simpleName
+
     // Previous frame translation
     private var lastTransform: FloatArray = FloatArray(16){0f}
     /**

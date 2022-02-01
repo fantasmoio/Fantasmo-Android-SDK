@@ -19,6 +19,7 @@ class FMCameraPitchFilter(
     lookUpThreshold: Float,
     private val context: Context
 ) : FMFrameFilter {
+    override val TAG = FMCameraPitchFilter::class.java.simpleName
 
     private val interval = if(lookDownThreshold < 0){
         lookDownThreshold..lookUpThreshold

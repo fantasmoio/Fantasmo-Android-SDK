@@ -2,8 +2,7 @@ package com.fantasmo.sdk.filters
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Color
+import android.graphics.YuvImage
 import android.os.Build
 import android.renderscript.*
 import androidx.annotation.RequiresApi
@@ -14,7 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlin.math.pow
 import kotlin.math.sqrt
 
 /**
@@ -28,7 +26,7 @@ class FMBlurFilter(
     blurFilterAverageThroughputThreshold: Float,
     val context: Context
 ) : FMFrameFilter {
-
+    override val TAG = FMBlurFilter::class.java.simpleName
     private val laplacianMatrix = floatArrayOf(
         0.0f, 1.0f, 0.0f,
         1.0f, -4.0f, 1.0f,
@@ -56,7 +54,7 @@ class FMBlurFilter(
      * @return Accepts frame or Rejects frame with ImageToBlurry failure
      */
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
-        val byteArrayFrame = FMUtility.acquireFrameImage(arFrame)
+        val yuvImage = FMUtility.acquireFrameImage(arFrame)
 
         if(!::rs.isInitialized){
             rs = RenderScript.create(context)
@@ -65,7 +63,7 @@ class FMBlurFilter(
         }
 
         GlobalScope.launch(Dispatchers.Default) { // launches coroutine in cpu thread
-            variance = calculateVariance(byteArrayFrame)
+            variance = calculateVariance(yuvImage)
         }
         varianceAverager.addSample(variance)
 
@@ -92,7 +90,7 @@ class FMBlurFilter(
             FMUtility.setFrame(null)
             FMFrameFilterResult.Rejected(FMFilterRejectionReason.IMAGETOOBLURRY)
         } else {
-            FMUtility.setFrame(byteArrayFrame)
+            FMUtility.setFrame(yuvImage)
             FMFrameFilterResult.Accepted
         }
     }
@@ -102,19 +100,19 @@ class FMBlurFilter(
      * Takes the frame and acquire the image from it and turns into greyscale
      * After that applies edge detection matrix to the greyscale image and
      * calculate variance from that
-     * @param byteArrayFrame frame converted to ByteArray to measure the variance
+     * @param yuvImage frame converted to ByteArray to measure the variance
      * @return variance blurriness value
      * */
-    suspend fun calculateVariance(byteArrayFrame: ByteArray?): Float {
+    suspend fun calculateVariance(yuvImage: YuvImage?): Float {
         val reducedHeight = 480
         val reducedWidth = 640
-        if (byteArrayFrame == null) {
+        if (yuvImage == null) {
             return 0.0f
         } else {
             val stdDev = GlobalScope.async {
                 val inputBitmap = Bitmap.createBitmap(FMUtility.imageWidth, FMUtility.imageHeight, Bitmap.Config.ALPHA_8)
                 val inputAllocation = Allocation.createFromBitmap(rs, inputBitmap)
-                inputAllocation.copyFrom(byteArrayFrame)
+                inputAllocation.copyFrom(yuvImage.yuvData)
                 inputAllocation.copyTo(inputBitmap)
                 inputAllocation.destroy()
                 val reducedBitmap =

@@ -67,13 +67,13 @@ class QRCodeScanner(
                 .build()
             val barcodeScanner: BarcodeScanner = BarcodeScanning.getClient(options)
 
-            val byteArray = FMUtility.acquireFrameImage(arFrame)
+            val yuvImage = FMUtility.acquireFrameImage(arFrame)
             GlobalScope.launch(Dispatchers.Default) {
-                if (byteArray == null) {
+                if (yuvImage == null) {
                     state = State.IDLE
                 } else {
                     val inputImage =
-                        InputImage.fromByteArray(byteArray, FMUtility.imageWidth, FMUtility.imageHeight, 0, ImageFormat.NV21)
+                        InputImage.fromByteArray(yuvImage.yuvData, FMUtility.imageWidth, FMUtility.imageHeight, 0, ImageFormat.NV21)
 
                     barcodeScanner.process(inputImage)
                         .addOnSuccessListener { barcodes ->

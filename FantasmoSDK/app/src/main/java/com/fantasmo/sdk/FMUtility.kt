@@ -3,13 +3,14 @@ package com.fantasmo.sdk
 import android.content.Context
 import android.graphics.*
 import android.media.Image
-import android.renderscript.Allocation
-import android.renderscript.RenderScript
+import android.os.Build
 import android.util.Log
 import android.view.Display
 import android.view.Surface
 import android.view.WindowManager
+import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.models.*
+import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import com.fantasmo.sdk.utilities.math.Vector3
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
@@ -22,46 +23,51 @@ import kotlin.math.*
 /**
  * Class with utility methods and constants
  */
+@RequiresApi(Build.VERSION_CODES.KITKAT)
 class FMUtility {
 
     companion object {
         private var hasPassedBlurFilter: Boolean = false
         private var hasPassedImageQualityFilter: Boolean = false
         private val TAG = FMUtility::class.java.simpleName
-        private var frameToByteArray : ByteArray? = null
+        private var frameYuvImage : YuvImage? = null
+        private var currentImage : Image? = null
         public var imageWidth : Int = 0
             private set
         public var imageHeight : Int = 0
             private set
         public var imageYStride : Int = 1
+
+        private var yuvToRgbConverter : YuvToRgbConverter? = null
         /**
          * Method to get the AR Frame camera image data.
          * @param arFrame the AR Frame to localize.
          * @return a ByteArray with the data of the [arFrame]
          */
-        fun getImageDataFromARFrame(context: Context, arFrame: Frame): ByteArray {
-            val localBa: ByteArray? = if(!hasPassedBlurFilter || !hasPassedImageQualityFilter){
+        fun getImageDataFromARFrame(context: Context, arFrame: Frame): ByteArray? {
+            val localImage: YuvImage? = if(frameYuvImage == null){
                 acquireFrameImage(arFrame)
             }else{
-                frameToByteArray
+                frameYuvImage
+            }
+            if (yuvToRgbConverter == null) {
+                yuvToRgbConverter = YuvToRgbConverter(context)
             }
 
-            val imageBitmap = BitmapFactory.decodeByteArray(localBa, 0, localBa!!.size)
-                .rotate(getImageRotationDegrees(context))
-            val data = getFileDataFromDrawable(imageBitmap)
+            val imageBitmap = localImage?.let { yuvToRgbConverter?.toBitmap(it) }
+            imageBitmap?.rotate(getImageRotationDegrees(context))
+            val data = imageBitmap?.let { getFileDataFromDrawable(it)}
 
-            imageBitmap.recycle()
+            imageBitmap?.recycle()
             return data
         }
 
-        private fun createByteArrayOutputStream(cameraImage: Image): ByteArrayOutputStream {
+        private fun createYUVImage(cameraImage: Image): YuvImage {
             //The camera image received is in YUV YCbCr Format. Get buffers for each of the planes and use
             // them to create a new byte array defined by the size of all three buffers combined
             val cameraPlaneY = cameraImage.planes[0].buffer
             val cameraPlaneU = cameraImage.planes[1].buffer
             val cameraPlaneV = cameraImage.planes[2].buffer
-           // imageHeight = cameraImage.
-            imageYStride = cameraImage.planes[0].rowStride
             //Use the buffers to create a new byteArray that
             val compositeByteArray =
                 ByteArray(cameraPlaneY.capacity() + cameraPlaneU.capacity() + cameraPlaneV.capacity())
@@ -73,41 +79,12 @@ class FMUtility {
                 cameraPlaneY.capacity() + cameraPlaneU.capacity(),
                 cameraPlaneV.capacity()
             )
-
-            val baOutputStream = ByteArrayOutputStream()
-            val yuvImage = YuvImage(
-                compositeByteArray,
+            return YuvImage(compositeByteArray,
                 ImageFormat.NV21,
                 cameraImage.width,
                 cameraImage.height,
                 null
             )
-            yuvImage.compressToJpeg(
-                Rect(0, 0, cameraImage.width, cameraImage.height),
-                100,
-                baOutputStream
-            )
-            return baOutputStream
-        }
-
-        private fun createYUVByteArray(cameraImage: Image): ByteArray {
-            //The camera image received is in YUV YCbCr Format. Get buffers for each of the planes and use
-            // them to create a new byte array defined by the size of all three buffers combined
-            val cameraPlaneY = cameraImage.planes[0].buffer
-            val cameraPlaneU = cameraImage.planes[1].buffer
-            val cameraPlaneV = cameraImage.planes[2].buffer
-            //Use the buffers to create a new byteArray that
-            val compositeByteArray =
-                ByteArray(cameraPlaneY.capacity() + cameraPlaneU.capacity() + cameraPlaneV.capacity())
-
-            cameraPlaneY.get(compositeByteArray, 0, cameraPlaneY.capacity())
-            cameraPlaneU.get(compositeByteArray, cameraPlaneY.capacity(), cameraPlaneU.capacity())
-            cameraPlaneV.get(
-                compositeByteArray,
-                cameraPlaneY.capacity() + cameraPlaneU.capacity(),
-                cameraPlaneV.capacity()
-            )
-            return compositeByteArray
         }
 
         private fun getImageRotationDegrees(context: Context): Float {
@@ -253,23 +230,23 @@ class FMUtility {
          * @param arFrame Frame
          * @return `ByteArrayOutputStream` or `null` in case of exception
          */
-        fun acquireFrameImage(arFrame: Frame): ByteArray? {
-            if(hasPassedImageQualityFilter){
-                return frameToByteArray
+        fun acquireFrameImage(arFrame: Frame): YuvImage? {
+            if(frameYuvImage != null){
+                return frameYuvImage
             }
             try {
                 val cameraImage = arFrame.acquireCameraImage()
                 imageHeight = cameraImage.height
                 imageWidth = cameraImage.width
 
-                val yuvByteArray = createYUVByteArray(cameraImage)
+                val yuvImage = createYUVImage(cameraImage)
                 // Release the image
                 cameraImage.close()
-                return yuvByteArray
+                return yuvImage
             } catch (e: NotYetAvailableException) {
                 Log.e(TAG, "FrameNotYetAvailable")
             } catch (e: DeadlineExceededException) {
-                Log.e(TAG, "DeadlineExceededException")
+                Log.e(TAG, "DeadlineExceededException in acquireFrameImage")
             } catch (e: ResourceExhaustedException) {
                 Log.e(TAG, "ResourceExhaustedException")
             }
@@ -283,9 +260,9 @@ class FMUtility {
          * after being analyzed on the `BlurFilter`
          * @param byteArrayFrame `ByteArray` with frame image data
          */
-        fun setFrame(byteArrayFrame: ByteArray?) {
-            hasPassedBlurFilter = byteArrayFrame != null
-            frameToByteArray = byteArrayFrame
+        fun setFrame(yuvImage: YuvImage?) {
+            hasPassedBlurFilter = yuvImage != null
+            frameYuvImage = yuvImage
         }
 
         /**
@@ -295,10 +272,13 @@ class FMUtility {
          * after being analyzed on the `ImageQualityFilter`
          * @param image The image contained in the ARFrame
          */
-        fun setFrameQualityTest(image: Image?) {
+        fun setImage(image: Image?) {
             if(image!=null){
                 hasPassedImageQualityFilter = true
-                frameToByteArray = createYUVByteArray(image)
+                currentImage = image
+                imageHeight = image.height
+                imageWidth = image.width
+                frameYuvImage = createYUVImage(image)
             }
         }
 
@@ -310,6 +290,12 @@ class FMUtility {
         fun setFalse() {
             hasPassedBlurFilter = false
             hasPassedImageQualityFilter = false
+        }
+
+
+        fun resetImage() {
+            currentImage = null
+            frameYuvImage = null
         }
     }
 

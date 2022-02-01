@@ -101,7 +101,7 @@ class FMApi(
         try {
             fmNetworkManager.uploadImage(
                 FMConfiguration.getServerURL(),
-                imageData(arFrame, request),
+                imageData(arFrame, request)!!,
                 getLocalizeParams(arFrame, request),
                 token,
                 {
@@ -291,7 +291,7 @@ class FMApi(
      * @param request FMLocalizationRequest with information about simulation mode
      * @return result ByteArray with image to localize
      */
-    private fun imageData(arFrame: Frame, request: FMLocalizationRequest): ByteArray {
+    private fun imageData(arFrame: Frame, request: FMLocalizationRequest): ByteArray? {
         if (request.isSimulation) {
             return MockData.imageData(request, context)
         }

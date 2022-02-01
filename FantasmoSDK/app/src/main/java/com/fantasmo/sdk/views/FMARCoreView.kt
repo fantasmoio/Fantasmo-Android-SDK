@@ -13,6 +13,9 @@ import com.fantasmo.sdk.views.common.samplerender.SampleRender
 import com.fantasmo.sdk.views.common.samplerender.arcore.BackgroundRenderer
 import com.google.ar.core.*
 import com.google.ar.core.exceptions.CameraNotAvailableException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.io.IOException
 
 /**
@@ -192,7 +195,7 @@ class FMARCoreView(
         }
         val newArFrameTimestamp = frame.timestamp
         //Acquire ARCore Frame to set anchor and updates UI setting values in the view
-        (context as Activity).runOnUiThread {
+        GlobalScope.launch(Dispatchers.Default) {
             // Code here will run in UI thread
             if(connected && newArFrameTimestamp > lastArFrameTimestamp){
                 onUpdate(frame)

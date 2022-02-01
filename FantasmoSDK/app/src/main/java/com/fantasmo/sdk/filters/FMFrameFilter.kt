@@ -45,5 +45,6 @@ sealed class FMFrameFilterResult {
  * Prime filters are original blocks for a compound frame filter or can be used alone as a standalone filter.
  */
 interface FMFrameFilter {
+    val TAG: String
     fun accepts(arFrame: Frame): FMFrameFilterResult
 }
