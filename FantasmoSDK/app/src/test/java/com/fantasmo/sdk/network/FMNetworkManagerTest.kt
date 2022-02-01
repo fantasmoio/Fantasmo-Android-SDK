@@ -37,7 +37,7 @@ class FMNetworkManagerTest {
 
     private lateinit var mDelivery: ResponseDelivery
 
-    private lateinit var reqZoneIsInRadius: MockMultiPartRequest
+    private lateinit var reqIsLocalizationAvailable: MockMultiPartRequest
 
     private lateinit var reqUploadImage: MockMultiPartRequest
 
@@ -52,7 +52,7 @@ class FMNetworkManagerTest {
         openMocks(this)
         instrumentationContext = InstrumentationRegistry.getInstrumentation().context
 
-        fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), instrumentationContext)
+        fmNetworkManager = FMNetworkManager(instrumentationContext)
 
         mDelivery = ImmediateResponseDelivery()
 
@@ -60,7 +60,7 @@ class FMNetworkManagerTest {
         mockMultiPartRequestUploadImage()
 
         coordinate = Coordinate(48.84972140031428, 2.3726263972863566)
-        location = Location(null, coordinate, null, null, null, null)
+        location = Location(null, null, null, null, coordinate)
         pose = Pose(
             "N/A",
             Orientation(
@@ -92,6 +92,7 @@ class FMNetworkManagerTest {
     @Test
     fun testUploadImage() {
         fmNetworkManager.uploadImage(
+            FMConfiguration.getServerURL(),
             getFileDataFromDrawable(
                 BitmapFactory.decodeResource(
                     instrumentationContext.resources,
@@ -127,20 +128,46 @@ class FMNetworkManagerTest {
 
     @Test
     fun testZoneInRadiusRequest() {
-        fmNetworkManager.zoneInRadiusRequest(
-            "https://api.fantasmo.io/v1/parking.in.radius",
-            getZoneInRadiusParams(10),
+        fmNetworkManager.isLocalizationAvailableRequest(
+            FMConfiguration.getIsLocalizationAvailableURL(),
+            getIsLocalizationAvailableParams(),
             token,
-        ) {
-        }
-
-        assertNotNull(reqZoneIsInRadius)
+            {
+            },
+            {
+            }
+        )
+        assertNotNull(reqIsLocalizationAvailable)
         assertNotNull(fmNetworkManager.multipartRequest)
 
-        assertEquals(reqZoneIsInRadius.url, fmNetworkManager.multipartRequest.url)
-        assertEquals(reqZoneIsInRadius.method, fmNetworkManager.multipartRequest.method)
-        assertEquals(reqZoneIsInRadius.headers, fmNetworkManager.multipartRequest.headers)
-        assertEquals(reqZoneIsInRadius.priority, fmNetworkManager.multipartRequest.priority)
+        assertEquals(reqIsLocalizationAvailable.url, fmNetworkManager.multipartRequest.url)
+        assertEquals(reqIsLocalizationAvailable.method, fmNetworkManager.multipartRequest.method)
+        assertEquals(reqIsLocalizationAvailable.headers, fmNetworkManager.multipartRequest.headers)
+        assertEquals(reqIsLocalizationAvailable.priority, fmNetworkManager.multipartRequest.priority)
+
+        postResponseRequest()
+        assertTrue(fmNetworkManager.multipartRequest.deliverResponseCalled)
+        assertFalse(fmNetworkManager.multipartRequest.deliverErrorCalled)
+    }
+
+    @Test
+    fun testIsLocalizationAvailableRequest() {
+        fmNetworkManager.isLocalizationAvailableRequest(
+            FMConfiguration.getIsLocalizationAvailableURL(),
+            getIsLocalizationAvailableParams(),
+            token,
+            {
+            },
+            {
+            }
+        )
+        assertNotNull(reqIsLocalizationAvailable)
+        assertNotNull(fmNetworkManager.multipartRequest)
+
+        assertEquals(reqIsLocalizationAvailable.url, fmNetworkManager.multipartRequest.url)
+        assertEquals(reqIsLocalizationAvailable.method, fmNetworkManager.multipartRequest.method)
+        assertEquals(reqIsLocalizationAvailable.headers, fmNetworkManager.multipartRequest.headers)
+        assertEquals(reqIsLocalizationAvailable.priority, fmNetworkManager.multipartRequest.priority)
 
         postResponseRequest()
         assertTrue(fmNetworkManager.multipartRequest.deliverResponseCalled)
@@ -149,7 +176,7 @@ class FMNetworkManagerTest {
 
     private fun mockMultiPartRequestUploadImage() {
         reqUploadImage = object : MockMultiPartRequest(
-            Method.POST, "https://api.fantasmo.io/v1/image.localize",
+            Method.POST, FMConfiguration.getServerURL(),
             {
             },
             {
@@ -163,8 +190,8 @@ class FMNetworkManagerTest {
     }
 
     private fun mockMultiPartRequestZoneIsInRadius() {
-        reqZoneIsInRadius = object : MockMultiPartRequest(
-            Method.POST, "https://api.fantasmo.io/v1/parking.in.radius",
+        reqIsLocalizationAvailable = object : MockMultiPartRequest(
+            Method.POST, FMConfiguration.getIsLocalizationAvailableURL(),
             {
             },
             {
@@ -177,10 +204,9 @@ class FMNetworkManagerTest {
         }
     }
 
-    private fun getZoneInRadiusParams(radius: Int): HashMap<String, String> {
+    private fun getIsLocalizationAvailableParams(): HashMap<String, String> {
         val params = hashMapOf<String, String>()
 
-        params["radius"] = radius.toString()
         params["coordinate"] = Gson().toJson(Coordinate(48.84972140031428, 2.3726263972863566))
 
         return params

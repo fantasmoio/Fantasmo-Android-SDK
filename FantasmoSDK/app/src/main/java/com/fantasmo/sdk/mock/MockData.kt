@@ -14,6 +14,7 @@ import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.fantasmosdk.R
 import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.FMZone
+import com.fantasmo.sdk.models.Location
 import com.fantasmo.sdk.network.FMLocalizationRequest
 import com.google.gson.Gson
 import java.io.ByteArrayOutputStream
@@ -57,6 +58,22 @@ class MockData {
             return Pair(params, jpegData)
         }
 
+        /**
+         * Generate a simulated localization query params from a known location.
+         * @param request Request that specifies the type of semantic zone to simulate.
+         * @return Parameters for query.
+         */
+        fun params(request: FMLocalizationRequest): HashMap<String, String> {
+            return when(request.simulationZone){
+                FMZone.ZoneType.PARKING -> {
+                    parkingMockParameters()
+                }
+                else -> {
+                    streetMockParameters()
+                }
+            }
+        }
+
         private fun parkingMockParameters(): HashMap<String, String> {
             val intrinsic = hashMapOf(
                 "fx" to 1211.782470703125,
@@ -73,13 +90,12 @@ class MockData {
             )
 
             val coordinate = Coordinate(48.12844364094412, 11.572596873561112)
+            val location = Location(0, 0, 0, 0, coordinate)
 
             return hashMapOf(
                 "intrinsics" to Gson().toJson(intrinsic),
                 "gravity" to Gson().toJson(gravity),
-                "capturedAt" to System.currentTimeMillis().toString(),
-                "uuid" to "C6241E04-974A-4131-8B36-044A11E2C7F0",
-                "coordinate" to Gson().toJson(coordinate),
+                "location" to Gson().toJson(location),
             )
         }
 
@@ -99,13 +115,12 @@ class MockData {
             )
 
             val coordinate = Coordinate(48.12844364094412, 11.572596873561112)
+            val location = Location(0, 0, 0, 0, coordinate)
 
             return hashMapOf(
                 "intrinsics" to Gson().toJson(intrinsic),
                 "gravity" to Gson().toJson(gravity),
-                "capturedAt" to System.currentTimeMillis().toString(),
-                "uuid" to "A87E55CB-0649-4F87-A42F-8A33970F421E",
-                "coordinate" to Gson().toJson(coordinate),
+                "location" to Gson().toJson(location),
             )
         }
 
@@ -143,15 +158,15 @@ class MockData {
          * @param context: App Context
          * @return result: IntArray containing image resolution data for query.
          */
-        fun getImageResolution(request: FMLocalizationRequest, context: Context): IntArray{
-            return if(request.simulationZone == FMZone.ZoneType.PARKING){
+        fun getImageResolution(request: FMLocalizationRequest, context: Context): IntArray {
+            return if (request.simulationZone == FMZone.ZoneType.PARKING) {
                 val bitmap =
                     BitmapFactory.decodeResource(context.resources, R.drawable.image_in_parking)
-                intArrayOf(bitmap.height,bitmap.width)
-            }else{
+                intArrayOf(bitmap.height, bitmap.width)
+            } else {
                 val bitmap =
                     BitmapFactory.decodeResource(context.resources, R.drawable.image_on_street)
-                intArrayOf(bitmap.height,bitmap.width)
+                intArrayOf(bitmap.height, bitmap.width)
             }
         }
     }

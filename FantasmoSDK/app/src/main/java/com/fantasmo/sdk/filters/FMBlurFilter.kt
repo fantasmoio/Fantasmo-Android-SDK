@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Build
 import android.renderscript.*
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.utilities.MovingAverage
@@ -23,7 +24,10 @@ import kotlin.math.sqrt
  */
 @RequiresApi(Build.VERSION_CODES.KITKAT)
 class FMBlurFilter(
-    context: Context
+    blurFilterVarianceThreshold: Float,
+    blurFilterSuddenDropThreshold: Float,
+    blurFilterAverageThroughputThreshold: Float,
+    val context: Context
 ) : FMFrameFilter {
 
     private val laplacianMatrix = floatArrayOf(
@@ -36,16 +40,16 @@ class FMBlurFilter(
     private var varianceAverager = MovingAverage()
     private var averageVariance = varianceAverager.average
 
-    private var varianceThreshold = 275.0
-    private var suddenDropThreshold = 0.4
-    private var averageThroughputThreshold = 0.25
+    private var varianceThreshold = blurFilterVarianceThreshold
+    private var suddenDropThreshold = blurFilterSuddenDropThreshold
+    private var averageThroughputThreshold = blurFilterAverageThroughputThreshold
 
     private var throughputAverager = MovingAverage(8)
     private var averageThroughput: Float = throughputAverager.average
 
-    private val rs = RenderScript.create(context)
-    private val colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
-    private val convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
+    private lateinit var rs: RenderScript
+    private lateinit var colorIntrinsic: ScriptIntrinsicColorMatrix
+    private lateinit var convolve: ScriptIntrinsicConvolve3x3
 
     /**
      * Check frame acceptance.
@@ -54,6 +58,17 @@ class FMBlurFilter(
      */
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
         val byteArrayFrame = FMUtility.acquireFrameImage(arFrame)
+
+        if (!::rs.isInitialized) {
+            rs = RenderScript.create(context)
+            colorIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
+            convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
+        }
+
+        if (byteArrayFrame == null) {
+            return FMFrameFilterResult.Rejected(FMFilterRejectionReason.FRAMEERROR)
+        }
+
         GlobalScope.launch(Dispatchers.Default) { // launches coroutine in cpu thread
             variance = calculateVariance(byteArrayFrame)
         }
@@ -95,77 +110,75 @@ class FMBlurFilter(
      * @param byteArrayFrame frame converted to ByteArray to measure the variance
      * @return variance blurriness value
      * */
-    private suspend fun calculateVariance(byteArrayFrame: ByteArray?): Float {
+    suspend fun calculateVariance(byteArrayFrame: ByteArray): Float {
         val reducedHeight = 480
         val reducedWidth = 640
-        if (byteArrayFrame == null) {
-            return 0.0f
-        } else {
-            val stdDev = GlobalScope.async {
 
-                val originalBitmap =
-                    BitmapFactory.decodeByteArray(byteArrayFrame, 0, byteArrayFrame.size)
-                val reducedBitmap =
-                    Bitmap.createScaledBitmap(originalBitmap, reducedWidth, reducedHeight, true)
+        val stdDev = GlobalScope.async {
 
-                // Greyscale so we're only dealing with white <--> black pixels,
-                // this is so we only need to detect pixel luminosity
-                val greyscaleBitmap = Bitmap.createBitmap(
-                    reducedBitmap.width,
-                    reducedBitmap.height,
-                    reducedBitmap.config
-                )
-                val smootherInput = Allocation.createFromBitmap(
-                    rs,
-                    reducedBitmap,
-                    Allocation.MipmapControl.MIPMAP_NONE,
-                    Allocation.USAGE_SHARED
-                )
-                val greyscaleTargetAllocation = Allocation.createFromBitmap(
-                    rs,
-                    greyscaleBitmap,
-                    Allocation.MipmapControl.MIPMAP_NONE,
-                    Allocation.USAGE_SHARED
-                )
+            val originalBitmap =
+                BitmapFactory.decodeByteArray(byteArrayFrame, 0, byteArrayFrame.size)
+            val reducedBitmap =
+                Bitmap.createScaledBitmap(originalBitmap, reducedWidth, reducedHeight, true)
 
-                // Inverts and greyscales the image
-                colorIntrinsic.setGreyscale()
-                colorIntrinsic.forEach(smootherInput, greyscaleTargetAllocation)
-                greyscaleTargetAllocation.copyTo(greyscaleBitmap)
+            // Greyscale so we're only dealing with white <--> black pixels,
+            // this is so we only need to detect pixel luminosity
+            val greyscaleBitmap = Bitmap.createBitmap(
+                reducedBitmap.width,
+                reducedBitmap.height,
+                reducedBitmap.config
+            )
+            val smootherInput = Allocation.createFromBitmap(
+                rs,
+                reducedBitmap,
+                Allocation.MipmapControl.MIPMAP_NONE,
+                Allocation.USAGE_SHARED
+            )
+            val greyscaleTargetAllocation = Allocation.createFromBitmap(
+                rs,
+                greyscaleBitmap,
+                Allocation.MipmapControl.MIPMAP_NONE,
+                Allocation.USAGE_SHARED
+            )
 
-                // Run edge detection algorithm using a laplacian matrix convolution
-                // Apply 3x3 convolution to detect edges
-                val edgesBitmap = Bitmap.createBitmap(
-                    reducedBitmap.width,
-                    reducedBitmap.height,
-                    reducedBitmap.config
-                )
-                val greyscaleInput = Allocation.createFromBitmap(
-                    rs,
-                    greyscaleBitmap,
-                    Allocation.MipmapControl.MIPMAP_NONE,
-                    Allocation.USAGE_SHARED
-                )
-                val edgesTargetAllocation = Allocation.createFromBitmap(
-                    rs,
-                    edgesBitmap,
-                    Allocation.MipmapControl.MIPMAP_NONE,
-                    Allocation.USAGE_SHARED
-                )
+            // Inverts and greyscales the image
+            colorIntrinsic.setGreyscale()
+            colorIntrinsic.forEach(smootherInput, greyscaleTargetAllocation)
+            greyscaleTargetAllocation.copyTo(greyscaleBitmap)
 
-                convolve.setInput(greyscaleInput)
-                convolve.setCoefficients(laplacianMatrix)
-                convolve.forEach(edgesTargetAllocation)
-                edgesTargetAllocation.copyTo(edgesBitmap)
+            // Run edge detection algorithm using a laplacian matrix convolution
+            // Apply 3x3 convolution to detect edges
+            val edgesBitmap = Bitmap.createBitmap(
+                reducedBitmap.width,
+                reducedBitmap.height,
+                reducedBitmap.config
+            )
+            val greyscaleInput = Allocation.createFromBitmap(
+                rs,
+                greyscaleBitmap,
+                Allocation.MipmapControl.MIPMAP_NONE,
+                Allocation.USAGE_SHARED
+            )
+            val edgesTargetAllocation = Allocation.createFromBitmap(
+                rs,
+                edgesBitmap,
+                Allocation.MipmapControl.MIPMAP_NONE,
+                Allocation.USAGE_SHARED
+            )
 
-                // This is important to be false, otherwise image will be blank
-                edgesBitmap.setHasAlpha(false)
+            convolve.setInput(greyscaleInput)
+            convolve.setCoefficients(laplacianMatrix)
+            convolve.forEach(edgesTargetAllocation)
+            edgesTargetAllocation.copyTo(edgesBitmap)
 
-                // Get standard deviation from meanStdDev
-                meanStdDev(edgesBitmap)
-            }
-            return stdDev.await()
+            // This is important to be false, otherwise image will be blank
+            edgesBitmap.setHasAlpha(false)
+
+            // Get standard deviation from meanStdDev
+            meanStdDev(edgesBitmap)
         }
+        return stdDev.await()
+
     }
 
     /**

@@ -33,6 +33,20 @@ implementation 'com.google.mlkit:barcode-scanning:17.0.0'
 implementation 'com.google.code.gson:gson:2.8.6'
 implementation 'com.android.volley:volley:1.2.0'
 
+// TensorFlow Lite
+implementation 'org.tensorflow:tensorflow-lite-support:0.1.0'
+implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0'
+implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
+```
+
+## Building
+
+On the module-level `build.gradle`, inside the `android` properties you should add the following instruction. This will allow to add a machine learning model and to loaded it when in a Localizing Session.
+```kotlin
+    aaptOptions {
+        noCompress "tflite"
+        noCompress "lite"
+    }
 ```
 
 ## Permissions and requirements
@@ -90,7 +104,8 @@ After this, we are ready to connect to the Fantasmo SDK. We need to provide a co
 ```kotlin
 fmParkingView.fmParkingViewController = fmParkingViewController
 val sessionId = UUID.randomUUID().toString()
-fmParkingView.connect(sessionId)
+val sessionTags = listOf("berlin", "e-scooter") //optional tags
+fmParkingView.connect(sessionId, sessionTags)
 ```
 
 The SDK provides an internal LocationManager and it will give updates on location. If you want to use your own Location Manager, all you have to do is set `fmParkingView.usesInternalLocationManager` to false and call the `fmParkingView.updateLocation(location: Location)` on your location manager in order to get location updates. If you check `CustomDemoFragment.kt` there's an example of how to manage your own location updates: 
@@ -163,6 +178,7 @@ override fun fmParkingView(qrCodeString: String, continueBlock: (Boolean) -> Uni
     continueBlock(validQRCode)
 }
 ```
+
 **Note:** During a QR code scanning session, it is not possible to turn on the flashlight due to ARCore being used on the FMParkingView. ARCore blocks any input regarding turning on/off the flashlight during an AR session, limiting QR code readability on dark environments.
 
 ### Customizing UI

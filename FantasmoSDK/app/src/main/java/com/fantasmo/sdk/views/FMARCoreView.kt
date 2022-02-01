@@ -41,6 +41,7 @@ class FMARCoreView(
 
     private lateinit var displayRotationHelper: DisplayRotationHelper
     private lateinit var trackingStateHelper: TrackingStateHelper
+    private var lastArFrameTimestamp: Long = 0L
 
     // Set anchor after QR code is read
     private var anchorIsChecked = false
@@ -189,11 +190,13 @@ class FMARCoreView(
             Log.e(TAG, "Camera not available during onDrawFrame", e)
             return
         }
+        val newArFrameTimestamp = frame.timestamp
         //Acquire ARCore Frame to set anchor and updates UI setting values in the view
         (context as Activity).runOnUiThread {
             // Code here will run in UI thread
-            if(connected){
+            if(connected && newArFrameTimestamp > lastArFrameTimestamp){
                 onUpdate(frame)
+                lastArFrameTimestamp = newArFrameTimestamp
             }
         }
 

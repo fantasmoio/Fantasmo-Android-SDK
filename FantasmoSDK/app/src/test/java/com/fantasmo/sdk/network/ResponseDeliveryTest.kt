@@ -1,6 +1,7 @@
 package com.fantasmo.sdk.network
 
 import com.android.volley.*
+import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.utils.CacheTestUtils
 import com.fantasmo.sdk.utils.ImmediateResponseDelivery
 import com.fantasmo.sdk.models.*
@@ -119,7 +120,7 @@ class ResponseDeliveryTest {
 
     private fun createLocalizeResponse(): LocalizeResponse {
         val coordinate = Coordinate(48.84972140031428, 2.3726263972863566)
-        val location = Location(null, coordinate, null, null, null, null)
+        val location = Location(null, null, null, null, coordinate)
         val pose = Pose(
             "N/A",
             Orientation(
@@ -135,7 +136,7 @@ class ResponseDeliveryTest {
 
     private fun mockMultiPartRequest() {
         mRequest = object : MultiPartRequest(
-            Method.POST, "https://api.fantasmo.io/v1/parking.in.radius",
+            Method.POST, FMConfiguration.getIsLocalizationAvailableURL(),
             {
             },
             {

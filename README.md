@@ -29,6 +29,20 @@ implementation 'androidx.appcompat:appcompat:1.3.1'
 implementation 'com.google.android.material:material:1.4.0'
 implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
 implementation 'androidx.coordinatorlayout:coordinatorlayout:1.1.0'
+
+// TensorFlow Lite
+implementation 'org.tensorflow:tensorflow-lite-support:0.1.0'
+implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0'
+implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
+```
+### Building and Importing
+
+On the module-level `build.gradle`, inside the `android` properties you should add the following instruction. This will allow to add a machine learning model and to loaded it when in a Localizing Session.
+```kotlin
+    aaptOptions {
+        noCompress "tflite"
+        noCompress "lite"
+    }
 ```
 
 To build the library .aar, the desired Build Variant should be seleted and then build the project. The .aar will be located in /app/build/outputs/aar/
@@ -56,7 +70,6 @@ Try out the `FantasmoDemoApp` project or implement the code below.
  */
 private val fmParkingViewController: FMParkingViewProtocol =
     object : FMParkingViewProtocol {
-
         override fun fmParkingView(qrCode: Barcode, continueBlock: (Boolean) -> Unit) {
             // Handle QR Code result
         }
@@ -88,7 +101,8 @@ fmParkingView.accessToken = "API_KEY"
 
 // Present FMParkingView with a sessionId
 val sessionId = UUID.randomUUID().toString()
-fmParkingView.connect(sessionId)
+val sessionTags = listOf("berlin", "e-scooter") //optional tags
+fmParkingView.connect(sessionId, sessionTags)
 ```
 
 And add this to your `layout.xml` file:
@@ -111,9 +125,11 @@ fmParkingView.isParkingAvailable(location) { isParkingAvailable: Boolean
     }
 }
 ```
-### Providing a `sessionId`
+### Providing `sessionId` and `sessionTags`
 
-The `sessionId` parameter allows you to associate localization results with your own session identifier. Typically this would be a UUID string, but it can also follow your own format. For example, a scooter parking session might take multiple localization attempts. For analytics and billing purposes, this identifier allows you to link multiple attempts with a single parking session.
+The `sessionId` parameter allows you to associate localization results with your own session identifier. Typically this would be a UUID string, but it can also follow your own format. For example, a scooter parking session might take multiple localization attempts. For analytics and billing purposes, this identifier allows you to link multiple attempts with a single parking session. This string is currently limited to 64 characters.
+
+Similar to `sessionId`, you may also provide a list of `sessionTags`. This optional parameter can be used to label and group parking sessions that have something in common. For example sessions that take place in the same city might have the city name as a tag. These are used for analytics purposes only and will be included in your usage reports. Each tag must be a string and there is currently no limit to the number of tags a session can have.
 
 ### Initialization
 

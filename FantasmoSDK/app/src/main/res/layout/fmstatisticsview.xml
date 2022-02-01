@@ -6,14 +6,26 @@
     android:layout_height="wrap_content">
 
     <TextView
+        android:id="@+id/fantasmoSDKView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/fmTransparentWhite"
+        android:textColor="@color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
         android:id="@+id/statusText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
         android:background="@color/fmTransparentWhite"
         android:text="@string/status"
         android:textColor="@color/black"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/fantasmoSDKView" />
 
     <TextView
         android:id="@+id/statusTextView"
@@ -153,7 +165,7 @@
         android:text="@string/camera_angles"
         android:textColor="@color/black"
         app:layout_constraintStart_toStartOf="@+id/distanceTravelledText"
-        app:layout_constraintTop_toBottomOf="@+id/distanceTravelledText" />
+        app:layout_constraintTop_toBottomOf="@+id/remoteConfigText" />
 
     <TextView
         android:id="@+id/cameraAnglesTextView"
@@ -218,9 +230,9 @@
         android:background="@color/fmTransparentWhite"
         android:text="@string/limited"
         android:textColor="@color/black"
-        app:layout_constraintBottom_toBottomOf="@+id/normalTextView"
-        app:layout_constraintStart_toEndOf="@+id/normalTextView"
-        app:layout_constraintTop_toTopOf="@+id/normalTextView"
+        app:layout_constraintBottom_toBottomOf="@+id/frameErrorTextView"
+        app:layout_constraintStart_toEndOf="@+id/frameErrorTextView"
+        app:layout_constraintTop_toTopOf="@+id/frameErrorTextView"
         app:layout_constraintVertical_bias="0.0" />
 
     <TextView
@@ -456,4 +468,118 @@
         app:layout_constraintBottom_toBottomOf="@+id/deviceLocationText"
         app:layout_constraintStart_toEndOf="@+id/deviceLocationText"
         app:layout_constraintTop_toTopOf="@+id/deviceLocationText" />
+
+    <TextView
+        android:id="@+id/imageQualityVersionText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="@color/fmTransparentWhite"
+        android:text="@string/imagequalitymodelversion"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="@+id/tooFastText"
+        app:layout_constraintTop_toBottomOf="@+id/tooFastText" />
+
+    <TextView
+        android:id="@+id/imageQualityVersionTextview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/fmTransparentWhite"
+        android:text="@string/_1_0"
+        android:textColor="@color/black"
+        app:layout_constraintBottom_toBottomOf="@+id/imageQualityVersionText"
+        app:layout_constraintStart_toEndOf="@+id/imageQualityVersionText"
+        app:layout_constraintTop_toTopOf="@+id/imageQualityVersionText" />
+
+    <TextView
+        android:id="@+id/imageQualityInsufficientText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/fmTransparentWhite"
+        android:text="@string/insuficient_quality"
+        android:textColor="@color/black"
+        app:layout_constraintBottom_toBottomOf="@+id/imageQualityVersionTextview"
+        app:layout_constraintStart_toEndOf="@+id/imageQualityVersionTextview"
+        app:layout_constraintTop_toTopOf="@+id/imageQualityVersionTextview"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/imageQualityInsufficientTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/fmTransparentWhite"
+        android:text="@string/_0"
+        android:textColor="@color/black"
+        app:layout_constraintBottom_toBottomOf="@+id/imageQualityInsufficientText"
+        app:layout_constraintStart_toEndOf="@+id/imageQualityInsufficientText"
+        app:layout_constraintTop_toTopOf="@+id/imageQualityInsufficientText" />
+
+    <TextView
+        android:id="@+id/lastResultIQText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/fmTransparentWhite"
+        android:text="@string/last_result_iq"
+        android:textColor="@color/black"
+        app:layout_constraintBottom_toBottomOf="@+id/imageQualityInsufficientTextView"
+        app:layout_constraintStart_toEndOf="@+id/imageQualityInsufficientTextView"
+        app:layout_constraintTop_toTopOf="@+id/imageQualityInsufficientTextView" />
+
+    <TextView
+        android:id="@+id/lastResultIQTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/fmTransparentWhite"
+        android:text="@string/_0"
+        android:textColor="@color/black"
+        app:layout_constraintBottom_toBottomOf="@+id/lastResultIQText"
+        app:layout_constraintStart_toEndOf="@+id/lastResultIQText"
+        app:layout_constraintTop_toTopOf="@+id/lastResultIQText" />
+
+    <TextView
+        android:id="@+id/remoteConfigText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="@color/fmTransparentWhite"
+        android:text="@string/remote_config"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="@+id/distanceTravelledText"
+        app:layout_constraintTop_toBottomOf="@+id/distanceTravelledText" />
+
+    <TextView
+        android:id="@+id/remoteConfigTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/black"
+        android:background="@color/fmTransparentWhite"
+        app:layout_constraintBottom_toBottomOf="@+id/remoteConfigText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/remoteConfigText"
+        app:layout_constraintTop_toTopOf="@+id/remoteConfigText" />
+
+    <TextView
+        android:id="@+id/frameErrorText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/frameerror"
+        android:textColor="@color/black"
+        android:background="@color/fmTransparentWhite"
+        app:layout_constraintBottom_toBottomOf="@+id/normalTextView"
+        app:layout_constraintStart_toEndOf="@+id/normalTextView"
+        app:layout_constraintTop_toTopOf="@+id/normalTextView"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/frameErrorTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/_0"
+        android:textColor="@color/black"
+        android:background="@color/fmTransparentWhite"
+        app:layout_constraintBottom_toBottomOf="@+id/frameErrorText"
+        app:layout_constraintStart_toEndOf="@+id/frameErrorText"
+        app:layout_constraintTop_toTopOf="@+id/frameErrorText" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -30,7 +30,6 @@ class FMQRScanningView(
     private var closeButton: ImageButton = fmQRScanningView.findViewById(R.id.fmExitButton)
     private var enterQRButton: TextView = fmQRScanningView.findViewById(R.id.fmEnterQRButton)
 
-
     init {
         closeButton.setOnClickListener {
             fmParkingView.dismiss()

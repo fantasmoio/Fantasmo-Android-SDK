@@ -12,20 +12,22 @@ import android.net.NetworkCapabilities
 import android.util.Log
 import com.android.volley.*
 import com.android.volley.toolbox.Volley
+import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.IsLocalizationAvailableResponse
 import com.fantasmo.sdk.models.LocalizeResponse
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import org.json.JSONException
+import org.json.JSONObject
 
 /**
  * Manager for network requests.
  */
 class FMNetworkManager(
-    val url: String,
     private val context: Context
 ) {
-    private val TAG = "FMNetworkManager"
+    private val TAG = FMNetworkManager::class.java.simpleName
 
     private val requestQueue: RequestQueue by lazy {
         // applicationContext is key, it keeps you from leaking the
@@ -39,6 +41,7 @@ class FMNetworkManager(
      * Method to upload an image with the given [imageData] and [parameters].
      */
     fun uploadImage(
+        url: String,
         imageData: ByteArray,
         parameters: HashMap<String, String>,
         token: String,
@@ -60,11 +63,9 @@ class FMNetworkManager(
                 }
             },
             Response.ErrorListener { error ->
-                processAndLogError(error)
+                val response = processAndLogError(error)
 
-                if (error.networkResponse != null) {
-                    val errorResult = String(error.networkResponse.data)
-                    val response = Gson().fromJson(errorResult, ErrorResponse::class.java)
+                if (response != null) {
                     onError(response)
                 } else {
                     onError(ErrorResponse(404, "UnknownError"))
@@ -123,10 +124,72 @@ class FMNetworkManager(
                 }
             },
             Response.ErrorListener { error ->
-                processAndLogError(error)
-                if (error.networkResponse != null) {
-                    val errorResult = String(error.networkResponse.data)
-                    val response = Gson().fromJson(errorResult, ErrorResponse::class.java)
+                val response = processAndLogError(error)
+                if (response != null) {
+                    onError(response)
+                } else {
+                    onError(ErrorResponse(404, "UnknownError"))
+                }
+            }) {
+
+            // Overriding getParams() to pass our parameters
+            override fun getParams(): MutableMap<String, String> {
+                return parameters
+            }
+
+            // Overriding getHeaders() to pass our parameters
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Fantasmo-Key"] = token
+                return headers
+            }
+        }
+
+        // Adding request to the queue if there is a connection
+        if (isInternetAvailable()) {
+            requestQueue.add(multipartRequest)
+        } else {
+            Log.w(TAG, "No internet connection available")
+        }
+    }
+
+    fun sendInitializationRequest(
+        url: String,
+        parameters: HashMap<String, String>,
+        token: String,
+        onCompletion: (Boolean) -> Unit,
+        onError: (ErrorResponse) -> Unit
+    ) {
+        Log.i(TAG, "$url $parameters")
+        multipartRequest = object : MultiPartRequest(
+            Method.POST, url,
+            Response.Listener<NetworkResponse> { response ->
+                val resultResponse = String(response.data)
+                Log.d(TAG, "sendInitializationRequest RESPONSE: $resultResponse")
+                try {
+                    val initializeResponse = JSONObject(resultResponse)
+                    val onCompletionResult = initializeResponse.getBoolean("parking_in_radius")
+                    if (!onCompletionResult) {
+                        val reason = initializeResponse.getString("fantasmo_unavailable_reason")
+                        val reasonError = ErrorResponse(0, reason)
+                        onError(reasonError)
+                    } else {
+                        val configString = initializeResponse.optString("config")
+                        if (configString != "") {
+                            RemoteConfig.updateConfig(configString)
+                        } else {
+                            RemoteConfig.getDefaultConfig(context)
+                        }
+                    }
+                    onCompletion(onCompletionResult)
+                } catch (e: JSONException) {
+                    RemoteConfig.getDefaultConfig(context)
+                    e.printStackTrace()
+                }
+            },
+            Response.ErrorListener { error ->
+                val response = processAndLogError(error)
+                if (response != null) {
                     onError(response)
                 } else {
                     onError(ErrorResponse(404, "UnknownError"))
@@ -157,9 +220,10 @@ class FMNetworkManager(
     /**
      * Method to process and log network error.
      */
-    private fun processAndLogError(error: VolleyError) {
+    private fun processAndLogError(error: VolleyError) : ErrorResponse? {
         val networkResponse = error.networkResponse
         var errorMessage = "Unknown error"
+        var response : ErrorResponse? = null
         if (networkResponse == null) {
             if (error.javaClass == TimeoutError::class.java) {
                 errorMessage = "Request timeout"
@@ -169,27 +233,34 @@ class FMNetworkManager(
         } else {
             val errorResult = String(networkResponse.data)
             try {
-                val response = Gson().fromJson(errorResult, ErrorResponse::class.java)
+                response = Gson().fromJson(errorResult, ErrorResponse::class.java)
+                val debugMessage = response.message ?: response.detail ?: ""
 
                 when (networkResponse.statusCode) {
                     404 -> {
                         errorMessage = "Resource not found"
                     }
+                    403 -> {
+                        errorMessage = "Forbidden"
+                    }
                     401 -> {
-                        errorMessage = "${response.message} Authentication error"
+                        errorMessage = "$debugMessage Authentication error"
                     }
                     400 -> {
-                        errorMessage = "${response.message} Wrong parameters"
+                        errorMessage = "$debugMessage Wrong parameters"
                     }
                     500 -> {
-                        errorMessage = "${response.message} Something is wrong"
+                        errorMessage = "$debugMessage Something is wrong"
                     }
                 }
             } catch (e: JSONException) {
                 Log.e(TAG, "JSONException: ${e.message}")
+            } catch (e: JsonSyntaxException) {
+                Log.e(TAG, "JSONSyntaxException: ${e.message}")
             }
         }
         Log.e(TAG, "Network Error: $errorMessage")
+        return response
     }
 
     /**

@@ -1,6 +1,5 @@
 package com.fantasmo.sdk.filters
 
-import com.fantasmo.sdk.models.FMPosition
 import com.google.ar.core.Frame
 import kotlin.math.abs
 
@@ -9,20 +8,21 @@ import kotlin.math.abs
  * Prevents from sending repeated values to the backend.
  * Initializes with sideways movement Threshold in meters
  */
-class FMMovementFilter : FMFrameFilter {
-    // Sideways movement threshold
-    private val threshold = 0.001
+class FMMovementFilter(private val movementFilterThreshold: Float) : FMFrameFilter {
     // Previous frame translation
-    private var lastTransform: FloatArray = floatArrayOf(0F, 0F, 0F)
-
+    private var lastTransform: FloatArray = FloatArray(16){0f}
     /**
      * Check frame acceptance.
      * @param arFrame Frame to be evaluated
      * @return Accepts frame or Rejects frame with MovingTooLittle failure
      */
     override fun accepts(arFrame: Frame): FMFrameFilterResult {
-        return if (exceededThreshold(arFrame.camera.pose.translation)) {
-            lastTransform = arFrame.camera.pose.translation
+
+        val newTransform = FloatArray(16)
+        arFrame.androidSensorPose.toMatrix(newTransform, 0)
+        
+        return if (exceededThreshold(newTransform)) {
+            lastTransform = newTransform
             FMFrameFilterResult.Accepted
         } else {
             FMFrameFilterResult.Rejected(FMFilterRejectionReason.MOVINGTOOLITTLE)
@@ -35,9 +35,11 @@ class FMMovementFilter : FMFrameFilter {
      * @return If frame translation is within (false) or without threshold (true)
      */
     private fun exceededThreshold(newTransform: FloatArray?): Boolean {
-        val diff = FMPosition.minus(FMPosition(lastTransform), FMPosition(newTransform!!))
-        return ((abs(diff.x) > threshold)
-                || (abs(diff.y) > threshold)
-                || (abs(diff.z) > threshold))
+        newTransform?.forEachIndexed { index, value ->
+            if (abs(value - lastTransform[index]) > movementFilterThreshold) {
+                return true
+            }
+        }
+        return false
     }
 }

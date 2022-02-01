@@ -5,6 +5,8 @@ import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMLocationResult
+import com.fantasmo.sdk.config.RemoteConfig.Companion.remoteConfig
+import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.fantasmosdk.R
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
@@ -17,6 +19,7 @@ import com.google.ar.core.TrackingFailureReason
 class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
 
     private val TAG = FMSessionStatisticsView::class.java.simpleName
+    private var sdkVersion: TextView = arLayout.findViewById(R.id.fantasmoSDKView)
     private var statusTv: TextView = arLayout.findViewById(R.id.statusTextView)
     private var lastResultTv: TextView = arLayout.findViewById(R.id.lastResultTextView)
     private var localizeTimeTv: TextView = arLayout.findViewById(R.id.localizeTimeTextView)
@@ -31,19 +34,26 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     private var cameraAnglesSpreadTv: TextView =
         arLayout.findViewById(R.id.cameraAnglesSpreadTextView)
 
+    private var remoteConfigTv: TextView = arLayout.findViewById(R.id.remoteConfigTextView)
+
     private var normalTv: TextView = arLayout.findViewById(R.id.normalTextView)
     private var limitedTv: TextView = arLayout.findViewById(R.id.limitedTextView)
     private var notAvailableTv: TextView = arLayout.findViewById(R.id.notAvailableTextView)
     private var excessiveMotionTv: TextView = arLayout.findViewById(R.id.excessiveMotionTextView)
     private var insufficientFeaturesTv: TextView =
         arLayout.findViewById(R.id.insufficientFeaturesTextView)
-
     private var pitchLowTv: TextView = arLayout.findViewById(R.id.pitchLowTextView)
     private var pitchHighTv: TextView = arLayout.findViewById(R.id.pitchHighTextView)
     private var blurryTv: TextView = arLayout.findViewById(R.id.blurryTextView)
     private var tooFastTv: TextView = arLayout.findViewById(R.id.tooFastTextView)
     private var tooLittleTv: TextView = arLayout.findViewById(R.id.tooLittleTextView)
     private var featuresTv: TextView = arLayout.findViewById(R.id.featuresTextView)
+
+    private var imageQualityModelVersion: TextView = arLayout.findViewById(R.id.imageQualityVersionTextview)
+    private var imageQualityInsufficient: TextView = arLayout.findViewById(R.id.imageQualityInsufficientTextView)
+    private var imageQualityLastResult: TextView = arLayout.findViewById(R.id.lastResultIQTextView)
+
+    private var frameErrorTv: TextView = arLayout.findViewById(R.id.frameErrorTextView)
 
     fun updateStats(
         frame: Frame,
@@ -82,6 +92,12 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         tooFastTv.text = rejections.excessiveMotionFrameCount.toString()
         tooLittleTv.text = rejections.insufficientMotionFrameCount.toString()
         featuresTv.text = rejections.insufficientFeatures.toString()
+
+        imageQualityModelVersion.text = info.modelVersion
+        imageQualityLastResult.text = String.format("%.5f", info.lastImageQualityScore)
+        imageQualityInsufficient.text = rejections.imageQualityFrameCount.toString()
+
+        frameErrorTv.text = rejections.frameErrorCount.toString()
 
         val stringDistance =
             String.format("%.2f", info.translationAccumulator.totalTranslation) + " m"
@@ -143,9 +159,13 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     }
 
     fun reset() {
+        val fantasmo = "Fantasmo SDK: " + BuildConfig.VERSION_NAME
+        sdkVersion.text = fantasmo
         val stringZero = "0"
         val stringZeroS = "0,0s"
         val stringClear = ""
+
+        remoteConfigTv.text = remoteConfig.remoteConfigId
 
         lastResultTv.text = stringZero
         localizeTimeTv.text = stringZeroS
@@ -168,5 +188,10 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         tooFastTv.text = stringZero
         tooLittleTv.text = stringZero
         featuresTv.text = stringZero
+        frameErrorTv.text = stringZero
+
+        imageQualityModelVersion.text = stringClear
+        imageQualityLastResult.text = stringZero
+        imageQualityInsufficient.text = stringZero
     }
 }
