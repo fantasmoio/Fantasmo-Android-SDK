@@ -52,7 +52,7 @@ class FMNetworkManagerTest {
         openMocks(this)
         instrumentationContext = InstrumentationRegistry.getInstrumentation().context
 
-        fmNetworkManager = FMNetworkManager(FMConfiguration.getServerURL(), instrumentationContext)
+        fmNetworkManager = FMNetworkManager(instrumentationContext)
 
         mDelivery = ImmediateResponseDelivery()
 
@@ -92,6 +92,7 @@ class FMNetworkManagerTest {
     @Test
     fun testUploadImage() {
         fmNetworkManager.uploadImage(
+            FMConfiguration.getServerURL(),
             getFileDataFromDrawable(
                 BitmapFactory.decodeResource(
                     instrumentationContext.resources,
@@ -128,7 +129,7 @@ class FMNetworkManagerTest {
     @Test
     fun testZoneInRadiusRequest() {
         fmNetworkManager.isLocalizationAvailableRequest(
-            "https://mobility-bff-dev.fantasmo.dev/v2/isLocalizationAvailable",
+            FMConfiguration.getIsLocalizationAvailableURL(),
             getIsLocalizationAvailableParams(),
             token,
             {
@@ -152,7 +153,7 @@ class FMNetworkManagerTest {
     @Test
     fun testIsLocalizationAvailableRequest() {
         fmNetworkManager.isLocalizationAvailableRequest(
-            "https://mobility-bff-dev.fantasmo.dev/v2/isLocalizationAvailable",
+            FMConfiguration.getIsLocalizationAvailableURL(),
             getIsLocalizationAvailableParams(),
             token,
             {
@@ -175,7 +176,7 @@ class FMNetworkManagerTest {
 
     private fun mockMultiPartRequestUploadImage() {
         reqUploadImage = object : MockMultiPartRequest(
-            Method.POST, "https://api.fantasmo.io/v1/image.localize",
+            Method.POST, FMConfiguration.getServerURL(),
             {
             },
             {
@@ -190,7 +191,7 @@ class FMNetworkManagerTest {
 
     private fun mockMultiPartRequestZoneIsInRadius() {
         reqIsLocalizationAvailable = object : MockMultiPartRequest(
-            Method.POST, "https://mobility-bff-dev.fantasmo.dev/v2/isLocalizationAvailable",
+            Method.POST, FMConfiguration.getIsLocalizationAvailableURL(),
             {
             },
             {
