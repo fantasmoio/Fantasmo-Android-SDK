@@ -60,5 +60,6 @@ class FrameFilterRejectionStatistics {
         insufficientTiltFrameCount = 0
         insufficientMotionFrameCount = 0
         insufficientFeatures = 0
+        imageQualityFrameCount = 0
     }
 }

@@ -92,7 +92,7 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         featuresTv.text = rejections.insufficientFeatures.toString()
 
         imageQualityModelVersion.text = info.modelVersion
-        imageQualityLastResult.text = info.lastImageQualityScore.toString()
+        imageQualityLastResult.text = String.format("%.5f", info.lastImageQualityScore)
         imageQualityInsufficient.text = rejections.imageQualityFrameCount.toString()
 
         val stringDistance =
