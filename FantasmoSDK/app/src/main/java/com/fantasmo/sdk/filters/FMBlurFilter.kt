@@ -4,7 +4,9 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.YuvImage
 import android.os.Build
+import android.os.SystemClock
 import android.renderscript.*
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.utilities.MovingAverage
@@ -19,7 +21,7 @@ import kotlin.math.sqrt
  * Class responsible for filtering frames due to blur on images.
  * Prevents from sending blurred images.
  */
-@RequiresApi(Build.VERSION_CODES.KITKAT)
+@RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
 class FMBlurFilter(
     blurFilterVarianceThreshold: Float,
     blurFilterSuddenDropThreshold: Float,
@@ -33,7 +35,6 @@ class FMBlurFilter(
         0.0f, 1.0f, 0.0f
     )
 
-    private var variance: Float = 0.0f
     private var varianceAverager = MovingAverage()
     private var averageVariance = varianceAverager.average
 
@@ -44,9 +45,19 @@ class FMBlurFilter(
     private var throughputAverager = MovingAverage(8)
     private var averageThroughput: Float = throughputAverager.average
 
+    private val reducedHeight = 480
+    private val reducedWidth = 640
+
     private lateinit var rs : RenderScript
     private lateinit var histogram: ScriptIntrinsicHistogram
     private lateinit var convolve : ScriptIntrinsicConvolve3x3
+    private lateinit var resize : ScriptIntrinsicResize
+    private lateinit var inputBitmap: Bitmap
+    private lateinit var inputAllocation: Allocation
+    private lateinit var binsAllocation: Allocation
+    private lateinit var resizedAllocation: Allocation
+    private lateinit var convolveOutputAllocation: Allocation
+    private var histogramBins = IntArray(256)
 
     /**
      * Check frame acceptance.
@@ -60,11 +71,21 @@ class FMBlurFilter(
             rs = RenderScript.create(context)
             histogram = ScriptIntrinsicHistogram.create(rs, Element.U8(rs))
             convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
+            resize = ScriptIntrinsicResize.create(rs)
+            val builder = Type.Builder(rs, Element.U8(rs))
+            builder.setX(FMUtility.imageWidth)
+            builder.setY(FMUtility.imageHeight)
+            inputAllocation = Allocation.createTyped(rs, builder.create())
+            builder.setX(reducedWidth)
+            builder.setY(reducedHeight)
+            resizedAllocation = Allocation.createTyped(rs, builder.create())
+            convolveOutputAllocation = Allocation.createTyped(rs, builder.create())
+            binsAllocation = Allocation.createSized(rs, Element.U32(rs), 256)
+            resize.setInput(inputAllocation)
+            histogram.setOutput(binsAllocation)
         }
 
-        GlobalScope.launch(Dispatchers.Default) { // launches coroutine in cpu thread
-            variance = calculateVariance(yuvImage)
-        }
+        val variance = calculateVariance(yuvImage)
         varianceAverager.addSample(variance)
 
         val isLowVariance: Boolean
@@ -103,73 +124,29 @@ class FMBlurFilter(
      * @param yuvImage frame converted to ByteArray to measure the variance
      * @return variance blurriness value
      * */
-    suspend fun calculateVariance(yuvImage: YuvImage?): Float {
-        val reducedHeight = 480
-        val reducedWidth = 640
+    fun calculateVariance(yuvImage: YuvImage?): Float {
         if (yuvImage == null) {
             return 0.0f
         } else {
-            val stdDev = GlobalScope.async {
-                val inputBitmap = Bitmap.createBitmap(FMUtility.imageWidth, FMUtility.imageHeight, Bitmap.Config.ALPHA_8)
-                val inputAllocation = Allocation.createFromBitmap(rs, inputBitmap)
-                inputAllocation.copyFrom(yuvImage.yuvData)
-                inputAllocation.copyTo(inputBitmap)
-                inputAllocation.destroy()
-                val reducedBitmap =
-                    Bitmap.createScaledBitmap(inputBitmap, reducedWidth, reducedHeight, true)
+            inputAllocation.copyFrom(yuvImage.yuvData)
 
-                // Run edge detection algorithm using a laplacian matrix convolution
-                // Apply 3x3 convolution to detect edges
-                val edgesBitmap = Bitmap.createBitmap(
-                    reducedBitmap.width,
-                    reducedBitmap.height,
-                    reducedBitmap.config
-                )
-                val reducedInput = Allocation.createFromBitmap(
-                    rs,
-                    reducedBitmap,
-                    Allocation.MipmapControl.MIPMAP_NONE,
-                    Allocation.USAGE_SHARED
-                )
-                val edgesTargetAllocation = Allocation.createFromBitmap(
-                    rs,
-                    edgesBitmap,
-                    Allocation.MipmapControl.MIPMAP_NONE,
-                    Allocation.USAGE_SHARED
-                )
+            resize.setInput(inputAllocation)
+            resize.forEach_bicubic(resizedAllocation)
 
-                convolve.setInput(reducedInput)
-                convolve.setCoefficients(laplacianMatrix)
-                convolve.forEach(edgesTargetAllocation)
-                edgesTargetAllocation.copyTo(edgesBitmap)
-                reducedInput.destroy()
-                edgesTargetAllocation.destroy()
-                // Get standard deviation from meanStdDev
-                meanStdDev(edgesBitmap)
-            }
-            return stdDev.await()
+            convolve.setInput(resizedAllocation)
+            convolve.setCoefficients(laplacianMatrix)
+            convolve.forEach(convolveOutputAllocation)
+
+            // Get standard deviation from meanStdDev
+            histogram.forEach(convolveOutputAllocation)
+
+            binsAllocation.copyTo(histogramBins)
+            var avg = 0.0
+            histogramBins.forEachIndexed { index, bin -> avg += index * bin / (256.0 * convolveOutputAllocation.bytesSize) }
+            var stdDev = 0.0
+            histogramBins.forEachIndexed { index, bin -> stdDev += (index * bin / (256.0 * convolveOutputAllocation.bytesSize)) - avg}
+
+            return (sqrt(stdDev) * 100.0).toFloat()
         }
-    }
-
-    /**
-     * Finds the average of all pixels in the image
-     * Also calculates the standard deviation from the average and pixel color
-     * @param bitmap image after edge detection matrix application
-     * @return stdDev variable with blurriness value
-     * */
-    private fun meanStdDev(bitmap: Bitmap): Float {
-        val inputAllocation = Allocation.createFromBitmap(rs, bitmap, Allocation.MipmapControl.MIPMAP_NONE, Allocation.USAGE_SHARED)
-        val bins = IntArray(256)
-        val binsAllocation = Allocation.createSized(rs, Element.U32(rs), 256)
-        histogram.setOutput(binsAllocation)
-        histogram.forEach(inputAllocation)
-        binsAllocation.copyTo(bins)
-        inputAllocation.destroy()
-        binsAllocation.destroy()
-        var avg = 0.0
-        bins.forEachIndexed { index, bin -> avg += index * bin / (256.0 * bitmap.byteCount) }
-        var stdDev = 0.0
-        bins.forEachIndexed { index, bin -> stdDev += (index * bin / (256.0 * bitmap.byteCount)) - avg}
-        return (sqrt(stdDev) * 100.0).toFloat()
     }
 }

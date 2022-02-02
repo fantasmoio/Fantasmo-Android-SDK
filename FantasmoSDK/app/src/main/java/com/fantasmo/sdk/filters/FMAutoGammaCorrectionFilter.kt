@@ -32,9 +32,7 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
             histogramIntrinsic = ScriptIntrinsicHistogram.create(rs, Element.U8(rs))
             colorLUT = ScriptIntrinsicLUT.create(rs, Element.U8_4(rs))
         }
-        GlobalScope.launch(Dispatchers.Default) { // launches coroutine in cpu thread
-            yuvImage = applyAutoGammaCorrection(yuvImage, 0.3f)
-        }
+        yuvImage = applyAutoGammaCorrection(yuvImage, 0.3f)
         FMUtility.setFrame(yuvImage)
         return FMFrameFilterResult.Accepted
     }
@@ -49,12 +47,10 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
      * @return variance blurriness value
      * */
     @RequiresApi(Build.VERSION_CODES.KITKAT)
-        public suspend fun applyAutoGammaCorrection(yuvImage: YuvImage?, meanT: Float): YuvImage? {
+        fun applyAutoGammaCorrection(yuvImage: YuvImage?, meanT: Float): YuvImage? {
         if (yuvImage == null) {
             return null
         } else {
-            val autoGammaCorrection = GlobalScope.async {
-                val rs = RenderScript.create(context)
                 val luminanceInput = Allocation.createSized(rs, Element.U8(rs), FMUtility.imageWidth * FMUtility.imageHeight)
                 luminanceInput.copyFrom(yuvImage.yuvData)
                 val histogramOutput = Allocation.createSized(rs, Element.U32(rs), 256)
@@ -78,7 +74,7 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
                 }
 
                 if (meanBrightness > meanT) {
-                    yuvImage
+                    return yuvImage
                 }
                 else {
                     val meanRange: DoubleArray = doubleArrayOf(meanT - meanT / 100.0, meanT + meanT / 100.0)
@@ -121,10 +117,8 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
                     val finalArray = ByteArray(yuvImage.yuvData.size)
                     finalOutput.copyTo(finalArray)
                     yuvImage.yuvData.copyInto(finalArray, yuvImage.width * yuvImage.height, yuvImage.width * yuvImage.height, yuvImage.yuvData.size - 1)
-                    YuvImage(finalArray, yuvImage.yuvFormat, yuvImage.width, yuvImage.height, yuvImage.strides)
+                    return YuvImage(finalArray, yuvImage.yuvFormat, yuvImage.width, yuvImage.height, yuvImage.strides)
                 }
             }
-            return autoGammaCorrection.await()
-        }
     }
 }

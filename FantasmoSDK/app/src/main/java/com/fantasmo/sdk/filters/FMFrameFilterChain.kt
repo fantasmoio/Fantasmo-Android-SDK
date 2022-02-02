@@ -3,13 +3,16 @@ package com.fantasmo.sdk.filters
 import android.app.Activity
 import android.content.Context
 import android.os.Build
+import android.os.SystemClock
 import android.util.Log
+import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.config.RemoteConfig
 import com.google.ar.core.Frame
 import com.google.ar.core.exceptions.DeadlineExceededException
 import com.google.ar.core.exceptions.NotYetAvailableException
 import com.google.ar.core.exceptions.ResourceExhaustedException
+import java.util.*
 
 /**
  * Class responsible for filtering frames according the implemented filters
@@ -88,6 +91,7 @@ class FMFrameFilterChain(context: Context) {
      * @param arFrame Frame for approval.
      * @return result FMFrameFilterResult
      */
+    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     fun accepts(arFrame: Frame): FMFrameFilterResult {
         if (shouldForceAccept()) {
             lastAcceptTime = System.nanoTime()
@@ -98,7 +102,12 @@ class FMFrameFilterChain(context: Context) {
                 FMUtility.setImage(image)
                 for (filter in filters) {
                     currentFilter = filter
+                    Log.d(TAG, "Frame ${arFrame.timestamp} entering ${filter.TAG}")
+                    val before = SystemClock.elapsedRealtimeNanos()
                     val result = filter.accepts(arFrame)
+                    val after = SystemClock.elapsedRealtimeNanos()
+                    val interval = ((after - before) / 1000L).toFloat() / 1000f
+                    Log.d(TAG, "Frame ${arFrame.timestamp} took ${interval}ms through ${filter.TAG}")
                     if (result != FMFrameFilterResult.Accepted) {
                         FMUtility.setFalse()
                         image.close()
