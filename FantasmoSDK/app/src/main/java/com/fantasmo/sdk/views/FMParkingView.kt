@@ -54,6 +54,12 @@ class FMParkingView @JvmOverloads constructor(
     var isSimulation = false
 
     /**
+     * Controls QR code scanner. When set to `true` enables a QR code scanning session.
+     * Default behavior is to be set on `true`
+     */
+    var enableQRCodeScanner = true
+
+    /**
      * Controls whether this class uses its own internal LocationManager to automatically receive location updates. Default is `true`.
      * When set to `false` it is expected that location updates will be manually provided via the `updateLocation()` method.
      */
@@ -200,7 +206,15 @@ class FMParkingView @JvmOverloads constructor(
             statistics.visibility = View.GONE
         }
 
-        startQRScanning()
+        if (enableQRCodeScanner){
+            startQRScanning()
+        }
+        else {
+            // Set an AR anchor now
+            fmARCoreView.startAnchor()
+            state = State.QRSCANNING
+            startLocalizing()
+        }
     }
 
     /**
