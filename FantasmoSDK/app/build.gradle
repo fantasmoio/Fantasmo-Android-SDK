@@ -83,18 +83,18 @@ android {
                     from components.release
 
                     // You can then customize attributes of the publication as shown below.
-                    groupId = 'com.example.MyLibrary'
-                    artifactId = 'final'
-                    version = versionName
+                    groupId = 'com.fantasmo.sdk'
+                    artifactId = 'FantasmoSDK'
+                    version = defaultConfig.versionName
                 }
                 // Creates a Maven publication called “debug”.
                 debug(MavenPublication) {
                     // Applies the component for the debug build variant.
                     from components.debug
 
-                    groupId = 'com.example.MyLibrary'
-                    artifactId = 'final-debug'
-                    version = '1.0'
+                    groupId = 'com.fantasmo.sdk'
+                    artifactId = 'FantasmoSDK'
+                    version = defaultConfig.versionName
                 }
             }
         }
