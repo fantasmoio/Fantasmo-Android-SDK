@@ -203,6 +203,14 @@ override fun fmParkingView(qrCodeString: String, continueBlock: (Boolean) -> Uni
 }
 ```
 
+### Skip QR Code Scanner
+By default the SDK enables the QR code scanner. If you desire to skip the QR code scanning session, you can set the `enableQRCodeScanner` property to false and the SDK will skip this step and start a Localizing session.
+
+```kotlin
+// Skips QR Code Scanning Session
+fmParkingView.enableQRCodeScanner = false
+```
+
 **Important:** If you implement this method, you must call the `continueBlock` with a boolean value. A value of `true` indicates the QR code is valid and that localization should start. Passing `false` to this block indicates the code is invalid and instructs the parking view to scan for more QR codes. This block may be called synchronously or asynchronously but must be done so on the main queue.
 
 During a QR code scanning session, it is not possible to turn on the flashlight due to ARCore being used on the FMParkingView. ARCore blocks any input regarding turning on/off the flashlight during an AR session, limiting QR code readability on dark environments.
