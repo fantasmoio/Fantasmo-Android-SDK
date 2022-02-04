@@ -92,3 +92,8 @@ Version 3.1.0
 - MW-547 End Ride button hidden for a while when opening SDK
 - MW-557 TooLittle frame count increases nearly 1to1 with every frame
 - MW-566 Expose AR Frame error count
+
+Version 3.1.1
+- MW-512 Allow skipping the QR code scanner in the SDK
+- MW-535 Consume remote_config_id from initialize endpoint, send to localize endpoint
+- MW-559 Cannot set camera config, session is not paused

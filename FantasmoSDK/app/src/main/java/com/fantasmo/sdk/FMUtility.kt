@@ -298,5 +298,6 @@ class FMUtility {
         const val PixelBufferPlaneCount: Int = 2
 
         const val defaultConfigId = "default-android_17.01.22"
+        const val fileName = "remote_config.json"
     }
 }
