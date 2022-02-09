@@ -33,8 +33,8 @@ class FMFrame (private val frame: Frame){
         try {
             val cameraImage = frame.acquireCameraImage()
             val cameraPlaneY = cameraImage.planes[0].buffer
-            val cameraPlaneU = cameraImage.planes[1].buffer
-            val cameraPlaneV = cameraImage.planes[2].buffer
+            val cameraPlaneU = cameraImage.planes[2].buffer
+            val cameraPlaneV = cameraImage.planes[1].buffer
             //Use the buffers to create a new byteArray
             val compositeByteArray =
                 ByteArray(cameraPlaneY.capacity() + cameraPlaneU.capacity() + cameraPlaneV.capacity())
