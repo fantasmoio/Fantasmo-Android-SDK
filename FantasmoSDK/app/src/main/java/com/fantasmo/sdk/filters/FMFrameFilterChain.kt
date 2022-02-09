@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.config.RemoteConfig
+import com.fantasmo.sdk.models.FMFrame
 import com.google.ar.core.Frame
 import com.google.ar.core.exceptions.DeadlineExceededException
 import com.google.ar.core.exceptions.NotYetAvailableException
@@ -98,24 +99,21 @@ class FMFrameFilterChain(context: Context) {
             return FMFrameFilterResult.Accepted
         } else {
             try{
-                val image = arFrame.acquireCameraImage()
-                FMUtility.setImage(image)
+                val fmFrame = FMFrame(arFrame)
                 for (filter in filters) {
                     currentFilter = filter
                     Log.d(TAG, "Frame ${arFrame.timestamp} entering ${filter.TAG}")
                     val before = SystemClock.elapsedRealtimeNanos()
-                    val result = filter.accepts(arFrame)
+                    val result = filter.accepts(fmFrame)
                     val after = SystemClock.elapsedRealtimeNanos()
                     val interval = ((after - before) / 1000L).toFloat() / 1000f
                     Log.d(TAG, "Frame ${arFrame.timestamp} took ${interval}ms through ${filter.TAG}")
                     if (result != FMFrameFilterResult.Accepted) {
                         FMUtility.setFalse()
-                        image.close()
                         return result
                     }
                 }
                 FMUtility.setFalse()
-                image.close()
             }
             catch (e: NotYetAvailableException) {
                 Log.e(TAG, "FrameNotYetAvailable")

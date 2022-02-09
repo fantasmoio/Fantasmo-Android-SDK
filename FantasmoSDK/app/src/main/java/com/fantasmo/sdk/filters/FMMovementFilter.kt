@@ -1,5 +1,6 @@
 package com.fantasmo.sdk.filters
 
+import com.fantasmo.sdk.models.FMFrame
 import com.google.ar.core.Frame
 import kotlin.math.abs
 
@@ -18,10 +19,10 @@ class FMMovementFilter(private val movementFilterThreshold: Float) : FMFrameFilt
      * @param arFrame Frame to be evaluated
      * @return Accepts frame or Rejects frame with MovingTooLittle failure
      */
-    override fun accepts(arFrame: Frame): FMFrameFilterResult {
+    override fun accepts(fmFrame: FMFrame): FMFrameFilterResult {
 
         val newTransform = FloatArray(16)
-        arFrame.androidSensorPose.toMatrix(newTransform, 0)
+        fmFrame.androidSensorPose.toMatrix(newTransform, 0)
         
         return if (exceededThreshold(newTransform)) {
             lastTransform = newTransform

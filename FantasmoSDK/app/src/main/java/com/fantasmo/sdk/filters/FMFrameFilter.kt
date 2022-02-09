@@ -1,7 +1,7 @@
 package com.fantasmo.sdk.filters
 
 import com.fantasmo.sdk.FMBehaviorRequest
-import com.google.ar.core.Frame
+import com.fantasmo.sdk.models.FMFrame
 
 enum class FMFilterRejectionReason {
     PITCHTOOLOW,
@@ -46,5 +46,5 @@ sealed class FMFrameFilterResult {
  */
 interface FMFrameFilter {
     val TAG: String
-    fun accepts(arFrame: Frame): FMFrameFilterResult
+    fun accepts(fmFrame: FMFrame): FMFrameFilterResult
 }

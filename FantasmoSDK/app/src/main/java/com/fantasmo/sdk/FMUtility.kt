@@ -253,35 +253,6 @@ class FMUtility {
             return null
         }
 
-             /**
-         * This avoids AR frames from being converted twice to `ByteArray`.
-         *
-         * Also prevents outdated frames from throwing `DeadlineExceededException`
-         * after being analyzed on the `BlurFilter`
-         * @param byteArrayFrame `ByteArray` with frame image data
-         */
-        fun setFrame(yuvImage: YuvImage?) {
-            hasPassedBlurFilter = yuvImage != null
-            frameYuvImage = yuvImage
-        }
-
-        /**
-         * This avoids AR frames from being converted twice to `ByteArray`.
-         *
-         * Also prevents outdated frames from throwing `DeadlineExceededException`
-         * after being analyzed on the `ImageQualityFilter`
-         * @param image The image contained in the ARFrame
-         */
-        fun setImage(image: Image?) {
-            if(image!=null){
-                hasPassedImageQualityFilter = true
-                currentImage = image
-                imageHeight = image.height
-                imageWidth = image.width
-                frameYuvImage = createYUVImage(image)
-            }
-        }
-
         /**
          * Before QRScanning, the flags HasPassedBlurFilter and
          * HasPassedImageQualityTest must be reseted in order

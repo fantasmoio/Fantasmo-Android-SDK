@@ -9,6 +9,7 @@ import android.renderscript.*
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
+import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.utilities.MovingAverage
 import com.google.ar.core.Frame
 import kotlinx.coroutines.Dispatchers
@@ -64,8 +65,8 @@ class FMBlurFilter(
      * @param arFrame Frame to be evaluated
      * @return Accepts frame or Rejects frame with ImageToBlurry failure
      */
-    override fun accepts(arFrame: Frame): FMFrameFilterResult {
-        val yuvImage = FMUtility.acquireFrameImage(arFrame)
+    override fun accepts(fmFrame: FMFrame): FMFrameFilterResult {
+        val yuvImage = fmFrame.yuvImage
 
         if(!::rs.isInitialized){
             rs = RenderScript.create(context)
@@ -108,10 +109,8 @@ class FMBlurFilter(
         }
 
         return if (isBlurry) {
-            FMUtility.setFrame(null)
             FMFrameFilterResult.Rejected(FMFilterRejectionReason.IMAGETOOBLURRY)
         } else {
-            FMUtility.setFrame(yuvImage)
             FMFrameFilterResult.Accepted
         }
     }

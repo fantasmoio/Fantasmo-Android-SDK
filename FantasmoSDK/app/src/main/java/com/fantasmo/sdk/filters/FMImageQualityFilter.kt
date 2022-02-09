@@ -6,6 +6,7 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
+import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.models.tensorflowML.ImageQualityModelUpdater
 import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import com.google.ar.core.Frame
@@ -33,7 +34,7 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
     var modelVersion = imageQualityModelUpdater.modelVersion
     private var imageQualityModel: Interpreter? = null
 
-    override fun accepts(arFrame: Frame): FMFrameFilterResult {
+    override fun accepts(fmFrame: FMFrame): FMFrameFilterResult {
         var before = SystemClock.elapsedRealtimeNanos()
 
         imageQualityModel = imageQualityModelUpdater.getInterpreter()
@@ -48,43 +49,36 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
             return FMFrameFilterResult.Accepted
         }
 
-        val yuvImage = FMUtility.acquireFrameImage(arFrame)
         after = SystemClock.elapsedRealtimeNanos()
         interval = ((after - before) / 1000L).toFloat() / 1000f
         Log.d(TAG, "Acquiring frame image took ${interval}ms")
         before = after
 
-        if (yuvImage == null) {
-            // The frame being null means it's no longer available to send in the request
-            Log.e(TAG, "Failed to create Input Array")
-            return FMFrameFilterResult.Rejected(FMFilterRejectionReason.IMAGEQUALITYSCOREBELOWTHRESHOLD)
-        } else {
-            val rgbByteArray =  yuvToRgbConverter.toByteArray(yuvImage, imageWidth, imageHeight)
-            after = SystemClock.elapsedRealtimeNanos()
-            interval = ((after - before) / 1000L).toFloat() / 1000f
-            Log.d(TAG, "YUV to RGB took ${interval}ms")
-            before = after
+        val rgbByteArray =  yuvToRgbConverter.toByteArray(fmFrame.yuvImage, imageWidth, imageHeight)
+        after = SystemClock.elapsedRealtimeNanos()
+        interval = ((after - before) / 1000L).toFloat() / 1000f
+        Log.d(TAG, "YUV to RGB took ${interval}ms")
+        before = after
 
-            val rgbImage = getRGBValues(rgbByteArray)
-            after = SystemClock.elapsedRealtimeNanos()
-            interval = ((after - before) / 1000L).toFloat() / 1000f
-            Log.d(TAG, "Getting RGB values took ${interval}ms")
-            before = after
+        val rgbImage = getRGBValues(rgbByteArray)
+        after = SystemClock.elapsedRealtimeNanos()
+        interval = ((after - before) / 1000L).toFloat() / 1000f
+        Log.d(TAG, "Getting RGB values took ${interval}ms")
+        before = after
 
-            val result = processImage(rgbImage)
-            after = SystemClock.elapsedRealtimeNanos()
-            interval = ((after - before) / 1000L).toFloat() / 1000f
-            Log.d(TAG, "Processing the image took ${interval}ms")
-            before = after
+        val result = processImage(rgbImage)
+        after = SystemClock.elapsedRealtimeNanos()
+        interval = ((after - before) / 1000L).toFloat() / 1000f
+        Log.d(TAG, "Processing the image took ${interval}ms")
+        before = after
 
-            if (result != null) {
-                lastImageQualityScore = result
-                Log.d(TAG, "IQE: $result")
-                return if (result >= scoreThreshold) {
-                    FMFrameFilterResult.Accepted
-                } else {
-                    FMFrameFilterResult.Rejected(FMFilterRejectionReason.IMAGEQUALITYSCOREBELOWTHRESHOLD)
-                }
+        if (result != null) {
+            lastImageQualityScore = result
+            Log.d(TAG, "IQE: $result")
+            return if (result >= scoreThreshold) {
+                FMFrameFilterResult.Accepted
+            } else {
+                FMFrameFilterResult.Rejected(FMFilterRejectionReason.IMAGEQUALITYSCOREBELOWTHRESHOLD)
             }
         }
         return FMFrameFilterResult.Accepted

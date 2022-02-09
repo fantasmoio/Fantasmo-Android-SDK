@@ -6,6 +6,7 @@ import android.view.Surface
 import android.view.WindowManager
 import com.fantasmo.sdk.FMUtility.Companion.convertQuaternionToEuler
 import com.fantasmo.sdk.FMUtility.Companion.convertToDegrees
+import com.fantasmo.sdk.models.FMFrame
 import com.google.ar.core.Frame
 
 /**
@@ -31,11 +32,11 @@ class FMCameraPitchFilter(
      * @param arFrame Frame to be evaluated
      * @return Accepts frame or Rejects frame with PitchTooHigh or PitchTooLow failure
      */
-    override fun accepts(arFrame: Frame): FMFrameFilterResult {
+    override fun accepts(fmFrame: FMFrame): FMFrameFilterResult {
         // RotationQuaternion virtual camera pose
-        val orientedQuaternion = arFrame.camera.displayOrientedPose.rotationQuaternion
+        val orientedQuaternion = fmFrame.camera.displayOrientedPose.rotationQuaternion
         // RotationQuaternion from device sensor system
-        val sensorQuaternion = arFrame.androidSensorPose.rotationQuaternion
+        val sensorQuaternion = fmFrame.androidSensorPose.rotationQuaternion
 
         val rotation: Int = try {
             context.display?.rotation!!
