@@ -1,5 +1,12 @@
 package com.fantasmo.sdk.config
 
+import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Assert.*
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+
+@RunWith(RobolectricTestRunner::class)
 class RemoteConfigTest {
 
     companion object {
@@ -43,4 +50,16 @@ class RemoteConfigTest {
             imageQualityFilterModelVersion = "0.1.0"
         )
     }
+    @Test
+    fun testRemoteConfigNullId() {
+        RemoteConfig.updateConfig(InstrumentationRegistry.getInstrumentation().context, "null")
+        assertEquals(RemoteConfig.remoteConfig.remoteConfigId, remoteConfig.remoteConfigId)
+    }
+
+    @Test
+    fun testRemoteConfigEmptyArray() {
+        RemoteConfig.updateConfig(InstrumentationRegistry.getInstrumentation().context, "[]")
+        assertEquals(RemoteConfig.remoteConfig.remoteConfigId, remoteConfig.remoteConfigId)
+    }
+
 }
