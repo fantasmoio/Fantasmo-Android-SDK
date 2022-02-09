@@ -13,6 +13,7 @@ import com.google.ar.core.Frame
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
+import kotlin.math.exp
 
 @RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
 class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Context) :
@@ -156,8 +157,8 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
         before = after
 
         return if (tfBufferOut.floatArray.size == 2) {
-            val y1Exp = tfBufferOut.floatArray[0]
-            val y2Exp = tfBufferOut.floatArray[1]
+            val y1Exp = exp(tfBufferOut.floatArray[0])
+            val y2Exp = exp(tfBufferOut.floatArray[1])
             if (!y1Exp.isNaN() && y1Exp.isFinite() && !y2Exp.isNaN() && y2Exp.isFinite()) {
                 val score = 1 / (1 + y2Exp / y1Exp)
                 score
