@@ -53,7 +53,7 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
         if (yuvImage == null) {
             // The frame being null means it's no longer available to send in the request
             Log.e(TAG, "Failed to create Input Array")
-            return FMFrameFilterResult.Rejected(FMFilterRejectionReason.IMAGEQUALITYSCOREBELOWTHRESHOLD)
+            return FMFrameFilterResult.Rejected(FMFilterRejectionReason.FRAMEERROR)
         } else {
             val rgbByteArray =
                 yuvToRgbConverter.toByteArray(yuvImage, imageWidth, imageHeight)

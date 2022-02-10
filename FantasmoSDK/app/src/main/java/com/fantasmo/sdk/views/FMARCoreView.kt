@@ -78,6 +78,7 @@ class FMARCoreView(
 
         // Note that order matters - see the note in onPause(), the reverse applies here.
         try {
+            arSession!!.pause()
             configureARSession()
             // To record a live camera session for later playback, call
             // `session.startRecording(recorderConfig)` at anytime. To playback a previously recorded AR

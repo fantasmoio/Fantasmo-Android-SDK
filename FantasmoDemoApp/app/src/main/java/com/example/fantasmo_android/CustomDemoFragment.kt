@@ -49,6 +49,9 @@ class CustomDemoFragment : Fragment() {
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private lateinit var showStatisticsSwitch: Switch
 
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
+    private lateinit var scanQRCodeSwitch: Switch
+
     private lateinit var endRideButton: Button
     private lateinit var exitButton: Button
 
@@ -88,6 +91,7 @@ class CustomDemoFragment : Fragment() {
         controlsLayout = currentView.findViewById(R.id.controlsLayout)
         isSimulationSwitch = currentView.findViewById(R.id.simulationModeSwitch)
         showStatisticsSwitch = currentView.findViewById(R.id.showStatisticsSwitch)
+        scanQRCodeSwitch = currentView.findViewById(R.id.scanQRCodeSwitch)
 
         resultsLayout = currentView.findViewById(R.id.resultsLayout)
         resultTextView = currentView.findViewById(R.id.localizationResultView)
@@ -215,6 +219,9 @@ class CustomDemoFragment : Fragment() {
 
         // Enable Debug Mode to display session statistics
         fmParkingView.showStatistics = showStatisticsSwitch.isChecked
+
+        // Skips QR Code Scanning Session
+        fmParkingView.enableQRCodeScanner = scanQRCodeSwitch.isChecked
 
         // Before presenting the FMParkingView register custom views, otherwise the default ones
         // will overpass these ones

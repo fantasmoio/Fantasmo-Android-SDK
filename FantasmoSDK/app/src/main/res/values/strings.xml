@@ -53,5 +53,6 @@
     <string name="enter_manually">Enter Manually</string>
     <string name="enter_qr_code">Enter QR Code</string>
     <string name="remote_config">Remote Config:</string>
+    <string name="frameerror">; FrameError:</string>
 
 </resources>

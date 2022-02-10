@@ -230,9 +230,9 @@
         android:background="@color/fmTransparentWhite"
         android:text="@string/limited"
         android:textColor="@color/black"
-        app:layout_constraintBottom_toBottomOf="@+id/normalTextView"
-        app:layout_constraintStart_toEndOf="@+id/normalTextView"
-        app:layout_constraintTop_toTopOf="@+id/normalTextView"
+        app:layout_constraintBottom_toBottomOf="@+id/frameErrorTextView"
+        app:layout_constraintStart_toEndOf="@+id/frameErrorTextView"
+        app:layout_constraintTop_toTopOf="@+id/frameErrorTextView"
         app:layout_constraintVertical_bias="0.0" />
 
     <TextView
@@ -558,5 +558,28 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/remoteConfigText"
         app:layout_constraintTop_toTopOf="@+id/remoteConfigText" />
+
+    <TextView
+        android:id="@+id/frameErrorText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/frameerror"
+        android:textColor="@color/black"
+        android:background="@color/fmTransparentWhite"
+        app:layout_constraintBottom_toBottomOf="@+id/normalTextView"
+        app:layout_constraintStart_toEndOf="@+id/normalTextView"
+        app:layout_constraintTop_toTopOf="@+id/normalTextView"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/frameErrorTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/_0"
+        android:textColor="@color/black"
+        android:background="@color/fmTransparentWhite"
+        app:layout_constraintBottom_toBottomOf="@+id/frameErrorText"
+        app:layout_constraintStart_toEndOf="@+id/frameErrorText"
+        app:layout_constraintTop_toTopOf="@+id/frameErrorText" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

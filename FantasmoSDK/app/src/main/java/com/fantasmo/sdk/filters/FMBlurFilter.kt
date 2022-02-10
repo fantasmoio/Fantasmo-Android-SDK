@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.YuvImage
 import android.os.Build
 import android.renderscript.*
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.utilities.MovingAverage
@@ -59,7 +60,7 @@ class FMBlurFilter(
         val yuvImage = fmFrame.yuvImage
             ?: return FMFrameFilterResult.Rejected(FMFilterRejectionReason.INSUFFICIENTFEATURES)
 
-        if(!::rs.isInitialized){
+        if (!::rs.isInitialized) {
             rs = RenderScript.create(context)
             histogram = ScriptIntrinsicHistogram.create(rs, Element.U8(rs))
             convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))

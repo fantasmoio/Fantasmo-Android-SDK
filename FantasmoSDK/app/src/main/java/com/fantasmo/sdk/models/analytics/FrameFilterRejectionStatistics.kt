@@ -15,6 +15,7 @@ class FrameFilterRejectionStatistics {
     var insufficientFeatures = 0
     var excessiveMotionFrameCount = 0
     var imageQualityFrameCount = 0
+    var frameErrorCount = 0
 
 
     /**
@@ -47,6 +48,9 @@ class FrameFilterRejectionStatistics {
             FMFilterRejectionReason.IMAGEQUALITYSCOREBELOWTHRESHOLD -> {
                 imageQualityFrameCount += 1
             }
+            FMFilterRejectionReason.FRAMEERROR -> {
+                frameErrorCount += 1
+            }
         }
     }
 
@@ -61,5 +65,6 @@ class FrameFilterRejectionStatistics {
         insufficientMotionFrameCount = 0
         insufficientFeatures = 0
         imageQualityFrameCount = 0
+        frameErrorCount = 0
     }
 }
