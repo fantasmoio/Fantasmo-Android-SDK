@@ -213,7 +213,6 @@ class FMParkingView @JvmOverloads constructor(
             // Set an AR anchor now
             fmARCoreView.startAnchor()
             state = State.QRSCANNING
-            FMUtility.setFalse()
             startLocalizing()
         }
     }
