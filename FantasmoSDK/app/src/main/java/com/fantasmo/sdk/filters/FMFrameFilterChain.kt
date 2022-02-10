@@ -9,7 +9,6 @@ import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.models.FMFrame
-import com.google.ar.core.Frame
 import com.google.ar.core.exceptions.DeadlineExceededException
 import com.google.ar.core.exceptions.NotYetAvailableException
 import com.google.ar.core.exceptions.ResourceExhaustedException
@@ -93,27 +92,23 @@ class FMFrameFilterChain(context: Context) {
      * @return result FMFrameFilterResult
      */
     @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-    fun accepts(arFrame: Frame): FMFrameFilterResult {
+    fun accepts(fmFrame: FMFrame): FMFrameFilterResult {
         if (shouldForceAccept()) {
             lastAcceptTime = System.nanoTime()
             return FMFrameFilterResult.Accepted
         } else {
             try{
-                val fmFrame = FMFrame(arFrame)
                 for (filter in filters) {
                     currentFilter = filter
-                    Log.d(TAG, "Frame ${arFrame.timestamp} entering ${filter.TAG}")
                     val before = SystemClock.elapsedRealtimeNanos()
                     val result = filter.accepts(fmFrame)
                     val after = SystemClock.elapsedRealtimeNanos()
                     val interval = ((after - before) / 1000L).toFloat() / 1000f
-                    Log.d(TAG, "Frame ${arFrame.timestamp} took ${interval}ms through ${filter.TAG}")
+                    Log.d(TAG, "Frame ${fmFrame.timestamp} took ${interval}ms through ${filter.TAG}")
                     if (result != FMFrameFilterResult.Accepted) {
-                        FMUtility.setFalse()
                         return result
                     }
                 }
-                FMUtility.setFalse()
             }
             catch (e: NotYetAvailableException) {
                 Log.e(TAG, "FrameNotYetAvailable")
@@ -142,8 +137,8 @@ class FMFrameFilterChain(context: Context) {
         return elapsed > acceptanceThreshold
     }
 
-    fun evaluateAsync(arFrame: Frame, completion: (FMFrameFilterResult) -> Unit) {
-        val result = accepts(arFrame)
+    fun evaluateAsync(fmFrame: FMFrame, completion: (FMFrameFilterResult) -> Unit) {
+        val result = accepts(fmFrame)
         (context as Activity).runOnUiThread {
             completion(result)
         }

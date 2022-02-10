@@ -1,11 +1,11 @@
 package com.fantasmo.sdk
 
 import com.fantasmo.sdk.models.ErrorResponse
+import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
-import com.google.ar.core.Frame
 
 /**
  * Class that describes the confidence level of a Localization Result
@@ -91,5 +91,5 @@ interface FMLocationListener {
      * @param info `AccumulatedARCoreInfo` with all the statistics about movement and rotation
      * @param rejections `FrameFilterRejectionsStatistics with all the statistics regarding frame rejection
      */
-    fun locationManager(didUpdateFrame: Frame, info: AccumulatedARCoreInfo, rejections: FrameFilterRejectionStatistics) {}
+    fun locationManager(didUpdateFrame: FMFrame, info: AccumulatedARCoreInfo, rejections: FrameFilterRejectionStatistics) {}
 }

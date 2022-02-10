@@ -7,7 +7,6 @@ import android.view.WindowManager
 import com.fantasmo.sdk.FMUtility.Companion.convertQuaternionToEuler
 import com.fantasmo.sdk.FMUtility.Companion.convertToDegrees
 import com.fantasmo.sdk.models.FMFrame
-import com.google.ar.core.Frame
 
 /**
  * Class responsible for filtering frames due to critical angles.

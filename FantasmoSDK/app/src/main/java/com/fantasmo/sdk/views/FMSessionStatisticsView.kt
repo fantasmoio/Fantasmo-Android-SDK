@@ -8,9 +8,9 @@ import com.fantasmo.sdk.FMLocationResult
 import com.fantasmo.sdk.config.RemoteConfig.Companion.remoteConfig
 import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.fantasmosdk.R
+import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
-import com.google.ar.core.Frame
 import com.google.ar.core.TrackingFailureReason
 
 /**
@@ -54,15 +54,15 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     private var imageQualityLastResult: TextView = arLayout.findViewById(R.id.lastResultIQTextView)
 
     fun updateStats(
-        frame: Frame,
+        fmFrame: FMFrame,
         info: AccumulatedARCoreInfo,
         rejections: FrameFilterRejectionStatistics
     ) {
-        val cameraTranslation = frame.androidSensorPose?.translation
+        val cameraTranslation = fmFrame.androidSensorPose?.translation
         cameraTranslationTv.text =
             createStringDisplay(cameraTranslation)
 
-        val cameraRotation = frame.androidSensorPose?.rotationQuaternion
+        val cameraRotation = fmFrame.androidSensorPose?.rotationQuaternion
         cameraAnglesTv.text = createStringDisplay(cameraRotation)
 
         normalTv.text =

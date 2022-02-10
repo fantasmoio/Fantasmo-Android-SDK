@@ -11,7 +11,6 @@ import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.mock.MockData
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.models.analytics.MagneticField
-import com.google.ar.core.Frame
 import com.google.gson.Gson
 import java.util.*
 
@@ -93,7 +92,7 @@ class FMApi(
      * Method to build the Localize request.
      */
     fun sendLocalizeRequest(
-        arFrame: Frame,
+        fmFrame: FMFrame,
         request: FMLocalizationRequest,
         onCompletion: (Location, List<FMZone>) -> Unit,
         onError: (ErrorResponse) -> Unit
@@ -101,8 +100,8 @@ class FMApi(
         try {
             fmNetworkManager.uploadImage(
                 FMConfiguration.getServerURL(),
-                imageData(arFrame, request)!!,
-                getLocalizeParams(arFrame, request),
+                imageData(fmFrame, request)!!,
+                getLocalizeParams(fmFrame, request),
                 token,
                 {
                     val location = it.location
@@ -206,20 +205,20 @@ class FMApi(
      * @return an HashMap with all the localization parameters.
      */
     private fun getLocalizeParams(
-        frame: Frame,
+        fmFrame: FMFrame,
         request: FMLocalizationRequest
     ): HashMap<String, String> {
-        val pose = FMUtility.getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context, frame)
+        val pose = FMUtility.getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context, fmFrame)
 
         val location = request.location
 
         val resolution = hashMapOf<String, Int>()
-        val imageResolution = getImageResolution(frame, request)
+        val imageResolution = getImageResolution(fmFrame, request)
         resolution["height"] = imageResolution.height
         resolution["width"] = imageResolution.width
 
-        val focalLength = frame.camera.imageIntrinsics.focalLength
-        val principalPoint = frame.camera.imageIntrinsics.principalPoint
+        val focalLength = fmFrame.camera.imageIntrinsics.focalLength
+        val principalPoint = fmFrame.camera.imageIntrinsics.principalPoint
         val intrinsics = FMIntrinsics(
             focalLength.component1(),
             focalLength.component2(),
@@ -291,29 +290,29 @@ class FMApi(
      * @param request FMLocalizationRequest with information about simulation mode
      * @return result ByteArray with image to localize
      */
-    private fun imageData(arFrame: Frame, request: FMLocalizationRequest): ByteArray? {
+    private fun imageData(fmFrame: FMFrame, request: FMLocalizationRequest): ByteArray? {
         if (request.isSimulation) {
             return MockData.imageData(request, context)
         }
-        return FMUtility.getImageDataFromARFrame(context, arFrame)
+        return fmFrame.imageData()
     }
 
     /**
      * Get the image resolution used to perform "localize" HTTP request.
-     * @param arFrame Frame to return the resolution from
+     * @param fmFrame Frame to return the resolution from
      * @param request Localization request struct
      * @return result Resolution of the frame
      */
     private fun getImageResolution(
-        arFrame: Frame,
+        fmFrame: FMFrame,
         request: FMLocalizationRequest
     ): FMFrameResolution {
         if (request.isSimulation) {
             val result = MockData.getImageResolution(request, context)
             return FMFrameResolution(result[0], result[1])
         }
-        val height = arFrame.camera.imageIntrinsics.imageDimensions[0]
-        val width = arFrame.camera.imageIntrinsics.imageDimensions[1]
+        val height = fmFrame.camera.imageIntrinsics.imageDimensions[0]
+        val width = fmFrame.camera.imageIntrinsics.imageDimensions[1]
         return FMFrameResolution(height, width)
     }
 

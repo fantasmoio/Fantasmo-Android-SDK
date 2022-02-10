@@ -1,6 +1,7 @@
 package com.fantasmo.sdk.models.analytics
 
 import com.fantasmo.sdk.FMUtility.Companion.convertQuaternionToEuler
+import com.fantasmo.sdk.models.FMFrame
 import com.google.ar.core.Frame
 import kotlin.math.max
 import kotlin.math.min
@@ -32,10 +33,10 @@ class TotalDeviceRotationAccumulator {
 
     /**
      * On every frame, update get the rotation from the current frame
-     * @param arFrame Frame
+     * @param fmFrame FMFrame
      */
-    fun update(arFrame: Frame) {
-        val rotation = arFrame.androidSensorPose.rotationQuaternion
+    fun update(fmFrame: FMFrame) {
+        val rotation = fmFrame.androidSensorPose.rotationQuaternion
         updateRotationValues(rotation!!)
         frameCounter += 1
     }

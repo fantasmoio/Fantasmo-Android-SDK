@@ -6,6 +6,7 @@ import android.opengl.GLSurfaceView
 import android.util.Log
 import android.util.Size
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.models.FMPose
 import com.fantasmo.sdk.views.common.helpers.DisplayRotationHelper
 import com.fantasmo.sdk.views.common.helpers.TrackingStateHelper
@@ -193,17 +194,18 @@ class FMARCoreView(
             Log.e(TAG, "Camera not available during onDrawFrame", e)
             return
         }
-        val newArFrameTimestamp = frame.timestamp
+        val fmFrame = FMFrame(frame, context)
+        val newArFrameTimestamp = fmFrame.timestamp
         //Acquire ARCore Frame to set anchor and updates UI setting values in the view
         GlobalScope.launch(Dispatchers.Default) {
             // Code here will run in UI thread
             if(connected && newArFrameTimestamp > lastArFrameTimestamp){
-                onUpdate(frame)
+                onUpdate(fmFrame)
                 lastArFrameTimestamp = newArFrameTimestamp
             }
         }
 
-        val camera = frame.camera
+        val camera = fmFrame.camera
 
         // Update BackgroundRenderer state to match the depth settings. False for this case
         try {
@@ -217,7 +219,7 @@ class FMARCoreView(
         backgroundRenderer.updateDisplayGeometry(frame)
 
         trackingStateHelper.updateKeepScreenOnFlag(camera.trackingState)
-        if (frame.timestamp != 0L) {
+        if (fmFrame.timestamp != 0L) {
             backgroundRenderer.drawBackground(render)
         }
     }
@@ -226,8 +228,8 @@ class FMARCoreView(
      * On any changes to the scene call onUpdate method to get arFrames and get the camera data
      * Also responsible for frame anchoring and qrScanning with arFrames
      */
-    private fun onUpdate(frame: Frame) {
-        val anchorDelta = arSessionListener.anchorDelta(frame)
+    private fun onUpdate(fmFrame: FMFrame) {
+        val anchorDelta = arSessionListener.anchorDelta(fmFrame)
 
         if (anchorDelta != null) {
             val position =
@@ -238,15 +240,15 @@ class FMARCoreView(
                 )
             //Log.d(TAG,"Anchor Delta: ${createStringDisplay(position)}")
         }
-        arSessionListener.localize(frame)
+        arSessionListener.localize(fmFrame)
 
         if (!anchored) {
             if (anchorIsChecked) {
-                anchored = arSessionListener.anchored(frame)
+                anchored = arSessionListener.anchored(fmFrame)
             }
         }
 
-        arSessionListener.qrCodeScan(frame)
+        arSessionListener.qrCodeScan(fmFrame)
     }
 
     /**
@@ -281,21 +283,21 @@ interface FMARSessionListener{
      * When the SDK enters the localization session, this provides the frame
      * to localize and passes to the `FMLocationManager.session()` method.
      */
-    fun localize(frame: Frame)
+    fun localize(fmFrame: FMFrame)
 
     /**
      * Sends the state of the anchor. In case of success returns `true`,
      * otherwise returns `false` telling the user to try again.
      */
-    fun anchored(frame: Frame): Boolean
+    fun anchored(fmFrame: FMFrame): Boolean
 
     /**
      * Gets the FMPose regarding the difference between the anchor and current frame.
      */
-    fun anchorDelta(frame: Frame): FMPose?
+    fun anchorDelta(fmFrame: FMFrame): FMPose?
 
     /**
      * Sends a frame to the QRCodeReader and extract a QR Code from it.
      */
-    fun qrCodeScan(frame: Frame)
+    fun qrCodeScan(fmFrame: FMFrame)
 }

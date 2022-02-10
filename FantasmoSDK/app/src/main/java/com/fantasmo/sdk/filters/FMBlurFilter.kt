@@ -4,18 +4,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.YuvImage
 import android.os.Build
-import android.os.SystemClock
 import android.renderscript.*
-import android.util.Log
 import androidx.annotation.RequiresApi
-import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.utilities.MovingAverage
-import com.google.ar.core.Frame
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import kotlin.math.sqrt
 
 /**
@@ -53,8 +45,6 @@ class FMBlurFilter(
     private lateinit var histogram: ScriptIntrinsicHistogram
     private lateinit var convolve : ScriptIntrinsicConvolve3x3
     private lateinit var resize : ScriptIntrinsicResize
-    private lateinit var inputBitmap: Bitmap
-    private lateinit var inputAllocation: Allocation
     private lateinit var binsAllocation: Allocation
     private lateinit var resizedAllocation: Allocation
     private lateinit var convolveOutputAllocation: Allocation
@@ -67,6 +57,7 @@ class FMBlurFilter(
      */
     override fun accepts(fmFrame: FMFrame): FMFrameFilterResult {
         val yuvImage = fmFrame.yuvImage
+            ?: return FMFrameFilterResult.Rejected(FMFilterRejectionReason.INSUFFICIENTFEATURES)
 
         if(!::rs.isInitialized){
             rs = RenderScript.create(context)
@@ -74,15 +65,11 @@ class FMBlurFilter(
             convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
             resize = ScriptIntrinsicResize.create(rs)
             val builder = Type.Builder(rs, Element.U8(rs))
-            builder.setX(FMUtility.imageWidth)
-            builder.setY(FMUtility.imageHeight)
-            inputAllocation = Allocation.createTyped(rs, builder.create())
             builder.setX(reducedWidth)
             builder.setY(reducedHeight)
             resizedAllocation = Allocation.createTyped(rs, builder.create())
             convolveOutputAllocation = Allocation.createTyped(rs, builder.create())
             binsAllocation = Allocation.createSized(rs, Element.U32(rs), 256)
-            resize.setInput(inputAllocation)
             histogram.setOutput(binsAllocation)
         }
 
@@ -127,10 +114,16 @@ class FMBlurFilter(
         if (yuvImage == null) {
             return 0.0f
         } else {
+            val builder = Type.Builder(rs, Element.U8(rs))
+            builder.setX(yuvImage.width)
+            builder.setY(yuvImage.height)
+            val inputAllocation = Allocation.createTyped(rs, builder.create())
+
             inputAllocation.copyFrom(yuvImage.yuvData)
 
             resize.setInput(inputAllocation)
             resize.forEach_bicubic(resizedAllocation)
+            inputAllocation.destroy()
 
             convolve.setInput(resizedAllocation)
             convolve.setCoefficients(laplacianMatrix)
