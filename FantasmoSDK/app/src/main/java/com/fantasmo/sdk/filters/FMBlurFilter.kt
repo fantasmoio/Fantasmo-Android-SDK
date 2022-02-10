@@ -58,7 +58,7 @@ class FMBlurFilter(
      */
     override fun accepts(fmFrame: FMFrame): FMFrameFilterResult {
         val yuvImage = fmFrame.yuvImage
-            ?: return FMFrameFilterResult.Rejected(FMFilterRejectionReason.INSUFFICIENTFEATURES)
+            ?: return FMFrameFilterResult.Rejected(FMFilterRejectionReason.FRAMEERROR)
 
         if (!::rs.isInitialized) {
             rs = RenderScript.create(context)
