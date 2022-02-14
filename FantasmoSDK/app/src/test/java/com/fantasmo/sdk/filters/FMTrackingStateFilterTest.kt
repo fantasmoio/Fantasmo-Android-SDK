@@ -1,5 +1,6 @@
 package com.fantasmo.sdk.filters
 
+import com.fantasmo.sdk.models.FMFrame
 import com.google.ar.core.Camera
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingFailureReason
@@ -13,7 +14,7 @@ class FMTrackingStateFilterTest {
     @Test
     fun testPitchFilterAccepts() {
         val filter = FMTrackingStateFilter()
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val camera = Mockito.mock(Camera::class.java)
         Mockito.`when`(frame.camera).thenReturn(camera)
         Mockito.`when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
@@ -27,7 +28,7 @@ class FMTrackingStateFilterTest {
     @Test
     fun testPitchFilterRejectsBadState() {
         val filter = FMTrackingStateFilter()
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val camera = Mockito.mock(Camera::class.java)
         Mockito.`when`(frame.camera).thenReturn(camera)
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.BAD_STATE)
@@ -41,7 +42,7 @@ class FMTrackingStateFilterTest {
     @Test
     fun testPitchFilterRejectsExcessiveMotion() {
         val filter = FMTrackingStateFilter()
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val camera = Mockito.mock(Camera::class.java)
         Mockito.`when`(frame.camera).thenReturn(camera)
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.EXCESSIVE_MOTION)
@@ -55,7 +56,7 @@ class FMTrackingStateFilterTest {
     @Test
     fun testPitchFilterRejectsCameraUnavailable() {
         val filter = FMTrackingStateFilter()
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val camera = Mockito.mock(Camera::class.java)
         Mockito.`when`(frame.camera).thenReturn(camera)
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.CAMERA_UNAVAILABLE)
@@ -69,7 +70,7 @@ class FMTrackingStateFilterTest {
     @Test
     fun testPitchFilterRejectsInsufficientLight() {
         val filter = FMTrackingStateFilter()
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val camera = Mockito.mock(Camera::class.java)
         Mockito.`when`(frame.camera).thenReturn(camera)
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.INSUFFICIENT_LIGHT)
@@ -83,7 +84,7 @@ class FMTrackingStateFilterTest {
     @Test
     fun testPitchFilterRejectsInsufficientFeatures() {
         val filter = FMTrackingStateFilter()
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val camera = Mockito.mock(Camera::class.java)
         Mockito.`when`(frame.camera).thenReturn(camera)
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.INSUFFICIENT_FEATURES)
@@ -97,7 +98,7 @@ class FMTrackingStateFilterTest {
     @Test
     fun testPitchFilterRejectsInitializing() {
         val filter = FMTrackingStateFilter()
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val camera = Mockito.mock(Camera::class.java)
         Mockito.`when`(frame.camera).thenReturn(camera)
         Mockito.`when`(frame.camera.trackingState).thenReturn(TrackingState.PAUSED)

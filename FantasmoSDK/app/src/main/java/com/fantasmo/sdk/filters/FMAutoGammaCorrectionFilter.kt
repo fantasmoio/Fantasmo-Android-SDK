@@ -7,7 +7,10 @@ import androidx.annotation.RequiresApi
 import android.renderscript.*
 import com.fantasmo.sdk.models.FMFrame
 import kotlin.math.pow
-
+/**
+ * Class responsible for correcting image brightness
+ * Prevents from sending images that are too dark
+ */
 @RequiresApi(Build.VERSION_CODES.KITKAT)
 class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter {
     override val TAG = FMAutoGammaCorrectionFilter::class.java.simpleName
@@ -22,24 +25,25 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
             histogramIntrinsic = ScriptIntrinsicHistogram.create(rs, Element.U8(rs))
             colorLUT = ScriptIntrinsicLUT.create(rs, Element.U8_4(rs))
         }
-        fmFrame.processedYuvImage = applyAutoGammaCorrection(fmFrame.yuvImage, 0.3f)
+        fmFrame.yuvImage = applyAutoGammaCorrection(fmFrame.yuvImage, 0.3f)
         return FMFrameFilterResult.Accepted
     }
 
 
     /**
-     * Calculates the variance using image convolution
-     * Takes the frame and acquire the image from it and turns into greyscale
-     * After that applies edge detection matrix to the greyscale image and
-     * calculate variance from that
-     * @param byteArrayFrame frame converted to ByteArray to measure the variance
-     * @return variance blurriness value
+     * Gamma correction process based on histogram
+     * Takes the luminance channel of the input image and calculates its histogram
+     * Runs a loop to determine the needed gamma for correction, then applies it to the image
+     * @param yuvImage YUV image from the frame to be corrected
+     * @param meanT Target brightness
+     * @return Corrected YUV image
      * */
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     fun applyAutoGammaCorrection(yuvImage: YuvImage?, meanT: Float): YuvImage? {
         if (yuvImage == null) {
             return null
         } else {
+            // Calculate histogram with RenderScript
             val luminanceInput = Allocation.createSized(rs, Element.U8(rs), yuvImage.height * yuvImage.width)
             luminanceInput.copyFrom(yuvImage.yuvData)
             val histogramOutput = Allocation.createSized(rs, Element.U32(rs), 256)
@@ -51,11 +55,12 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
             luminanceInput.destroy()
             histogramOutput.destroy()
 
+            // Assign float bin values, then calculate mean brightness
             val originalBinValues = DoubleArray(256)
             for (i in 0..255) {
                 originalBinValues[i] = i / 256.0
             }
-            var correctedBinValues = originalBinValues.clone()
+            val correctedBinValues = originalBinValues.clone()
             val histogramSum = histogram.sum()
             var meanBrightness = 0.0
             for (i in 0..255) {
@@ -66,12 +71,13 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
                 return yuvImage
             }
             else {
+                // Trying to fit mean brightness around meanT +- 1%
                 val meanRange: DoubleArray = doubleArrayOf(meanT - meanT / 100.0, meanT + meanT / 100.0)
 
                 var gamma = 1.0
                 var step = 0.5
                 var numOfLoops = 0
-
+                // Loop that decimates gamma value between 0 and 1, dividing step by 2 every time until we hone in on a valid gamma value
                 while (true) {
                     numOfLoops++
                     if (meanBrightness >= meanRange[0] && meanBrightness <= meanRange[1]) {
@@ -84,13 +90,16 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
                     }
                     step /= 2.0
                     meanBrightness = 0.0
+                    // Recalculating mean brightness before next check
                     for (i in 0..255) {
                         correctedBinValues[i] = originalBinValues[i]
                         correctedBinValues[i] = correctedBinValues[i].pow(gamma)
                         meanBrightness += correctedBinValues[i] * histogram[i] / histogramSum
                     }
                 }
-                var finalBins = IntArray(256)
+
+                // Applying new gamma to Y channel via the color LUT intrinsic. We trick the intrinsic in thinking we're processing an RGBA image
+                val finalBins = IntArray(256)
                 for (i in 0..255) {
                     finalBins[i] = (correctedBinValues[i] * 256.0).toInt()
                     colorLUT.setBlue(i, finalBins[i])
@@ -107,6 +116,8 @@ class FMAutoGammaCorrectionFilter(private val context: Context) : FMFrameFilter 
                 colorLUT.forEach(finalInput, finalOutput)
                 val outputArray = ByteArray(yuvImage.height * yuvImage.width)
                 finalOutput.copyTo(outputArray)
+
+                // Copying corrected values to start of the output array, and UV from original image to the end, then creating new YuvImage
                 val finalArray = ByteArray(yuvImage.yuvData.size)
                 outputArray.copyInto(finalArray, 0, 0, outputArray.size)
                 yuvImage.yuvData.copyInto(finalArray, yuvImage.width * yuvImage.height, yuvImage.width * yuvImage.height, yuvImage.yuvData.size - 1)

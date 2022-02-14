@@ -412,13 +412,17 @@ class FMParkingView @JvmOverloads constructor(
             }
 
             override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
-                fmParkingViewController.fmParkingView(didRequestBehavior)
-                fmLocalizingViewController.didRequestLocalizationBehavior(didRequestBehavior)
+                (context as Activity).runOnUiThread {
+                    fmParkingViewController.fmParkingView(didRequestBehavior)
+                    fmLocalizingViewController.didRequestLocalizationBehavior(didRequestBehavior)
+                }
             }
 
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
-                fmParkingViewController.fmParkingView(error, metadata)
-                fmLocalizingViewController.didReceiveLocalizationError(error, metadata)
+                (context as Activity).runOnUiThread {
+                    fmParkingViewController.fmParkingView(error, metadata)
+                    fmLocalizingViewController.didReceiveLocalizationError(error, metadata)
+                }
             }
 
             override fun locationManager(didChangeState: FMLocationManager.State) {

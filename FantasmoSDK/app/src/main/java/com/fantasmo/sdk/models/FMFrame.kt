@@ -28,7 +28,7 @@ class FMFrame (private val frame: Frame,
     val timestamp = frame.timestamp
     private var _yuvImage: YuvImage? = null
 
-    val yuvImage: YuvImage?
+    var yuvImage: YuvImage?
         @RequiresApi(Build.VERSION_CODES.KITKAT)
         get() {
             if(_yuvImage == null) {
@@ -36,7 +36,8 @@ class FMFrame (private val frame: Frame,
             }
             return _yuvImage
         }
-    var processedYuvImage: YuvImage? = null
+    set(value) {_yuvImage = value}
+
     @RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
     private var yuvToRgbConverter = YuvToRgbConverter(context)
 

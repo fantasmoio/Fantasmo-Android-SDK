@@ -139,8 +139,6 @@ class FMFrameFilterChain(context: Context) {
 
     fun evaluateAsync(fmFrame: FMFrame, completion: (FMFrameFilterResult) -> Unit) {
         val result = accepts(fmFrame)
-        (context as Activity).runOnUiThread {
-            completion(result)
-        }
-    }
+        completion(result)
+     }
 }
