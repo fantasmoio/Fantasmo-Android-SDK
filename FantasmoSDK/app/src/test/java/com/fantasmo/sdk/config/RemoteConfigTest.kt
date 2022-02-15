@@ -4,7 +4,7 @@ class RemoteConfigTest {
 
     companion object {
         val remoteConfig = RemoteConfig.Config(
-            remoteConfigId = "default-android_17.01.22",
+            remoteConfigId = "default-android_15.02.22",
             frameAcceptanceThresholdTimeout = 1.0f,
             isBehaviorRequesterEnabled = false,
             isTrackingStateFilterEnabled = true,
@@ -17,6 +17,8 @@ class RemoteConfigTest {
             isCameraPitchFilterEnabled = true,
             cameraPitchFilterMaxUpwardTilt = 30.0f,
             cameraPitchFilterMaxDownwardTilt = 65.0f,
+            isImageEnhancerEnabled = true,
+            imageEnhancerTargetBrightness = 0.15f,
             isImageQualityFilterEnabled = false,
             imageQualityFilterScoreThreshold = 0.0f,
             imageQualityFilterModelUri = null,
@@ -37,6 +39,8 @@ class RemoteConfigTest {
             isCameraPitchFilterEnabled = false,
             cameraPitchFilterMaxUpwardTilt = 30.0f,
             cameraPitchFilterMaxDownwardTilt = 65.0f,
+            isImageEnhancerEnabled = false,
+            imageEnhancerTargetBrightness = 0.15f,
             isImageQualityFilterEnabled = false,
             imageQualityFilterScoreThreshold = 0.0f,
             imageQualityFilterModelUri = null,

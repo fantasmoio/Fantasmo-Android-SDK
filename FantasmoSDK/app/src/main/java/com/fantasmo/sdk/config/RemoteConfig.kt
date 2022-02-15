@@ -26,6 +26,8 @@ class RemoteConfig {
         var isCameraPitchFilterEnabled: Boolean,
         var cameraPitchFilterMaxUpwardTilt: Float,
         var cameraPitchFilterMaxDownwardTilt: Float,
+        var isImageEnhancerEnabled: Boolean,
+        var imageEnhancerTargetBrightness: Float,
         var isImageQualityFilterEnabled: Boolean,
         var imageQualityFilterScoreThreshold: Float,
         var imageQualityFilterModelUri: String?,
@@ -168,6 +170,8 @@ class RemoteConfig {
                     configJSON.getString("camera_pitch_filter_max_upward_tilt")
                 val cameraPitchFilterMaxDownwardTilt =
                     configJSON.getString("camera_pitch_filter_max_downward_tilt")
+                val isImageEnhancerEnabled = configJSON.getBoolean("is_image_enhancer_enabled")
+                val imageEnhancerTargetBrightness = configJSON.getString("image_enhancer_target_brightness")
                 val isImageQualityFilterEnabled =
                     configJSON.getBoolean("is_image_quality_filter_enabled")
                 val imageQualityFilterScoreThreshold =
@@ -200,6 +204,8 @@ class RemoteConfig {
                     cameraPitchFilterMaxDownwardTilt.toFloat(),
                     isImageQualityFilterEnabled,
                     imageQualityFilterScoreThreshold.toFloat(),
+                    isImageEnhancerEnabled,
+                    imageEnhancerTargetBrightness.toFloat(),
                     imageQualityFilterModelUri,
                     imageQualityFilterModelVersion
                 )

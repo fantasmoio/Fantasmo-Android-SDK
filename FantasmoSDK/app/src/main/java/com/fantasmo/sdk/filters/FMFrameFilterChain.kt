@@ -67,7 +67,13 @@ class FMFrameFilterChain(context: Context) {
                 )
                 filters.add(blurFilter)
             }
-            filters.add(FMAutoGammaCorrectionFilter(context))
+            if(rc.isImageEnhancerEnabled) {
+                val imageEnhancer = FMAutoGammaCorrectionFilter(
+                    rc.imageEnhancerTargetBrightness,
+                    context
+                )
+                filters.add(imageEnhancer)
+            }
             if (rc.isImageQualityFilterEnabled) {
                 val imageQualityFilter = FMImageQualityFilter(
                     rc.imageQualityFilterScoreThreshold,
