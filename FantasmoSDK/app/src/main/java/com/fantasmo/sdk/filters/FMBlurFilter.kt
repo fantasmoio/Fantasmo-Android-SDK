@@ -138,7 +138,7 @@ class FMBlurFilter(
             var avg = 0.0
             histogramBins.forEachIndexed { index, bin -> avg += index * bin / (256.0 * convolveOutputAllocation.bytesSize) }
             var stdDev = 0.0
-            histogramBins.forEachIndexed { index, bin -> stdDev += ((index * bin / (256.0 * convolveOutputAllocation.bytesSize)) - avg).pow(2.0)}
+            histogramBins.forEachIndexed { index, bin -> stdDev += (index * bin / 256.0 - avg).pow(2.0) / convolveOutputAllocation.bytesSize}
 
             return (sqrt(stdDev) * 100.0).toFloat()
         }
