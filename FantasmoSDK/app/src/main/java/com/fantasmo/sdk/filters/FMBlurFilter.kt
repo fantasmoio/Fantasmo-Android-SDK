@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.utilities.MovingAverage
+import kotlin.math.pow
 import kotlin.math.sqrt
 
 /**
@@ -137,7 +138,7 @@ class FMBlurFilter(
             var avg = 0.0
             histogramBins.forEachIndexed { index, bin -> avg += index * bin / (256.0 * convolveOutputAllocation.bytesSize) }
             var stdDev = 0.0
-            histogramBins.forEachIndexed { index, bin -> stdDev += (index * bin / (256.0 * convolveOutputAllocation.bytesSize)) - avg}
+            histogramBins.forEachIndexed { index, bin -> stdDev += ((index * bin / (256.0 * convolveOutputAllocation.bytesSize)) - avg).pow(2.0)}
 
             return (sqrt(stdDev) * 100.0).toFloat()
         }
