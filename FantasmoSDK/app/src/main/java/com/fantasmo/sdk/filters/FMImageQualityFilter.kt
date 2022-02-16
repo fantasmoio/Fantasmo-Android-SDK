@@ -36,12 +36,19 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
     private var imageQualityModelUpdater = ImageQualityModelUpdater(context)
     var modelVersion = imageQualityModelUpdater.modelVersion
     private var imageQualityModel: Interpreter? = null
+    private lateinit var colorMatrixIntrinsic: ScriptIntrinsicColorMatrix
+    private lateinit var scalingMatrix: Matrix3f
 
     override fun accepts(fmFrame: FMFrame): FMFrameFilterResult {
 
         imageQualityModel = imageQualityModelUpdater.getInterpreter()
         if(!::rs.isInitialized) {
             rs = RenderScript.create(context)
+            colorMatrixIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
+            scalingMatrix = Matrix3f()
+            scalingMatrix.scale(1 / 0.229f, 1 / 0.224f, 1 / 0.225f)
+            colorMatrixIntrinsic.setColorMatrix(scalingMatrix)
+            colorMatrixIntrinsic.setAdd(-0.485f / 0.229f, -0.456f / 0.224f, -0.406f / 0.225f, 0f)
         }
 
         if (imageQualityModel == null) {
@@ -80,14 +87,9 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
      * @return FloatArray containing RGB values in float precision
      */
     private fun getRGBValues(inArray: ByteArray): FloatArray {
-        var inputAllocation = Allocation.createSized(rs, Element.RGBA_8888(rs), imageHeight * imageWidth)
+        val inputAllocation = Allocation.createSized(rs, Element.RGBA_8888(rs), imageHeight * imageWidth)
         inputAllocation.copyFrom(inArray)
-        val colorMatrixIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
-        val scalingMatrix = Matrix3f()
-        scalingMatrix.scale(1 / 0.229f, 1 / 0.224f, 1 / 0.225f)
-        colorMatrixIntrinsic.setColorMatrix(scalingMatrix)
-        colorMatrixIntrinsic.setAdd(-0.485f / 0.229f, -0.456f / 0.224f, -0.406f / 0.225f, 0f)
-        var outputAllocation = Allocation.createSized(rs, Element.F32_3(rs), imageHeight * imageWidth)
+        val outputAllocation = Allocation.createSized(rs, Element.F32_3(rs), imageHeight * imageWidth)
         colorMatrixIntrinsic.forEach(inputAllocation, outputAllocation)
         val rgbMixed = FloatArray(imageHeight * imageWidth * 4)
         outputAllocation.copyTo(rgbMixed)

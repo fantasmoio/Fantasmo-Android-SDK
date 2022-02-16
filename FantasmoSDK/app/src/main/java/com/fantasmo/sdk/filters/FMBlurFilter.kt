@@ -136,11 +136,10 @@ class FMBlurFilter(
 
             binsAllocation.copyTo(histogramBins)
             var avg = 0.0
-            histogramBins.forEachIndexed { index, bin -> avg += index * bin / (256.0 * convolveOutputAllocation.bytesSize) }
+            histogramBins.forEachIndexed { index, bin -> avg += (index * bin).toDouble() / (reducedWidth * reducedHeight).toDouble() }
             var stdDev = 0.0
-            histogramBins.forEachIndexed { index, bin -> stdDev += (index / 256.0 - avg).pow(2.0) * bin / convolveOutputAllocation.bytesSize}
-
-            return (sqrt(stdDev) * 100.0).toFloat()
+            histogramBins.forEachIndexed { index, bin -> stdDev += (index - avg).pow(2.0) * bin / (reducedWidth * reducedHeight).toDouble()}
+            return stdDev.toFloat()
         }
     }
 }
