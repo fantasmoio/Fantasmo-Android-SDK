@@ -1,10 +1,7 @@
 package com.fantasmo.sdk.filters
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.os.Build
-import android.os.Environment
 import android.renderscript.*
 import android.util.Log
 import androidx.annotation.RequiresApi

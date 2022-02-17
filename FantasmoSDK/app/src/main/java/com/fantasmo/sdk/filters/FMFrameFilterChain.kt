@@ -1,12 +1,10 @@
 package com.fantasmo.sdk.filters
 
-import android.app.Activity
 import android.content.Context
 import android.os.Build
 import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.models.FMFrame
 import com.google.ar.core.exceptions.DeadlineExceededException

@@ -1,7 +1,6 @@
 package com.fantasmo.sdk.filters
 
 import com.fantasmo.sdk.models.FMFrame
-import com.google.ar.core.Pose
 import kotlin.math.abs
 
 /**

@@ -1,16 +1,13 @@
 package com.fantasmo.sdk.filters
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.YuvImage
 import android.os.Build
 import android.renderscript.*
-import android.util.Log
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.utilities.MovingAverage
 import kotlin.math.pow
-import kotlin.math.sqrt
 
 /**
  * Class responsible for filtering frames due to blur on images.
