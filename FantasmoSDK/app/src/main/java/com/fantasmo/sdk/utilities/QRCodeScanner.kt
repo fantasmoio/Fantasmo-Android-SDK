@@ -1,12 +1,11 @@
 package com.fantasmo.sdk.utilities
 
 import android.annotation.SuppressLint
-import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
 import android.util.Log
-import com.fantasmo.sdk.FMUtility
+import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.views.FMParkingViewProtocol
 import com.fantasmo.sdk.views.FMQRScanningViewProtocol
-import com.google.ar.core.Frame
 import com.google.mlkit.vision.barcode.Barcode
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
@@ -45,7 +44,7 @@ class QRCodeScanner(
      */
     @SuppressLint("UnsafeExperimentalUsageError", "UnsafeOptInUsageError")
     fun processImage(
-        arFrame: Frame
+        fmFrame: FMFrame
     ) {
         if (!qrCodeReaderEnabled && state == State.QRCODEDETECTED) {
             return
@@ -65,14 +64,13 @@ class QRCodeScanner(
                 .build()
             val barcodeScanner: BarcodeScanner = BarcodeScanning.getClient(options)
 
-            val byteArray = FMUtility.acquireFrameImage(arFrame)
+            val yuvImage = fmFrame.yuvImage
             GlobalScope.launch(Dispatchers.Default) {
-                if (byteArray == null) {
+                if (yuvImage == null) {
                     state = State.IDLE
                 } else {
-                    val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
                     val inputImage =
-                        InputImage.fromBitmap(bitmap!!, 0)
+                        InputImage.fromByteArray(yuvImage.yuvData, yuvImage.width, yuvImage.height, 0, ImageFormat.NV21)
 
                     barcodeScanner.process(inputImage)
                         .addOnSuccessListener { barcodes ->

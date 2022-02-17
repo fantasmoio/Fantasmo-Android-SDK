@@ -1,6 +1,6 @@
 package com.fantasmo.sdk.models.analytics
 
-import com.google.ar.core.Frame
+import com.fantasmo.sdk.models.FMFrame
 import com.google.ar.core.TrackingFailureReason
 import com.google.ar.core.TrackingState
 import java.util.*
@@ -45,9 +45,9 @@ class TrackingStateFrameStatistics {
      * that best describes the tracking state event
      * @param arFrame: frame to be evaluated
      */
-    fun update(arFrame: Frame) {
-        val reason = arFrame.camera.trackingFailureReason
-        val trackingState = arFrame.camera.trackingState
+    fun update(fmFrame: FMFrame) {
+        val reason = fmFrame.camera.trackingFailureReason
+        val trackingState = fmFrame.camera.trackingState
 
         when (reason) {
             //Loss of tracking due to Camera Unavailable

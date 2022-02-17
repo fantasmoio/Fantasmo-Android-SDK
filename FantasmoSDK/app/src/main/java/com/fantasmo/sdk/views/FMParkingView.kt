@@ -16,6 +16,7 @@ import com.fantasmo.sdk.*
 import com.fantasmo.sdk.fantasmosdk.R
 import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.ErrorResponse
+import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.models.FMPose
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
@@ -24,7 +25,6 @@ import com.fantasmo.sdk.utilities.DeviceLocationListener
 import com.fantasmo.sdk.utilities.DeviceLocationManager
 import com.fantasmo.sdk.utilities.QRCodeScanner
 import com.fantasmo.sdk.utilities.QRCodeScannerListener
-import com.google.ar.core.Frame
 
 /**
  * Manager of the ARCore session. Provides a camera preview with AR capabilities when not connected.
@@ -213,7 +213,6 @@ class FMParkingView @JvmOverloads constructor(
             // Set an AR anchor now
             fmARCoreView.startAnchor()
             state = State.QRSCANNING
-            FMUtility.setFalse()
             startLocalizing()
         }
     }
@@ -294,7 +293,6 @@ class FMParkingView @JvmOverloads constructor(
             return
         }
         state = State.QRSCANNING
-        FMUtility.setFalse()
         qrCodeReader.startQRScanner()
         fmQrScanningViewController.didStartQRScanning()
         fmParkingViewController.fmParkingViewDidStartQRScanning()
@@ -414,28 +412,34 @@ class FMParkingView @JvmOverloads constructor(
             }
 
             override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
-                fmParkingViewController.fmParkingView(didRequestBehavior)
-                fmLocalizingViewController.didRequestLocalizationBehavior(didRequestBehavior)
+                (context as Activity).runOnUiThread {
+                    fmParkingViewController.fmParkingView(didRequestBehavior)
+                    fmLocalizingViewController.didRequestLocalizationBehavior(didRequestBehavior)
+                }
             }
 
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
-                fmParkingViewController.fmParkingView(error, metadata)
-                fmLocalizingViewController.didReceiveLocalizationError(error, metadata)
+                (context as Activity).runOnUiThread {
+                    fmParkingViewController.fmParkingView(error, metadata)
+                    fmLocalizingViewController.didReceiveLocalizationError(error, metadata)
+                }
             }
 
             override fun locationManager(didChangeState: FMLocationManager.State) {
                 (context as Activity).runOnUiThread {
-                    fmSessionStatisticsView.updateState(didChangeState)
+                    if(showStatistics)
+                        fmSessionStatisticsView.updateState(didChangeState)
                 }
             }
 
             override fun locationManager(
-                didUpdateFrame: Frame,
+                didUpdateFrame: FMFrame,
                 info: AccumulatedARCoreInfo,
                 rejections: FrameFilterRejectionStatistics
             ) {
                 (context as Activity).runOnUiThread {
-                    fmSessionStatisticsView.updateStats(didUpdateFrame, info, rejections)
+                    if (showStatistics)
+                        fmSessionStatisticsView.updateStats(didUpdateFrame, info, rejections)
                 }
             }
         }
@@ -466,29 +470,29 @@ class FMParkingView @JvmOverloads constructor(
      */
     private var arSessionListener: FMARSessionListener =
         object : FMARSessionListener {
-            override fun localize(frame: Frame) {
+            override fun localize(fmFrame: FMFrame) {
                 // If localizing, pass the current AR frame to the location manager
                 if (state == State.LOCALIZING) {
-                    fmLocationManager.session(frame)
+                    fmLocationManager.session(fmFrame)
                 }
             }
 
-            override fun anchored(frame: Frame): Boolean {
-                fmLocationManager.setAnchor(frame)
+            override fun anchored(fmFrame: FMFrame): Boolean {
+                fmLocationManager.setAnchor(fmFrame)
                 return true
             }
 
-            override fun qrCodeScan(frame: Frame) {
+            override fun qrCodeScan(fmFrame: FMFrame) {
                 // If qrScanning, pass the current AR frame to the qrCode reader
                 if (state == State.QRSCANNING) {
-                    qrCodeReader.processImage(frame)
+                    qrCodeReader.processImage(fmFrame)
                 }
             }
 
-            override fun anchorDelta(frame: Frame): FMPose? {
+            override fun anchorDelta(fmFrame: FMFrame): FMPose? {
                 return fmLocationManager.anchorFrame?.let { anchorFrame ->
                     FMUtility.anchorDeltaPoseForFrame(
-                        frame,
+                        fmFrame,
                         anchorFrame
                     )
                 }
@@ -505,10 +509,11 @@ class FMParkingView @JvmOverloads constructor(
                 fmLocationManager.setLocation(
                     locationResult
                 )
-                fmSessionStatisticsView.updateLocation(
-                    locationResult.latitude,
-                    locationResult.longitude
-                )
+                if (showStatistics)
+                    fmSessionStatisticsView.updateLocation(
+                        locationResult.latitude,
+                        locationResult.longitude
+                    )
             }
         }
 }

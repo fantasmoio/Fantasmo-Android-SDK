@@ -42,6 +42,10 @@ class RemoteConfig {
         var cameraPitchFilterMaxUpwardTilt: Float,
         @SerializedName("camera_pitch_filter_max_downward_tilt")
         var cameraPitchFilterMaxDownwardTilt: Float,
+        @SerializedName("is_image_enhancer_enabled")
+        var isImageEnhancerEnabled: Boolean,
+        @SerializedName("image_enhancer_target_brightness")
+        var imageEnhancerTargetBrightness: Float,
         @SerializedName("is_image_quality_filter_enabled")
         var isImageQualityFilterEnabled: Boolean,
         @SerializedName("image_quality_filter_score_threshold")

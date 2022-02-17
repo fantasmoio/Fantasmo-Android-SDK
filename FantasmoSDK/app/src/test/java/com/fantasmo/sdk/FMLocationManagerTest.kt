@@ -2,7 +2,7 @@ package com.fantasmo.sdk
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.media.Image
+import android.graphics.YuvImage
 import android.os.Build
 import android.view.Display
 import android.view.Surface
@@ -10,16 +10,14 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.config.RemoteConfigTest
 import com.fantasmo.sdk.filters.*
-import com.fantasmo.sdk.models.ErrorResponse
-import com.fantasmo.sdk.models.FMOrientation
-import com.fantasmo.sdk.models.FMPose
-import com.fantasmo.sdk.models.FMPosition
+import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.network.FMNetworkManager
 import com.google.ar.core.*
+import com.google.ar.core.Pose
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
@@ -31,7 +29,6 @@ import org.junit.runner.RunWith
 import org.mockito.Mockito.*
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.nio.ByteBuffer
 
 @Config(sdk = [Build.VERSION_CODES.O_MR1])
 @RunWith(RobolectricTestRunner::class)
@@ -143,7 +140,7 @@ class FMLocationManagerTest {
     // Anchor Test
     @Test
     fun setAnchor() {
-        val frame = mock(Frame::class.java)
+        val frame = mock(FMFrame::class.java)
         fmLocationManager.setAnchor(frame)
 
         val anchorFrame = fmLocationManager.javaClass.getDeclaredField("anchorFrame")
@@ -164,11 +161,11 @@ class FMLocationManagerTest {
 
     @Test
     fun anchorDeltaPoseForNullFrameTest() {
-        val frame = mock(Frame::class.java)
+        val frame = mock(FMFrame::class.java)
         val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
 
-        val anchorFrame = mock(Frame::class.java)
+        val anchorFrame = mock(FMFrame::class.java)
 
         val deltaFMPose = FMUtility.anchorDeltaPoseForFrame(frame, anchorFrame)
         val position = FMPosition(0f, 0f, 0f)
@@ -244,7 +241,7 @@ class FMLocationManagerTest {
         testFilter.isAccessible = true
         testFilter.set(spyFMLocationManager, filter2)
 
-        val frame = mock(Frame::class.java)
+        val frame = mock(FMFrame::class.java)
         val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
@@ -306,7 +303,7 @@ class FMLocationManagerTest {
         fieldFrameFilter.isAccessible = true
         fieldFrameFilter.set(fmLocationManager, frameFilter)
 
-        val frame = mock(Frame::class.java)
+        val frame = mock(FMFrame::class.java)
         val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
@@ -356,7 +353,7 @@ class FMLocationManagerTest {
         fmLocationManager.isSimulation = true
         fmLocationManager.setLocation(location)
 
-        val frame = mock(Frame::class.java)
+        val frame = mock(FMFrame::class.java)
         val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
@@ -421,7 +418,7 @@ class FMLocationManagerTest {
     @Test
     fun testLocalizeNotConnected() {
 
-        val frame = mock(Frame::class.java)
+        val frame = mock(FMFrame::class.java)
         val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.NONE)
@@ -442,7 +439,7 @@ class FMLocationManagerTest {
 
         fmLocationManager.setLocation(location)
 
-        val frame = mock(Frame::class.java)
+        val frame = mock(FMFrame::class.java)
         val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
@@ -499,13 +496,17 @@ class FMLocationManagerTest {
         fieldRenderScriptContext.isAccessible = true
         fieldRenderScriptContext.set(fmBlurFilter, null)
 
-        val fieldColorIntrinsic = fmBlurFilter.javaClass.getDeclaredField("colorIntrinsic")
-        fieldColorIntrinsic.isAccessible = true
-        fieldColorIntrinsic.set(fmBlurFilter, null)
+        val fieldHistogram = fmBlurFilter.javaClass.getDeclaredField("histogram")
+        fieldHistogram.isAccessible = true
+        fieldHistogram.set(fmBlurFilter, null)
 
         val fieldConvolve = fmBlurFilter.javaClass.getDeclaredField("convolve")
         fieldConvolve.isAccessible = true
         fieldConvolve.set(fmBlurFilter, null)
+
+        val fieldResize = fmBlurFilter.javaClass.getDeclaredField("resize")
+        fieldResize.isAccessible = true
+        fieldResize.set(fmBlurFilter, null)
 
         val spyFMBlurFilterRule = spy(fmBlurFilter)
         val context = mock(Context::class.java)
@@ -523,18 +524,10 @@ class FMLocationManagerTest {
         testFilter.isAccessible = true
         testFilter.set(spyFMLocationManager, filter2)
 
-        val frame = mock(Frame::class.java)
+        val frame = mock(FMFrame::class.java)
 
-        val image = mock(Image::class.java)
-        `when`(frame.acquireCameraImage()).thenReturn(image)
-
-        val imagePlanes = mock(Image.Plane::class.java)
-        `when`(image.planes).thenReturn(arrayOf(imagePlanes, imagePlanes, imagePlanes))
-
-        val buffer = mock(ByteBuffer::class.java)
-        `when`(image.planes[0].buffer).thenReturn(buffer)
-        `when`(image.planes[1].buffer).thenReturn(buffer)
-        `when`(image.planes[2].buffer).thenReturn(buffer)
+        val image = mock(YuvImage::class.java)
+        `when`(frame.yuvImage).thenReturn(image)
 
         `when`(image.height).thenReturn(height)
         `when`(image.width).thenReturn(width)
@@ -584,7 +577,7 @@ class FMLocationManagerTest {
      */
     @Test
     fun testLocalizeSimulationFMApi() {
-        val instrumentationContext2 = InstrumentationRegistry.getInstrumentation().context
+        val instrumentationContext2 = InstrumentationRegistry.getInstrumentation().targetContext
         val fmLocationManager = FMLocationManager(instrumentationContext2)
         fmLocationManager.connect(token, fmLocationListener)
 
@@ -620,7 +613,7 @@ class FMLocationManagerTest {
         testFilter.isAccessible = true
         testFilter.set(spyFMLocationManager, filter2)
 
-        val frame = mock(Frame::class.java)
+        val frame = mock(FMFrame::class.java)
         val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
@@ -636,16 +629,8 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
-        val image = mock(Image::class.java)
-        `when`(frame.acquireCameraImage()).thenReturn(image)
-
-        val imagePlanes = mock(Image.Plane::class.java)
-        `when`(image.planes).thenReturn(arrayOf(imagePlanes, imagePlanes, imagePlanes))
-
-        val buffer = mock(ByteBuffer::class.java)
-        `when`(image.planes[0].buffer).thenReturn(buffer)
-        `when`(image.planes[1].buffer).thenReturn(buffer)
-        `when`(image.planes[2].buffer).thenReturn(buffer)
+        val image = mock(YuvImage::class.java)
+        `when`(frame.yuvImage).thenReturn(image)
 
         `when`(image.height).thenReturn(height)
         `when`(image.width).thenReturn(width)
@@ -710,7 +695,7 @@ class FMLocationManagerTest {
         testFilter.isAccessible = true
         testFilter.set(spyFMLocationManager, filter2)
 
-        val frame = mock(Frame::class.java)
+        val frame = mock(FMFrame::class.java)
         val camera = mock(Camera::class.java)
         `when`(frame.camera).thenReturn(camera)
         `when`(frame.camera.trackingState).thenReturn(TrackingState.TRACKING)
@@ -726,16 +711,8 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
-        val image = mock(Image::class.java)
-        `when`(frame.acquireCameraImage()).thenReturn(image)
-
-        val imagePlanes = mock(Image.Plane::class.java)
-        `when`(image.planes).thenReturn(arrayOf(imagePlanes, imagePlanes, imagePlanes))
-
-        val buffer = mock(ByteBuffer::class.java)
-        `when`(image.planes[0].buffer).thenReturn(buffer)
-        `when`(image.planes[1].buffer).thenReturn(buffer)
-        `when`(image.planes[2].buffer).thenReturn(buffer)
+        val image = mock(YuvImage::class.java)
+        `when`(frame.yuvImage).thenReturn(image)
 
         `when`(image.height).thenReturn(height)
         `when`(image.width).thenReturn(width)

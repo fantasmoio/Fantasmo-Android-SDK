@@ -1,5 +1,6 @@
 package com.fantasmo.sdk.analytics
 
+import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.models.analytics.TrackingStateFrameStatistics
 import com.google.ar.core.Camera
 import com.google.ar.core.Frame
@@ -14,7 +15,7 @@ class TrackingStateFrameStatsTest {
 
     @Test
     fun testUpdate(){
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val camera = Mockito.mock(Camera::class.java)
         Mockito.`when`(frame.camera).thenReturn(camera)
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.EXCESSIVE_MOTION)

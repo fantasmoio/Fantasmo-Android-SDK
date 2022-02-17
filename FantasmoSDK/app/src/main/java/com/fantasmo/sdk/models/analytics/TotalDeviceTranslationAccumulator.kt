@@ -1,7 +1,7 @@
 package com.fantasmo.sdk.models.analytics
 
 import com.fantasmo.sdk.FMUtility.Companion.distance
-import com.google.ar.core.Frame
+import com.fantasmo.sdk.models.FMFrame
 import com.google.ar.core.TrackingFailureReason
 
 /**
@@ -23,15 +23,15 @@ class TotalDeviceTranslationAccumulator(private val decimationFactor: Int) {
     /**
      * Every n-th frame is taken, where n = `decimationFactor`.
      * Frames with limited tracking state are omitted.
-     * @param arFrame: Frame
+     * @param fmFrame: FMFrame
      */
-    fun update(arFrame: Frame) {
+    fun update(fmFrame: FMFrame) {
         if (previousTranslation.isEmpty()) {
-            previousTranslation = arFrame.camera.pose.translation
+            previousTranslation = fmFrame.camera.pose.translation
         }
         if (frameCounter >= nextFrameToTake) {
-            if (arFrame.camera.trackingFailureReason == TrackingFailureReason.NONE) {
-                val translation = arFrame.camera.pose.translation
+            if (fmFrame.camera.trackingFailureReason == TrackingFailureReason.NONE) {
+                val translation = fmFrame.camera.pose.translation
                 totalTranslation += distance(translation!!, previousTranslation)
                 previousTranslation = translation
                 nextFrameToTake += decimationFactor

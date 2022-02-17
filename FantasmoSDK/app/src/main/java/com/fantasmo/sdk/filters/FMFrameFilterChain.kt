@@ -2,8 +2,15 @@ package com.fantasmo.sdk.filters
 
 import android.content.Context
 import android.os.Build
+import android.os.SystemClock
+import android.util.Log
+import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.config.RemoteConfig
-import com.google.ar.core.Frame
+import com.fantasmo.sdk.models.FMFrame
+import com.google.ar.core.exceptions.DeadlineExceededException
+import com.google.ar.core.exceptions.NotYetAvailableException
+import com.google.ar.core.exceptions.ResourceExhaustedException
+import java.util.*
 
 /**
  * Class responsible for filtering frames according the implemented filters
@@ -17,6 +24,10 @@ class FMFrameFilterChain(context: Context) {
 
     // number of seconds after which we force acceptance
     private var acceptanceThreshold: Float
+
+    private var currentFilter: FMFrameFilter? = null
+
+    private val context: Context
 
     /**
      * Active frame filters, in order of increasing computational cost
@@ -54,6 +65,13 @@ class FMFrameFilterChain(context: Context) {
                 )
                 filters.add(blurFilter)
             }
+            if(rc.isImageEnhancerEnabled) {
+                val imageEnhancer = FMAutoGammaCorrectionFilter(
+                    rc.imageEnhancerTargetBrightness,
+                    context
+                )
+                filters.add(imageEnhancer)
+            }
             if (rc.isImageQualityFilterEnabled) {
                 val imageQualityFilter = FMImageQualityFilter(
                     rc.imageQualityFilterScoreThreshold,
@@ -62,6 +80,7 @@ class FMFrameFilterChain(context: Context) {
                 filters.add(imageQualityFilter)
             }
         }
+        this.context = context
     }
 
     /**
@@ -76,18 +95,36 @@ class FMFrameFilterChain(context: Context) {
      * @param arFrame Frame for approval.
      * @return result FMFrameFilterResult
      */
-    fun accepts(arFrame: Frame): FMFrameFilterResult {
+    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
+    fun accepts(fmFrame: FMFrame): FMFrameFilterResult {
         if (shouldForceAccept()) {
             lastAcceptTime = System.nanoTime()
             return FMFrameFilterResult.Accepted
         } else {
-            for (filter in filters) {
-                val result = filter.accepts(arFrame)
-                if (result != FMFrameFilterResult.Accepted) {
-                    return result
+            try{
+                for (filter in filters) {
+                    currentFilter = filter
+                    val before = SystemClock.elapsedRealtimeNanos()
+                    val result = filter.accepts(fmFrame)
+                    val after = SystemClock.elapsedRealtimeNanos()
+                    val interval = ((after - before) / 1000L).toFloat() / 1000f
+                    Log.d(TAG, "Frame ${fmFrame.timestamp} took ${interval}ms through ${filter.TAG}")
+                    if (result != FMFrameFilterResult.Accepted) {
+                        return result
+                    }
                 }
             }
-        }
+            catch (e: NotYetAvailableException) {
+                Log.e(TAG, "FrameNotYetAvailable")
+            } catch (e: DeadlineExceededException) {
+                if (currentFilter != null)
+                    Log.e(TAG, "DeadlineExceededException: ${currentFilter?.TAG}")
+                else
+                    Log.e(TAG, "DeadlineExceededException")
+            } catch (e: ResourceExhaustedException) {
+                Log.e(TAG, "ResourceExhaustedException")
+            }
+       }
         lastAcceptTime = System.nanoTime()
         return FMFrameFilterResult.Accepted
     }
@@ -104,7 +141,8 @@ class FMFrameFilterChain(context: Context) {
         return elapsed > acceptanceThreshold
     }
 
-    fun evaluateAsync(arFrame: Frame, completion: (FMFrameFilterResult) -> Unit) {
-        completion(accepts(arFrame))
-    }
+    fun evaluateAsync(fmFrame: FMFrame, completion: (FMFrameFilterResult) -> Unit) {
+        val result = accepts(fmFrame)
+        completion(result)
+     }
 }

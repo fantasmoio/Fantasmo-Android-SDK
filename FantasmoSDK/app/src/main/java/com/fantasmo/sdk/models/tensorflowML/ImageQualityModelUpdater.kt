@@ -131,7 +131,7 @@ class ImageQualityModelUpdater(val context: Context) {
                     //Initialize interpreter an keep it in memory
                     interpreter = Interpreter(file, options)
                     firstRead = false
-                    Interpreter(file, options)
+                    interpreter
                 } catch (ex: IOException) {
                     //file does not exist
                     Log.e(TAG, "Error on reading the model.")

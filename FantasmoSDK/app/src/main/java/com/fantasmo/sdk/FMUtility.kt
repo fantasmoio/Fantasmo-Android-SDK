@@ -3,11 +3,14 @@ package com.fantasmo.sdk
 import android.content.Context
 import android.graphics.*
 import android.media.Image
+import android.os.Build
 import android.util.Log
 import android.view.Display
 import android.view.Surface
 import android.view.WindowManager
+import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.models.*
+import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import com.fantasmo.sdk.utilities.math.Vector3
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
@@ -20,115 +23,26 @@ import kotlin.math.*
 /**
  * Class with utility methods and constants
  */
+@RequiresApi(Build.VERSION_CODES.KITKAT)
 class FMUtility {
 
     companion object {
-        private var hasPassedBlurFilter: Boolean = false
-        private var hasPassedImageQualityFilter: Boolean = false
-        private val TAG = FMUtility::class.java.simpleName
-        private var frameToByteArray : ByteArray? = null
-        /**
-         * Method to get the AR Frame camera image data.
-         * @param arFrame the AR Frame to localize.
-         * @return a ByteArray with the data of the [arFrame]
-         */
-        fun getImageDataFromARFrame(context: Context, arFrame: Frame): ByteArray {
-            val localBa: ByteArray? = if(!hasPassedBlurFilter || !hasPassedImageQualityFilter){
-                acquireFrameImage(arFrame)
-            }else{
-                frameToByteArray
-            }
-
-            val imageBitmap = BitmapFactory.decodeByteArray(localBa, 0, localBa!!.size)
-                .rotate(getImageRotationDegrees(context))
-            val data = getFileDataFromDrawable(imageBitmap)
-
-            imageBitmap.recycle()
-            return data
-        }
-
-        private fun createByteArrayOutputStream(cameraImage: Image): ByteArrayOutputStream {
-            //The camera image received is in YUV YCbCr Format. Get buffers for each of the planes and use
-            // them to create a new byte array defined by the size of all three buffers combined
-            val cameraPlaneY = cameraImage.planes[0].buffer
-            val cameraPlaneU = cameraImage.planes[1].buffer
-            val cameraPlaneV = cameraImage.planes[2].buffer
-
-            //Use the buffers to create a new byteArray that
-            val compositeByteArray =
-                ByteArray(cameraPlaneY.capacity() + cameraPlaneU.capacity() + cameraPlaneV.capacity())
-
-            cameraPlaneY.get(compositeByteArray, 0, cameraPlaneY.capacity())
-            cameraPlaneU.get(compositeByteArray, cameraPlaneY.capacity(), cameraPlaneU.capacity())
-            cameraPlaneV.get(
-                compositeByteArray,
-                cameraPlaneY.capacity() + cameraPlaneU.capacity(),
-                cameraPlaneV.capacity()
-            )
-
-            val baOutputStream = ByteArrayOutputStream()
-            val yuvImage = YuvImage(
-                compositeByteArray,
-                ImageFormat.NV21,
-                cameraImage.width,
-                cameraImage.height,
-                null
-            )
-            yuvImage.compressToJpeg(
-                Rect(0, 0, cameraImage.width, cameraImage.height),
-                100,
-                baOutputStream
-            )
-            return baOutputStream
-        }
-
-        private fun getImageRotationDegrees(context: Context): Float {
-            val rotation: Int = try {
-                context.display?.rotation!!
-            } catch (exception: UnsupportedOperationException) {
-                val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-                val display: Display = wm.defaultDisplay
-                display.rotation
-            }
-
-            when (rotation) {
-                // SCREEN_ORIENTATION_REVERSE_LANDSCAPE
-                Surface.ROTATION_270 -> {
-                    return -90f
-                }
-                // SCREEN_ORIENTATION_LANDSCAPE
-                Surface.ROTATION_90 -> {
-                    return 0f
-                }
-                // SCREEN_ORIENTATION_PORTRAIT
-                Surface.ROTATION_0 -> {
-                    return 90f
-                }
-                // SCREEN_ORIENTATION_REVERSE_PORTRAIT
-                Surface.ROTATION_180 -> {
-                    return 180f
-                }
-                else -> {
-                    return 90f
-                }
-            }
-        }
 
         /**
          * Utility method to get the correct Pose for each of the device orientations.
          */
-        fun getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context: Context, frame: Frame): FMPose {
-            return FMPose(frame.camera.displayOrientedPose)
+        fun getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context: Context, fmFrame: FMFrame): FMPose {
+            return FMPose(fmFrame.camera.displayOrientedPose)
         }
 
         /**
          * Calculate the FMPose difference of the anchor frame with respect to the given frame.
          * @param arFrame the current AR Frame.
          */
-        fun anchorDeltaPoseForFrame(arFrame: Frame, anchorFrame: Frame): FMPose {
+        fun anchorDeltaPoseForFrame(fmFrame: FMFrame, anchorFrame: FMFrame): FMPose {
             // Pose of frame must be taken for "virtual" device as we send to server orientation of
             // "virtual" device for "localization" frame
-            val poseARVirtualFrame = arFrame.camera.displayOrientedPose
+            val poseARVirtualFrame = fmFrame.camera.displayOrientedPose
             val poseAnchor = anchorFrame.androidSensorPose
 
             return if (poseAnchor != null && poseARVirtualFrame != null) {
@@ -143,21 +57,6 @@ class FMUtility {
             assert( abs(axis.length() - 1) < 0.001 )
             val a = sin(angle/2)
             return Pose.makeRotation(a * axis.x, a * axis.y, a * axis.z, cos(angle/2))
-        }
-
-        private fun Bitmap.rotate(degrees: Float): Bitmap {
-            val matrix = Matrix().apply { postRotate(degrees) }
-            return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
-        }
-
-        private fun getFileDataFromDrawable(bitmap: Bitmap): ByteArray {
-            val byteArrayOutputStream = ByteArrayOutputStream()
-            bitmap.compress(
-                Bitmap.CompressFormat.JPEG,
-                Constants.JpegCompressionRatio,
-                byteArrayOutputStream
-            )
-            return byteArrayOutputStream.toByteArray()
         }
 
         /**
@@ -217,70 +116,6 @@ class FMUtility {
                         (translation[1] - previousTranslation[1]).pow(2) +
                         (translation[2] - previousTranslation[2]).pow(2)
             )
-        }
-
-        /**
-         * Acquires the image from the ARCore frame catching all
-         * exceptions that could happen during localizing session
-         * @param arFrame Frame
-         * @return `ByteArrayOutputStream` or `null` in case of exception
-         */
-        fun acquireFrameImage(arFrame: Frame): ByteArray? {
-            if(hasPassedImageQualityFilter){
-                return frameToByteArray
-            }
-            try {
-                val cameraImage = arFrame.acquireCameraImage()
-                arFrame.acquireCameraImage().close()
-
-                val baOutputStream = createByteArrayOutputStream(cameraImage)
-                // Release the image
-                cameraImage.close()
-                return baOutputStream.toByteArray()
-            } catch (e: NotYetAvailableException) {
-                Log.e(TAG, "FrameNotYetAvailable")
-            } catch (e: DeadlineExceededException) {
-                Log.e(TAG, "DeadlineExceededException")
-            } catch (e: ResourceExhaustedException) {
-                Log.e(TAG, "ResourceExhaustedException")
-            }
-            return null
-        }
-
-        /**
-         * This avoids AR frames from being converted twice to `ByteArray`.
-         *
-         * Also prevents outdated frames from throwing `DeadlineExceededException`
-         * after being analyzed on the `BlurFilter`
-         * @param byteArrayFrame `ByteArray` with frame image data
-         */
-        fun setFrame(byteArrayFrame: ByteArray?) {
-            hasPassedBlurFilter = byteArrayFrame != null
-            frameToByteArray = byteArrayFrame
-        }
-
-        /**
-         * This avoids AR frames from being converted twice to `ByteArray`.
-         *
-         * Also prevents outdated frames from throwing `DeadlineExceededException`
-         * after being analyzed on the `ImageQualityFilter`
-         * @param image The image contained in the ARFrame
-         */
-        fun setFrameQualityTest(image: Image?) {
-            if(image!=null){
-                hasPassedImageQualityFilter = true
-                frameToByteArray = createByteArrayOutputStream(image).toByteArray()
-            }
-        }
-
-        /**
-         * Before QRScanning, the flags HasPassedBlurFilter and
-         * HasPassedImageQualityTest must be reseted in order
-         * to enable a new QRCode search
-         */
-        fun setFalse() {
-            hasPassedBlurFilter = false
-            hasPassedImageQualityFilter = false
         }
     }
 

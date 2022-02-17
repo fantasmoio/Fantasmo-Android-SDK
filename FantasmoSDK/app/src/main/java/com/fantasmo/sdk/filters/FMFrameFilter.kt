@@ -1,7 +1,7 @@
 package com.fantasmo.sdk.filters
 
 import com.fantasmo.sdk.FMBehaviorRequest
-import com.google.ar.core.Frame
+import com.fantasmo.sdk.models.FMFrame
 
 enum class FMFilterRejectionReason {
     PITCHTOOLOW,
@@ -47,5 +47,6 @@ sealed class FMFrameFilterResult {
  * Prime filters are original blocks for a compound frame filter or can be used alone as a standalone filter.
  */
 interface FMFrameFilter {
-    fun accepts(arFrame: Frame): FMFrameFilterResult
+    val TAG: String
+    fun accepts(fmFrame: FMFrame): FMFrameFilterResult
 }
