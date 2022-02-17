@@ -27,7 +27,7 @@ class FMFrameFilterChain(context: Context) {
 
     private var currentFilter: FMFrameFilter? = null
 
-    private lateinit var context: Context
+    private val context: Context
 
     /**
      * Active frame filters, in order of increasing computational cost
