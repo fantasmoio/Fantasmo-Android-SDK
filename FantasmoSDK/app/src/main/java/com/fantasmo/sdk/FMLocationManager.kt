@@ -194,7 +194,7 @@ class FMLocationManager(private val context: Context) {
     /**
      * Localize the image frame. It triggers a network request that
      * provides a response via the callback [FMLocationListener].
-     * @param arFrame an AR Frame to localize
+     * @param fmFrame an FMFrame to localize
      */
     private fun localize(fmFrame: FMFrame) {
         if (!isConnected) {
