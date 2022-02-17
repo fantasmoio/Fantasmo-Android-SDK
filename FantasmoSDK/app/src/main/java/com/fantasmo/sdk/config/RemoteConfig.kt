@@ -2,8 +2,11 @@ package com.fantasmo.sdk.config
 
 import android.content.Context
 import android.util.Log
+import com.google.gson.Gson
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.FMUtility.Constants.fileName
+import com.google.gson.JsonSyntaxException
+import com.google.gson.annotations.SerializedName
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.*
@@ -13,24 +16,43 @@ import java.lang.StringBuilder
 class RemoteConfig {
 
     data class Config(
+        @SerializedName("remote_config_id")
         var remoteConfigId: String,
+        @SerializedName("frame_acceptance_threshold_timeout")
         var frameAcceptanceThresholdTimeout: Float,
+        @SerializedName("is_behavior_requester_enabled")
         var isBehaviorRequesterEnabled: Boolean,
+        @SerializedName("is_tracking_state_filter_enabled")
         var isTrackingStateFilterEnabled: Boolean,
+        @SerializedName("is_movement_filter_enabled")
         var isMovementFilterEnabled: Boolean,
+        @SerializedName("movement_filter_threshold")
         var movementFilterThreshold: Float,
+        @SerializedName("is_blur_filter_enabled")
         var isBlurFilterEnabled: Boolean,
+        @SerializedName("blur_filter_variance_threshold")
         var blurFilterVarianceThreshold: Float,
+        @SerializedName("blur_filter_sudden_drop_threshold")
         var blurFilterSuddenDropThreshold: Float,
+        @SerializedName("blur_filter_average_throughput_threshold")
         var blurFilterAverageThroughputThreshold: Float,
+        @SerializedName("is_camera_pitch_filter_enabled")
         var isCameraPitchFilterEnabled: Boolean,
+        @SerializedName("camera_pitch_filter_max_upward_tilt")
         var cameraPitchFilterMaxUpwardTilt: Float,
+        @SerializedName("camera_pitch_filter_max_downward_tilt")
         var cameraPitchFilterMaxDownwardTilt: Float,
+        @SerializedName("is_image_enhancer_enabled")
         var isImageEnhancerEnabled: Boolean,
+        @SerializedName("image_enhancer_target_brightness")
         var imageEnhancerTargetBrightness: Float,
+        @SerializedName("is_image_quality_filter_enabled")
         var isImageQualityFilterEnabled: Boolean,
+        @SerializedName("image_quality_filter_score_threshold")
         var imageQualityFilterScoreThreshold: Float,
+        @SerializedName("image_quality_filter_model_uri")
         var imageQualityFilterModelUri: String?,
+        @SerializedName("image_quality_filter_model_version")
         var imageQualityFilterModelVersion: String?
     )
 
@@ -145,76 +167,11 @@ class RemoteConfig {
          * @return `Config` object
          */
         private fun getConfigFromJSON(jsonString: String): Config? {
-            val configJSON = JSONObject(jsonString)
-            try {
-                val remoteConfigId = configJSON.getString("remote_config_id")
-
-                val frameAcceptanceThresholdTimeout =
-                    configJSON.getString("frame_acceptance_threshold_timeout")
-                val isBehaviorRequesterEnabled =
-                    configJSON.getBoolean("is_behavior_requester_enabled")
-                val isTrackingStateFilterEnabled =
-                    configJSON.getBoolean("is_tracking_state_filter_enabled")
-                val isMovementFilterEnabled = configJSON.getBoolean("is_movement_filter_enabled")
-                val movementFilterThreshold = configJSON.getString("movement_filter_threshold")
-                val isBlurFilterEnabled = configJSON.getBoolean("is_blur_filter_enabled")
-                val blurFilterVarianceThreshold =
-                    configJSON.getString("blur_filter_variance_threshold")
-                val blurFilterSuddenDropThreshold =
-                    configJSON.getString("blur_filter_sudden_drop_threshold")
-                val blurFilterAverageThroughputThreshold =
-                    configJSON.getString("blur_filter_average_throughput_threshold")
-                val isCameraPitchFilterEnabled =
-                    configJSON.getBoolean("is_camera_pitch_filter_enabled")
-                val cameraPitchFilterMaxUpwardTilt =
-                    configJSON.getString("camera_pitch_filter_max_upward_tilt")
-                val cameraPitchFilterMaxDownwardTilt =
-                    configJSON.getString("camera_pitch_filter_max_downward_tilt")
-                val isImageEnhancerEnabled = configJSON.getBoolean("is_image_enhancer_enabled")
-                val imageEnhancerTargetBrightness = configJSON.getString("image_enhancer_target_brightness")
-                val isImageQualityFilterEnabled =
-                    configJSON.getBoolean("is_image_quality_filter_enabled")
-                val imageQualityFilterScoreThreshold =
-                    configJSON.getString("image_quality_filter_score_threshold")
-
-                var imageQualityFilterModelUri: String? = null
-                var imageQualityFilterModelVersion: String? = null
-                try {
-                    imageQualityFilterModelUri =
-                        configJSON.getString("image_quality_filter_model_uri")
-                    imageQualityFilterModelVersion =
-                        configJSON.getString("image_quality_filter_model_version")
-                } catch (e: JSONException) {
-                    Log.i(TAG, "No model specified in remote config")
-                }
-
-                val config = Config(
-                    remoteConfigId,
-                    frameAcceptanceThresholdTimeout.toFloat(),
-                    isBehaviorRequesterEnabled,
-                    isTrackingStateFilterEnabled,
-                    isMovementFilterEnabled,
-                    movementFilterThreshold.toFloat(),
-                    isBlurFilterEnabled,
-                    blurFilterVarianceThreshold.toFloat(),
-                    blurFilterSuddenDropThreshold.toFloat(),
-                    blurFilterAverageThroughputThreshold.toFloat(),
-                    isCameraPitchFilterEnabled,
-                    cameraPitchFilterMaxUpwardTilt.toFloat(),
-                    cameraPitchFilterMaxDownwardTilt.toFloat(),
-                    isImageQualityFilterEnabled,
-                    imageQualityFilterScoreThreshold.toFloat(),
-                    isImageEnhancerEnabled,
-                    imageEnhancerTargetBrightness.toFloat(),
-                    imageQualityFilterModelUri,
-                    imageQualityFilterModelVersion
-                )
-
-                return config
-
-            } catch (e: JSONException) {
+            return try {
+                Gson().fromJson(jsonString, Config::class.java)
+            } catch (e: JsonSyntaxException) {
                 Log.e(TAG, "Error Decoding Remote Json")
-                return null
+                null
             }
         }
     }
