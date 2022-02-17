@@ -207,6 +207,14 @@ override fun fmParkingView(qrCodeString: String, continueBlock: (Boolean) -> Uni
 
 During a QR code scanning session, it is not possible to turn on the flashlight due to ARCore being used on the FMParkingView. ARCore blocks any input regarding turning on/off the flashlight during an AR session, limiting QR code readability on dark environments.
 
+### Skip QR Code Scanner
+By default the SDK enables the QR code scanner. If you desire to skip the QR code scanning session, you can set the `enableQRCodeScanner` property to `false` and the SDK will skip this step and start a Localizing session.
+
+```kotlin
+// Skips QR Code Scanning Session
+fmParkingView.enableQRCodeScanner = false
+```
+
 ### Localizing
 
 During localization, frames are continuously captured and sent to the server. Filtering logic in the SDK will automatically select the best frames, and it will issue behavior requests to the user to help improve the incoming images. Confidence in the location result increases during successive updates and clients can choose to stop localizing by dismissing the view, when a desired confidence level is reached.
