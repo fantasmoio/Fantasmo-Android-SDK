@@ -15,6 +15,7 @@ import com.fantasmo.sdk.evaluators.FMFrameEvaluationResult
 import com.fantasmo.sdk.evaluators.FMFrameEvaluatorChain
 import com.fantasmo.sdk.evaluators.FMFrameEvaluatorChainListener
 import com.fantasmo.sdk.filters.BehaviorRequester
+import com.fantasmo.sdk.filters.FMFrameFilterRejectionReason
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
@@ -298,7 +299,7 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
     fun session(fmFrame: FMFrame) {
         if (state != State.STOPPED) {
             // run the frame through the configured filters
-            frameEvaluatorChain.evaluate(fmFrame)
+            frameEvaluatorChain.evaluateAsync(fmFrame)
         }
         var frameToLocalize = frameEvaluatorChain.dequeueBestFrame()
         if (frameToLocalize != null)  {
@@ -309,14 +310,42 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
         accumulatedARCoreInfo.update(fmFrame)
     }
 
-    override fun didEvaluateFrame(
+    override fun didEvaluateFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame) {
+        // evaluator successfully evaluated and assigned an `evaluation` object on the frame, show info in debug view
+    }
+
+    override fun didFindNewBestFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame) {
+        // evaluator found a new best frame, show info in debug view
+    }
+
+    override fun didDiscardFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame) {
+        // evaluator was busy and discarded the frame, show info in debug view
+    }
+
+    override fun didRejectFrameWithFilterReason(
         frameEvaluatorChain: FMFrameEvaluatorChain,
         frame: FMFrame,
-        result: FMFrameEvaluationResult
+        reason: FMFrameFilterRejectionReason
     ) {
-        if(result is FMFrameEvaluationResult.Discarded && result.reason is FMFrameEvaluationDiscardReason.RejectedByFilter) {
-            behaviorRequester.processFilterRejection(result.reason.reason)
-            frameEventAccumulator.accumulate(result.reason.reason)
-        }
+        // evaluator filter rejected the frame, show info in debug view
+        behaviorRequester?.processFilterRejection(reason)
+        frameEventAccumulator.accumulate(reason)
+        fmLocationListener?.locationManager(frame, accumulatedARCoreInfo, frameEventAccumulator)
+    }
+
+    override fun didRejectFrameBelowMinScoreThreshold(
+        frameEvaluatorChain: FMFrameEvaluatorChain,
+        frame: FMFrame,
+        minScoreThreshold: Float
+    ) {
+        // evaluator rejected the frame because it was below the min score threshold, show info in debug view
+    }
+
+    override fun didRejectFrameBelowCurrentBestScore(
+        frameEvaluatorChain: FMFrameEvaluatorChain,
+        frame: FMFrame,
+        currentBestScore: Float
+    ) {
+        // evaluator rejected the frame because it was below the current best score, show info in debug view
     }
 }

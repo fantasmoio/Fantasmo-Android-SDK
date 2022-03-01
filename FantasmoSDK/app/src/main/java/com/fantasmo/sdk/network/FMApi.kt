@@ -249,12 +249,10 @@ class FMApi(
         params["rotationSpread"] = gson.toJson(request.analytics.rotationSpread)
         params["magneticData"] = gson.toJson(request.analytics.magneticField)
 
-        if (fmFrame.evaluation?.type == FMFrameEvaluationType.ImageQualityEstimation) {
-            fmFrame.evaluation?.userInfo?.forEach {
-                if (it.value != null) {
-                    params[it.key] = it.value!!
-                }
-            }
+
+        // add frame evaluation info, if available
+        if (fmFrame.evaluation != null) {
+            params["frameEvaluation"] = gson.toJson(fmFrame.evaluation)
         }
 
         params["remoteConfigId"] = gson.toJson(request.analytics.remoteConfigId)

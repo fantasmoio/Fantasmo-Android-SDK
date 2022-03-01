@@ -7,7 +7,7 @@ enum class FMFrameEvaluationType {
 }
 
 data class FMFrameEvaluation (val type: FMFrameEvaluationType,
-                                val score: Float, // 0.0 - 1.0, (1.0 being the best)
+                                val score: Float, // 0.0 - 1.0
                                 val userInfo: Map<String, String?>?  // optional analytics etc.
                             )
 

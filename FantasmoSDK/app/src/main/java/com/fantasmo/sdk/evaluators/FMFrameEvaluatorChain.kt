@@ -11,18 +11,22 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 interface FMFrameEvaluatorChainListener {
-    fun didEvaluateFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, result: FMFrameEvaluationResult)
+    fun didEvaluateFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame)
+    fun didFindNewBestFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame)
+    fun didDiscardFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame)
+    fun didRejectFrameWithFilterReason(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, reason: FMFrameFilterRejectionReason)
+    fun didRejectFrameBelowMinScoreThreshold(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, minScoreThreshold: Float)
+    fun didRejectFrameBelowCurrentBestScore(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, currentBestScore: Float)
 }
 
-class FMFrameEvaluatorChain
-    (remoteConfig: RemoteConfig.Config, context: Context) : FMFrameEvaluator {
-    override val TAG: String = FMFrameEvaluatorChain::javaClass.name
+class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context) {
+    val TAG: String = FMFrameEvaluatorChain::javaClass.name
 
     private val minWindowTime: Float = 0.4f
     private val maxWindowTime: Float = 1.2f
     private val minScoreThreshold: Float = 0.0f
     private val minHighQualityScore: Float = 0.9f
-    private val frameEvaluator: FMFrameEvaluator?
+    private val frameEvaluator: FMFrameEvaluator
     private val preEvaluationFilters : MutableList<FMFrameFilter>
     private val defaultCoroutineScope = CoroutineScope(Dispatchers.Default)
     private val mainCoroutineScope = CoroutineScope(Dispatchers.Main)
@@ -32,7 +36,7 @@ class FMFrameEvaluatorChain
 
     private var currentBestFrame: FMFrame? = null
 
-    private var windowStart: Double? = null
+    private var windowStart: Double
 
     private var isEvaluatingFrame: Boolean = false
 
@@ -71,20 +75,16 @@ class FMFrameEvaluatorChain
             null
         }
 
-        @RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
-        frameEvaluator = FMImageQualityEvaluator(context)
+        frameEvaluator = FMImageQualityEvaluator.makeEvaluator(context)
+
+        windowStart = System.nanoTime() / n2s
     }
 
 
-    override fun evaluate(fmFrame: FMFrame) {
-        if (windowStart == null) {
-            windowStart = System.nanoTime() / n2s
-        }
-
+    fun evaluateAsync(fmFrame: FMFrame) {
         if(isEvaluatingFrame) {
-            listener?.didEvaluateFrame(this,
-                fmFrame,
-                FMFrameEvaluationResult.Discarded(FMFrameEvaluationDiscardReason.OtherEvaluationInProgress))
+            listener?.didDiscardFrame(this,
+                fmFrame)
             return
         }
 
@@ -101,7 +101,7 @@ class FMFrameEvaluatorChain
         if (filterResult != FMFrameFilterResult.Accepted) {
             val reason = filterResult.getRejectedReason()
             if(reason != null)
-                listener?.didEvaluateFrame(this, fmFrame, FMFrameEvaluationResult.Discarded(FMFrameEvaluationDiscardReason.RejectedByFilter(reason)))
+                listener?.didRejectFrameWithFilterReason(this, fmFrame, reason)
             return
         }
 
@@ -114,64 +114,57 @@ class FMFrameEvaluatorChain
             imageEnhancer?.enhance(fmFrame)
 
             // evaluate the frame using the configured evaluator
-            frameEvaluator?.evaluate(fmFrame)
+            val evaluation = frameEvaluator.evaluate(fmFrame)
 
             mainCoroutineScope.launch {
                 // finish evaluation on the main thread
-                finishEvaluation(fmFrame)
+                processEvaluation(evaluation, fmFrame)
                 // unset flag to allow new frames to be evaluated
                 isEvaluatingFrame = false
             }
         }
     }
 
-    private fun finishEvaluation(fmFrame: FMFrame) {
+    private fun processEvaluation(evaluation: FMFrameEvaluation, fmFrame: FMFrame) {
         if (!isEvaluatingFrame) {
             error("not evaluating frame")
         }
 
-        val evaluation = fmFrame.evaluation
-        if(evaluation == null) {
-            if (currentBestFrame?.evaluation == null) {
-                currentBestFrame = fmFrame
-                listener?.didEvaluateFrame(this, fmFrame, FMFrameEvaluationResult.NewCurrentBest)
-            } else {
-                listener?.didEvaluateFrame(this, fmFrame, FMFrameEvaluationResult.Discarded(FMFrameEvaluationDiscardReason.EvaluatorError))
-            }
-            return
-        }
+        // store the evaluation on the frame and notify the delegate
+        fmFrame.evaluation = evaluation
+        listener?.didEvaluateFrame(this, fmFrame)
 
-        // check if the frame is above the min score threshold, otherwise throw it away
+        // check if the frame is above the min score threshold, otherwise return
         if (evaluation.score < minScoreThreshold) {
-            listener?.didEvaluateFrame(this, fmFrame, FMFrameEvaluationResult.Discarded(FMFrameEvaluationDiscardReason.BelowMinScoreThreshold))
+            listener?.didRejectFrameBelowMinScoreThreshold(this, fmFrame, minScoreThreshold)
             return
         }
 
-        // check if the new frame is better than our current best, otherwise throw it away
+        // check if the new frame score is better than our current best frame score, otherwise return
         val currentBestEvaluation = currentBestFrame?.evaluation
         if(currentBestEvaluation != null && currentBestEvaluation.score > evaluation.score) {
-            listener?.didEvaluateFrame(this, fmFrame, FMFrameEvaluationResult.Discarded(FMFrameEvaluationDiscardReason.BelowCurrentBestScore))
+            listener?.didRejectFrameBelowCurrentBestScore(this, fmFrame, currentBestEvaluation.score)
+            return
         }
 
-        // update our current best frame
+        // frame is the new best, update our saved reference and notify the delegate
         currentBestFrame = fmFrame
-        listener?.didEvaluateFrame(this, fmFrame, FMFrameEvaluationResult.NewCurrentBest)
+        listener?.didFindNewBestFrame(this, fmFrame)
     }
 
     fun dequeueBestFrame() : FMFrame? {
         val evaluation = currentBestFrame?.evaluation
-        if (windowStart == null || currentBestFrame == null || evaluation == null) {
+        if (currentBestFrame == null || evaluation == null) {
             return null
         }
         val currentTime = System.nanoTime() / n2s
-        val timeElapsed = currentTime - windowStart!!
+        val timeElapsed = currentTime - windowStart
         if (timeElapsed < minWindowTime) {
             return null
         }
 
         if (evaluation.score >= minHighQualityScore || timeElapsed >= maxWindowTime) {
-            currentBestFrame = null
-            windowStart = currentTime
+            reset()
             return currentBestFrame
         }
 
@@ -180,13 +173,8 @@ class FMFrameEvaluatorChain
 
     fun reset() {
         // TODO - reset window state, close current window etc.
-        windowStart = null
+        windowStart = System.nanoTime() / n2s
         currentBestFrame = null
-    }
-
-    fun <T> getFilterOfType(type: Class<T>): T? {
-        @Suppress("UNCHECKED_CAST")
-        return preEvaluationFilters.first{type.isInstance(it)} as T?
     }
 
     //TODO - Implement
