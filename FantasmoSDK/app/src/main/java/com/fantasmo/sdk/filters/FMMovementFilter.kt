@@ -32,7 +32,7 @@ class FMMovementFilter(private val movementFilterThreshold: Float) : FMFrameFilt
             lastTransform = newTransform
             FMFrameFilterResult.Accepted
         } else {
-            FMFrameFilterResult.Rejected(FMFilterRejectionReason.MOVINGTOOLITTLE)
+            FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.MovingTooLittle)
         }
     }
 

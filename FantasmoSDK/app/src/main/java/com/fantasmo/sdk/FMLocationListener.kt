@@ -47,11 +47,11 @@ class FMLocationResult(
  * to get more accurate and correct frames to analyze.
  */
 enum class FMBehaviorRequest(val description: String) {
-    POINTATBUILDINGS("Point at stores, signs and buildings around you to get a precise location"),
-    TILTUP("Tilt your device up"),
-    TILTDOWN("Tilt your device down"),
-    PANAROUND("Pan around the scene"),
-    PANSLOWLY("Pan more slowly");
+    PointAtBuildings("Point at stores, signs and buildings around you to get a precise location"),
+    TiltUp("Tilt your device up"),
+    TiltDown("Tilt your device down"),
+    PanAround("Pan around the scene"),
+    PanSlowly("Pan more slowly");
 }
 
 /**

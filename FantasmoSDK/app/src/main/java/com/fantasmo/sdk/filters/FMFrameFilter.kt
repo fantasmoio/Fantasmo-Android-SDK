@@ -3,15 +3,15 @@ package com.fantasmo.sdk.filters
 import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.models.FMFrame
 
-enum class FMFilterRejectionReason {
-    PITCHTOOLOW,
-    PITCHTOOHIGH,
-    IMAGETOOBLURRY,
-    MOVINGTOOFAST,
-    MOVINGTOOLITTLE,
-    INSUFFICIENTFEATURES,
-    IMAGEQUALITYSCOREBELOWTHRESHOLD,
-    FRAMEERROR;
+enum class FMFrameFilterRejectionReason {
+    PitchTooLow,
+    PitchTooHigh,
+    ImageTooBlurry,
+    MovingTooFast,
+    MovingTooLittle,
+    InsufficientFeatures,
+    ImageQualityScoreBelowThreshold,
+    FrameError;
 
     /**
      * Method responsible for mapping a `FMFilterRejectionReason to the end user.
@@ -19,23 +19,23 @@ enum class FMFilterRejectionReason {
      */
     fun mapToBehaviorRequest(): FMBehaviorRequest {
         return when (this) {
-            PITCHTOOLOW -> FMBehaviorRequest.TILTUP
-            PITCHTOOHIGH -> FMBehaviorRequest.TILTDOWN
-            MOVINGTOOFAST -> FMBehaviorRequest.PANSLOWLY
-            IMAGETOOBLURRY -> FMBehaviorRequest.PANSLOWLY
-            MOVINGTOOLITTLE -> FMBehaviorRequest.PANAROUND
-            INSUFFICIENTFEATURES -> FMBehaviorRequest.PANAROUND
-            IMAGEQUALITYSCOREBELOWTHRESHOLD -> FMBehaviorRequest.PANAROUND
-            FRAMEERROR -> FMBehaviorRequest.POINTATBUILDINGS
+            PitchTooLow -> FMBehaviorRequest.TiltUp
+            PitchTooHigh -> FMBehaviorRequest.TiltDown
+            MovingTooFast -> FMBehaviorRequest.PanSlowly
+            ImageTooBlurry -> FMBehaviorRequest.PanSlowly
+            MovingTooLittle -> FMBehaviorRequest.PanAround
+            InsufficientFeatures -> FMBehaviorRequest.PanAround
+            ImageQualityScoreBelowThreshold -> FMBehaviorRequest.PanAround
+            FrameError -> FMBehaviorRequest.PointAtBuildings
         }
     }
 }
 
 sealed class FMFrameFilterResult {
     object Accepted : FMFrameFilterResult()
-    class Rejected(val reason: FMFilterRejectionReason): FMFrameFilterResult()
+    class Rejected(val reason: FMFrameFilterRejectionReason): FMFrameFilterResult()
 
-    fun getRejectedReason(): FMFilterRejectionReason? {
+    fun getRejectedReason(): FMFrameFilterRejectionReason? {
         return when (this){
             is Rejected -> reason
             else -> null

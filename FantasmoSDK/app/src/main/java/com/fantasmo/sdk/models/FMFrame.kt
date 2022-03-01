@@ -11,6 +11,7 @@ import android.view.Surface
 import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
+import com.fantasmo.sdk.evaluators.FMFrameEvaluation
 import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import com.google.ar.core.Camera
 import com.google.ar.core.Frame
@@ -28,6 +29,8 @@ class FMFrame (private val frame: Frame,
     val timestamp = frame.timestamp
     private var _yuvImage: YuvImage? = null
 
+    var evaluation: FMFrameEvaluation? = null // nil if no evaluation has been done, or evaluator error
+
     var yuvImage: YuvImage?
         @RequiresApi(Build.VERSION_CODES.KITKAT)
         get() {
@@ -44,7 +47,7 @@ class FMFrame (private val frame: Frame,
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun setYuvImageFromFrame() {
         try {
-            val cameraImage = frame!!.acquireCameraImage()
+            val cameraImage = frame.acquireCameraImage()
             val cameraPlaneY = cameraImage.planes[0].buffer
             val cameraPlaneU = cameraImage.planes[2].buffer
             val cameraPlaneV = cameraImage.planes[1].buffer
@@ -77,7 +80,7 @@ class FMFrame (private val frame: Frame,
     }
 
     fun imageData(): ByteArray? {
-        val imageBitmap = yuvImage?.let { yuvToRgbConverter?.toBitmap(it) }
+        val imageBitmap = yuvImage?.let { yuvToRgbConverter.toBitmap(it) }
         imageBitmap?.rotate(getImageRotationDegrees(context))
         val data = imageBitmap?.let { getFileDataFromDrawable(it) }
 

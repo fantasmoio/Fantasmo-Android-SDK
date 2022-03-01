@@ -14,6 +14,7 @@ import com.fantasmo.sdk.views.common.samplerender.SampleRender
 import com.fantasmo.sdk.views.common.samplerender.arcore.BackgroundRenderer
 import com.google.ar.core.*
 import com.google.ar.core.exceptions.CameraNotAvailableException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -46,6 +47,8 @@ class FMARCoreView(
     private lateinit var displayRotationHelper: DisplayRotationHelper
     private lateinit var trackingStateHelper: TrackingStateHelper
     private var lastArFrameTimestamp: Long = 0L
+
+    private var coroutineScope = CoroutineScope(Dispatchers.Default)
 
     // Set anchor after QR code is read
     private var anchorIsChecked = false
@@ -198,8 +201,8 @@ class FMARCoreView(
         val fmFrame = FMFrame(frame, context)
         val newArFrameTimestamp = fmFrame.timestamp
         //Acquire ARCore Frame to set anchor and updates UI setting values in the view
-        GlobalScope.launch(Dispatchers.Default) {
-            // Code here will run in UI thread
+        coroutineScope.launch {
+            // Code here will run in Default thread
             if(connected && newArFrameTimestamp > lastArFrameTimestamp){
                 onUpdate(fmFrame)
                 lastArFrameTimestamp = newArFrameTimestamp

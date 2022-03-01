@@ -1,6 +1,6 @@
 package com.fantasmo.sdk
 
-import com.fantasmo.sdk.filters.FMFilterRejectionReason
+import com.fantasmo.sdk.filters.FMFrameFilterRejectionReason
 import com.fantasmo.sdk.filters.BehaviorRequester
 import com.fantasmo.sdk.filters.FMFrameFilterResult
 import com.fantasmo.sdk.models.ErrorResponse
@@ -16,7 +16,7 @@ class BehaviorRequesterTest {
 
     @Test
     fun testProcessResult() {
-        val reason = FMFilterRejectionReason.PITCHTOOLOW
+        val reason = FMFrameFilterRejectionReason.PitchTooLow
         val failure = FMFrameFilterResult.Rejected(reason)
         behaviorRequester.processResult(failure)
 
@@ -37,12 +37,12 @@ class BehaviorRequesterTest {
 
     @Test
     fun testProcessResultWithFailure() {
-        val reason = FMFilterRejectionReason.PITCHTOOLOW
+        val reason = FMFrameFilterRejectionReason.PitchTooLow
         val failure = FMFrameFilterResult.Rejected(reason)
 
         val fieldRejectionCounts = behaviorRequester.javaClass.getDeclaredField("rejectionCounts")
         fieldRejectionCounts.isAccessible = true
-        val result : MutableMap<FMFilterRejectionReason, Int> = fieldRejectionCounts.get(behaviorRequester) as MutableMap<FMFilterRejectionReason, Int>
+        val result : MutableMap<FMFrameFilterRejectionReason, Int> = fieldRejectionCounts.get(behaviorRequester) as MutableMap<FMFrameFilterRejectionReason, Int>
 
         result[reason] = 2
 
@@ -61,12 +61,12 @@ class BehaviorRequesterTest {
 
     @Test
     fun testProcessResultStartNewCycle() {
-        val reason = FMFilterRejectionReason.PITCHTOOLOW
+        val reason = FMFrameFilterRejectionReason.PitchTooLow
         val failure = FMFrameFilterResult.Rejected(reason)
 
         val fieldRejectionCounts = behaviorRequester.javaClass.getDeclaredField("rejectionCounts")
         fieldRejectionCounts.isAccessible = true
-        val result : MutableMap<FMFilterRejectionReason, Int> = fieldRejectionCounts.get(behaviorRequester) as MutableMap<FMFilterRejectionReason, Int>
+        val result : MutableMap<FMFrameFilterRejectionReason, Int> = fieldRejectionCounts.get(behaviorRequester) as MutableMap<FMFrameFilterRejectionReason, Int>
 
         result[reason] = 30
 

@@ -89,7 +89,7 @@ class FMFrameFilterChainTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_0)
 
         assertEquals(
-            FMFilterRejectionReason.MOVINGTOOFAST,
+            FMFrameFilterRejectionReason.MovingTooFast,
             filter.accepts(frame).getRejectedReason()
         )
     }

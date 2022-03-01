@@ -12,21 +12,20 @@ import kotlin.math.pow
  * Prevents from sending images that are too dark
  */
 @RequiresApi(Build.VERSION_CODES.KITKAT)
-class FMAutoGammaCorrectionFilter(private val targetBrightness : Float, private val context: Context) : FMFrameFilter {
-    override val TAG = FMAutoGammaCorrectionFilter::class.java.simpleName
+class FMImageEnhancer(private val targetBrightness : Float, private val context: Context) {
+    val TAG = FMImageEnhancer::class.java.simpleName
 
     private lateinit var rs : RenderScript
     private lateinit var histogramIntrinsic: ScriptIntrinsicHistogram
     private lateinit var colorLUT : ScriptIntrinsicLUT
 
-    override fun accepts(fmFrame: FMFrame): FMFrameFilterResult {
+    fun enhance(fmFrame: FMFrame) {
         if(!::rs.isInitialized){
             rs = RenderScript.create(context)
             histogramIntrinsic = ScriptIntrinsicHistogram.create(rs, Element.U8(rs))
             colorLUT = ScriptIntrinsicLUT.create(rs, Element.U8_4(rs))
         }
         fmFrame.yuvImage = applyAutoGammaCorrection(fmFrame.yuvImage, targetBrightness)
-        return FMFrameFilterResult.Accepted
     }
 
 

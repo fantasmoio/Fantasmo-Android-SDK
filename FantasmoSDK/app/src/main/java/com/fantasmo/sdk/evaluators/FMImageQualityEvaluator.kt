@@ -1,29 +1,32 @@
-package com.fantasmo.sdk.filters
+package com.fantasmo.sdk.evaluators
 
 import android.content.Context
 import android.os.Build
 import android.renderscript.*
 import android.util.Log
 import androidx.annotation.RequiresApi
+import com.fantasmo.sdk.filters.FMImageQualityFilter
 import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.models.tensorflowML.ImageQualityModelUpdater
 import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
+import java.util.*
 import kotlin.math.exp
 
 @RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
-class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Context) :
-    FMFrameFilter {
+class FMImageQualityEvaluator(val context: Context) :
+    FMFrameEvaluator {
+    val scoreUserInfoKey = "imageQualityScore"
+    val versionUserInfoKey = "imageQualityModelVersion"
+
     override val TAG = FMImageQualityFilter::class.java.simpleName
     private val mlShape = intArrayOf(1, 3, 320, 240)
     private val imageHeight: Int = 320
     private val imageWidth: Int = 240
 
-    val scoreThreshold = imageQualityScoreThreshold
-    var lastImageQualityScore = 0f
-    private lateinit var rs : RenderScript
+    private lateinit var rs: RenderScript
 
     private val yuvToRgbConverter = YuvToRgbConverter(context)
 
@@ -36,10 +39,9 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
     private lateinit var colorMatrixIntrinsic: ScriptIntrinsicColorMatrix
     private lateinit var scalingMatrix: Matrix3f
 
-    override fun accepts(fmFrame: FMFrame): FMFrameFilterResult {
-
+    override fun evaluate(fmFrame: FMFrame) {
         imageQualityModel = imageQualityModelUpdater.getInterpreter()
-        if(!::rs.isInitialized) {
+        if (!::rs.isInitialized) {
             rs = RenderScript.create(context)
             colorMatrixIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
             scalingMatrix = Matrix3f()
@@ -50,43 +52,44 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
 
         if (imageQualityModel == null) {
             Log.e(TAG, "Failed to get Model")
-            return FMFrameFilterResult.Accepted
+            return
         }
 
         val yuvImage = fmFrame.yuvImage
         if (yuvImage == null) {
             // The frame being null means it's no longer available to send in the request
             Log.e(TAG, "Failed to create Input Array")
-            return FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.FrameError)
+            return
         } else {
             val rgbByteArray =
                 yuvToRgbConverter.toByteArray(yuvImage, imageWidth, imageHeight)
 
             val rgbImage = getRGBValues(rgbByteArray)
-            val result = processImage(rgbImage)
+            val score = processImage(rgbImage)
 
-            if (result != null) {
-                lastImageQualityScore = result
-                Log.d(TAG, "IQE: $result")
-                return if (result >= scoreThreshold) {
-                    FMFrameFilterResult.Accepted
-                } else {
-                    FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.ImageQualityScoreBelowThreshold)
-                }
-            }
-            return FMFrameFilterResult.Accepted
+            if (score != null) {
+                Log.d(TAG, "IQE score: $score")
+                val userInfo = mapOf(
+                    scoreUserInfoKey to score.toString(),
+                    versionUserInfoKey to modelVersion
+                )
+                fmFrame.evaluation = FMFrameEvaluation(FMFrameEvaluationType.ImageQualityEstimation, score, userInfo)
+             }
         }
     }
-            /**
+
+    /**
      * Gathers all the RGB values and stores them in an
      * FloatArray dividing by three main channels
      * @param bitmap Bitmap image already converted from YUV to RGB
      * @return FloatArray containing RGB values in float precision
      */
     private fun getRGBValues(inArray: ByteArray): FloatArray {
-        val inputAllocation = Allocation.createSized(rs, Element.RGBA_8888(rs), imageHeight * imageWidth)
+        val inputAllocation =
+            Allocation.createSized(rs, Element.RGBA_8888(rs), imageHeight * imageWidth)
         inputAllocation.copyFrom(inArray)
-        val outputAllocation = Allocation.createSized(rs, Element.F32_3(rs), imageHeight * imageWidth)
+        val outputAllocation =
+            Allocation.createSized(rs, Element.F32_3(rs), imageHeight * imageWidth)
         colorMatrixIntrinsic.forEach(inputAllocation, outputAllocation)
         val rgbMixed = FloatArray(imageHeight * imageWidth * 4)
         outputAllocation.copyTo(rgbMixed)
@@ -101,7 +104,7 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
 
                 rgb[x + imageWidth * y] = r
                 rgb[imageHeight * imageWidth + imageWidth * y + x] = g
-                rgb[ 2 * imageHeight * imageWidth + imageWidth * y + x] = b
+                rgb[2 * imageHeight * imageWidth + imageWidth * y + x] = b
             }
         }
         inputAllocation.destroy()

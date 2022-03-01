@@ -93,9 +93,10 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         tooLittleTv.text = rejections.insufficientMotionFrameCount.toString()
         featuresTv.text = rejections.insufficientFeatures.toString()
 
-        imageQualityModelVersion.text = info.modelVersion
-        imageQualityLastResult.text = String.format("%.5f", info.lastImageQualityScore)
-        imageQualityInsufficient.text = rejections.imageQualityFrameCount.toString()
+        //TODO - Fix this
+//        imageQualityModelVersion.text = info.modelVersion
+//        imageQualityLastResult.text = String.format("%.5f", info.lastImageQualityScore)
+//        imageQualityInsufficient.text = rejections.imageQualityFrameCount.toString()
 
         frameErrorTv.text = rejections.frameErrorCount.toString()
 

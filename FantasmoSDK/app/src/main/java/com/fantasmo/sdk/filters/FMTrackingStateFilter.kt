@@ -19,29 +19,29 @@ class FMTrackingStateFilter : FMFrameFilter {
             fmFrame.camera.trackingFailureReason == TrackingFailureReason.NONE
         ) {
             // Initializing
-            return FMFrameFilterResult.Rejected(FMFilterRejectionReason.MOVINGTOOLITTLE)
+            return FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.MovingTooLittle)
         } else return when (fmFrame.camera.trackingFailureReason) {
             TrackingFailureReason.CAMERA_UNAVAILABLE -> {
                 // Motion tracking was paused because the camera
                 // is in use by another application
-                FMFrameFilterResult.Rejected(FMFilterRejectionReason.MOVINGTOOLITTLE)
+                FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.MovingTooLittle)
             }
             TrackingFailureReason.EXCESSIVE_MOTION -> {
                 // Ask the user to move the device more slowly
-                FMFrameFilterResult.Rejected(FMFilterRejectionReason.MOVINGTOOFAST)
+                FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.MovingTooFast)
             }
             TrackingFailureReason.INSUFFICIENT_FEATURES -> {
                 // Ask the user to move to a different area and to
                 // avoid blank walls and surfaces without detail
-                FMFrameFilterResult.Rejected(FMFilterRejectionReason.INSUFFICIENTFEATURES)
+                FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.InsufficientFeatures)
             }
             TrackingFailureReason.INSUFFICIENT_LIGHT -> {
                 // Ask the user to move to a more brightly lit area
-                FMFrameFilterResult.Rejected(FMFilterRejectionReason.INSUFFICIENTFEATURES)
+                FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.InsufficientFeatures)
             }
             else -> {
                 // No specific user action is likely to resolve this issue
-                FMFrameFilterResult.Rejected(FMFilterRejectionReason.MOVINGTOOFAST)
+                FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.MovingTooFast)
             }
         }
     }

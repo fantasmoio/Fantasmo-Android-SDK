@@ -86,11 +86,11 @@ class FMCameraPitchFilter(
             }
             // If it's looking Up
             rotationQuaternion[0] * orientationSign < 0 -> {
-                FMFrameFilterResult.Rejected(FMFilterRejectionReason.PITCHTOOHIGH)
+                FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.PitchTooHigh)
             }
             // Else it's looking Down
             else -> {
-                FMFrameFilterResult.Rejected(FMFilterRejectionReason.PITCHTOOLOW)
+                FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.PitchTooLow)
             }
         }
     }

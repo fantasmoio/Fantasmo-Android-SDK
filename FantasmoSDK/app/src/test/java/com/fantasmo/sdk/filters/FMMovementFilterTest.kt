@@ -2,7 +2,6 @@ package com.fantasmo.sdk.filters
 
 import com.fantasmo.sdk.config.RemoteConfigTest
 import com.fantasmo.sdk.models.FMFrame
-import com.google.ar.core.Camera
 import com.google.ar.core.Pose
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -51,7 +50,7 @@ class FMMovementFilterTest {
         `when`(frame.androidSensorPose).thenReturn(pose)
 
         assertEquals(
-            FMFilterRejectionReason.MOVINGTOOLITTLE,
+            FMFrameFilterRejectionReason.MovingTooLittle,
             filter.accepts(frame).getRejectedReason()
         )
     }

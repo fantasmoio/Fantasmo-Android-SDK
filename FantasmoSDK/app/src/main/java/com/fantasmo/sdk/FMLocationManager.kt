@@ -10,10 +10,11 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import com.fantasmo.sdk.config.RemoteConfig
+import com.fantasmo.sdk.evaluators.FMFrameEvaluationDiscardReason
+import com.fantasmo.sdk.evaluators.FMFrameEvaluationResult
+import com.fantasmo.sdk.evaluators.FMFrameEvaluatorChain
+import com.fantasmo.sdk.evaluators.FMFrameEvaluatorChainListener
 import com.fantasmo.sdk.filters.BehaviorRequester
-import com.fantasmo.sdk.filters.FMFrameFilterChain
-import com.fantasmo.sdk.filters.FMFrameFilterResult
-import com.fantasmo.sdk.filters.FMImageQualityFilter
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
@@ -26,7 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
 
-class FMLocationManager(private val context: Context) {
+class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainListener{
     private val TAG = "FMLocationManager"
 
     enum class State {
@@ -64,7 +65,7 @@ class FMLocationManager(private val context: Context) {
     private var isConnected = false
 
     // Used to validate frame for sufficient quality before sending to API.
-    private lateinit var frameFilterChain: FMFrameFilterChain
+    private lateinit var frameEvaluatorChain: FMFrameEvaluatorChain
 
     // Throttler for invalid frames.
     private lateinit var behaviorRequester: BehaviorRequester
@@ -100,7 +101,7 @@ class FMLocationManager(private val context: Context) {
         this.fmLocationListener = callback
         fmApi = FMApi(context, token)
         rc = RemoteConfig.remoteConfig
-        frameFilterChain = FMFrameFilterChain(context)
+        frameEvaluatorChain = FMFrameEvaluatorChain(rc, context)
         if (rc.isBehaviorRequesterEnabled) {
             behaviorRequester = BehaviorRequester {
                 fmLocationListener?.locationManager(didRequestBehavior = it)
@@ -151,7 +152,7 @@ class FMLocationManager(private val context: Context) {
         fmLocationListener?.locationManager(state)
         motionManager.restart()
         accumulatedARCoreInfo.reset()
-        this.frameFilterChain.restart()
+        this.frameEvaluatorChain.reset()
         if (rc.isBehaviorRequesterEnabled) {
             this.behaviorRequester.restart()
         }
@@ -255,13 +256,6 @@ class FMLocationManager(private val context: Context) {
             accumulatedARCoreInfo.rotationAccumulator.yaw[2],
             accumulatedARCoreInfo.rotationAccumulator.roll[2]
         )
-        val imageQualityFilterInfo: FMImageQualityFilterInfo? =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && frameFilterChain.rc.isImageQualityFilterEnabled) {
-                val filter = frameFilterChain.filters.last() as FMImageQualityFilter
-                FMImageQualityFilterInfo(filter.modelVersion, filter.lastImageQualityScore)
-            } else {
-                null
-            }
         val frameAnalytics = FMLocalizationAnalytics(
             appSessionId,
             appSessionTags,
@@ -270,7 +264,6 @@ class FMLocationManager(private val context: Context) {
             rotationSpread,
             accumulatedARCoreInfo.translationAccumulator.totalTranslation,
             motionManager.magneticField,
-            imageQualityFilterInfo,
             rc.remoteConfigId
         )
         val openCVRelativeAnchorPose = anchorFrame?.let { anchorFrame ->
@@ -299,45 +292,31 @@ class FMLocationManager(private val context: Context) {
         }
     }
 
-    private var isEvaluatingFrame = false
-
     /**
      * Method to check whether the SDK is ready to localize a frame or not.
      */
     fun session(fmFrame: FMFrame) {
-        if (state != State.STOPPED
-            && !isEvaluatingFrame
-        ) {
+        if (state != State.STOPPED) {
             // run the frame through the configured filters
-            isEvaluatingFrame = true
-            frameFilterChain.evaluateAsync(fmFrame) { filterResult ->
-                processFrame(fmFrame, filterResult)
-                isEvaluatingFrame = false
-            }
+            frameEvaluatorChain.evaluate(fmFrame)
         }
+        var frameToLocalize = frameEvaluatorChain.dequeueBestFrame()
+        if (frameToLocalize != null)  {
+            localize(frameToLocalize)
+        }
+
+        fmLocationListener?.locationManager(fmFrame, accumulatedARCoreInfo, frameEventAccumulator)
+        accumulatedARCoreInfo.update(fmFrame)
     }
 
-    private fun processFrame(fmFrame: FMFrame, filterResult: FMFrameFilterResult) {
-        if (rc.isBehaviorRequesterEnabled) {
-            behaviorRequester.processResult(filterResult)
+    override fun didEvaluateFrame(
+        frameEvaluatorChain: FMFrameEvaluatorChain,
+        frame: FMFrame,
+        result: FMFrameEvaluationResult
+    ) {
+        if(result is FMFrameEvaluationResult.Discarded && result.reason is FMFrameEvaluationDiscardReason.RejectedByFilter) {
+            behaviorRequester.processFilterRejection(result.reason.reason)
+            frameEventAccumulator.accumulate(result.reason.reason)
         }
-        accumulatedARCoreInfo.update(fmFrame)
-        if (filterResult == FMFrameFilterResult.Accepted) {
-            if (state == State.LOCALIZING) {
-                localize(fmFrame)
-            }
-        } else {
-            frameEventAccumulator.accumulate(filterResult.getRejectedReason()!!)
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            if (frameFilterChain.rc.isImageQualityFilterEnabled) {
-                val filter = frameFilterChain.filters.last() as FMImageQualityFilter
-                accumulatedARCoreInfo.lastImageQualityScore = filter.lastImageQualityScore
-                accumulatedARCoreInfo.scoreThreshold = filter.scoreThreshold
-                accumulatedARCoreInfo.modelVersion = filter.modelVersion
-            }
-        }
-        fmLocationListener?.locationManager(fmFrame, accumulatedARCoreInfo, frameEventAccumulator)
     }
 }

@@ -8,41 +8,41 @@ class FMFrameFilterTest {
 
     @Test
     fun testMapRequestBehavior() {
-        var rejection = FMFilterRejectionReason.PITCHTOOLOW
+        var rejection = FMFrameFilterRejectionReason.PitchTooLow
 
         assertEquals(
             rejection.mapToBehaviorRequest(),
-            FMBehaviorRequest.TILTUP
+            FMBehaviorRequest.TiltUp
         )
 
-        rejection = FMFilterRejectionReason.PITCHTOOHIGH
+        rejection = FMFrameFilterRejectionReason.PitchTooHigh
         assertEquals(
             rejection.mapToBehaviorRequest(),
-            FMBehaviorRequest.TILTDOWN
+            FMBehaviorRequest.TiltDown
         )
 
-        rejection = FMFilterRejectionReason.MOVINGTOOLITTLE
+        rejection = FMFrameFilterRejectionReason.MovingTooLittle
         assertEquals(
             rejection.mapToBehaviorRequest(),
-            FMBehaviorRequest.PANAROUND
+            FMBehaviorRequest.PanAround
         )
 
-        rejection = FMFilterRejectionReason.MOVINGTOOFAST
+        rejection = FMFrameFilterRejectionReason.MovingTooFast
         assertEquals(
             rejection.mapToBehaviorRequest(),
-            FMBehaviorRequest.PANSLOWLY
+            FMBehaviorRequest.PanSlowly
         )
 
-        rejection = FMFilterRejectionReason.INSUFFICIENTFEATURES
+        rejection = FMFrameFilterRejectionReason.InsufficientFeatures
         assertEquals(
             rejection.mapToBehaviorRequest(),
-            FMBehaviorRequest.PANAROUND
+            FMBehaviorRequest.PanAround
         )
 
-        rejection = FMFilterRejectionReason.IMAGETOOBLURRY
+        rejection = FMFrameFilterRejectionReason.ImageTooBlurry
         assertEquals(
             rejection.mapToBehaviorRequest(),
-            FMBehaviorRequest.PANSLOWLY
+            FMBehaviorRequest.PanSlowly
         )
     }
 }

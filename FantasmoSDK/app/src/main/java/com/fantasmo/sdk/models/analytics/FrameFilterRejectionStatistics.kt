@@ -1,6 +1,6 @@
 package com.fantasmo.sdk.models.analytics
 
-import com.fantasmo.sdk.filters.FMFilterRejectionReason
+import com.fantasmo.sdk.filters.FMFrameFilterRejectionReason
 
 /**
  * Class responsible for gathering information about frame filtration rejection.
@@ -24,31 +24,31 @@ class FrameFilterRejectionStatistics {
      * the information about the localization session regarding frame filtration.
      * @param result FMFrameFilterFailure
      */
-    fun accumulate(result: FMFilterRejectionReason) {
+    fun accumulate(result: FMFrameFilterRejectionReason) {
         totalFrameCount += 1
         when (result) {
-            FMFilterRejectionReason.MOVINGTOOFAST -> {
+            FMFrameFilterRejectionReason.MovingTooFast -> {
                 excessiveMotionFrameCount += 1
             }
-            FMFilterRejectionReason.IMAGETOOBLURRY -> {
+            FMFrameFilterRejectionReason.ImageTooBlurry -> {
                 excessiveBlurFrameCount += 1
             }
-            FMFilterRejectionReason.MOVINGTOOLITTLE -> {
+            FMFrameFilterRejectionReason.MovingTooLittle -> {
                 insufficientMotionFrameCount += 1
             }
-            FMFilterRejectionReason.PITCHTOOHIGH -> {
+            FMFrameFilterRejectionReason.PitchTooHigh -> {
                 insufficientTiltFrameCount += 1
             }
-            FMFilterRejectionReason.PITCHTOOLOW -> {
+            FMFrameFilterRejectionReason.PitchTooLow -> {
                 excessiveTiltFrameCount += 1
             }
-            FMFilterRejectionReason.INSUFFICIENTFEATURES -> {
+            FMFrameFilterRejectionReason.InsufficientFeatures -> {
                 insufficientFeatures += 1
             }
-            FMFilterRejectionReason.IMAGEQUALITYSCOREBELOWTHRESHOLD -> {
+            FMFrameFilterRejectionReason.ImageQualityScoreBelowThreshold -> {
                 imageQualityFrameCount += 1
             }
-            FMFilterRejectionReason.FRAMEERROR -> {
+            FMFrameFilterRejectionReason.FrameError -> {
                 frameErrorCount += 1
             }
         }

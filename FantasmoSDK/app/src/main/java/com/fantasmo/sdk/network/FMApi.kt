@@ -7,6 +7,7 @@ import android.provider.Settings.Secure
 import android.util.Log
 import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.FMUtility
+import com.fantasmo.sdk.evaluators.FMFrameEvaluationType
 import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.mock.MockData
 import com.fantasmo.sdk.models.*
@@ -36,16 +37,7 @@ class FMLocalizationAnalytics(
     var rotationSpread: FMRotationSpread,
     var totalDistance: Float,
     var magneticField: MagneticField,
-    var imageQualityFilterInfo: FMImageQualityFilterInfo?,
     var remoteConfigId: String
-)
-
-/**
- * Class to hold ImageQuality Filter Statistics
- */
-class FMImageQualityFilterInfo(
-    var modelVersion: String,
-    var lastImageQualityScore: Float
 )
 
 /**
@@ -257,11 +249,12 @@ class FMApi(
         params["rotationSpread"] = gson.toJson(request.analytics.rotationSpread)
         params["magneticData"] = gson.toJson(request.analytics.magneticField)
 
-        if (request.analytics.imageQualityFilterInfo != null) {
-            params["imageQualityModelVersion"] =
-                request.analytics.imageQualityFilterInfo!!.modelVersion
-            params["imageQualityScore"] =
-                String.format("%.5f", request.analytics.imageQualityFilterInfo!!.lastImageQualityScore)
+        if (fmFrame.evaluation?.type == FMFrameEvaluationType.ImageQualityEstimation) {
+            fmFrame.evaluation?.userInfo?.forEach {
+                if (it.value != null) {
+                    params[it.key] = it.value!!
+                }
+            }
         }
 
         params["remoteConfigId"] = gson.toJson(request.analytics.remoteConfigId)
