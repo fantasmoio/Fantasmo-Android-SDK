@@ -97,3 +97,10 @@ Version 3.1.1
 - MW-512 Allow skipping the QR code scanner in the SDK
 - MW-535 Consume remote_config_id from initialize endpoint, send to localize endpoint
 - MW-559 Cannot set camera config, session is not paused
+
+Version 3.2.0
+- MW-576 Android recall model is occasionally not downloaded, no request sent
+- MW-577 Update android SDK readme to include instructions about skipping QR code
+- MW-535 Consume remote_config_id from initialize endpoint, send to localize endpoint
+- MW-578 Android frame error count increases nearly 1:1 with accepted (normal) frames
+- MW-523 Research image enhancement viability on Android
