@@ -44,7 +44,7 @@ class FMFrame (private val frame: Frame,
     @RequiresApi(Build.VERSION_CODES.KITKAT)
     private fun setYuvImageFromFrame() {
         try {
-            val cameraImage = frame!!.acquireCameraImage()
+            val cameraImage = frame.acquireCameraImage()
             val cameraPlaneY = cameraImage.planes[0].buffer
             val cameraPlaneU = cameraImage.planes[2].buffer
             val cameraPlaneV = cameraImage.planes[1].buffer
@@ -77,11 +77,12 @@ class FMFrame (private val frame: Frame,
     }
 
     fun imageData(): ByteArray? {
-        val imageBitmap = yuvImage?.let { yuvToRgbConverter?.toBitmap(it) }
-        imageBitmap?.rotate(getImageRotationDegrees(context))
-        val data = imageBitmap?.let { getFileDataFromDrawable(it) }
+        val image = yuvImage ?: return null
+        val imageBitmap = yuvToRgbConverter.toBitmap(image)
+        imageBitmap.rotate(getImageRotationDegrees(context))
+        val data = getFileDataFromDrawable(imageBitmap)
 
-        imageBitmap?.recycle()
+        imageBitmap.recycle()
         return data
     }
 

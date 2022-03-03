@@ -98,9 +98,10 @@ class FMApi(
         onError: (ErrorResponse) -> Unit
     ) {
         try {
+            val imageData = imageData(fmFrame, request) ?: error("No image data to send in request")
             fmNetworkManager.uploadImage(
                 FMConfiguration.getServerURL(),
-                imageData(fmFrame, request)!!,
+                imageData,
                 getLocalizeParams(fmFrame, request),
                 token,
                 {
