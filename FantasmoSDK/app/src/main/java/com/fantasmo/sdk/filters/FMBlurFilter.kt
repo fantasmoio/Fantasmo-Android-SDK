@@ -44,9 +44,9 @@ class FMBlurFilter(
     private lateinit var histogram: ScriptIntrinsicHistogram
     private lateinit var convolve : ScriptIntrinsicConvolve3x3
     private lateinit var resize : ScriptIntrinsicResize
-    private lateinit var binsAllocation: Allocation
-    private lateinit var resizedAllocation: Allocation
-    private lateinit var convolveOutputAllocation: Allocation
+    private lateinit var imageTypeBuilder: Type.Builder
+    private lateinit var resizedImageTypeBuilder: Type.Builder
+
     private var histogramBins = IntArray(256)
 
     /**
@@ -63,13 +63,12 @@ class FMBlurFilter(
             histogram = ScriptIntrinsicHistogram.create(rs, Element.U8(rs))
             convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
             resize = ScriptIntrinsicResize.create(rs)
-            val builder = Type.Builder(rs, Element.U8(rs))
-            builder.setX(reducedWidth)
-            builder.setY(reducedHeight)
-            resizedAllocation = Allocation.createTyped(rs, builder.create())
-            convolveOutputAllocation = Allocation.createTyped(rs, builder.create())
-            binsAllocation = Allocation.createSized(rs, Element.U32(rs), 256)
-            histogram.setOutput(binsAllocation)
+            imageTypeBuilder = Type.Builder(rs, Element.U8(rs))
+            imageTypeBuilder.setX(yuvImage.width)
+            imageTypeBuilder.setY(yuvImage.height)
+            resizedImageTypeBuilder = Type.Builder(rs, Element.U8(rs))
+            resizedImageTypeBuilder.setX(reducedWidth)
+            resizedImageTypeBuilder.setY(reducedHeight)
         }
 
         val variance = calculateVariance(yuvImage)
@@ -113,10 +112,11 @@ class FMBlurFilter(
         if (yuvImage == null) {
             return 0.0f
         } else {
-            val builder = Type.Builder(rs, Element.U8(rs))
-            builder.setX(yuvImage.width)
-            builder.setY(yuvImage.height)
-            val inputAllocation = Allocation.createTyped(rs, builder.create())
+            val inputAllocation = Allocation.createTyped(rs, imageTypeBuilder.create())
+            val resizedAllocation = Allocation.createTyped(rs, resizedImageTypeBuilder.create())
+            val convolveOutputAllocation = Allocation.createTyped(rs, resizedImageTypeBuilder.create())
+            val binsAllocation = Allocation.createSized(rs, Element.U32(rs), 256)
+            histogram.setOutput(binsAllocation)
 
             inputAllocation.copyFrom(yuvImage.yuvData)
 
@@ -127,11 +127,15 @@ class FMBlurFilter(
             convolve.setInput(resizedAllocation)
             convolve.setCoefficients(laplacianMatrix)
             convolve.forEach(convolveOutputAllocation)
+            resizedAllocation.destroy()
 
             // Get standard deviation from meanStdDev
             histogram.forEach(convolveOutputAllocation)
+            convolveOutputAllocation.destroy()
 
             binsAllocation.copyTo(histogramBins)
+            binsAllocation.destroy()
+
             var avg = 0.0
             histogramBins.forEachIndexed { index, bin -> avg += (index * bin).toDouble() / (reducedWidth * reducedHeight).toDouble() }
             var stdDev = 0.0
