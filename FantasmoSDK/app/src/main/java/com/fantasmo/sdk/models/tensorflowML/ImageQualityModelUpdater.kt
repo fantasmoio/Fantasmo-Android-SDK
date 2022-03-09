@@ -16,7 +16,7 @@ import java.io.IOException
 class ImageQualityModelUpdater(val context: Context) {
 
     private val TAG = ImageQualityModelUpdater::class.java.simpleName
-    private var fileName = ""
+    private var fileName: String? = null
     var modelVersion = ""
     private var modelUrl = ""
     private val queue = Volley.newRequestQueue(context)
@@ -82,12 +82,14 @@ class ImageQualityModelUpdater(val context: Context) {
      */
     fun getInterpreter(): Interpreter? {
         val remoteConfig = RemoteConfig.remoteConfig
-        if (remoteConfig.imageQualityFilterModelUri != null &&
-            remoteConfig.imageQualityFilterModelVersion != null &&
-            remoteConfig.imageQualityFilterModelVersion != modelVersion
+        val modelUri = remoteConfig.imageQualityFilterModelUri
+        val remoteModelVersion = remoteConfig.imageQualityFilterModelVersion
+        if (modelUri != null &&
+            remoteModelVersion != null &&
+            remoteModelVersion != modelVersion
         ) {
-            modelUrl = remoteConfig.imageQualityFilterModelUri!!
-            modelVersion = remoteConfig.imageQualityFilterModelVersion!!
+            modelUrl = modelUri
+            modelVersion = remoteModelVersion
             fileName = "image-quality-estimator-$modelVersion.tflite"
             hasRequestedUpdate = true
             Log.d(TAG, "Received model version: $modelVersion")
@@ -109,6 +111,9 @@ class ImageQualityModelUpdater(val context: Context) {
      * @return `Interpreter` with the model loaded
      */
     private fun checkForUpdates(): Interpreter? {
+        if(fileName == null) {
+            return null
+        }
         val file = File(context.filesDir, fileName)
         if (!file.exists()) {
             if (!hasRequestedModel) {
@@ -127,7 +132,7 @@ class ImageQualityModelUpdater(val context: Context) {
                 interpreter
             } else {
                 try {
-                    Log.d(TAG, "Model file present in App data.")
+                    Log.d(TAG, "Model file present in file ${context.filesDir}/$fileName")
                     //Initialize interpreter an keep it in memory
                     interpreter = Interpreter(file, options)
                     firstRead = false
@@ -135,6 +140,9 @@ class ImageQualityModelUpdater(val context: Context) {
                 } catch (ex: IOException) {
                     //file does not exist
                     Log.e(TAG, "Error on reading the model.")
+                    null
+                } catch (e: Error) {
+                    Log.e(TAG, e.localizedMessage)
                     null
                 }
             }
