@@ -54,6 +54,7 @@ class ImageQualityModelUpdater(val context: Context) {
             Request.Method.GET, modelUrl,
             { response ->
                 try {
+                    Log.d(TAG, "Model Network Response received, writing to file...")
                     val fileOutputStream = FileOutputStream(File(context.filesDir, fileName))
                     fileOutputStream.write(response)
                     fileOutputStream.close()
