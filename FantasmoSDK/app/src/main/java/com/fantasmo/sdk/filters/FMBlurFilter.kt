@@ -44,7 +44,6 @@ class FMBlurFilter(
     private lateinit var histogram: ScriptIntrinsicHistogram
     private lateinit var convolve : ScriptIntrinsicConvolve3x3
     private lateinit var resize : ScriptIntrinsicResize
-    private lateinit var imageTypeBuilder: Type.Builder
     private lateinit var resizedImageTypeBuilder: Type.Builder
 
     private var histogramBins = IntArray(256)
@@ -63,9 +62,6 @@ class FMBlurFilter(
             histogram = ScriptIntrinsicHistogram.create(rs, Element.U8(rs))
             convolve = ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs))
             resize = ScriptIntrinsicResize.create(rs)
-            imageTypeBuilder = Type.Builder(rs, Element.U8(rs))
-            imageTypeBuilder.setX(yuvImage.width)
-            imageTypeBuilder.setY(yuvImage.height)
             resizedImageTypeBuilder = Type.Builder(rs, Element.U8(rs))
             resizedImageTypeBuilder.setX(reducedWidth)
             resizedImageTypeBuilder.setY(reducedHeight)
@@ -112,6 +108,9 @@ class FMBlurFilter(
         if (yuvImage == null) {
             return 0.0f
         } else {
+            val imageTypeBuilder = Type.Builder(rs, Element.U8(rs))
+            imageTypeBuilder.setX(yuvImage.width)
+            imageTypeBuilder.setY(yuvImage.height)
             val inputAllocation = Allocation.createTyped(rs, imageTypeBuilder.create())
             val resizedAllocation = Allocation.createTyped(rs, resizedImageTypeBuilder.create())
             val convolveOutputAllocation = Allocation.createTyped(rs, resizedImageTypeBuilder.create())
