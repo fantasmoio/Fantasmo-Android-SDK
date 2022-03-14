@@ -25,7 +25,7 @@ class FMAutoGammaCorrectionFilter(private val targetBrightness : Float, private 
             histogramIntrinsic = ScriptIntrinsicHistogram.create(rs, Element.U8(rs))
             colorLUT = ScriptIntrinsicLUT.create(rs, Element.U8_4(rs))
         }
-        fmFrame.yuvImage = applyAutoGammaCorrection(fmFrame.yuvImage, targetBrightness)
+        applyAutoGammaCorrection(fmFrame, targetBrightness)
         return FMFrameFilterResult.Accepted
     }
 
@@ -39,9 +39,10 @@ class FMAutoGammaCorrectionFilter(private val targetBrightness : Float, private 
      * @return Corrected YUV image
      * */
     @RequiresApi(Build.VERSION_CODES.KITKAT)
-    fun applyAutoGammaCorrection(yuvImage: YuvImage?, meanT: Float): YuvImage? {
+    fun applyAutoGammaCorrection(fmFrame: FMFrame, meanT: Float) {
+        val yuvImage = fmFrame.yuvImage
         if (yuvImage == null) {
-            return null
+            return
         } else {
             // Calculate histogram with RenderScript
             val luminanceInput = Allocation.createSized(rs, Element.U8(rs), yuvImage.height * yuvImage.width)
@@ -68,7 +69,7 @@ class FMAutoGammaCorrectionFilter(private val targetBrightness : Float, private 
             }
 
             if (meanBrightness > meanT) {
-                return yuvImage
+                return
             }
             else {
                 // Trying to fit mean brightness around meanT +- 1%
@@ -123,7 +124,8 @@ class FMAutoGammaCorrectionFilter(private val targetBrightness : Float, private 
                 yuvImage.yuvData.copyInto(finalArray, yuvImage.width * yuvImage.height, yuvImage.width * yuvImage.height, yuvImage.yuvData.size - 1)
                 finalInput.destroy()
                 finalOutput.destroy()
-                return YuvImage(finalArray, yuvImage.yuvFormat, yuvImage.width, yuvImage.height, yuvImage.strides)
+                fmFrame.enhancedImageGamma = gamma.toFloat()
+                fmFrame.yuvImage = YuvImage(finalArray, yuvImage.yuvFormat, yuvImage.width, yuvImage.height, yuvImage.strides)
             }
         }
     }

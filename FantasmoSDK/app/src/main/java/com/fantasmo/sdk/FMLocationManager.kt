@@ -262,6 +262,11 @@ class FMLocationManager(private val context: Context) {
             } else {
                 null
             }
+        val imageEnhancementInfo: FMImageEnhancementInfo? = if (fmFrame.enhancedImageGamma == 1.0f) {
+            null
+        } else {
+            FMImageEnhancementInfo(fmFrame.enhancedImageGamma)
+        }
         val frameAnalytics = FMLocalizationAnalytics(
             appSessionId,
             appSessionTags,
@@ -270,6 +275,7 @@ class FMLocationManager(private val context: Context) {
             rotationSpread,
             accumulatedARCoreInfo.translationAccumulator.totalTranslation,
             motionManager.magneticField,
+            imageEnhancementInfo,
             imageQualityFilterInfo,
             rc.remoteConfigId
         )

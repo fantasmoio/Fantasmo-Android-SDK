@@ -36,6 +36,7 @@ class FMLocalizationAnalytics(
     var rotationSpread: FMRotationSpread,
     var totalDistance: Float,
     var magneticField: MagneticField,
+    var imageEnhancementInfo: FMImageEnhancementInfo?,
     var imageQualityFilterInfo: FMImageQualityFilterInfo?,
     var remoteConfigId: String
 )
@@ -75,6 +76,13 @@ class FMRotationSpread(
 class FMFrameResolution(
     var height: Int,
     var width: Int
+)
+
+/**
+ * Class to hold image enhancement info
+ */
+class FMImageEnhancementInfo(
+    var gamma: Float
 )
 
 /**
@@ -263,6 +271,10 @@ class FMApi(
                 request.analytics.imageQualityFilterInfo!!.modelVersion
             params["imageQualityScore"] =
                 String.format("%.5f", request.analytics.imageQualityFilterInfo!!.lastImageQualityScore)
+        }
+
+        if(request.analytics.imageEnhancementInfo != null) {
+            params["imageEnhancementInfo"] = gson.toJson(request.analytics.imageEnhancementInfo)
         }
 
         params["remoteConfigId"] = gson.toJson(request.analytics.remoteConfigId)
