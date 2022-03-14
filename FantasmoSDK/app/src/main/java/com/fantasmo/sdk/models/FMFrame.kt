@@ -27,7 +27,7 @@ class FMFrame (private val frame: Frame,
     val androidSensorPose = frame.androidSensorPose
     val timestamp = frame.timestamp
     private var _yuvImage: YuvImage? = null
-    var enhancedImageGamma: Float = 1.0f
+    var enhancedImageGamma: Float? = null
 
     var yuvImage: YuvImage?
         @RequiresApi(Build.VERSION_CODES.KITKAT)

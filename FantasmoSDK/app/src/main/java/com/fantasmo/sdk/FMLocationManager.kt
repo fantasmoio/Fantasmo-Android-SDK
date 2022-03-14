@@ -262,10 +262,11 @@ class FMLocationManager(private val context: Context) {
             } else {
                 null
             }
-        val imageEnhancementInfo: FMImageEnhancementInfo? = if (fmFrame.enhancedImageGamma == 1.0f) {
+        val gamma = fmFrame.enhancedImageGamma
+        val imageEnhancementInfo: FMImageEnhancementInfo? = if (gamma == null) {
             null
         } else {
-            FMImageEnhancementInfo(fmFrame.enhancedImageGamma)
+            FMImageEnhancementInfo(gamma)
         }
         val frameAnalytics = FMLocalizationAnalytics(
             appSessionId,
