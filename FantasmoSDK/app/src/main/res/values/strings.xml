@@ -27,7 +27,7 @@
     <string name="camera_angles_spread">Camera Angles Spread:</string>
     <string name="normal">Normal:</string>
     <string name="limited">; Limited:</string>
-    <string name="excessivemotion">ExcessiveMotion:</string>
+    <string name="excessive_motion">ExcessiveMotion:</string>
     <string name="not_available">; Not Available:</string>
     <string name="insufficient_features">; Insufficient Features:</string>
     <string name="pitch_low">Pitch Low:</string>
@@ -39,20 +39,22 @@
     <string name="features">; Features:</string>
     <string name="upload_time">; Upload Time:</string>
     <string name="last_result">Last Result:</string>
-    <string name="filterresult">FilterResult</string>
+    <string name="filter_result">FilterResult</string>
     <string name="qr">QR</string>
     <string name="device_location">Device Location:</string>
     <string name="scan_qr_code">Scan QR Code</string>
     <string name="verify_parking">VERIFY PARKING</string>
     <string name="exit">Exit</string>
-    <string name="imagequalitymodelversion">IQModel:</string>
+    <string name="image_quality_model_version">IQModel:</string>
     <string name="_1_0">1.0</string>
-    <string name="insuficient_quality">; Insufficient Quality:</string>
+    <string name="insufficient_quality">; Insufficient Quality:</string>
+    <string name="image_gamma_correction">; Image Gamma Correction:</string>
     <string name="last_result_iq">; Last Result:</string>
     <string name="skip">Skip</string>
+    <string name="none">None</string>
     <string name="enter_manually">Enter Manually</string>
     <string name="enter_qr_code">Enter QR Code</string>
     <string name="remote_config">Remote Config:</string>
-    <string name="frameerror">; FrameError:</string>
+    <string name="frame_error">; FrameError:</string>
 
 </resources>

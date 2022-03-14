@@ -52,6 +52,7 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     private var imageQualityModelVersion: TextView = arLayout.findViewById(R.id.imageQualityVersionTextview)
     private var imageQualityInsufficient: TextView = arLayout.findViewById(R.id.imageQualityInsufficientTextView)
     private var imageQualityLastResult: TextView = arLayout.findViewById(R.id.lastResultIQTextView)
+    private var imageGammaCorrection: TextView = arLayout.findViewById(R.id.imageGammaCorrection)
 
     private var frameErrorTv: TextView = arLayout.findViewById(R.id.frameErrorTextView)
 
@@ -107,6 +108,12 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
                     "[${info.rotationAccumulator.pitch[0]},${info.rotationAccumulator.pitch[1]}],${info.rotationAccumulator.pitch[2]}\n" +
                     "[${info.rotationAccumulator.roll[0]},${info.rotationAccumulator.roll[1]}],${info.rotationAccumulator.roll[2]}"
         cameraAnglesSpreadTv.text = stringSpread
+        val gamma = fmFrame.enhancedImageGamma
+        imageGammaCorrection.text = if(gamma != null) {
+            String.format("%.3f", gamma)
+        } else {
+            "None"
+        }
     }
 
     fun updateState(didChangeState: FMLocationManager.State) {
