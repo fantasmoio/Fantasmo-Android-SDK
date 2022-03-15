@@ -29,6 +29,8 @@ class FMFrameFilterChain(context: Context) {
 
     private val context: Context
 
+    private var imageEnhancer: FMAutoGammaCorrectionFilter? = null
+
     /**
      * Active frame filters, in order of increasing computational cost
      */
@@ -71,6 +73,7 @@ class FMFrameFilterChain(context: Context) {
                     context
                 )
                 filters.add(imageEnhancer)
+                this.imageEnhancer = imageEnhancer
             }
             if (rc.isImageQualityFilterEnabled) {
                 val imageQualityFilter = FMImageQualityFilter(
@@ -98,6 +101,7 @@ class FMFrameFilterChain(context: Context) {
     @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     fun accepts(fmFrame: FMFrame): FMFrameFilterResult {
         if (shouldForceAccept()) {
+            imageEnhancer?.accepts(fmFrame)
             lastAcceptTime = System.nanoTime()
             return FMFrameFilterResult.Accepted
         } else {
