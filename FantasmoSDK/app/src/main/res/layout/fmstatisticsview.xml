@@ -275,7 +275,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:background="@color/fmTransparentWhite"
-        android:text="@string/excessivemotion"
+        android:text="@string/excessive_motion"
         android:textColor="@color/black"
         app:layout_constraintStart_toStartOf="@+id/normalText"
         app:layout_constraintTop_toBottomOf="@+id/normalText" />
@@ -475,10 +475,32 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:background="@color/fmTransparentWhite"
-        android:text="@string/imagequalitymodelversion"
+        android:text="@string/image_quality_model_version"
         android:textColor="@color/black"
         app:layout_constraintStart_toStartOf="@+id/tooFastText"
         app:layout_constraintTop_toBottomOf="@+id/tooFastText" />
+
+    <TextView
+        android:id="@+id/ImageGammaCorrectionText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="@color/fmTransparentWhite"
+        android:text="@string/image_gamma_correction"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="@+id/tooFastText"
+        app:layout_constraintTop_toBottomOf="@+id/imageQualityVersionText" />
+
+    <TextView
+        android:id="@+id/imageGammaCorrection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/fmTransparentWhite"
+        android:text="@string/none"
+        android:textColor="@color/black"
+        app:layout_constraintBottom_toBottomOf="@+id/ImageGammaCorrectionText"
+        app:layout_constraintStart_toEndOf="@+id/ImageGammaCorrectionText"
+        app:layout_constraintTop_toTopOf="@+id/ImageGammaCorrectionText" />
 
     <TextView
         android:id="@+id/imageQualityVersionTextview"
@@ -496,7 +518,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@color/fmTransparentWhite"
-        android:text="@string/insuficient_quality"
+        android:text="@string/insufficient_quality"
         android:textColor="@color/black"
         app:layout_constraintBottom_toBottomOf="@+id/imageQualityVersionTextview"
         app:layout_constraintStart_toEndOf="@+id/imageQualityVersionTextview"
@@ -563,7 +585,7 @@
         android:id="@+id/frameErrorText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/frameerror"
+        android:text="@string/frame_error"
         android:textColor="@color/black"
         android:background="@color/fmTransparentWhite"
         app:layout_constraintBottom_toBottomOf="@+id/normalTextView"

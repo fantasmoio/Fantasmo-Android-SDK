@@ -115,26 +115,29 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
      * @return Float result of the model inference
      */
     private fun processImage(rgb: FloatArray): Float? {
+        if(imageQualityModel == null) {
+            return null
+        } else {
+            val tfBuffer = TensorBuffer.createFixedSize(mlShape, DataType.FLOAT32)
+            tfBuffer.loadArray(rgb)
 
-        val tfBuffer = TensorBuffer.createFixedSize(mlShape, DataType.FLOAT32)
-        tfBuffer.loadArray(rgb)
+            val tfBufferOut = TensorBuffer.createFixedSize(intArrayOf(1, 2), DataType.FLOAT32)
+            tfBufferOut.loadArray(floatArrayOf(0f, 0f))
 
-        val tfBufferOut = TensorBuffer.createFixedSize(intArrayOf(1, 2), DataType.FLOAT32)
-        tfBufferOut.loadArray(floatArrayOf(0f, 0f))
+            imageQualityModel!!.run(tfBuffer.buffer, tfBufferOut.buffer)
 
-        imageQualityModel!!.run(tfBuffer.buffer, tfBufferOut.buffer)
-
-        return if (tfBufferOut.floatArray.size == 2) {
-            val y1Exp = exp(tfBufferOut.floatArray[0])
-            val y2Exp = exp(tfBufferOut.floatArray[1])
-            if (!y1Exp.isNaN() && y1Exp.isFinite() && !y2Exp.isNaN() && y2Exp.isFinite()) {
-                val score = 1 / (1 + y2Exp / y1Exp)
-                score
+            return if (tfBufferOut.floatArray.size == 2) {
+                val y1Exp = exp(tfBufferOut.floatArray[0])
+                val y2Exp = exp(tfBufferOut.floatArray[1])
+                if (!y1Exp.isNaN() && y1Exp.isFinite() && !y2Exp.isNaN() && y2Exp.isFinite()) {
+                    val score = 1 / (1 + y2Exp / y1Exp)
+                    score
+                } else {
+                    null
+                }
             } else {
                 null
             }
-        } else {
-            null
         }
     }
 }

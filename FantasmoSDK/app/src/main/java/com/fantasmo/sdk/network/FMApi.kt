@@ -37,6 +37,8 @@ class FMLocalizationAnalytics(
     var rotationSpread: FMRotationSpread,
     var totalDistance: Float,
     var magneticField: MagneticField,
+    var imageEnhancementInfo: FMImageEnhancementInfo?,
+    var imageQualityFilterInfo: FMImageQualityFilterInfo?,
     var remoteConfigId: String
 )
 
@@ -70,6 +72,13 @@ class FMFrameResolution(
 )
 
 /**
+ * Class to hold image enhancement info
+ */
+class FMImageEnhancementInfo(
+    var gamma: Float
+)
+
+/**
  * Class to hold the necessary logic to communicate with Fantasmo API.
  */
 class FMApi(
@@ -90,9 +99,10 @@ class FMApi(
         onError: (ErrorResponse) -> Unit
     ) {
         try {
+            val imageData = imageData(fmFrame, request) ?: error("No image data to send in request")
             fmNetworkManager.uploadImage(
                 FMConfiguration.getServerURL(),
-                imageData(fmFrame, request)!!,
+                imageData,
                 getLocalizeParams(fmFrame, request),
                 token,
                 {
@@ -253,6 +263,10 @@ class FMApi(
         // add frame evaluation info, if available
         if (fmFrame.evaluation != null) {
             params["frameEvaluation"] = gson.toJson(fmFrame.evaluation)
+        }
+
+        if(request.analytics.imageEnhancementInfo != null) {
+            params["imageEnhancementInfo"] = gson.toJson(request.analytics.imageEnhancementInfo)
         }
 
         params["remoteConfigId"] = gson.toJson(request.analytics.remoteConfigId)

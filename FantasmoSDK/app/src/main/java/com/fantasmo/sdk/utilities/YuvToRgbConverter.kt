@@ -26,7 +26,7 @@ class YuvToRgbConverter(
      * @return Bitmap in RGB format
      */
     fun toBitmap(yuvImage: YuvImage): Bitmap {
-        val output = Bitmap.createBitmap(yuvImage.width, yuvImage.width, Bitmap.Config.ARGB_8888)
+        val output = Bitmap.createBitmap(yuvImage.width, yuvImage.height, Bitmap.Config.ARGB_8888)
 
         // Ensure that the RenderScript inputs and outputs are allocated
         if (!::rs.isInitialized) {
@@ -35,8 +35,10 @@ class YuvToRgbConverter(
             resizeIntrinsic = ScriptIntrinsicResize.create(rs)
         }
         // Explicitly create an element with type NV21, since that's the pixel format we use
-        val elemType = Type.Builder(rs, Element.YUV(rs)).setYuvFormat(ImageFormat.NV21).create()
-        val inputAllocation = Allocation.createSized(rs, elemType.element, yuvImage.yuvData.size)
+        val builder = Type.Builder(rs, Element.YUV(rs)).setYuvFormat(ImageFormat.NV21)
+        builder.setX(yuvImage.width)
+        builder.setY(yuvImage.height)
+        val inputAllocation = Allocation.createTyped(rs, builder.create())
         yuvToRgbIntrinsic.setInput(inputAllocation)
         val outputAllocation = Allocation.createFromBitmap(rs, output)
         // Convert NV21 format YUV to RGB
@@ -67,8 +69,10 @@ class YuvToRgbConverter(
         }
 
         // Explicitly create an element with type NV21, since that's the pixel format we use
-        val elemType = Type.Builder(rs, Element.YUV(rs)).setYuvFormat(ImageFormat.NV21).create()
-        val inputAllocation = Allocation.createSized(rs, elemType.element, yuvImage.yuvData.size)
+        val builder = Type.Builder(rs, Element.YUV(rs)).setYuvFormat(ImageFormat.NV21)
+        builder.setX(yuvImage.width)
+        builder.setY(yuvImage.height)
+        val inputAllocation = Allocation.createTyped(rs, builder.create())
         yuvToRgbIntrinsic.setInput(inputAllocation)
         val outputAllocation = Allocation.createFromBitmap(rs, output)
         resizeIntrinsic.setInput(outputAllocation)

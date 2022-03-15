@@ -28,6 +28,7 @@ class FMFrame (private val frame: Frame,
     val androidSensorPose = frame.androidSensorPose
     val timestamp = frame.timestamp
     private var _yuvImage: YuvImage? = null
+    var enhancedImageGamma: Float? = null
 
     var evaluation: FMFrameEvaluation? = null // nil if no evaluation has been done, or evaluator error
 
@@ -80,11 +81,12 @@ class FMFrame (private val frame: Frame,
     }
 
     fun imageData(): ByteArray? {
-        val imageBitmap = yuvImage?.let { yuvToRgbConverter.toBitmap(it) }
-        imageBitmap?.rotate(getImageRotationDegrees(context))
-        val data = imageBitmap?.let { getFileDataFromDrawable(it) }
+        val image = yuvImage ?: return null
+        val imageBitmap = yuvToRgbConverter.toBitmap(image)
+        imageBitmap.rotate(getImageRotationDegrees(context))
+        val data = getFileDataFromDrawable(imageBitmap)
 
-        imageBitmap?.recycle()
+        imageBitmap.recycle()
         return data
     }
 
