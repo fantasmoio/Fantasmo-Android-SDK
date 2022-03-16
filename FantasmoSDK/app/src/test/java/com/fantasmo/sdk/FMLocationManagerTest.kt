@@ -249,7 +249,7 @@ class FMLocationManagerTest {
 
         val cameraPose = getAcceptedPose()
         `when`(frame.camera.pose).thenReturn(cameraPose)
-        `when`(frame.androidSensorPose).thenReturn(cameraPose)
+        `when`(frame.cameraPose).thenReturn(cameraPose)
 
         val accumulatedARCoreInfo = AccumulatedARCoreInfo()
         val fieldAccumulatedARCoreInfo = fmLocationManager.javaClass.getDeclaredField("accumulatedARCoreInfo")
@@ -311,8 +311,8 @@ class FMLocationManagerTest {
 
         val cameraPose = getAcceptedPose()
         val pose2 = mock(Pose::class.java)
-        `when`(frame.androidSensorPose).thenReturn(pose2)
-        `when`(frame.androidSensorPose.rotationQuaternion)
+        `when`(frame.cameraPose).thenReturn(pose2)
+        `when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(cameraPose.rotationQuaternion)
 
         `when`(frame.camera.displayOrientedPose).thenReturn(pose2)
@@ -361,8 +361,8 @@ class FMLocationManagerTest {
 
         val cameraPose = getRejectedPose()
         val pose2 = mock(Pose::class.java)
-        `when`(frame.androidSensorPose).thenReturn(pose2)
-        `when`(frame.androidSensorPose.rotationQuaternion)
+        `when`(frame.cameraPose).thenReturn(pose2)
+        `when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(cameraPose.rotationQuaternion)
 
         `when`(frame.camera.displayOrientedPose).thenReturn(pose2)
@@ -424,7 +424,7 @@ class FMLocationManagerTest {
         `when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.NONE)
         val cameraPose = getAcceptedPose()
         `when`(frame.camera.pose).thenReturn(cameraPose)
-        `when`(frame.androidSensorPose).thenReturn(cameraPose)
+        `when`(frame.cameraPose).thenReturn(cameraPose)
 
         fmLocationManager.session(frame)
 
@@ -447,8 +447,8 @@ class FMLocationManagerTest {
         val cameraPose = getRejectedPose()
 
         val pose2 = mock(Pose::class.java)
-        `when`(frame.androidSensorPose).thenReturn(pose2)
-        `when`(frame.androidSensorPose.rotationQuaternion)
+        `when`(frame.cameraPose).thenReturn(pose2)
+        `when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(cameraPose.rotationQuaternion)
 
         `when`(frame.camera.pose).thenReturn(pose2)
@@ -543,8 +543,8 @@ class FMLocationManagerTest {
 
         val cameraPose = getAcceptedPose()
         val pose2 = mock(Pose::class.java)
-        `when`(frame.androidSensorPose).thenReturn(pose2)
-        `when`(frame.androidSensorPose.rotationQuaternion)
+        `when`(frame.cameraPose).thenReturn(pose2)
+        `when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(cameraPose.rotationQuaternion)
 
         `when`(frame.camera.pose).thenReturn(pose2)
@@ -622,8 +622,8 @@ class FMLocationManagerTest {
         val cameraPose = getAcceptedPose()
 
         val pose2 = mock(Pose::class.java)
-        `when`(frame.androidSensorPose).thenReturn(pose2)
-        `when`(frame.androidSensorPose.rotationQuaternion)
+        `when`(frame.cameraPose).thenReturn(pose2)
+        `when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(cameraPose.rotationQuaternion)
 
         `when`(frame.camera.pose).thenReturn(pose2)
@@ -704,8 +704,8 @@ class FMLocationManagerTest {
         val cameraPose = getAcceptedPose()
 
         val pose2 = mock(Pose::class.java)
-        `when`(frame.androidSensorPose).thenReturn(pose2)
-        `when`(frame.androidSensorPose.rotationQuaternion)
+        `when`(frame.cameraPose).thenReturn(pose2)
+        `when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(cameraPose.rotationQuaternion)
 
         `when`(frame.camera.pose).thenReturn(pose2)

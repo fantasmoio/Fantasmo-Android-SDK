@@ -2,22 +2,11 @@ package com.fantasmo.sdk
 
 import android.content.Context
 import android.graphics.*
-import android.media.Image
 import android.os.Build
-import android.util.Log
-import android.view.Display
-import android.view.Surface
-import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.models.*
-import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import com.fantasmo.sdk.utilities.math.Vector3
-import com.google.ar.core.Frame
 import com.google.ar.core.Pose
-import com.google.ar.core.exceptions.DeadlineExceededException
-import com.google.ar.core.exceptions.NotYetAvailableException
-import com.google.ar.core.exceptions.ResourceExhaustedException
-import java.io.ByteArrayOutputStream
 import kotlin.math.*
 
 /**
@@ -43,7 +32,7 @@ class FMUtility {
             // Pose of frame must be taken for "virtual" device as we send to server orientation of
             // "virtual" device for "localization" frame
             val poseARVirtualFrame = fmFrame.camera.displayOrientedPose
-            val poseAnchor = anchorFrame.androidSensorPose
+            val poseAnchor = anchorFrame.cameraPose
 
             return if (poseAnchor != null && poseARVirtualFrame != null) {
                 FMPose.diffPose(poseAnchor, poseARVirtualFrame)
