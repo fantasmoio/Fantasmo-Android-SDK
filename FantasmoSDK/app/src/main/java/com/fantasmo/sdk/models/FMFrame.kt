@@ -24,7 +24,7 @@ class FMFrame (private val frame: Frame,
 {
     private val TAG = FMFrame::class.java.simpleName
     val camera: Camera = frame.camera
-    val androidSensorPose = frame.androidSensorPose
+    val cameraPose = camera.pose
     val timestamp = frame.timestamp
     private var _yuvImage: YuvImage? = null
     var enhancedImageGamma: Float? = null
