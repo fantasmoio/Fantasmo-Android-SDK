@@ -136,6 +136,7 @@ class ImageQualityModelUpdater(val context: Context) {
                     Log.d(TAG, "Model file present in file ${context.filesDir}/$fileName")
                     //Initialize interpreter an keep it in memory
                     interpreter = Interpreter(file, options)
+                    modelVersion = RemoteConfig.remoteConfig.imageQualityFilterModelVersion ?: ""
                     firstRead = false
                     interpreter
                 } catch (ex: IOException) {

@@ -5,7 +5,7 @@
 
     <!-- Camera Fragment TextViews -->
     <string name="camera_translation">Camera Translation</string>
-    <string name="camera_angles">Camera Angles:</string>
+    <string name="camera_angles">Euler Angles:</string>
     <string name="device_coordinates">Device Coordinates</string>
     <string name="localize">Localize</string>
     <string name="anchor">Anchor</string>
@@ -24,7 +24,7 @@
     <string name="translation">Translation:</string>
     <string name="distance_traveled">Distance travelled:</string>
     <string name="_0_0s">0,0s</string>
-    <string name="camera_angles_spread">Camera Angles Spread:</string>
+    <string name="camera_angles_spread">Euler Angles Spread:</string>
     <string name="normal">Normal:</string>
     <string name="limited">; Limited:</string>
     <string name="excessive_motion">ExcessiveMotion:</string>
@@ -47,8 +47,8 @@
     <string name="exit">Exit</string>
     <string name="image_quality_model_version">IQModel:</string>
     <string name="_1_0">1.0</string>
-    <string name="insufficient_quality">; Insufficient Quality:</string>
-    <string name="image_gamma_correction">; Image Gamma Correction:</string>
+    <string name="insufficient_quality">; Rejections:</string>
+    <string name="image_gamma_correction">Image Gamma Correction:</string>
     <string name="last_result_iq">; Last Result:</string>
     <string name="skip">Skip</string>
     <string name="none">None</string>
