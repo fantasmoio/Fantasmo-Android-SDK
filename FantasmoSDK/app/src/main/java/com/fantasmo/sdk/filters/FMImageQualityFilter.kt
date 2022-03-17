@@ -31,7 +31,7 @@ class FMImageQualityFilter(imageQualityScoreThreshold: Float, val context: Conte
      * ImageQualityEstimatorModel initializer.
      */
     private var imageQualityModelUpdater = ImageQualityModelUpdater(context)
-    var modelVersion = imageQualityModelUpdater.modelVersion
+    val modelVersion get()  = imageQualityModelUpdater.modelVersion
     private var imageQualityModel: Interpreter? = null
     private lateinit var colorMatrixIntrinsic: ScriptIntrinsicColorMatrix
     private lateinit var scalingMatrix: Matrix3f
