@@ -176,7 +176,7 @@ class FMParkingView @JvmOverloads constructor(
      * @param sessionId an identifier for the parking session
      * @param sessionTags an optional list of tags for the parking session
      */
-    fun connect(sessionId: String, sessionTags: List<String>?) {
+    fun connect(sessionId: String, sessionTags: List<String>? = null) {
         this.visibility = View.VISIBLE
 
         appSessionId = sessionId

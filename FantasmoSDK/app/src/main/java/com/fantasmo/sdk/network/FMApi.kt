@@ -256,7 +256,11 @@ class FMApi(
         // session identifiers
         params["appSessionId"] = request.analytics.appSessionId!!
         val appSessionTags = request.analytics.appSessionTags
-        params["appSessionTags"] = gson.toJson(appSessionTags)
+        params["appSessionTags"] = if (appSessionTags != null) {
+             gson.toJson(appSessionTags)
+        } else {
+            ""
+        }
 
         params["localizationSessionId"] = request.analytics.localizationSessionId!!
 
