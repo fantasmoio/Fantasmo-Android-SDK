@@ -25,7 +25,7 @@ class FMMovementFilterTest {
                 (-0.005).toFloat()
             )
         )
-        `when`(frame.androidSensorPose).thenReturn(pose)
+        `when`(frame.cameraPose).thenReturn(pose)
 
         assertEquals(
             FMFrameFilterResult.Accepted,
@@ -47,7 +47,7 @@ class FMMovementFilterTest {
                 0F, 0F, 0F, 1F
             )
         )
-        `when`(frame.androidSensorPose).thenReturn(pose)
+        `when`(frame.cameraPose).thenReturn(pose)
 
         assertEquals(
             FMFrameFilterRejectionReason.MovingTooLittle,

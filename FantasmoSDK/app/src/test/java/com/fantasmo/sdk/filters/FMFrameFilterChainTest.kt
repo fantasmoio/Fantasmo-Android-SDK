@@ -76,8 +76,8 @@ class FMFrameFilterChainTest {
         Mockito.`when`(frame.camera).thenReturn(camera)
         Mockito.`when`(frame.camera.pose).thenReturn(pose2)
         Mockito.`when`(frame.camera.pose.translation).thenReturn(pose.translation)
-        Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
-        Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
+        Mockito.`when`(frame.cameraPose).thenReturn(pose2)
+        Mockito.`when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
 
         Mockito.`when`(frame.camera.displayOrientedPose).thenReturn(pose2)
@@ -136,8 +136,8 @@ class FMFrameFilterChainTest {
         Mockito.`when`(frame.camera).thenReturn(camera)
         Mockito.`when`(frame.camera.pose).thenReturn(pose2)
         Mockito.`when`(frame.camera.pose.translation).thenReturn(pose.translation)
-        Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
-        Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
+        Mockito.`when`(frame.cameraPose).thenReturn(pose2)
+        Mockito.`when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
 
         Mockito.`when`(frame.camera.displayOrientedPose).thenReturn(pose2)

@@ -61,11 +61,11 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         info: AccumulatedARCoreInfo,
         rejections: FrameFilterRejectionStatistics
     ) {
-        val cameraTranslation = fmFrame.androidSensorPose?.translation
+        val cameraTranslation = fmFrame.cameraPose?.translation
         cameraTranslationTv.text =
             createStringDisplay(cameraTranslation)
 
-        val cameraRotation = fmFrame.androidSensorPose?.rotationQuaternion
+        val cameraRotation = fmFrame.cameraAngles
         cameraAnglesTv.text = createStringDisplay(cameraRotation)
 
         normalTv.text =

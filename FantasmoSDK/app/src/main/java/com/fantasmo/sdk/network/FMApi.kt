@@ -210,7 +210,7 @@ class FMApi(
         fmFrame: FMFrame,
         request: FMLocalizationRequest
     ): HashMap<String, String> {
-        val pose = FMUtility.getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context, fmFrame)
+        val pose = FMUtility.getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(fmFrame)
 
         val location = request.location
 

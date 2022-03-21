@@ -1,29 +1,14 @@
 package com.fantasmo.sdk
 
-import android.content.Context
 import android.graphics.*
-import android.media.Image
-import android.os.Build
-import android.util.Log
-import android.view.Display
-import android.view.Surface
-import android.view.WindowManager
-import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.models.*
-import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import com.fantasmo.sdk.utilities.math.Vector3
-import com.google.ar.core.Frame
 import com.google.ar.core.Pose
-import com.google.ar.core.exceptions.DeadlineExceededException
-import com.google.ar.core.exceptions.NotYetAvailableException
-import com.google.ar.core.exceptions.ResourceExhaustedException
-import java.io.ByteArrayOutputStream
 import kotlin.math.*
 
 /**
  * Class with utility methods and constants
  */
-@RequiresApi(Build.VERSION_CODES.KITKAT)
 class FMUtility {
 
     companion object {
@@ -31,7 +16,7 @@ class FMUtility {
         /**
          * Utility method to get the correct Pose for each of the device orientations.
          */
-        fun getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(context: Context, fmFrame: FMFrame): FMPose {
+        fun getPoseOfOpenCVVirtualCameraBasedOnDeviceOrientation(fmFrame: FMFrame): FMPose {
             return FMPose(fmFrame.camera.displayOrientedPose)
         }
 
@@ -43,7 +28,7 @@ class FMUtility {
             // Pose of frame must be taken for "virtual" device as we send to server orientation of
             // "virtual" device for "localization" frame
             val poseARVirtualFrame = fmFrame.camera.displayOrientedPose
-            val poseAnchor = anchorFrame.androidSensorPose
+            val poseAnchor = anchorFrame.cameraPose
 
             return if (poseAnchor != null && poseARVirtualFrame != null) {
                 FMPose.diffPose(poseAnchor, poseARVirtualFrame)
@@ -61,45 +46,27 @@ class FMUtility {
 
         /**
          * Converts Quaternion to Euler Angles.
-         * Source: https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
+         * Source: https://github.com/IdeoG/quaternion-vector3-java/blob/master/Quaternion.java
          * @param rotationQuaternion: rotation quaternion correspondent to rotation of the device
          * */
         fun convertQuaternionToEuler(rotationQuaternion: FloatArray): FloatArray {
-            val qw = rotationQuaternion[3]
-            val qx = rotationQuaternion[0]
-            val qy = rotationQuaternion[1]
-            val qz = rotationQuaternion[2]
+            val eulerAngles = FloatArray(3)
+            val w = rotationQuaternion[3]
+            val x = rotationQuaternion[0]
+            val y = rotationQuaternion[1]
+            val z = rotationQuaternion[2]
+            val sqw = w * w
+            val sqx = x * x
+            val sqy = y * y
+            val sqz = z * z
 
-            val yaw: Float
-            val pitch: Float
-            val roll: Float
+            eulerAngles[0] =
+                atan2(2.0 * (x * y + z * w), (sqx - sqy - sqz + sqw).toDouble()).toFloat()
+            eulerAngles[1] =
+                atan2(2.0 * (y * z + x * w), (-sqx - sqy + sqz + sqw).toDouble()).toFloat()
+            eulerAngles[2] = asin(-2.0 * (x * z - y * w)).toFloat()
 
-            val sqw = qw * qw
-            val sqx = qx * qx
-            val sqy = qy * qy
-            val sqz = qz * qz
-
-            val unit = sqx + sqy + sqz + sqw // if normalised is one, otherwise is correction factor
-            val test = qx * qy + qz * qw
-            if (test > 0.499 * unit) { // singularity at north pole
-                yaw = (2 * atan2(qx, qw))
-                pitch = (Math.PI / 2).toFloat()
-                roll = 0f
-                return floatArrayOf(yaw, pitch, roll)
-            }
-            if (test < -0.499 * unit) { // singularity at south pole
-                yaw = (-2 * atan2(qx, qw))
-                pitch = (-Math.PI / 2).toFloat()
-                roll = 0f
-                return floatArrayOf(yaw, pitch, roll)
-            }
-
-            //Values are in radians
-            yaw = atan2(2 * qy * qw - 2 * qx * qz, sqx - sqy - sqz + sqw)
-            pitch = kotlin.math.asin(2 * test / unit)
-            roll = atan2(2 * qx * qw - 2 * qy * qz, -sqx + sqy - sqz + sqw)
-
-            return floatArrayOf(yaw, pitch, roll)
+            return eulerAngles
         }
 
         fun convertToDegrees(eulerAngles: FloatArray): FloatArray {

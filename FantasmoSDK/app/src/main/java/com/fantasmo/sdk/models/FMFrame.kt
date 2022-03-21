@@ -12,9 +12,12 @@ import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.evaluators.FMFrameEvaluation
+import com.fantasmo.sdk.FMUtility.Companion.convertQuaternionToEuler
+import com.fantasmo.sdk.FMUtility.Companion.convertToDegrees
 import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import com.google.ar.core.Camera
 import com.google.ar.core.Frame
+import com.google.ar.core.Pose
 import com.google.ar.core.exceptions.DeadlineExceededException
 import com.google.ar.core.exceptions.NotYetAvailableException
 import com.google.ar.core.exceptions.ResourceExhaustedException
@@ -25,7 +28,11 @@ class FMFrame (private val frame: Frame,
 {
     private val TAG = FMFrame::class.java.simpleName
     val camera: Camera = frame.camera
-    val androidSensorPose = frame.androidSensorPose
+    val cameraPose: Pose? = camera.pose
+    val cameraAngles: FloatArray? = if(cameraPose != null) {
+        convertToDegrees(convertQuaternionToEuler(cameraPose.rotationQuaternion))
+    } else { null}
+
     val timestamp = frame.timestamp
     private var _yuvImage: YuvImage? = null
     var enhancedImageGamma: Float? = null
