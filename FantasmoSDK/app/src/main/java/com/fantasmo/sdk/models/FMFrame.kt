@@ -87,10 +87,11 @@ class FMFrame (private val frame: Frame,
     fun imageData(): ByteArray? {
         val image = yuvImage ?: return null
         val imageBitmap = yuvToRgbConverter.toBitmap(image)
-        imageBitmap.rotate(getImageRotationDegrees(context))
-        val data = getFileDataFromDrawable(imageBitmap)
+        val rotatedBitmap = imageBitmap.rotate(getImageRotationDegrees(context))
+        val data = getFileDataFromDrawable(rotatedBitmap)
 
         imageBitmap.recycle()
+        rotatedBitmap.recycle()
         return data
     }
 
