@@ -1,6 +1,5 @@
 package com.fantasmo.sdk.models.analytics
 
-import com.fantasmo.sdk.FMUtility.Companion.convertQuaternionToEuler
 import com.fantasmo.sdk.models.FMFrame
 import kotlin.math.max
 import kotlin.math.min
@@ -38,7 +37,7 @@ class TotalDeviceRotationAccumulator {
      * @param fmFrame FMFrame
      */
     fun update(fmFrame: FMFrame) {
-        val rotation = fmFrame.cameraAngles
+        val rotation = fmFrame.sensorAngles
         if(rotation != null) {
             updateRotationValues(rotation)
         }

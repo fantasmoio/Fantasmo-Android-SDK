@@ -35,11 +35,8 @@ class FMCameraPitchFilter(
         // RotationQuaternion virtual camera pose
         val orientedQuaternion = fmFrame.camera.displayOrientedPose.rotationQuaternion
         // RotationQuaternion from device sensor system
-        val sensorQuaternion = fmFrame.cameraPose?.rotationQuaternion
-
-        if(sensorQuaternion == null) {
-            return FMFrameFilterResult.Rejected(FMFilterRejectionReason.FRAMEERROR)
-        }
+        val sensorQuaternion = fmFrame.androidSensorPose?.rotationQuaternion
+            ?: return FMFrameFilterResult.Rejected(FMFilterRejectionReason.FRAMEERROR)
 
         val rotation: Int = try {
             context.display?.rotation!!
@@ -85,7 +82,7 @@ class FMCameraPitchFilter(
         val eulerAngles = convertToDegrees(convertQuaternionToEuler(rotationQuaternion))
         return when {
             // If it's looking Up or Down and it's in threshold
-            (eulerAngles[2] in interval) -> {
+            (eulerAngles[0] in interval) -> {
                 FMFrameFilterResult.Accepted
             }
             // If it's looking Up

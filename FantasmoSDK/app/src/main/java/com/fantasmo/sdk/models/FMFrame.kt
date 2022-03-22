@@ -18,6 +18,7 @@ import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import com.google.ar.core.Camera
 import com.google.ar.core.Frame
 import com.google.ar.core.Pose
+import com.google.ar.core.TrackingState
 import com.google.ar.core.exceptions.DeadlineExceededException
 import com.google.ar.core.exceptions.NotYetAvailableException
 import com.google.ar.core.exceptions.ResourceExhaustedException
@@ -28,10 +29,9 @@ class FMFrame (private val frame: Frame,
 {
     private val TAG = FMFrame::class.java.simpleName
     val camera: Camera = frame.camera
-    val cameraPose: Pose? = camera.pose
-    val cameraAngles: FloatArray? = if(cameraPose != null) {
-        convertToDegrees(convertQuaternionToEuler(cameraPose.rotationQuaternion))
-    } else { null}
+    val cameraPose: Pose? =  if(camera.trackingState == TrackingState.TRACKING) camera.pose else null
+    val androidSensorPose: Pose? = if(camera.trackingState == TrackingState.TRACKING) frame.androidSensorPose else null
+    val sensorAngles: FloatArray? = if(androidSensorPose != null) convertToDegrees(convertQuaternionToEuler(androidSensorPose.rotationQuaternion)) else  null
 
     val timestamp = frame.timestamp
     private var _yuvImage: YuvImage? = null
@@ -90,10 +90,11 @@ class FMFrame (private val frame: Frame,
     fun imageData(): ByteArray? {
         val image = yuvImage ?: return null
         val imageBitmap = yuvToRgbConverter.toBitmap(image)
-        imageBitmap.rotate(getImageRotationDegrees(context))
-        val data = getFileDataFromDrawable(imageBitmap)
+        val rotatedBitmap = imageBitmap.rotate(getImageRotationDegrees(context))
+        val data = getFileDataFromDrawable(rotatedBitmap)
 
         imageBitmap.recycle()
+        rotatedBitmap.recycle()
         return data
     }
 
