@@ -160,49 +160,6 @@ class FMParkingView @JvmOverloads constructor(
         fmLocationManager = FMLocationManager(context)
     }
 
-    /**
-     * Check if there's an available parking space near a supplied Location.
-     *
-     * This method should be used to determine whether or not you should try to park and localize with Fantasmo.
-     * The boolean value passed to the completion block tells you if there is an available parking space within the
-     * acceptable radius of the supplied location. If `true`, you should construct a `FMParkingView` and
-     * attempt to localize. If `false` you should resort to other options.
-     *
-     * @param location the Location to check
-     * @param onCompletion block with a boolean result
-     */
-    fun isParkingAvailable(
-        location: Location,
-        onCompletion: (Boolean) -> Unit
-    ) {
-        if (!DeviceLocationManager.isValidLatLng(location.latitude, location.longitude)) {
-            onCompletion(false)
-            Log.e(TAG, "Invalid Coordinates")
-            return
-        }
-
-        val verticalAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            location.verticalAccuracyMeters
-        } else {
-            0.0f
-        }
-        val locationFantasmo =
-            com.fantasmo.sdk.models.Location(
-                location.altitude,
-                location.time,
-                location.accuracy,
-                verticalAccuracy,
-                Coordinate(location.latitude, location.longitude)
-            )
-        val fmApi = FMApi(context, accessToken)
-        fmApi.sendInitializationRequest(locationFantasmo, onCompletion) {
-            if (it.message != null) {
-                Log.e(TAG, it.message)
-            }
-            onCompletion(false)
-        }
-    }
-
     enum class State {
         IDLE,
         QRSCANNING,
