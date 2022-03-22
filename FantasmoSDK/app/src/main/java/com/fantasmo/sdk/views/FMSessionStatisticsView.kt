@@ -65,8 +65,9 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         cameraTranslationTv.text =
             createStringDisplay(cameraTranslation)
 
-        val cameraRotation = fmFrame.cameraAngles
-        cameraAnglesTv.text = createStringDisplay(cameraRotation)
+        val cameraRotation = fmFrame.sensorAngles
+        if(cameraRotation != null)
+            cameraAnglesTv.text = createStringDisplay(cameraRotation)
 
         normalTv.text =
             info.trackingStateFrameStatistics.framesWithNormalTrackingState.toString()
