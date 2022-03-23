@@ -246,7 +246,7 @@ class FMApi(
 
         val params = hashMapOf<String, String>()
         val gson = Gson()
-        params["capturedAt"] = System.currentTimeMillis().toString()
+        params["capturedAt"] = String.format("%.3f", System.currentTimeMillis().toDouble() / 1000.0)
         params["gravity"] = gson.toJson(pose.orientation)
         params["uuid"] = UUID.randomUUID().toString()
         params["location"] = gson.toJson(location)

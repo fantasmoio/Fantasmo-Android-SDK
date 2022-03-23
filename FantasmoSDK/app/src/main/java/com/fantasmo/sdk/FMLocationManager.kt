@@ -118,7 +118,7 @@ class FMLocationManager(private val context: Context) {
         val coordinate = Coordinate(location.latitude, location.longitude)
         this.currentLocation.coordinate = coordinate
         this.currentLocation.altitude = location.altitude
-        this.currentLocation.timestamp = location.time / 1000L
+        this.currentLocation.timestamp = location.time.toDouble() / 1000.0
         this.currentLocation.horizontalAccuracy = location.accuracy
 
         this.currentLocation.verticalAccuracy =

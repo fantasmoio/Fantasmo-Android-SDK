@@ -219,7 +219,7 @@ class FMNetworkManagerTest {
     private fun getLocalizeParams(): HashMap<String, String> {
         val params = hashMapOf<String, String>()
         val gson = Gson()
-        params["capturedAt"] = (System.currentTimeMillis() / 1000L).toString()
+        params["capturedAt"] = String.format("%.3f", System.currentTimeMillis().toDouble() / 1000.0)
         params["gravity"] = gson.toJson(
             Orientation(
                 0.8418958187103271,
