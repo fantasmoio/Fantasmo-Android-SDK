@@ -2,14 +2,13 @@ package com.fantasmo.sdk.filters
 
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import android.view.Display
 import android.view.Surface
 import androidx.test.platform.app.InstrumentationRegistry
 import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.config.RemoteConfigTest
+import com.fantasmo.sdk.models.FMFrame
 import com.google.ar.core.Camera
-import com.google.ar.core.Frame
 import com.google.ar.core.Pose
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Assert.assertEquals
@@ -38,7 +37,7 @@ class FMFrameFilterChainTest {
 
     @Test
     fun testShouldForceAcceptTrue() {
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val camera = Mockito.mock(Camera::class.java)
         Mockito.`when`(frame.camera).thenReturn(camera)
 
@@ -55,7 +54,7 @@ class FMFrameFilterChainTest {
 
     @Test
     fun testShouldForceAcceptFalse() {
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val pose = Pose(
             floatArrayOf(
                 (-0.001).toFloat(),
@@ -77,8 +76,8 @@ class FMFrameFilterChainTest {
         Mockito.`when`(frame.camera).thenReturn(camera)
         Mockito.`when`(frame.camera.pose).thenReturn(pose2)
         Mockito.`when`(frame.camera.pose.translation).thenReturn(pose.translation)
-        Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
-        Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
+        Mockito.`when`(frame.cameraPose).thenReturn(pose2)
+        Mockito.`when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
 
         Mockito.`when`(frame.camera.displayOrientedPose).thenReturn(pose2)
@@ -122,7 +121,7 @@ class FMFrameFilterChainTest {
             )
         ) as MutableList<FMFrameFilter>
 
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val pose = getAcceptedPose()
 
         val lastAcceptTime = 1L
@@ -137,8 +136,8 @@ class FMFrameFilterChainTest {
         Mockito.`when`(frame.camera).thenReturn(camera)
         Mockito.`when`(frame.camera.pose).thenReturn(pose2)
         Mockito.`when`(frame.camera.pose.translation).thenReturn(pose.translation)
-        Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
-        Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
+        Mockito.`when`(frame.cameraPose).thenReturn(pose2)
+        Mockito.`when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
 
         Mockito.`when`(frame.camera.displayOrientedPose).thenReturn(pose2)

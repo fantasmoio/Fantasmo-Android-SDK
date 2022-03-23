@@ -16,6 +16,7 @@ import com.fantasmo.sdk.*
 import com.fantasmo.sdk.fantasmosdk.R
 import com.fantasmo.sdk.models.Coordinate
 import com.fantasmo.sdk.models.ErrorResponse
+import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.models.FMPose
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
@@ -24,7 +25,6 @@ import com.fantasmo.sdk.utilities.DeviceLocationListener
 import com.fantasmo.sdk.utilities.DeviceLocationManager
 import com.fantasmo.sdk.utilities.QRCodeScanner
 import com.fantasmo.sdk.utilities.QRCodeScannerListener
-import com.google.ar.core.Frame
 
 /**
  * Manager of the ARCore session. Provides a camera preview with AR capabilities when not connected.
@@ -35,6 +35,56 @@ class FMParkingView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : LinearLayout(context, attrs) {
+
+    companion object {
+        private val TAG = "FMParkingView"
+        /**
+         * Check if there's an available parking space near a supplied Location.
+         *
+         * This method should be used to determine whether or not you should try to park and localize with Fantasmo.
+         * The boolean value passed to the completion block tells you if there is an available parking space within the
+         * acceptable radius of the supplied location. If `true`, you should construct a `FMParkingView` and
+         * attempt to localize. If `false` you should resort to other options.
+         *
+         * @param context the application context which will be used by FMApi to send the request
+         * @param accessToken the access token to be used by the API
+         * @param location the Location to check
+         * @param onCompletion block with a boolean result
+         */
+        fun isParkingAvailable(
+            context: Context,
+            accessToken: String,
+            location: Location,
+            onCompletion: (Boolean) -> Unit
+        ) {
+            if (!DeviceLocationManager.isValidLatLng(location.latitude, location.longitude)) {
+                onCompletion(false)
+                Log.e(TAG, "Invalid Coordinates")
+                return
+            }
+
+            val verticalAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                location.verticalAccuracyMeters
+            } else {
+                0.0f
+            }
+            val locationFantasmo =
+                com.fantasmo.sdk.models.Location(
+                    location.altitude,
+                    location.time,
+                    location.accuracy,
+                    verticalAccuracy,
+                    Coordinate(location.latitude, location.longitude)
+                )
+            val fmApi = FMApi(context, accessToken)
+            fmApi.sendInitializationRequest(locationFantasmo, onCompletion) {
+                if (it.message != null) {
+                    Log.e(TAG, it.message)
+                }
+                onCompletion(false)
+            }
+        }
+    }
 
     private val TAG = "FMParkingView"
     private var arLayout: CoordinatorLayout
@@ -110,49 +160,6 @@ class FMParkingView @JvmOverloads constructor(
         fmLocationManager = FMLocationManager(context)
     }
 
-    /**
-     * Check if there's an available parking space near a supplied Location.
-     *
-     * This method should be used to determine whether or not you should try to park and localize with Fantasmo.
-     * The boolean value passed to the completion block tells you if there is an available parking space within the
-     * acceptable radius of the supplied location. If `true`, you should construct a `FMParkingView` and
-     * attempt to localize. If `false` you should resort to other options.
-     *
-     * @param location the Location to check
-     * @param onCompletion block with a boolean result
-     */
-    fun isParkingAvailable(
-        location: Location,
-        onCompletion: (Boolean) -> Unit
-    ) {
-        if (!DeviceLocationManager.isValidLatLng(location.latitude, location.longitude)) {
-            onCompletion(false)
-            Log.e(TAG, "Invalid Coordinates")
-            return
-        }
-
-        val verticalAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            location.verticalAccuracyMeters
-        } else {
-            0.0f
-        }
-        val locationFantasmo =
-            com.fantasmo.sdk.models.Location(
-                location.altitude,
-                location.time,
-                location.accuracy,
-                verticalAccuracy,
-                Coordinate(location.latitude, location.longitude)
-            )
-        val fmApi = FMApi(context, accessToken)
-        fmApi.sendInitializationRequest(locationFantasmo, onCompletion) {
-            if (it.message != null) {
-                Log.e(TAG, it.message)
-            }
-            onCompletion(false)
-        }
-    }
-
     enum class State {
         IDLE,
         QRSCANNING,
@@ -176,7 +183,7 @@ class FMParkingView @JvmOverloads constructor(
      * @param sessionId an identifier for the parking session
      * @param sessionTags an optional list of tags for the parking session
      */
-    fun connect(sessionId: String, sessionTags: List<String>?) {
+    fun connect(sessionId: String, sessionTags: List<String>? = null) {
         this.visibility = View.VISIBLE
 
         appSessionId = sessionId
@@ -213,7 +220,6 @@ class FMParkingView @JvmOverloads constructor(
             // Set an AR anchor now
             fmARCoreView.startAnchor()
             state = State.QRSCANNING
-            FMUtility.setFalse()
             startLocalizing()
         }
     }
@@ -294,7 +300,6 @@ class FMParkingView @JvmOverloads constructor(
             return
         }
         state = State.QRSCANNING
-        FMUtility.setFalse()
         qrCodeReader.startQRScanner()
         fmQrScanningViewController.didStartQRScanning()
         fmParkingViewController.fmParkingViewDidStartQRScanning()
@@ -414,28 +419,34 @@ class FMParkingView @JvmOverloads constructor(
             }
 
             override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
-                fmParkingViewController.fmParkingView(didRequestBehavior)
-                fmLocalizingViewController.didRequestLocalizationBehavior(didRequestBehavior)
+                (context as Activity).runOnUiThread {
+                    fmParkingViewController.fmParkingView(didRequestBehavior)
+                    fmLocalizingViewController.didRequestLocalizationBehavior(didRequestBehavior)
+                }
             }
 
             override fun locationManager(error: ErrorResponse, metadata: Any?) {
-                fmParkingViewController.fmParkingView(error, metadata)
-                fmLocalizingViewController.didReceiveLocalizationError(error, metadata)
+                (context as Activity).runOnUiThread {
+                    fmParkingViewController.fmParkingView(error, metadata)
+                    fmLocalizingViewController.didReceiveLocalizationError(error, metadata)
+                }
             }
 
             override fun locationManager(didChangeState: FMLocationManager.State) {
                 (context as Activity).runOnUiThread {
-                    fmSessionStatisticsView.updateState(didChangeState)
+                    if(showStatistics)
+                        fmSessionStatisticsView.updateState(didChangeState)
                 }
             }
 
             override fun locationManager(
-                didUpdateFrame: Frame,
+                didUpdateFrame: FMFrame,
                 info: AccumulatedARCoreInfo,
                 rejections: FrameFilterRejectionStatistics
             ) {
                 (context as Activity).runOnUiThread {
-                    fmSessionStatisticsView.updateStats(didUpdateFrame, info, rejections)
+                    if (showStatistics)
+                        fmSessionStatisticsView.updateStats(didUpdateFrame, info, rejections)
                 }
             }
         }
@@ -466,29 +477,29 @@ class FMParkingView @JvmOverloads constructor(
      */
     private var arSessionListener: FMARSessionListener =
         object : FMARSessionListener {
-            override fun localize(frame: Frame) {
+            override fun localize(fmFrame: FMFrame) {
                 // If localizing, pass the current AR frame to the location manager
                 if (state == State.LOCALIZING) {
-                    fmLocationManager.session(frame)
+                    fmLocationManager.session(fmFrame)
                 }
             }
 
-            override fun anchored(frame: Frame): Boolean {
-                fmLocationManager.setAnchor(frame)
+            override fun anchored(fmFrame: FMFrame): Boolean {
+                fmLocationManager.setAnchor(fmFrame)
                 return true
             }
 
-            override fun qrCodeScan(frame: Frame) {
+            override fun qrCodeScan(fmFrame: FMFrame) {
                 // If qrScanning, pass the current AR frame to the qrCode reader
                 if (state == State.QRSCANNING) {
-                    qrCodeReader.processImage(frame)
+                    qrCodeReader.processImage(fmFrame)
                 }
             }
 
-            override fun anchorDelta(frame: Frame): FMPose? {
+            override fun anchorDelta(fmFrame: FMFrame): FMPose? {
                 return fmLocationManager.anchorFrame?.let { anchorFrame ->
                     FMUtility.anchorDeltaPoseForFrame(
-                        frame,
+                        fmFrame,
                         anchorFrame
                     )
                 }
@@ -505,10 +516,11 @@ class FMParkingView @JvmOverloads constructor(
                 fmLocationManager.setLocation(
                     locationResult
                 )
-                fmSessionStatisticsView.updateLocation(
-                    locationResult.latitude,
-                    locationResult.longitude
-                )
+                if (showStatistics)
+                    fmSessionStatisticsView.updateLocation(
+                        locationResult.latitude,
+                        locationResult.longitude
+                    )
             }
         }
 }

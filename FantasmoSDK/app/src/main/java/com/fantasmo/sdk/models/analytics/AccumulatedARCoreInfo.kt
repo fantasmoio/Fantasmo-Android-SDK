@@ -1,6 +1,6 @@
 package com.fantasmo.sdk.models.analytics
 
-import com.google.ar.core.Frame
+import com.fantasmo.sdk.models.FMFrame
 
 /**
  * Class responsible for accumulating information and statistics about how the ARCore is behaving
@@ -26,11 +26,11 @@ class AccumulatedARCoreInfo {
      * call) to each class involved in the statistics collection
      * @param arFrame frame collected during localize request
      */
-    fun update(arFrame: Frame) {
+    fun update(fmFrame: FMFrame) {
         elapsedFrames += 1
-        trackingStateFrameStatistics.update(arFrame)
-        translationAccumulator.update(arFrame)
-        rotationAccumulator.update(arFrame)
+        trackingStateFrameStatistics.update(fmFrame)
+        translationAccumulator.update(fmFrame)
+        rotationAccumulator.update(fmFrame)
     }
 
     /**

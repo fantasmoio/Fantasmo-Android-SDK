@@ -178,7 +178,7 @@ class CustomDemoFragment : Fragment() {
         // Test location of a parking space in Berlin
         val myLocation = getMyLocation()
         // Before trying to localize with Fantasmo you should check if the user is near a mapped parking space
-        fmParkingView.isParkingAvailable(myLocation) {
+        FMParkingView.isParkingAvailable(requireContext(), accessToken, myLocation) {
             if (it) {
                 startParkingFlow()
             } else {

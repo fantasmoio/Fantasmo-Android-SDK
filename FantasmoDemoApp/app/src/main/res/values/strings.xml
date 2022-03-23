@@ -20,7 +20,7 @@
     <string name="map">Map</string>
     <string name="end_ride">End Ride</string>
     <string name="simulation_mode">Simulation Mode</string>
-    <string name="show_debug_statitics">Show Debug Statitics</string>
+    <string name="show_debug_statistics">Show Debug Statistics</string>
     <string name="exit">Exit</string>
     <string name="scan_qr_code">Scan QR Code</string>
     <string name="skip">Skip</string>

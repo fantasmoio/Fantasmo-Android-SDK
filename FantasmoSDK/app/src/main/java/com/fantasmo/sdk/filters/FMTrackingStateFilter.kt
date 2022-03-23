@@ -1,6 +1,6 @@
 package com.fantasmo.sdk.filters
 
-import com.google.ar.core.Frame
+import com.fantasmo.sdk.models.FMFrame
 import com.google.ar.core.TrackingFailureReason
 import com.google.ar.core.TrackingState
 
@@ -9,17 +9,18 @@ import com.google.ar.core.TrackingState
  * Prevents from sending frames that were broken during ARSession
  */
 class FMTrackingStateFilter : FMFrameFilter {
+    override val TAG = FMTrackingStateFilter::class.java.simpleName
 
-    override fun accepts(arFrame: Frame): FMFrameFilterResult {
-        if (arFrame.camera.trackingState == TrackingState.TRACKING) {
+    override fun accepts(fmFrame: FMFrame): FMFrameFilterResult {
+        if (fmFrame.camera.trackingState == TrackingState.TRACKING) {
             //Normal behavior
             return FMFrameFilterResult.Accepted
-        } else if (arFrame.camera.trackingState == TrackingState.PAUSED &&
-            arFrame.camera.trackingFailureReason == TrackingFailureReason.NONE
+        } else if (fmFrame.camera.trackingState == TrackingState.PAUSED &&
+            fmFrame.camera.trackingFailureReason == TrackingFailureReason.NONE
         ) {
             // Initializing
             return FMFrameFilterResult.Rejected(FMFilterRejectionReason.MOVINGTOOLITTLE)
-        } else return when (arFrame.camera.trackingFailureReason) {
+        } else return when (fmFrame.camera.trackingFailureReason) {
             TrackingFailureReason.CAMERA_UNAVAILABLE -> {
                 // Motion tracking was paused because the camera
                 // is in use by another application

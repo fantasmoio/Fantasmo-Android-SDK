@@ -8,9 +8,9 @@ import com.fantasmo.sdk.FMLocationResult
 import com.fantasmo.sdk.config.RemoteConfig.Companion.remoteConfig
 import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.fantasmosdk.R
+import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
-import com.google.ar.core.Frame
 import com.google.ar.core.TrackingFailureReason
 
 /**
@@ -52,20 +52,22 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     private var imageQualityModelVersion: TextView = arLayout.findViewById(R.id.imageQualityVersionTextview)
     private var imageQualityInsufficient: TextView = arLayout.findViewById(R.id.imageQualityInsufficientTextView)
     private var imageQualityLastResult: TextView = arLayout.findViewById(R.id.lastResultIQTextView)
+    private var imageGammaCorrection: TextView = arLayout.findViewById(R.id.imageGammaCorrection)
 
     private var frameErrorTv: TextView = arLayout.findViewById(R.id.frameErrorTextView)
 
     fun updateStats(
-        frame: Frame,
+        fmFrame: FMFrame,
         info: AccumulatedARCoreInfo,
         rejections: FrameFilterRejectionStatistics
     ) {
-        val cameraTranslation = frame.androidSensorPose?.translation
+        val cameraTranslation = fmFrame.cameraPose?.translation
         cameraTranslationTv.text =
             createStringDisplay(cameraTranslation)
 
-        val cameraRotation = frame.androidSensorPose?.rotationQuaternion
-        cameraAnglesTv.text = createStringDisplay(cameraRotation)
+        val cameraRotation = fmFrame.sensorAngles
+        if(cameraRotation != null)
+            cameraAnglesTv.text = createStringDisplay(cameraRotation)
 
         normalTv.text =
             info.trackingStateFrameStatistics.framesWithNormalTrackingState.toString()
@@ -107,6 +109,12 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
                     "[${info.rotationAccumulator.pitch[0]},${info.rotationAccumulator.pitch[1]}],${info.rotationAccumulator.pitch[2]}\n" +
                     "[${info.rotationAccumulator.roll[0]},${info.rotationAccumulator.roll[1]}],${info.rotationAccumulator.roll[2]}"
         cameraAnglesSpreadTv.text = stringSpread
+        val gamma = fmFrame.enhancedImageGamma
+        imageGammaCorrection.text = if(gamma != null) {
+            String.format("%.3f", gamma)
+        } else {
+            "None"
+        }
     }
 
     fun updateState(didChangeState: FMLocationManager.State) {

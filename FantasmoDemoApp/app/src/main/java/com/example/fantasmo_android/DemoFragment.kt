@@ -57,7 +57,7 @@ class DemoFragment : Fragment() {
     private val usesInternalLocationManager = true
 
     private lateinit var systemLocationManager: SystemLocationManager
-    private lateinit var deviceLocation: Location
+    private var deviceLocation: Location? = null
 
     // FMParkingView accessToken
     private val accessToken = SimulationUtils.API_KEY
@@ -120,36 +120,41 @@ class DemoFragment : Fragment() {
     private fun handleEndRideButton() {
         // Test location of a parking space in Berlin
         val myLocation = getMyLocation()
-        // Before trying to localize with Fantasmo you should check if the user is near a mapped parking space
-        fmParkingView.isParkingAvailable(
-            myLocation
-        ) {
-            if (it) {
-                startParkingFlow()
-            } else {
-                resultsLayout.visibility = View.VISIBLE
-                mapPinButton.visibility = View.GONE
-                val stringNotAvailable = "Parking not available near your location."
-                resultTextView.text = stringNotAvailable
+        if(myLocation != null) {
+            // Before trying to localize with Fantasmo you should check if the user is near a mapped parking space
+            FMParkingView.isParkingAvailable(
+                requireContext(),
+                accessToken,
+                myLocation
+            ) {
+                if (it) {
+                    startParkingFlow()
+                } else {
+                    resultsLayout.visibility = View.VISIBLE
+                    mapPinButton.visibility = View.GONE
+                    val stringNotAvailable = "Parking not available near your location."
+                    resultTextView.text = stringNotAvailable
+                }
             }
         }
     }
 
-    private fun getMyLocation(): Location {
-        var location = Location("")
-        if (isSimulationSwitch.isChecked) {
+    private fun getMyLocation(): Location? {
+        return if (isSimulationSwitch.isChecked) {
+            val location = Location("")
             location.latitude = SimulationUtils.latitude
             location.longitude = SimulationUtils.longitude
+            location
         } else {
-            location = deviceLocation
+            deviceLocation
         }
-        return location
     }
 
     private val systemLocationListener: SystemLocationListener =
         object : SystemLocationListener {
             override fun onLocationUpdate(currentLocation: Location) {
                 deviceLocation = currentLocation
+                endRideButton.visibility = View.VISIBLE
             }
         }
 

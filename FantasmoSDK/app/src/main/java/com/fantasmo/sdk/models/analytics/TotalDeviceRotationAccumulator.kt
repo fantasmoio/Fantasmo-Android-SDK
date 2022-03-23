@@ -1,7 +1,6 @@
 package com.fantasmo.sdk.models.analytics
 
-import com.fantasmo.sdk.FMUtility.Companion.convertQuaternionToEuler
-import com.google.ar.core.Frame
+import com.fantasmo.sdk.models.FMFrame
 import kotlin.math.max
 import kotlin.math.min
 
@@ -18,25 +17,30 @@ class TotalDeviceRotationAccumulator {
     // Being Min=[0], Max=[1] and Spread=[2]
     // Roll is rotation on X axis
     // Max and Min valid range is [−π,π], Roll spread ∈ [0,2π]
-    var roll = floatArrayOf(0f, 0f, 0f)
+    var roll = floatArrayOf(Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, 0f)
+        private set
 
     // Yaw is rotation on Y axis
     // Max and Min valid range is [−π,π], Yaw spread ∈ [0,2π]
-    var yaw = floatArrayOf(0f, 0f, 0f)
+    var yaw = floatArrayOf(Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, 0f)
+        private set
 
     // Pitch is rotation on Z axis
     // Valid range is [−π/2,π/2], Pitch spread ∈ [0,π]
-    var pitch = floatArrayOf(0f, 0f, 0f)
+    var pitch = floatArrayOf(Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, 0f)
+        private set
 
     private var frameCounter: Int = 0
 
     /**
      * On every frame, update get the rotation from the current frame
-     * @param arFrame Frame
+     * @param fmFrame FMFrame
      */
-    fun update(arFrame: Frame) {
-        val rotation = arFrame.androidSensorPose.rotationQuaternion
-        updateRotationValues(rotation!!)
+    fun update(fmFrame: FMFrame) {
+        val rotation = fmFrame.sensorAngles
+        if(rotation != null) {
+            updateRotationValues(rotation)
+        }
         frameCounter += 1
     }
 
@@ -47,25 +51,24 @@ class TotalDeviceRotationAccumulator {
      * @param rotation FloatArray correspondent to the rotationQuaternion
      */
     private fun updateRotationValues(rotation: FloatArray) {
-        val rads = convertQuaternionToEuler(rotation)
-        val yawCurrent = rads[0]
-        val pitchCurrent = rads[1]
-        val rollCurrent = rads[2]
+        val yawCurrent = rotation[0]
+        val pitchCurrent = rotation[1]
+        val rollCurrent = rotation[2]
 
         //Update Yaw values
         yaw[0] = min(yawCurrent, yaw[0])
         yaw[1] = max(yawCurrent, yaw[1])
-        yaw[2] = min(max(yaw[1] - yaw[0], 0f), 2 * Math.PI.toFloat())
+        yaw[2] = min(max(yaw[1] - yaw[0], 0f), 360f)
 
         //Update Pitch values
         pitch[0] = min(pitchCurrent, pitch[0])
         pitch[1] = max(pitchCurrent, pitch[1])
-        pitch[2] = min(max(pitch[1] - pitch[0], 0f), 2 * Math.PI.toFloat())
+        pitch[2] = min(max(pitch[1] - pitch[0], 0f), 360f)
 
         //Update Roll values
         roll[0] = min(rollCurrent, roll[0])
         roll[1] = max(rollCurrent, roll[1])
-        roll[2] = min(max(roll[1] - roll[0], 0f), 2 * Math.PI.toFloat())
+        roll[2] = min(max(roll[1] - roll[0], 0f), 360f)
     }
 
     /**
@@ -73,8 +76,8 @@ class TotalDeviceRotationAccumulator {
      */
     fun reset() {
         frameCounter = 0
-        yaw = floatArrayOf(0f, 0f, 0f)
-        pitch = floatArrayOf(0f, 0f, 0f)
-        roll = floatArrayOf(0f, 0f, 0f)
+        yaw = floatArrayOf(Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, 0f)
+        pitch = floatArrayOf(Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, 0f)
+        roll = floatArrayOf(Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY, 0f)
     }
 }

@@ -14,17 +14,13 @@ import com.fantasmo.sdk.filters.BehaviorRequester
 import com.fantasmo.sdk.filters.FMFrameFilterChain
 import com.fantasmo.sdk.filters.FMFrameFilterResult
 import com.fantasmo.sdk.filters.FMImageQualityFilter
-import com.fantasmo.sdk.models.Coordinate
-import com.fantasmo.sdk.models.ErrorResponse
-import com.fantasmo.sdk.models.FMZone
-import com.fantasmo.sdk.models.Location
+import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.network.*
 import com.fantasmo.sdk.utilities.DeviceLocationManager
 import com.fantasmo.sdk.utilities.LocationFuser
-import com.google.ar.core.Frame
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -55,7 +51,7 @@ class FMLocationManager(private val context: Context) {
 
     var state = State.STOPPED
 
-    var anchorFrame: Frame? = null
+    var anchorFrame: FMFrame? = null
     var currentLocation: Location = Location()
 
     private var fmLocationListener: FMLocationListener? = null
@@ -122,7 +118,7 @@ class FMLocationManager(private val context: Context) {
         val coordinate = Coordinate(location.latitude, location.longitude)
         this.currentLocation.coordinate = coordinate
         this.currentLocation.altitude = location.altitude
-        this.currentLocation.timestamp = location.time
+        this.currentLocation.timestamp = location.time.toDouble() / 1000.0
         this.currentLocation.horizontalAccuracy = location.accuracy
 
         this.currentLocation.verticalAccuracy =
@@ -176,12 +172,12 @@ class FMLocationManager(private val context: Context) {
     /**
      * Set an anchor point. All location updates will now report the
      * location of the anchor instead of the camera.
-     * @param [arFrame] an AR Frame to use as anchor.
+     * @param [fmFrame] an AR Frame to use as anchor.
      */
-    fun setAnchor(arFrame: Frame) {
+    fun setAnchor(fmFrame: FMFrame) {
         Log.d(TAG, "setAnchor")
 
-        this.anchorFrame = arFrame
+        this.anchorFrame = fmFrame
         locationFuser.reset()
     }
 
@@ -198,9 +194,9 @@ class FMLocationManager(private val context: Context) {
     /**
      * Localize the image frame. It triggers a network request that
      * provides a response via the callback [FMLocationListener].
-     * @param arFrame an AR Frame to localize
+     * @param fmFrame an FMFrame to localize
      */
-    private fun localize(arFrame: Frame) {
+    private fun localize(fmFrame: FMFrame) {
         if (!isConnected) {
             return
         }
@@ -218,9 +214,9 @@ class FMLocationManager(private val context: Context) {
         coroutineScope.launch {
             state = State.UPLOADING
             fmLocationListener?.locationManager(state)
-            val localizeRequest = createLocalizationRequest(arFrame)
+            val localizeRequest = createLocalizationRequest(fmFrame)
             fmApi.sendLocalizeRequest(
-                arFrame,
+                fmFrame,
                 localizeRequest,
                 { localizeResponse, fmZones ->
                     Log.d(TAG, "localize: $localizeResponse, Zones $fmZones")
@@ -243,7 +239,7 @@ class FMLocationManager(private val context: Context) {
     /**
      * Gather all the information needed to assemble a LocalizationRequest.
      */
-    private fun createLocalizationRequest(frame: Frame): FMLocalizationRequest {
+    private fun createLocalizationRequest(fmFrame: FMFrame): FMLocalizationRequest {
         val frameEvents = FMFrameEvent(
             (frameEventAccumulator.excessiveTiltFrameCount + frameEventAccumulator.insufficientTiltFrameCount),
             frameEventAccumulator.excessiveBlurFrameCount,
@@ -266,6 +262,12 @@ class FMLocationManager(private val context: Context) {
             } else {
                 null
             }
+        val gamma = fmFrame.enhancedImageGamma
+        val imageEnhancementInfo: FMImageEnhancementInfo? = if (gamma == null) {
+            null
+        } else {
+            FMImageEnhancementInfo(gamma)
+        }
         val frameAnalytics = FMLocalizationAnalytics(
             appSessionId,
             appSessionTags,
@@ -274,12 +276,13 @@ class FMLocationManager(private val context: Context) {
             rotationSpread,
             accumulatedARCoreInfo.translationAccumulator.totalTranslation,
             motionManager.magneticField,
+            imageEnhancementInfo,
             imageQualityFilterInfo,
             rc.remoteConfigId
         )
         val openCVRelativeAnchorPose = anchorFrame?.let { anchorFrame ->
             FMUtility.anchorDeltaPoseForFrame(
-                frame,
+                fmFrame,
                 anchorFrame
             )
         }
@@ -308,27 +311,27 @@ class FMLocationManager(private val context: Context) {
     /**
      * Method to check whether the SDK is ready to localize a frame or not.
      */
-    fun session(arFrame: Frame) {
+    fun session(fmFrame: FMFrame) {
         if (state != State.STOPPED
             && !isEvaluatingFrame
         ) {
             // run the frame through the configured filters
             isEvaluatingFrame = true
-            frameFilterChain.evaluateAsync(arFrame) { filterResult ->
-                processFrame(arFrame, filterResult)
+            frameFilterChain.evaluateAsync(fmFrame) { filterResult ->
+                processFrame(fmFrame, filterResult)
                 isEvaluatingFrame = false
             }
         }
     }
 
-    private fun processFrame(arFrame: Frame, filterResult: FMFrameFilterResult) {
+    private fun processFrame(fmFrame: FMFrame, filterResult: FMFrameFilterResult) {
         if (rc.isBehaviorRequesterEnabled) {
             behaviorRequester.processResult(filterResult)
         }
-        accumulatedARCoreInfo.update(arFrame)
+        accumulatedARCoreInfo.update(fmFrame)
         if (filterResult == FMFrameFilterResult.Accepted) {
             if (state == State.LOCALIZING) {
-                localize(arFrame)
+                localize(fmFrame)
             }
         } else {
             frameEventAccumulator.accumulate(filterResult.getRejectedReason()!!)
@@ -342,6 +345,6 @@ class FMLocationManager(private val context: Context) {
                 accumulatedARCoreInfo.modelVersion = filter.modelVersion
             }
         }
-        fmLocationListener?.locationManager(arFrame, accumulatedARCoreInfo, frameEventAccumulator)
+        fmLocationListener?.locationManager(fmFrame, accumulatedARCoreInfo, frameEventAccumulator)
     }
 }

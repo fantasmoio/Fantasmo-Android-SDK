@@ -4,8 +4,8 @@ import android.content.Context
 import android.view.Display
 import android.view.Surface
 import com.fantasmo.sdk.config.RemoteConfigTest
+import com.fantasmo.sdk.models.FMFrame
 import com.google.ar.core.Camera
-import com.google.ar.core.Frame
 import com.google.ar.core.Pose
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -20,7 +20,7 @@ class FMCameraPitchTest {
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
             context)
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val pose = Pose(
             floatArrayOf(
                 -0.982F,
@@ -35,8 +35,8 @@ class FMCameraPitchTest {
             )
         )
         val pose2 = Mockito.mock(Pose::class.java)
-        Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
-        Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
+        Mockito.`when`(frame.cameraPose).thenReturn(pose2)
+        Mockito.`when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
 
         val camera = Mockito.mock(Camera::class.java)
@@ -62,7 +62,7 @@ class FMCameraPitchTest {
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
             context)
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val pose = Pose(
             floatArrayOf(
                 (-0.01).toFloat(),
@@ -75,8 +75,8 @@ class FMCameraPitchTest {
             )
         )
         val pose2 = Mockito.mock(Pose::class.java)
-        Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
-        Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
+        Mockito.`when`(frame.cameraPose).thenReturn(pose2)
+        Mockito.`when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
 
         val camera = Mockito.mock(Camera::class.java)
@@ -102,7 +102,7 @@ class FMCameraPitchTest {
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
             context)
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val pose = Pose(
             floatArrayOf(
                 (-0.01).toFloat(),
@@ -115,8 +115,8 @@ class FMCameraPitchTest {
             )
         )
         val pose2 = Mockito.mock(Pose::class.java)
-        Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
-        Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
+        Mockito.`when`(frame.cameraPose).thenReturn(pose2)
+        Mockito.`when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
 
         val camera = Mockito.mock(Camera::class.java)
@@ -142,7 +142,7 @@ class FMCameraPitchTest {
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
             context)
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val pose = Pose(
             floatArrayOf(
                 (-0.01).toFloat(),
@@ -155,8 +155,8 @@ class FMCameraPitchTest {
             )
         )
         val pose2 = Mockito.mock(Pose::class.java)
-        Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
-        Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
+        Mockito.`when`(frame.cameraPose).thenReturn(pose2)
+        Mockito.`when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
 
         val camera = Mockito.mock(Camera::class.java)
@@ -182,7 +182,7 @@ class FMCameraPitchTest {
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
             context)
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val pose = Pose(
             floatArrayOf(
                 (-0.01).toFloat(),
@@ -195,8 +195,8 @@ class FMCameraPitchTest {
             )
         )
         val pose2 = Mockito.mock(Pose::class.java)
-        Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
-        Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
+        Mockito.`when`(frame.cameraPose).thenReturn(pose2)
+        Mockito.`when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
 
         val camera = Mockito.mock(Camera::class.java)
@@ -222,7 +222,7 @@ class FMCameraPitchTest {
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
             context)
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val pose = Pose(
             floatArrayOf(
                 (-0.01).toFloat(),
@@ -235,8 +235,8 @@ class FMCameraPitchTest {
             )
         )
         val pose2 = Mockito.mock(Pose::class.java)
-        Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
-        Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
+        Mockito.`when`(frame.cameraPose).thenReturn(pose2)
+        Mockito.`when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
 
         val camera = Mockito.mock(Camera::class.java)
@@ -262,7 +262,7 @@ class FMCameraPitchTest {
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
             context)
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val pose = Pose(
             floatArrayOf(
                 (-0.01).toFloat(),
@@ -275,8 +275,8 @@ class FMCameraPitchTest {
             )
         )
         val pose2 = Mockito.mock(Pose::class.java)
-        Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
-        Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
+        Mockito.`when`(frame.cameraPose).thenReturn(pose2)
+        Mockito.`when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
 
         val camera = Mockito.mock(Camera::class.java)
@@ -302,7 +302,7 @@ class FMCameraPitchTest {
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
             context)
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val pose = Pose(
             floatArrayOf(
                 (-0.01).toFloat(),
@@ -315,8 +315,8 @@ class FMCameraPitchTest {
             )
         )
         val pose2 = Mockito.mock(Pose::class.java)
-        Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
-        Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
+        Mockito.`when`(frame.cameraPose).thenReturn(pose2)
+        Mockito.`when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
 
         val camera = Mockito.mock(Camera::class.java)
@@ -342,7 +342,7 @@ class FMCameraPitchTest {
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
             RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
             context)
-        val frame = Mockito.mock(Frame::class.java)
+        val frame = Mockito.mock(FMFrame::class.java)
         val pose = Pose(
             floatArrayOf(
                 (-0.01).toFloat(),
@@ -355,8 +355,8 @@ class FMCameraPitchTest {
             )
         )
         val pose2 = Mockito.mock(Pose::class.java)
-        Mockito.`when`(frame.androidSensorPose).thenReturn(pose2)
-        Mockito.`when`(frame.androidSensorPose.rotationQuaternion)
+        Mockito.`when`(frame.cameraPose).thenReturn(pose2)
+        Mockito.`when`(frame.cameraPose.rotationQuaternion)
             .thenReturn(pose.rotationQuaternion)
 
         val camera = Mockito.mock(Camera::class.java)
