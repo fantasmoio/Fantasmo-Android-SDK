@@ -102,7 +102,7 @@ class FMPose {
 
     constructor() {
         this.position = FMPosition(0.0, 0.0, 0.0)
-        this.orientation = FMOrientation(0.0f, 0.0f, 0.0f, 0.0f)
+        this.orientation = FMOrientation(1.0f, 0.0f, 0.0f, 0.0f)
     }
 
     constructor(pose: Pose) {
