@@ -46,16 +46,18 @@ class FMUtility {
 
         /**
          * Converts Quaternion to Euler Angles.
-         * Source: https://github.com/IdeoG/quaternion-vector3-java/blob/master/Quaternion.java
+         * Source: www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
+         * Conventions are changed to fit with this model, as we need attitude / pitch between -90° and 90°
+         * attitude -> pitch, banking -> roll, heading -> yaw. -90° is added to yaw to fit with iOS model.
          * @param rotationQuaternion: rotation quaternion correspondent to rotation of the device
          * */
         fun convertQuaternionToEuler(rotationQuaternion: FloatArray): FloatArray {
             val qw = rotationQuaternion[3]
-            val qx = rotationQuaternion[0]
-            val qy = rotationQuaternion[1]
-            val qz = rotationQuaternion[2]
+            val qx = rotationQuaternion[1]
+            val qy = rotationQuaternion[2]
+            val qz = rotationQuaternion[0]
 
-            val yaw: Float
+            var yaw: Float
             val pitch: Float
             val roll: Float
 
@@ -70,21 +72,24 @@ class FMUtility {
                 yaw = (2 * atan2(qx, qw))
                 pitch = (Math.PI / 2).toFloat()
                 roll = 0f
-                return floatArrayOf(yaw, pitch, roll)
+                return floatArrayOf(pitch, roll, yaw)
             }
             if (test < -0.499 * unit) { // singularity at south pole
                 yaw = (-2 * atan2(qx, qw))
                 pitch = (-Math.PI / 2).toFloat()
                 roll = 0f
-                return floatArrayOf(yaw, pitch, roll)
+                return floatArrayOf(pitch, roll, yaw)
             }
 
             //Values are in radians
-            yaw = atan2(2 * qy * qw - 2 * qx * qz, sqx - sqy - sqz + sqw)
-            pitch = kotlin.math.asin(2 * test / unit)
+            yaw = (atan2(2 * qy * qw - 2 * qx * qz, sqx - sqy - sqz + sqw) - (Math.PI/ 2).toFloat())
+            if(yaw < (-Math.PI).toFloat()) {
+                yaw += (2 * Math.PI).toFloat()
+            }
+            pitch = asin(2 * test / unit)
             roll = atan2(2 * qx * qw - 2 * qy * qz, -sqx + sqy - sqz + sqw)
 
-            return floatArrayOf(roll, pitch, yaw)
+            return floatArrayOf(pitch, roll, yaw)
         }
 
         fun convertToDegrees(eulerAngles: FloatArray): FloatArray {
