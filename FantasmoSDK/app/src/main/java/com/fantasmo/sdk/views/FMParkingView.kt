@@ -71,7 +71,7 @@ class FMParkingView @JvmOverloads constructor(
             val locationFantasmo =
                 com.fantasmo.sdk.models.Location(
                     location.altitude,
-                    location.time,
+                    location.time / 1000.0,
                     location.accuracy,
                     verticalAccuracy,
                     Coordinate(location.latitude, location.longitude)
