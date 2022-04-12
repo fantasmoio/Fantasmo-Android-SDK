@@ -66,8 +66,8 @@ class FMFrameEvent(
  */
 class FMRotationSpread(
     var pitch: Float,
-    var yaw: Float,
-    var roll: Float
+    var roll: Float,
+    var yaw: Float
 )
 
 /**
