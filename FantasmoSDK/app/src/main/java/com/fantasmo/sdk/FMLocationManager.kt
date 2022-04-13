@@ -254,8 +254,8 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
         )
         val rotationSpread = FMRotationSpread(
             accumulatedARCoreInfo.rotationAccumulator.pitch[2],
-            accumulatedARCoreInfo.rotationAccumulator.yaw[2],
-            accumulatedARCoreInfo.rotationAccumulator.roll[2]
+            accumulatedARCoreInfo.rotationAccumulator.roll[2],
+            accumulatedARCoreInfo.rotationAccumulator.yaw[2]
         )
         val imageQualityFilterInfo: FMImageQualityFilterInfo? =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && frameFilterChain.rc.isImageQualityFilterEnabled) {

@@ -106,10 +106,10 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
             String.format("%.2f", info.translationAccumulator.totalTranslation) + " m"
         distanceTravelledTv.text = stringDistance
         val stringSpread =
-            "[${info.rotationAccumulator.yaw[0]},${info.rotationAccumulator.yaw[1]}],${info.rotationAccumulator.yaw[2]}\n" +
                     "[${info.rotationAccumulator.pitch[0]},${info.rotationAccumulator.pitch[1]}],${info.rotationAccumulator.pitch[2]}\n" +
-                    "[${info.rotationAccumulator.roll[0]},${info.rotationAccumulator.roll[1]}],${info.rotationAccumulator.roll[2]}"
-        cameraAnglesSpreadTv.text = stringSpread
+                    "[${info.rotationAccumulator.roll[0]},${info.rotationAccumulator.roll[1]}],${info.rotationAccumulator.roll[2]}\n" +
+                    "[${info.rotationAccumulator.yaw[0]},${info.rotationAccumulator.yaw[1]}],${info.rotationAccumulator.yaw[2]}"
+                cameraAnglesSpreadTv.text = stringSpread
         val gamma = fmFrame.enhancedImageGamma
         imageGammaCorrection.text = if(gamma != null) {
             String.format("%.3f", gamma)
