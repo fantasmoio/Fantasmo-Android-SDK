@@ -179,7 +179,7 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     }
 
     fun reset() {
-        val fantasmo = BuildConfig.VERSION_NAME
+        val fantasmo = "Fantasmo SDK " + BuildConfig.VERSION_NAME
         sdkVersion.text = fantasmo
         val stringZero = "0"
         val stringZeroS = "0.0s"

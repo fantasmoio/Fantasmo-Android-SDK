@@ -27,7 +27,7 @@ class FMImageQualityEvaluator(val context: Context) {
     }
 
     companion object {
-        private const val VERSION_USER_INFO_KEY = "imageQualityModelVersion"
+        private const val VERSION_USER_INFO_KEY = "modelVersion"
         private const val ERROR_USER_INFO_KEY = "imageQualityError"
 
         fun makeEvaluation(score: Float, modelVersion: String? = null) : FMFrameEvaluation {
@@ -78,7 +78,8 @@ class FMImageQualityEvaluatorTFLite(val context: Context) :
      * ImageQualityEstimatorModel initializer.
      */
     private var imageQualityModelUpdater = ImageQualityModelUpdater(context)
-    var modelVersion = imageQualityModelUpdater.modelVersion
+    private val modelVersion
+        get() = imageQualityModelUpdater.modelVersion
     private var imageQualityModel: Interpreter? = null
     private lateinit var colorMatrixIntrinsic: ScriptIntrinsicColorMatrix
     private lateinit var scalingMatrix: Matrix3f

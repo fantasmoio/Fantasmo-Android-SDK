@@ -101,10 +101,10 @@ class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context
 
         // run frame through filters
         var filterResult: FMFrameFilterResult = FMFrameFilterResult.Accepted
-        filters.forEach {
-            filterResult = it.accepts(fmFrame)
+        for (filter in filters) {
+            filterResult = filter.accepts(fmFrame)
             if (filterResult != FMFrameFilterResult.Accepted) {
-                return@forEach
+                break
             }
         }
 
