@@ -2,7 +2,7 @@ package com.fantasmo.sdk.evaluators
 
 import android.content.Context
 import android.os.Build
-import androidx.annotation.RequiresApi
+import android.util.Log
 import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.filters.*
 import com.fantasmo.sdk.models.FMFrame
@@ -11,23 +11,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 interface FMFrameEvaluatorChainListener {
-    fun didEvaluateFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame)
-    fun didFindNewBestFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame)
-    fun didDiscardFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame)
+    fun didStartWindow(frameEvaluatorChain: FMFrameEvaluatorChain,  startTime: Double)
+    fun didRejectFrameWhileEvaluatingOtherFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, otherFrame: FMFrame)
     fun didRejectFrameWithFilterReason(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, reason: FMFrameFilterRejectionReason)
-    fun didRejectFrameBelowMinScoreThreshold(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, minScoreThreshold: Float)
-    fun didRejectFrameBelowCurrentBestScore(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, currentBestScore: Float)
+    fun didEvaluateNewBestFrame(frameEvaluatorChain: FMFrameEvaluatorChain, newBestFrame: FMFrame)
+    fun didFinishEvaluatingFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame)
+    fun didEvaluateFrameBelowMinScoreThreshold(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, minScoreThreshold: Float)
+    fun didEvaluateFrameBelowCurrentBestScore(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, currentBestScore: Float)
 }
 
 class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context) {
-    val TAG: String = FMFrameEvaluatorChain::javaClass.name
+    val TAG: String = FMFrameEvaluatorChain::class.java.simpleName
 
-    private val minWindowTime: Float = 0.4f
-    private val maxWindowTime: Float = 1.2f
-    private val minScoreThreshold: Float = 0.0f
-    private val minHighQualityScore: Float = 0.9f
     private val frameEvaluator: FMFrameEvaluator
-    private val preEvaluationFilters : MutableList<FMFrameFilter>
+    private val filters : MutableList<FMFrameFilter> = mutableListOf()
     private val defaultCoroutineScope = CoroutineScope(Dispatchers.Default)
     private val mainCoroutineScope = CoroutineScope(Dispatchers.Main)
 
@@ -36,9 +33,17 @@ class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context
 
     private var currentBestFrame: FMFrame? = null
 
+    private var evaluatingFrame: FMFrame? = null
+
     private var windowStart: Double
 
-    private var isEvaluatingFrame: Boolean = false
+    private var minWindowTime: Float
+
+    private var maxWindowTime: Float
+
+    private var minScoreThreshold: Float
+
+    private var minHighQualityScore: Float
 
     var listener: FMFrameEvaluatorChainListener? = null
 
@@ -47,10 +52,8 @@ class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context
     init {
         // TODO - get these from remote config
 
-        preEvaluationFilters = mutableListOf()
-
         if (remoteConfig.isTrackingStateFilterEnabled) {
-            preEvaluationFilters.add(FMTrackingStateFilter())
+            filters.add(FMTrackingStateFilter())
         }
         if (remoteConfig.isCameraPitchFilterEnabled) {
             val cameraPitchFilter = FMCameraPitchFilter(
@@ -58,18 +61,17 @@ class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context
                 remoteConfig.cameraPitchFilterMaxUpwardTilt,
                 context
             )
-            preEvaluationFilters.add(cameraPitchFilter)
+            filters.add(cameraPitchFilter)
         }
         if (remoteConfig.isMovementFilterEnabled) {
             val movementFilter = FMMovementFilter(
                 remoteConfig.movementFilterThreshold
             )
-            preEvaluationFilters.add(movementFilter)
+            filters.add(movementFilter)
         }
 
         // configure the image enhancer, if enabled
-        @RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
-        imageEnhancer = if (remoteConfig.isImageEnhancerEnabled) {
+        imageEnhancer = if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT_WATCH && remoteConfig.isImageEnhancerEnabled) {
             FMImageEnhancer(remoteConfig.imageEnhancerTargetBrightness, context)
         } else {
             null
@@ -77,20 +79,29 @@ class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context
 
         frameEvaluator = FMImageQualityEvaluator.makeEvaluator(context)
 
+        minWindowTime = remoteConfig.minLocalizationWindowTime
+        maxWindowTime = remoteConfig.maxLocalizationWindowTime
+        minScoreThreshold = remoteConfig.minFrameEvaluationScore
+        minHighQualityScore = remoteConfig.minFrameEvaluationHighQualityScore
+
         windowStart = System.nanoTime() / n2s
     }
 
 
     fun evaluateAsync(fmFrame: FMFrame) {
-        if(isEvaluatingFrame) {
-            listener?.didDiscardFrame(this,
-                fmFrame)
+        if(evaluatingFrame != null) {
+            Log.d(TAG, "Already evaluating frame, rejecting frame ${fmFrame.timestamp}")
+            evaluatingFrame?.let {
+                listener?.didRejectFrameWhileEvaluatingOtherFrame(this, fmFrame,
+                    it
+                )
+            }
             return
         }
 
         // run frame through filters
         var filterResult: FMFrameFilterResult = FMFrameFilterResult.Accepted
-        preEvaluationFilters.forEach {
+        filters.forEach {
             filterResult = it.accepts(fmFrame)
             if (filterResult != FMFrameFilterResult.Accepted) {
                 return@forEach
@@ -100,56 +111,58 @@ class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context
         // if any filter rejects, throw frame away
         if (filterResult != FMFrameFilterResult.Accepted) {
             val reason = filterResult.getRejectedReason()
+            Log.d(TAG, "Frame ${fmFrame.timestamp} rejected for reason $reason")
             if(reason != null)
                 listener?.didRejectFrameWithFilterReason(this, fmFrame, reason)
             return
         }
 
         // set a flag so we can only process one frame at a time
-        isEvaluatingFrame = true
-
+        evaluatingFrame = fmFrame
         // begin async stuff
         defaultCoroutineScope.launch {
             // enhance image, apply gamma correction if too dark
-            imageEnhancer?.enhance(fmFrame)
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                imageEnhancer?.enhance(fmFrame)
+            }
 
             // evaluate the frame using the configured evaluator
             val evaluation = frameEvaluator.evaluate(fmFrame)
 
             mainCoroutineScope.launch {
                 // finish evaluation on the main thread
-                processEvaluation(evaluation, fmFrame)
-                // unset flag to allow new frames to be evaluated
-                isEvaluatingFrame = false
+                processEvaluation(evaluation)
             }
         }
     }
 
-    private fun processEvaluation(evaluation: FMFrameEvaluation, fmFrame: FMFrame) {
-        if (!isEvaluatingFrame) {
-            error("not evaluating frame")
-        }
+    private fun processEvaluation(evaluation: FMFrameEvaluation) {
+        val fmFrame = evaluatingFrame ?: error("evaluating frame is null")
 
         // store the evaluation on the frame and notify the delegate
         fmFrame.evaluation = evaluation
-        listener?.didEvaluateFrame(this, fmFrame)
-
+        listener?.didFinishEvaluatingFrame(this, fmFrame)
+        val currentBestScore = currentBestFrame?.evaluation?.score
         // check if the frame is above the min score threshold, otherwise return
         if (evaluation.score < minScoreThreshold) {
-            listener?.didRejectFrameBelowMinScoreThreshold(this, fmFrame, minScoreThreshold)
-            return
+            Log.d(TAG, "Frame ${fmFrame.timestamp} score ${evaluation.score} below threshold")
+            listener?.didEvaluateFrameBelowMinScoreThreshold(this, fmFrame, minScoreThreshold)
         }
-
         // check if the new frame score is better than our current best frame score, otherwise return
-        val currentBestEvaluation = currentBestFrame?.evaluation
-        if(currentBestEvaluation != null && currentBestEvaluation.score > evaluation.score) {
-            listener?.didRejectFrameBelowCurrentBestScore(this, fmFrame, currentBestEvaluation.score)
-            return
+
+        else if(currentBestScore != null && currentBestScore > evaluation.score) {
+            Log.d(TAG, "Frame ${fmFrame.timestamp} score ${evaluation.score} below current best score")
+            listener?.didEvaluateFrameBelowCurrentBestScore(this, fmFrame, currentBestScore)
+        }
+        else {
+            // frame is the new best, update our saved reference and notify the delegate
+            Log.d(TAG, "Frame ${fmFrame.timestamp} score ${evaluation.score} new best")
+            currentBestFrame = fmFrame
+            listener?.didEvaluateNewBestFrame(this, fmFrame)
         }
 
-        // frame is the new best, update our saved reference and notify the delegate
-        currentBestFrame = fmFrame
-        listener?.didFindNewBestFrame(this, fmFrame)
+        evaluatingFrame = null
+        listener?.didFinishEvaluatingFrame(this, fmFrame)
     }
 
     fun dequeueBestFrame() : FMFrame? {
@@ -164,18 +177,18 @@ class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context
         }
 
         if (evaluation.score >= minHighQualityScore || timeElapsed >= maxWindowTime) {
-            reset()
-            return currentBestFrame
+            Log.d(TAG, "Time elapsed $timeElapsed, max window time $maxWindowTime\nscore ${evaluation.score}, min high quality score $minHighQualityScore, dequeuing frame")
+            val returnFrame = currentBestFrame
+            resetWindow()
+            return returnFrame
         }
-
         return null
     }
 
-    fun reset() {
-        // TODO - reset window state, close current window etc.
+    fun resetWindow() {
         windowStart = System.nanoTime() / n2s
         currentBestFrame = null
+        listener?.didStartWindow(this, windowStart)
     }
 
-    //TODO - Implement
 }

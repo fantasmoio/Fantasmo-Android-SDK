@@ -36,7 +36,7 @@ class FMCameraPitchFilter(
         val orientedQuaternion = fmFrame.camera.displayOrientedPose.rotationQuaternion
         // RotationQuaternion from device sensor system
         val sensorQuaternion = fmFrame.androidSensorPose?.rotationQuaternion
-            ?: return FMFrameFilterResult.Rejected(FMFilterRejectionReason.FRAMEERROR)
+            ?: return FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.FRAME_ERROR)
 
         val rotation: Int = try {
             context.display?.rotation!!
@@ -87,11 +87,11 @@ class FMCameraPitchFilter(
             }
             // If it's looking Up
             rotationQuaternion[0] * orientationSign < 0 -> {
-                FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.PitchTooHigh)
+                FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.PITCH_TOO_HIGH)
             }
             // Else it's looking Down
             else -> {
-                FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.PitchTooLow)
+                FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.PITCH_TOO_LOW)
             }
         }
     }

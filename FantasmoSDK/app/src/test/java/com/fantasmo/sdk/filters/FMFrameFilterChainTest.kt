@@ -7,6 +7,7 @@ import android.view.Surface
 import androidx.test.platform.app.InstrumentationRegistry
 import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.config.RemoteConfigTest
+import com.fantasmo.sdk.evaluators.FMFrameEvaluatorChain
 import com.fantasmo.sdk.models.FMFrame
 import com.google.ar.core.Camera
 import com.google.ar.core.Pose
@@ -25,14 +26,13 @@ import org.robolectric.annotation.Config
 @ExperimentalCoroutinesApi
 class FMFrameFilterChainTest {
 
-    private lateinit var filter : FMFrameFilterChain
+    private lateinit var filter : FMFrameEvaluatorChain
     private lateinit var context : Context
 
     @Before
     fun setUp() {
         RemoteConfig.remoteConfig = RemoteConfigTest.remoteConfig
-        context = Mockito.mock(Context::class.java)
-        filter = FMFrameFilterChain(context)
+        filter = FMFrameEvaluatorChain(RemoteConfig.remoteConfig, InstrumentationRegistry.getInstrumentation().context)
     }
 
     @Test
@@ -48,7 +48,7 @@ class FMFrameFilterChainTest {
 
         assertEquals(
             FMFrameFilterResult.Accepted,
-            filter.accepts(frame)
+            filter.evaluateAsync(frame)
         )
     }
 
@@ -89,8 +89,8 @@ class FMFrameFilterChainTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_0)
 
         assertEquals(
-            FMFrameFilterRejectionReason.MovingTooFast,
-            filter.accepts(frame).getRejectedReason()
+            FMFrameFilterRejectionReason.MOVING_TOO_FAST,
+            filter.evaluateAsync(frame).getRejectedReason()
         )
     }
 
@@ -102,25 +102,7 @@ class FMFrameFilterChainTest {
     @Ignore
     fun testFrameCheck() {
         val instrumentationContext = InstrumentationRegistry.getInstrumentation().context
-        val filter = FMFrameFilterChain(instrumentationContext)
-
-        val fmBlurFilterRule = FMBlurFilter(
-            RemoteConfigTest.remoteConfig.blurFilterVarianceThreshold,
-            RemoteConfigTest.remoteConfig.blurFilterSuddenDropThreshold,
-            RemoteConfigTest.remoteConfig.blurFilterAverageThroughputThreshold,
-            instrumentationContext
-        )
-        val spyFMBlurFilterRule = Mockito.spy(fmBlurFilterRule)
-
-        filter.filters = listOf(
-            FMMovementFilter(RemoteConfigTest.remoteConfig.movementFilterThreshold),
-            FMCameraPitchFilter(
-                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
-                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
-                instrumentationContext
-            )
-        ) as MutableList<FMFrameFilter>
-
+        val filter = FMFrameEvaluatorChain(RemoteConfigTest.remoteConfig, instrumentationContext)
         val frame = Mockito.mock(FMFrame::class.java)
         val pose = getAcceptedPose()
 

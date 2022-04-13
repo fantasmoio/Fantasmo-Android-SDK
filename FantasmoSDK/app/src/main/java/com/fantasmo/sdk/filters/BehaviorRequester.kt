@@ -8,7 +8,7 @@ import java.util.*
  */
 class BehaviorRequester(handler: (FMBehaviorRequest) -> Unit) {
 
-    private val defaultBehavior = FMBehaviorRequest.PointAtBuildings
+    private val defaultBehavior = FMBehaviorRequest.POINT_AT_BUILDINGS
     private var didRequestInitialDefaultBehavior = false
 
     private val n2s: Double = 1_000_000_000.0

@@ -33,7 +33,7 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.BAD_STATE)
 
         Assert.assertEquals(
-            FMFrameFilterRejectionReason.MovingTooFast,
+            FMFrameFilterRejectionReason.MOVING_TOO_FAST,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -47,7 +47,7 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.EXCESSIVE_MOTION)
 
         Assert.assertEquals(
-            FMFrameFilterRejectionReason.MovingTooFast,
+            FMFrameFilterRejectionReason.MOVING_TOO_FAST,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -61,7 +61,7 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.CAMERA_UNAVAILABLE)
 
         Assert.assertEquals(
-            FMFrameFilterRejectionReason.MovingTooLittle,
+            FMFrameFilterRejectionReason.MOVING_TOO_LITTLE,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -75,7 +75,7 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.INSUFFICIENT_LIGHT)
 
         Assert.assertEquals(
-            FMFrameFilterRejectionReason.InsufficientFeatures,
+            FMFrameFilterRejectionReason.INSUFFICIENT_FEATURES,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -89,7 +89,7 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.INSUFFICIENT_FEATURES)
 
         Assert.assertEquals(
-            FMFrameFilterRejectionReason.InsufficientFeatures,
+            FMFrameFilterRejectionReason.INSUFFICIENT_FEATURES,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -104,7 +104,7 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.NONE)
 
         Assert.assertEquals(
-            FMFrameFilterRejectionReason.MovingTooLittle,
+            FMFrameFilterRejectionReason.MOVING_TOO_LITTLE,
             filter.accepts(frame).getRejectedReason()
         )
     }

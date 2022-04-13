@@ -233,17 +233,7 @@ class FMARCoreView(
      * Also responsible for frame anchoring and qrScanning with arFrames
      */
     private fun onUpdate(fmFrame: FMFrame) {
-        val anchorDelta = arSessionListener.anchorDelta(fmFrame)
 
-        if (anchorDelta != null) {
-            val position =
-                floatArrayOf(
-                    anchorDelta.position.x,
-                    anchorDelta.position.y,
-                    anchorDelta.position.z
-                )
-            //Log.d(TAG,"Anchor Delta: ${createStringDisplay(position)}")
-        }
         arSessionListener.localize(fmFrame)
 
         if (!anchored) {

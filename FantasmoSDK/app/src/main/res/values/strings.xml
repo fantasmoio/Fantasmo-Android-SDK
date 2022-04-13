@@ -22,22 +22,25 @@
     <string name="status">Status:</string>
     <string name="localize_time">Localize Time:</string>
     <string name="translation">Translation:</string>
-    <string name="distance_traveled">Distance travelled:</string>
-    <string name="_0_0s">0,0s</string>
+    <string name="total_translation">Total Translation:</string>
+    <string name="_0_0s">0.0s</string>
+    <string name="_0m">0m</string>
+    <string name="_0_rotation">0.00°, 0.00°, 0.00°</string>
+    <string name="_0_angle_spread">(0.00°, 0.00°) 0.00°</string>
     <string name="camera_angles_spread">Euler Angles Spread:</string>
     <string name="normal">Normal:</string>
     <string name="limited">; Limited:</string>
     <string name="excessive_motion">ExcessiveMotion:</string>
     <string name="not_available">; Not Available:</string>
-    <string name="insufficient_features">; Insufficient Features:</string>
-    <string name="pitch_low">Pitch Low:</string>
-    <string name="pitch_high">; Pitch High:</string>
+    <string name="insufficient_features">Insufficient Features:</string>
+    <string name="pitch_low">Too Low:</string>
+    <string name="pitch_high">Too High:</string>
     <string name="blurry">; Blurry:</string>
     <string name="_0">0</string>
     <string name="too_fast">Too Fast:</string>
-    <string name="too_little">; Too Little:</string>
+    <string name="too_little">Too Little:</string>
     <string name="features">; Features:</string>
-    <string name="upload_time">; Upload Time:</string>
+    <string name="upload_time">Upload Time:</string>
     <string name="last_result">Last Result:</string>
     <string name="filter_result">FilterResult</string>
     <string name="qr">QR</string>
@@ -56,5 +59,17 @@
     <string name="enter_qr_code">Enter QR Code</string>
     <string name="remote_config">Remote Config:</string>
     <string name="frame_error">; FrameError:</string>
+    <string name="fantasmo_sdk">Fantasmo SDK</string>
+    <string name="na">n/a</string>
+    <string name="current_window">Current Window:</string>
+    <string name="best_score">Best Score:</string>
+    <string name="frames_evaluated">Frames Evaluated:</string>
+    <string name="frames_rejected">Frames Rejected:</string>
+    <string name="live_score">Live Score:</string>
+    <string name="errors">Errors:</string>
+    <string name="translation_0">0.00, 0.00, 0.00</string>
+    <string name="movement">Movement</string>
+    <string name="camera_pitch">Camera Pitch</string>
+
 
 </resources>

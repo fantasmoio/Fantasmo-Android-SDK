@@ -7,7 +7,6 @@ import android.provider.Settings.Secure
 import android.util.Log
 import com.fantasmo.sdk.FMConfiguration
 import com.fantasmo.sdk.FMUtility
-import com.fantasmo.sdk.evaluators.FMFrameEvaluationType
 import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.mock.MockData
 import com.fantasmo.sdk.models.*
@@ -38,7 +37,6 @@ class FMLocalizationAnalytics(
     var totalDistance: Float,
     var magneticField: MagneticField,
     var imageEnhancementInfo: FMImageEnhancementInfo?,
-    var imageQualityFilterInfo: FMImageQualityFilterInfo?,
     var remoteConfigId: String
 )
 

@@ -3,7 +3,7 @@ package com.fantasmo.sdk.evaluators
 import com.fantasmo.sdk.filters.FMFrameFilterRejectionReason
 
 enum class FMFrameEvaluationType {
-    ImageQualityEstimation
+    IMAGE_QUALITY_ESTIMATION
 }
 
 data class FMFrameEvaluation (val type: FMFrameEvaluationType,

@@ -5,7 +5,7 @@ import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
-import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
+import com.fantasmo.sdk.models.analytics.FMFrameEvaluationStatistics
 
 /**
  * Class that describes the confidence level of a Localization Result
@@ -47,11 +47,11 @@ class FMLocationResult(
  * to get more accurate and correct frames to analyze.
  */
 enum class FMBehaviorRequest(val description: String) {
-    PointAtBuildings("Point at stores, signs and buildings around you to get a precise location"),
-    TiltUp("Tilt your device up"),
-    TiltDown("Tilt your device down"),
-    PanAround("Pan around the scene"),
-    PanSlowly("Pan more slowly");
+    POINT_AT_BUILDINGS("Point at stores, signs and buildings around you to get a precise location"),
+    TILT_UP("Tilt your device up"),
+    TILT_DOWN("Tilt your device down"),
+    PAN_AROUND("Pan around the scene"),
+    PAN_SLOWLY("Pan more slowly");
 }
 
 /**
@@ -59,37 +59,48 @@ enum class FMBehaviorRequest(val description: String) {
  * location manager object.
  */
 interface FMLocationListener {
+     /**
+     * Tells the listener that a new frame upload is starting.
+     * @param frame `FMFrame` that is getting uploaded
+     */
+
+    fun didBeginUpload(frame: FMFrame) {}
 
     /**
      * Tells the listener that new location data is available.
      * @param result Location of the device (or anchor if set)
      */
-    fun locationManager(result: FMLocationResult)
+    fun didUpdateLocation(result: FMLocationResult)
 
     /**
      * Tells the listener that an error has occurred.
      * @param error The error reported.
      * @param metadata Metadata related t the error.
      */
-    fun locationManager(error: ErrorResponse, metadata: Any?)
+    fun didFailWithError(error: ErrorResponse, metadata: Any?)
 
     /**
      * Tells the listener that a request behavior has occurred.
-     * @param didRequestBehavior The behavior reported.
+     * @param behavior The behavior reported.
      */
-    fun locationManager(didRequestBehavior: FMBehaviorRequest){}
+    fun didRequestBehavior(behavior: FMBehaviorRequest){}
 
     /**
      * Tells the listener that the `FMLocationManager` has changed state
-     * @param didChangeState The new state of the `FMLocationManager` instance
+     * @param state The new state of the `FMLocationManager` instance
      */
-    fun locationManager(didChangeState: FMLocationManager.State){}
+    fun didChangeState(state: FMLocationManager.State){}
+
+    /**
+     * Tells the listener that there's an update on AR info
+     * @param frame current AR frame
+     * @param info `AccumulatedARCoreInfo` with all the info about movement and rotation
+     */
+    fun didUpdateFrame(frame: FMFrame, info: AccumulatedARCoreInfo) {}
 
     /**
      * Tells the listener that there's an update on the statistics
-     * @param didUpdateFrame current AR frame
-     * @param info `AccumulatedARCoreInfo` with all the statistics about movement and rotation
-     * @param rejections `FrameFilterRejectionsStatistics with all the statistics regarding frame rejection
+     * @param frameEvaluationStatistics `FMFrameEvaluationStatistics` with all the statistics
      */
-    fun locationManager(didUpdateFrame: FMFrame, info: AccumulatedARCoreInfo, rejections: FrameFilterRejectionStatistics) {}
+    fun didUpdateFrameEvaluationStatistics(frameEvaluationStatistics: FMFrameEvaluationStatistics) {}
 }

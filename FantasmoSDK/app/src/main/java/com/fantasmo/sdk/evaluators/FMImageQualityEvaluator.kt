@@ -5,7 +5,6 @@ import android.os.Build
 import android.renderscript.*
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.fantasmo.sdk.filters.FMImageQualityFilter
 import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.models.tensorflowML.ImageQualityModelUpdater
 import com.fantasmo.sdk.utilities.YuvToRgbConverter
@@ -19,26 +18,26 @@ class FMImageQualityEvaluator(val context: Context) {
     val TAG: String = FMImageQualityEvaluator::class.java.simpleName
 
     enum class Error {
-        NotSupported,
-        FailedToCreateModel,
-        FailedToCreateInputArray,
-        FailedToResizePixelBuffer,
-        NoPrediction,
-        InvalidFeatureValue
+        NOT_SUPPORTED,
+        FAILED_TO_CREATE_MODEL,
+        FAILED_TO_CREATE_INPUT_ARRAY,
+        FAILED_TO_RESIZE_PIXEL_BUFFER,
+        NO_PREDICTION,
+        INVALID_FEATURE_VALUE
     }
 
     companion object {
-        const val versionUserInfoKey = "imageQualityModelVersion"
-        const val errorUserInfoKey = "imageQualityError"
+        private const val VERSION_USER_INFO_KEY = "imageQualityModelVersion"
+        private const val ERROR_USER_INFO_KEY = "imageQualityError"
 
         fun makeEvaluation(score: Float, modelVersion: String? = null) : FMFrameEvaluation {
-            return FMFrameEvaluation(FMFrameEvaluationType.ImageQualityEstimation, score,
-                mapOf(versionUserInfoKey to modelVersion))
+            return FMFrameEvaluation(FMFrameEvaluationType.IMAGE_QUALITY_ESTIMATION, score,
+                mapOf(VERSION_USER_INFO_KEY to modelVersion))
         }
 
         fun makeEvaluation(error: Error, modelVersion: String? = null) : FMFrameEvaluation {
             // We use a score of 1.0 so the frame is always accepted
-            return FMFrameEvaluation(FMFrameEvaluationType.ImageQualityEstimation, 1.0f, mapOf(versionUserInfoKey to modelVersion, errorUserInfoKey to error.name))
+            return FMFrameEvaluation(FMFrameEvaluationType.IMAGE_QUALITY_ESTIMATION, 1.0f, mapOf(VERSION_USER_INFO_KEY to modelVersion, ERROR_USER_INFO_KEY to error.name))
         }
         // Factory constructor, returns the TFLite evaluator if supported
         fun makeEvaluator(context: Context) : FMFrameEvaluator {
@@ -57,7 +56,7 @@ class FMImageQualityEvaluatorNotSupported : FMFrameEvaluator {
     override val TAG: String = FMImageQualityEvaluatorNotSupported::class.java.name
 
     override fun evaluate(fmFrame: FMFrame) : FMFrameEvaluation {
-        return FMImageQualityEvaluator.makeEvaluation(FMImageQualityEvaluator.Error.NotSupported)
+        return FMImageQualityEvaluator.makeEvaluation(FMImageQualityEvaluator.Error.NOT_SUPPORTED)
     }
 }
 
@@ -97,14 +96,14 @@ class FMImageQualityEvaluatorTFLite(val context: Context) :
 
         if (imageQualityModel == null) {
             Log.e(TAG, "Failed to get Model")
-            return FMImageQualityEvaluator.makeEvaluation(FMImageQualityEvaluator.Error.FailedToCreateModel, modelVersion)
+            return FMImageQualityEvaluator.makeEvaluation(FMImageQualityEvaluator.Error.FAILED_TO_CREATE_MODEL, modelVersion)
         }
 
         val yuvImage = fmFrame.yuvImage
         if (yuvImage == null) {
             // The frame being null means it's no longer available to send in the request
             Log.e(TAG, "Failed to create Input Array")
-            return FMImageQualityEvaluator.makeEvaluation(FMImageQualityEvaluator.Error.FailedToCreateInputArray, modelVersion)
+            return FMImageQualityEvaluator.makeEvaluation(FMImageQualityEvaluator.Error.FAILED_TO_CREATE_INPUT_ARRAY, modelVersion)
         } else {
             val rgbByteArray =
                 yuvToRgbConverter.toByteArray(yuvImage, imageWidth, imageHeight)
@@ -116,7 +115,7 @@ class FMImageQualityEvaluatorTFLite(val context: Context) :
                 Log.d(TAG, "IQE score: $score")
                 return FMImageQualityEvaluator.makeEvaluation(score, modelVersion)
             }
-            return FMImageQualityEvaluator.makeEvaluation(FMImageQualityEvaluator.Error.InvalidFeatureValue, modelVersion)
+            return FMImageQualityEvaluator.makeEvaluation(FMImageQualityEvaluator.Error.INVALID_FEATURE_VALUE, modelVersion)
         }
     }
 

@@ -10,15 +10,14 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import com.fantasmo.sdk.config.RemoteConfig
-import com.fantasmo.sdk.evaluators.FMFrameEvaluationDiscardReason
-import com.fantasmo.sdk.evaluators.FMFrameEvaluationResult
+import com.fantasmo.sdk.evaluators.FMFrameEvaluationType
 import com.fantasmo.sdk.evaluators.FMFrameEvaluatorChain
 import com.fantasmo.sdk.evaluators.FMFrameEvaluatorChainListener
 import com.fantasmo.sdk.filters.BehaviorRequester
 import com.fantasmo.sdk.filters.FMFrameFilterRejectionReason
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
-import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
+import com.fantasmo.sdk.models.analytics.FMFrameEvaluationStatistics
 import com.fantasmo.sdk.models.analytics.MotionManager
 import com.fantasmo.sdk.network.*
 import com.fantasmo.sdk.utilities.DeviceLocationManager
@@ -36,13 +35,7 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
         STOPPED,
 
         // localizing
-        LOCALIZING,
-
-        // uploading image while localizing
-        UPLOADING,
-
-        // paused
-        PAUSED
+        LOCALIZING
     }
 
     private var coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
@@ -65,6 +58,9 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
 
     private var isConnected = false
 
+    var activeUploads: MutableList<FMFrame> = mutableListOf()
+    private set
+
     // Used to validate frame for sufficient quality before sending to API.
     private lateinit var frameEvaluatorChain: FMFrameEvaluatorChain
 
@@ -82,7 +78,7 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
     // App Session Tags supplied by the SDK client
     private var appSessionTags : List<String>? = null
 
-    private var frameEventAccumulator = FrameFilterRejectionStatistics()
+    private var frameEvaluationStatistics = FMFrameEvaluationStatistics(FMFrameEvaluationType.IMAGE_QUALITY_ESTIMATION)
     private var accumulatedARCoreInfo = AccumulatedARCoreInfo()
 
     private lateinit var rc: RemoteConfig.Config
@@ -105,10 +101,10 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
         frameEvaluatorChain = FMFrameEvaluatorChain(rc, context)
         if (rc.isBehaviorRequesterEnabled) {
             behaviorRequester = BehaviorRequester {
-                fmLocationListener?.locationManager(didRequestBehavior = it)
+                fmLocationListener?.didRequestBehavior(behavior = it)
             }
         }
-        fmLocationListener?.locationManager(state)
+        fmLocationListener?.didChangeState(state)
     }
 
     /**
@@ -150,15 +146,18 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
 
         this.isConnected = true
         this.state = State.LOCALIZING
-        fmLocationListener?.locationManager(state)
+        fmLocationListener?.didChangeState(state)
         motionManager.restart()
         accumulatedARCoreInfo.reset()
-        this.frameEvaluatorChain.reset()
+
+        frameEvaluatorChain.listener = this
+        frameEvaluatorChain.resetWindow()
+
         if (rc.isBehaviorRequesterEnabled) {
             this.behaviorRequester.restart()
         }
         this.locationFuser.reset()
-        frameEventAccumulator.reset()
+        frameEvaluationStatistics.reset()
     }
 
     /**
@@ -168,7 +167,7 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
         Log.d(TAG, "stopUpdatingLocation")
         motionManager.stop()
         this.state = State.STOPPED
-        fmLocationListener?.locationManager(state)
+        fmLocationListener?.didChangeState(state)
     }
 
     /**
@@ -208,33 +207,35 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
             )
         ) {
             val error = ErrorResponse(0, "Invalid Coordinates")
-            fmLocationListener?.locationManager(error, null)
+            fmLocationListener?.didFailWithError(error, null)
             Log.e(TAG, "Invalid Coordinates")
             return
         }
         Log.d(TAG, "localize: isSimulation $isSimulation")
         coroutineScope.launch {
-            state = State.UPLOADING
-            fmLocationListener?.locationManager(state)
+            fmLocationListener?.didChangeState(state)
             val localizeRequest = createLocalizationRequest(fmFrame)
+            fmLocationListener?.didBeginUpload(fmFrame)
+            activeUploads.add(fmFrame)
             fmApi.sendLocalizeRequest(
                 fmFrame,
                 localizeRequest,
                 { localizeResponse, fmZones ->
                     Log.d(TAG, "localize: $localizeResponse, Zones $fmZones")
                     val result = locationFuser.fusedResult(localizeResponse, fmZones)
-                    fmLocationListener?.locationManager(
+                    activeUploads.removeAll { it == fmFrame }
+                    fmLocationListener?.didUpdateLocation(
                         result
                     )
-
                     updateStateAfterLocalization()
                 },
-                {
-                    Log.e(TAG, "localize: $it")
-                    fmLocationListener?.locationManager(it, null)
-
+                { error ->
+                    Log.e(TAG, "localize: $error")
+                    activeUploads.removeAll { it == fmFrame }
+                    fmLocationListener?.didFailWithError(error, null)
                     updateStateAfterLocalization()
                 })
+
         }
     }
 
@@ -243,10 +244,11 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
      */
     private fun createLocalizationRequest(fmFrame: FMFrame): FMLocalizationRequest {
         val frameEvents = FMFrameEvent(
-            (frameEventAccumulator.excessiveTiltFrameCount + frameEventAccumulator.insufficientTiltFrameCount),
-            frameEventAccumulator.excessiveBlurFrameCount,
-            frameEventAccumulator.excessiveMotionFrameCount,
-            frameEventAccumulator.insufficientFeatures,
+            frameEvaluationStatistics.totalRejections[FMFrameFilterRejectionReason.PITCH_TOO_LOW] ?: 0
+                    + (frameEvaluationStatistics.totalRejections[FMFrameFilterRejectionReason.PITCH_TOO_HIGH] ?: 0),
+            frameEvaluationStatistics.totalRejections[FMFrameFilterRejectionReason.IMAGE_TOO_BLURRY] ?: 0,
+            frameEvaluationStatistics.totalRejections[FMFrameFilterRejectionReason.MOVING_TOO_FAST] ?: 0,
+            frameEvaluationStatistics.totalRejections[FMFrameFilterRejectionReason.INSUFFICIENT_FEATURES] ?: 0,
             (accumulatedARCoreInfo.trackingStateFrameStatistics.framesWithLimitedTrackingState
                     + accumulatedARCoreInfo.trackingStateFrameStatistics.framesWithNotAvailableTracking
                     ),
@@ -257,13 +259,7 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
             accumulatedARCoreInfo.rotationAccumulator.roll[2],
             accumulatedARCoreInfo.rotationAccumulator.yaw[2]
         )
-        val imageQualityFilterInfo: FMImageQualityFilterInfo? =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && frameFilterChain.rc.isImageQualityFilterEnabled) {
-                val filter = frameFilterChain.filters.last() as FMImageQualityFilter
-                FMImageQualityFilterInfo(filter.modelVersion, filter.lastImageQualityScore)
-            } else {
-                null
-            }
+
         val gamma = fmFrame.enhancedImageGamma
         val imageEnhancementInfo: FMImageEnhancementInfo? = if (gamma == null) {
             null
@@ -279,7 +275,6 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
             accumulatedARCoreInfo.translationAccumulator.totalTranslation,
             motionManager.magneticField,
             imageEnhancementInfo,
-            imageQualityFilterInfo,
             rc.remoteConfigId
         )
         val openCVRelativeAnchorPose = anchorFrame?.let { anchorFrame ->
@@ -304,7 +299,7 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
     private fun updateStateAfterLocalization() {
         if (state != State.STOPPED) {
             state = State.LOCALIZING
-            fmLocationListener?.locationManager(state)
+            fmLocationListener?.didChangeState(state)
         }
     }
 
@@ -316,25 +311,34 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
             // run the frame through the configured filters
             frameEvaluatorChain.evaluateAsync(fmFrame)
         }
-        var frameToLocalize = frameEvaluatorChain.dequeueBestFrame()
+        val frameToLocalize = frameEvaluatorChain.dequeueBestFrame()
         if (frameToLocalize != null)  {
             localize(frameToLocalize)
         }
 
-        fmLocationListener?.locationManager(fmFrame, accumulatedARCoreInfo, frameEventAccumulator)
+        fmLocationListener?.didUpdateFrame(fmFrame, accumulatedARCoreInfo)
         accumulatedARCoreInfo.update(fmFrame)
     }
 
-    override fun didEvaluateFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame) {
-        // evaluator successfully evaluated and assigned an `evaluation` object on the frame, show info in debug view
+    override fun didFinishEvaluatingFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame) {
+        frameEvaluationStatistics.addEvaluation(frame)
+        fmLocationListener?.didUpdateFrameEvaluationStatistics(frameEvaluationStatistics)
     }
 
-    override fun didFindNewBestFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame) {
+    override fun didEvaluateNewBestFrame(frameEvaluatorChain: FMFrameEvaluatorChain, newBestFrame: FMFrame) {
         // evaluator found a new best frame, show info in debug view
+        frameEvaluationStatistics.setCurrentBest(newBestFrame)
+        fmLocationListener?.didUpdateFrameEvaluationStatistics(frameEvaluationStatistics)
     }
 
-    override fun didDiscardFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame) {
+    override fun didStartWindow(frameEvaluatorChain: FMFrameEvaluatorChain, startTime: Double) {
+        frameEvaluationStatistics.startWindow(startTime)
+        fmLocationListener?.didUpdateFrameEvaluationStatistics(frameEvaluationStatistics)
+    }
+
+    override fun didRejectFrameWhileEvaluatingOtherFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame:FMFrame, otherFrame: FMFrame) {
         // evaluator was busy and discarded the frame, show info in debug view
+
     }
 
     override fun didRejectFrameWithFilterReason(
@@ -343,12 +347,12 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
         reason: FMFrameFilterRejectionReason
     ) {
         // evaluator filter rejected the frame, show info in debug view
-        behaviorRequester?.processFilterRejection(reason)
-        frameEventAccumulator.accumulate(reason)
-        fmLocationListener?.locationManager(frame, accumulatedARCoreInfo, frameEventAccumulator)
+        frameEvaluationStatistics.addFilterRejection(reason)
+        fmLocationListener?.didUpdateFrameEvaluationStatistics(frameEvaluationStatistics)
+        behaviorRequester.processFilterRejection(reason)
     }
 
-    override fun didRejectFrameBelowMinScoreThreshold(
+    override fun didEvaluateFrameBelowMinScoreThreshold(
         frameEvaluatorChain: FMFrameEvaluatorChain,
         frame: FMFrame,
         minScoreThreshold: Float
@@ -356,7 +360,7 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
         // evaluator rejected the frame because it was below the min score threshold, show info in debug view
     }
 
-    override fun didRejectFrameBelowCurrentBestScore(
+    override fun didEvaluateFrameBelowCurrentBestScore(
         frameEvaluatorChain: FMFrameEvaluatorChain,
         frame: FMFrame,
         currentBestScore: Float

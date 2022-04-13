@@ -90,7 +90,7 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_0)
 
         assertEquals(
-            FMFrameFilterRejectionReason.PitchTooHigh,
+            FMFrameFilterRejectionReason.PITCH_TOO_HIGH,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -130,7 +130,7 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_0)
 
         assertEquals(
-            FMFrameFilterRejectionReason.PitchTooLow,
+            FMFrameFilterRejectionReason.PITCH_TOO_LOW,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -170,7 +170,7 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_180)
 
         assertEquals(
-            FMFrameFilterRejectionReason.PitchTooHigh,
+            FMFrameFilterRejectionReason.PITCH_TOO_HIGH,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -210,7 +210,7 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_180)
 
         assertEquals(
-            FMFrameFilterRejectionReason.PitchTooLow,
+            FMFrameFilterRejectionReason.PITCH_TOO_LOW,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -250,7 +250,7 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_90)
 
         assertEquals(
-            FMFrameFilterRejectionReason.PitchTooHigh,
+            FMFrameFilterRejectionReason.PITCH_TOO_HIGH,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -290,7 +290,7 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_90)
 
          assertEquals(
-             FMFrameFilterRejectionReason.PitchTooLow,
+             FMFrameFilterRejectionReason.PITCH_TOO_LOW,
              filter.accepts(frame).getRejectedReason()
         )
     }
@@ -330,7 +330,7 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_270)
 
         assertEquals(
-            FMFrameFilterRejectionReason.PitchTooHigh,
+            FMFrameFilterRejectionReason.PITCH_TOO_HIGH,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -370,7 +370,7 @@ class FMCameraPitchTest {
         Mockito.`when`(context.display?.rotation!!).thenReturn(Surface.ROTATION_270)
 
         assertEquals(
-            FMFrameFilterRejectionReason.PitchTooLow,
+            FMFrameFilterRejectionReason.PITCH_TOO_LOW,
             filter.accepts(frame).getRejectedReason()
         )
     }

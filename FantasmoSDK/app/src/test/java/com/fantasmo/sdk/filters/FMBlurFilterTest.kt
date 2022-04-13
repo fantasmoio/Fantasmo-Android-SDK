@@ -79,7 +79,7 @@ class FMBlurFilterTest {
         testScope.launch(Dispatchers.Default) { // launches coroutine in cpu thread
             doReturn(250.0).`when`(spyFMBlurFilter).calculateVariance(yuvImage)
             Assert.assertEquals(
-                FMFrameFilterRejectionReason.ImageTooBlurry,
+                FMFrameFilterRejectionReason.IMAGE_TOO_BLURRY,
                 spyFMBlurFilter.accepts(frame).getRejectedReason()
             )
         }

@@ -19,7 +19,7 @@ import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.models.FMPose
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
-import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
+import com.fantasmo.sdk.models.analytics.FMFrameEvaluationStatistics
 import com.fantasmo.sdk.network.FMApi
 import com.fantasmo.sdk.utilities.DeviceLocationListener
 import com.fantasmo.sdk.utilities.DeviceLocationManager
@@ -162,7 +162,7 @@ class FMParkingView @JvmOverloads constructor(
 
     enum class State {
         IDLE,
-        QRSCANNING,
+        QR_SCANNING,
         LOCALIZING
     }
 
@@ -219,7 +219,7 @@ class FMParkingView @JvmOverloads constructor(
         else {
             // Set an AR anchor now
             fmARCoreView.startAnchor()
-            state = State.QRSCANNING
+            state = State.QR_SCANNING
             startLocalizing()
         }
     }
@@ -230,7 +230,7 @@ class FMParkingView @JvmOverloads constructor(
      * Stops Location Updates if internal Location Manager is in use
      */
     fun dismiss() {
-        if (state == State.LOCALIZING || state == State.QRSCANNING) {
+        if (state == State.LOCALIZING || state == State.QR_SCANNING) {
             state = State.IDLE
 
             fmARCoreView.connected = false
@@ -299,7 +299,7 @@ class FMParkingView @JvmOverloads constructor(
         if (state != State.IDLE) {
             return
         }
-        state = State.QRSCANNING
+        state = State.QR_SCANNING
         qrCodeReader.startQRScanner()
         fmQrScanningViewController.didStartQRScanning()
         fmParkingViewController.fmParkingViewDidStartQRScanning()
@@ -337,7 +337,7 @@ class FMParkingView @JvmOverloads constructor(
      * This method is only intended to be called while QR scanning, it performs transition to the localization view.
      */
     private fun startLocalizing() {
-        if (state != State.QRSCANNING) {
+        if (state != State.QR_SCANNING) {
             return
         }
         fmQrScanningViewController.didStopQRScanning()
@@ -366,7 +366,7 @@ class FMParkingView @JvmOverloads constructor(
      * validated.
      */
     fun enterQRCode(string: String) {
-        if (state != State.QRSCANNING) {
+        if (state != State.QR_SCANNING) {
             return
         }
         // Set an AR anchor now
@@ -410,43 +410,56 @@ class FMParkingView @JvmOverloads constructor(
      */
     private val fmLocationListener: FMLocationListener =
         object : FMLocationListener {
-            override fun locationManager(result: FMLocationResult) {
-                fmParkingViewController.fmParkingView(result)
-                fmLocalizingViewController.didReceiveLocalizationResult(result)
+            override fun didBeginUpload(frame: FMFrame) {
                 (context as Activity).runOnUiThread {
+                    fmSessionStatisticsView.update(fmLocationManager.activeUploads)
+                }
+            }
+
+            override fun didUpdateLocation(result: FMLocationResult) {
+                (context as Activity).runOnUiThread {
+                    fmParkingViewController.fmParkingView(result)
+                    fmLocalizingViewController.didReceiveLocalizationResult(result)
                     fmSessionStatisticsView.updateResult(result)
                 }
             }
 
-            override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
+            override fun didRequestBehavior(behavior: FMBehaviorRequest) {
                 (context as Activity).runOnUiThread {
-                    fmParkingViewController.fmParkingView(didRequestBehavior)
-                    fmLocalizingViewController.didRequestLocalizationBehavior(didRequestBehavior)
+                    fmParkingViewController.fmParkingView(behavior)
+                    fmLocalizingViewController.didRequestLocalizationBehavior(behavior)
                 }
             }
 
-            override fun locationManager(error: ErrorResponse, metadata: Any?) {
+            override fun didFailWithError(error: ErrorResponse, metadata: Any?) {
                 (context as Activity).runOnUiThread {
                     fmParkingViewController.fmParkingView(error, metadata)
                     fmLocalizingViewController.didReceiveLocalizationError(error, metadata)
                 }
             }
 
-            override fun locationManager(didChangeState: FMLocationManager.State) {
-                (context as Activity).runOnUiThread {
-                    if(showStatistics)
-                        fmSessionStatisticsView.updateState(didChangeState)
+            override fun didChangeState(state: FMLocationManager.State) {
+                if(showStatistics) {
+                    (context as Activity).runOnUiThread {
+                        fmSessionStatisticsView.updateState(state)
+                    }
                 }
             }
 
-            override fun locationManager(
-                didUpdateFrame: FMFrame,
-                info: AccumulatedARCoreInfo,
-                rejections: FrameFilterRejectionStatistics
-            ) {
+            override fun didUpdateFrameEvaluationStatistics(frameEvaluationStatistics: FMFrameEvaluationStatistics) {
                 (context as Activity).runOnUiThread {
-                    if (showStatistics)
-                        fmSessionStatisticsView.updateStats(didUpdateFrame, info, rejections)
+                    fmSessionStatisticsView.update(frameEvaluationStatistics)
+                }
+            }
+
+            override fun didUpdateFrame(
+                frame: FMFrame,
+                info: AccumulatedARCoreInfo
+            ) {
+                if (showStatistics) {
+                    (context as Activity).runOnUiThread {
+                        fmSessionStatisticsView.updateStats(frame, info)
+                    }
                 }
             }
         }
@@ -491,7 +504,7 @@ class FMParkingView @JvmOverloads constructor(
 
             override fun qrCodeScan(fmFrame: FMFrame) {
                 // If qrScanning, pass the current AR frame to the qrCode reader
-                if (state == State.QRSCANNING) {
+                if (state == State.QR_SCANNING) {
                     qrCodeReader.processImage(fmFrame)
                 }
             }

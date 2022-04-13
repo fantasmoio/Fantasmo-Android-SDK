@@ -8,9 +8,10 @@ import com.fantasmo.sdk.FMLocationResult
 import com.fantasmo.sdk.config.RemoteConfig.Companion.remoteConfig
 import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.fantasmosdk.R
+import com.fantasmo.sdk.filters.FMFrameFilterRejectionReason
 import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
-import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
+import com.fantasmo.sdk.models.analytics.FMFrameEvaluationStatistics
 import com.google.ar.core.TrackingFailureReason
 
 /**
@@ -21,66 +22,43 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     private val TAG = FMSessionStatisticsView::class.java.simpleName
     private var sdkVersion: TextView = arLayout.findViewById(R.id.fantasmoSDKView)
     private var statusTv: TextView = arLayout.findViewById(R.id.statusTextView)
+    private var currentWindowTv: TextView = arLayout.findViewById(R.id.currentWindowTextView)
+    private var bestScoreTv: TextView = arLayout.findViewById(R.id.bestScoreTextView)
+    private var framesEvaluatedTv: TextView = arLayout.findViewById(R.id.framesEvaluatedTextView)
+    private var liveScoreTv: TextView = arLayout.findViewById(R.id.liveScoreTextView)
+    private var framesRejectedTv: TextView = arLayout.findViewById(R.id.framesRejectedTextView)
+    private var currentRejectionTv: TextView = arLayout.findViewById(R.id.currentRejectionTextView)
     private var lastResultTv: TextView = arLayout.findViewById(R.id.lastResultTextView)
-    private var localizeTimeTv: TextView = arLayout.findViewById(R.id.localizeTimeTextView)
-    private var uploadTimeTv: TextView = arLayout.findViewById(R.id.uploadTimeTextView)
+    private var errorsTv: TextView = arLayout.findViewById(R.id.errorsTextView)
     private var deviceLocationTv: TextView = arLayout.findViewById(R.id.deviceLocationTextView)
-
-    private var cameraTranslationTv: TextView = arLayout.findViewById(R.id.translationTextView)
-    private var distanceTravelledTv: TextView =
-        arLayout.findViewById(R.id.distanceTravelledTextView)
-
-    private var cameraAnglesTv: TextView = arLayout.findViewById(R.id.cameraAnglesTextView)
-    private var cameraAnglesSpreadTv: TextView =
-        arLayout.findViewById(R.id.cameraAnglesSpreadTextView)
-
+    private var translationTv: TextView = arLayout.findViewById(R.id.translationTextView)
+    private var totalTranslationTv: TextView = arLayout.findViewById(R.id.totalTranslationTextView)
     private var remoteConfigTv: TextView = arLayout.findViewById(R.id.remoteConfigTextView)
+    private var eulerAnglesTv: TextView = arLayout.findViewById(R.id.eulerAnglesTextView)
+    private var eulerAnglesSpreadXTv: TextView = arLayout.findViewById(R.id.eulerAnglesSpreadXTextView)
+    private var eulerAnglesSpreadYTv: TextView = arLayout.findViewById(R.id.eulerAnglesSpreadYTextView)
+    private var eulerAnglesSpreadZTv: TextView = arLayout.findViewById(R.id.eulerAnglesSpreadZTextView)
+    private var movementTooFastTv: TextView = arLayout.findViewById(R.id.movementTooFastTextView)
+    private var movementTooLittleTv: TextView = arLayout.findViewById(R.id.movementTooLittleTextView)
+    private var pitchTooHighTv: TextView = arLayout.findViewById(R.id.pitchTooHighTextView)
+    private var pitchTooLowTv: TextView = arLayout.findViewById(R.id.pitchTooLowTextView)
+    private var insufficientFeaturesTv: TextView = arLayout.findViewById(R.id.insufficientFeaturesTextView)
 
-    private var normalTv: TextView = arLayout.findViewById(R.id.normalTextView)
-    private var limitedTv: TextView = arLayout.findViewById(R.id.limitedTextView)
-    private var notAvailableTv: TextView = arLayout.findViewById(R.id.notAvailableTextView)
-    private var excessiveMotionTv: TextView = arLayout.findViewById(R.id.excessiveMotionTextView)
-    private var insufficientFeaturesTv: TextView =
-        arLayout.findViewById(R.id.insufficientFeaturesTextView)
-    private var pitchLowTv: TextView = arLayout.findViewById(R.id.pitchLowTextView)
-    private var pitchHighTv: TextView = arLayout.findViewById(R.id.pitchHighTextView)
-    private var blurryTv: TextView = arLayout.findViewById(R.id.blurryTextView)
-    private var tooFastTv: TextView = arLayout.findViewById(R.id.tooFastTextView)
-    private var tooLittleTv: TextView = arLayout.findViewById(R.id.tooLittleTextView)
-    private var featuresTv: TextView = arLayout.findViewById(R.id.featuresTextView)
 
-    private var imageQualityModelVersion: TextView = arLayout.findViewById(R.id.imageQualityVersionTextview)
-    private var imageQualityInsufficient: TextView = arLayout.findViewById(R.id.imageQualityInsufficientTextView)
-    private var imageQualityLastResult: TextView = arLayout.findViewById(R.id.lastResultIQTextView)
-    private var imageGammaCorrection: TextView = arLayout.findViewById(R.id.imageGammaCorrection)
-
-    private var frameErrorTv: TextView = arLayout.findViewById(R.id.frameErrorTextView)
+    private var windowStart: Double? = null
 
     fun updateStats(
         fmFrame: FMFrame,
-        info: AccumulatedARCoreInfo,
-        rejections: FrameFilterRejectionStatistics
+        info: AccumulatedARCoreInfo
     ) {
         val cameraTranslation = fmFrame.cameraPose?.translation
-        cameraTranslationTv.text =
+        translationTv.text =
             createStringDisplay(cameraTranslation)
 
         val cameraRotation = fmFrame.sensorAngles
         if(cameraRotation != null)
-            cameraAnglesTv.text = createStringDisplay(cameraRotation)
+            eulerAnglesTv.text = createStringDisplay(cameraRotation)
 
-        normalTv.text =
-            info.trackingStateFrameStatistics.framesWithNormalTrackingState.toString()
-        limitedTv.text =
-            info.trackingStateFrameStatistics.framesWithLimitedTrackingState.toString()
-        notAvailableTv.text =
-            info.trackingStateFrameStatistics.framesWithNotAvailableTracking.toString()
-        excessiveMotionTv.text =
-            if (info.trackingStateFrameStatistics.framesWithLimitedTrackingStateByReason[TrackingFailureReason.EXCESSIVE_MOTION] == null) {
-                "0"
-            } else {
-                info.trackingStateFrameStatistics.framesWithLimitedTrackingStateByReason[TrackingFailureReason.EXCESSIVE_MOTION].toString()
-            }
         insufficientFeaturesTv.text =
             if (info.trackingStateFrameStatistics.framesWithLimitedTrackingStateByReason[TrackingFailureReason.INSUFFICIENT_FEATURES] == null) {
                 "0"
@@ -88,34 +66,70 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
                 info.trackingStateFrameStatistics.framesWithLimitedTrackingStateByReason[TrackingFailureReason.INSUFFICIENT_FEATURES].toString()
             }
 
-        pitchLowTv.text = rejections.excessiveTiltFrameCount.toString()
-        pitchHighTv.text = rejections.insufficientTiltFrameCount.toString()
-        blurryTv.text = rejections.excessiveBlurFrameCount.toString()
-        tooFastTv.text = rejections.excessiveMotionFrameCount.toString()
-        tooLittleTv.text = rejections.insufficientMotionFrameCount.toString()
-        featuresTv.text = rejections.insufficientFeatures.toString()
-
-        //TODO - Fix this
-//        imageQualityModelVersion.text = info.modelVersion
-//        imageQualityLastResult.text = String.format("%.5f", info.lastImageQualityScore)
-//        imageQualityInsufficient.text = rejections.imageQualityFrameCount.toString()
-
-        frameErrorTv.text = rejections.frameErrorCount.toString()
-
         val stringDistance =
             String.format("%.2f", info.translationAccumulator.totalTranslation) + " m"
-        distanceTravelledTv.text = stringDistance
-        val stringSpread =
-                    "[${info.rotationAccumulator.pitch[0]},${info.rotationAccumulator.pitch[1]}],${info.rotationAccumulator.pitch[2]}\n" +
-                    "[${info.rotationAccumulator.roll[0]},${info.rotationAccumulator.roll[1]}],${info.rotationAccumulator.roll[2]}\n" +
-                    "[${info.rotationAccumulator.yaw[0]},${info.rotationAccumulator.yaw[1]}],${info.rotationAccumulator.yaw[2]}"
-                cameraAnglesSpreadTv.text = stringSpread
-        val gamma = fmFrame.enhancedImageGamma
-        imageGammaCorrection.text = if(gamma != null) {
-            String.format("%.3f", gamma)
-        } else {
-            "None"
+        totalTranslationTv.text = stringDistance
+        val stringXSpread = "(${info.rotationAccumulator.pitch[0]}°, ${info.rotationAccumulator.pitch[1]}°), ${info.rotationAccumulator.pitch[2]}°"
+        val stringYSpread = "(${info.rotationAccumulator.roll[0]}°, ${info.rotationAccumulator.roll[1]}°), ${info.rotationAccumulator.roll[2]}°"
+        val stringZSpread = "(${info.rotationAccumulator.yaw[0]}°, ${info.rotationAccumulator.yaw[1]}°), ${info.rotationAccumulator.yaw[2]}°"
+        eulerAnglesSpreadXTv.text = stringXSpread
+        eulerAnglesSpreadYTv.text = stringYSpread
+        eulerAnglesSpreadZTv.text = stringZSpread
+    }
+
+    fun update(activeUploads: MutableList<FMFrame>) {
+        activeUploads.forEach { frame ->
+            val uploadText = "Uploading... "
+            var infoText = "Score: "
+            val score = frame.evaluation?.score
+            infoText += if (score != null) {
+                String.format("%.5f", score)
+            } else {
+                "n/a"
+            }
+            val gamma = frame.enhancedImageGamma
+            if (gamma != null) {
+                infoText += String.format(", Gamma: %.5f", gamma)
+            }
         }
+    }
+
+    fun update(frameEvaluationStatistics: FMFrameEvaluationStatistics) {
+        val window = if(frameEvaluationStatistics.windows.size == 0)
+            null
+        else
+            frameEvaluationStatistics.windows.last()
+        windowStart = window?.start
+        framesEvaluatedTv.text = "${window?.evaluations ?: 0}"
+
+        // update live score
+        val liveScore = window?.currentScore
+        val liveScoreText = if (liveScore != null) {
+            String.format("%.5f", liveScore)
+        } else {
+            "n/a"
+        }
+        liveScoreTv.text = liveScoreText
+
+        // update window best score
+        val currentBestScore = window?.currentBestScore
+        val bestScoreText = if(currentBestScore != null) {
+            String.format("%.5f", currentBestScore)
+        } else {
+            "n/a"
+        }
+        bestScoreTv.text = bestScoreText
+
+        // update window filter rejections
+        framesRejectedTv.text = "${window?.rejections ?: 0}"
+        currentRejectionTv.text = window?.currentRejectionReason?.name ?: ""
+
+        // update total filter rejection counts
+        pitchTooHighTv.text = "${frameEvaluationStatistics.totalRejections[FMFrameFilterRejectionReason.PITCH_TOO_HIGH] ?: 0}"
+        pitchTooLowTv.text = "${frameEvaluationStatistics.totalRejections[FMFrameFilterRejectionReason.PITCH_TOO_LOW] ?: 0}"
+        movementTooFastTv.text = "${frameEvaluationStatistics.totalRejections[FMFrameFilterRejectionReason.MOVING_TOO_FAST] ?: 0}"
+        movementTooLittleTv.text = "${frameEvaluationStatistics.totalRejections[FMFrameFilterRejectionReason.MOVING_TOO_LITTLE] ?: 0}"
+        insufficientFeaturesTv.text = "${frameEvaluationStatistics.totalRejections[FMFrameFilterRejectionReason.INSUFFICIENT_FEATURES] ?: 0}"
     }
 
     fun updateState(didChangeState: FMLocationManager.State) {
@@ -123,11 +137,8 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
             FMLocationManager.State.LOCALIZING -> {
                 statusTv.setTextColor(Color.GREEN)
             }
-            FMLocationManager.State.UPLOADING -> {
-                statusTv.setTextColor(Color.RED)
-            }
             else -> {
-                statusTv.setTextColor(Color.BLACK)
+                statusTv.setTextColor(Color.RED)
             }
         }
         statusTv.text = didChangeState.toString()
@@ -143,12 +154,12 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
 
         val elapsedUploading = (System.currentTimeMillis() - uploadingStart) / 1_000.0
         val stringUploadTime = String.format("%.2f", elapsedUploading) + "s"
-        uploadTimeTv.text = stringUploadTime
+        val uploadTimeText = stringUploadTime
         uploadingStart = System.currentTimeMillis()
 
         val elapsedLocalizing = (System.currentTimeMillis() - localizingStart) / 1_000.0
         val stringLocalizeTime = String.format("%.2f", elapsedLocalizing) + "s"
-        localizeTimeTv.text = stringLocalizeTime
+        val localizeTimeText = stringLocalizeTime
         localizingStart = System.currentTimeMillis()
     }
 
@@ -168,39 +179,40 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     }
 
     fun reset() {
-        val fantasmo = "Fantasmo SDK: " + BuildConfig.VERSION_NAME
+        val fantasmo = BuildConfig.VERSION_NAME
         sdkVersion.text = fantasmo
         val stringZero = "0"
-        val stringZeroS = "0,0s"
+        val stringZeroS = "0.0s"
         val stringClear = ""
+        val stringNA = "n/a"
+        val stringZeroTranslation = "0.00, 0.00, 0.00"
+        val stringZeroM = "0m"
+        val stringZeroAngles = "0.00°, 0.00°, 0.00°"
+        val stringZeroAngleSpread = "(0.00°, 0.00°), 0.00°"
 
         remoteConfigTv.text = remoteConfig.remoteConfigId
 
-        lastResultTv.text = stringZero
-        localizeTimeTv.text = stringZeroS
-        uploadTimeTv.text = stringZeroS
-
+        statusTv.text = stringClear
+        currentWindowTv.text = stringZeroS
+        bestScoreTv.text = stringNA
+        framesEvaluatedTv.text = stringZero
+        liveScoreTv.text = stringNA
+        framesRejectedTv.text = stringZero
+        currentRejectionTv.text = stringClear
+        lastResultTv.text = stringClear
+        errorsTv.text = stringZero
         deviceLocationTv.text = stringClear
-        cameraTranslationTv.text = stringClear
-        distanceTravelledTv.text = stringClear
-        cameraAnglesTv.text = stringClear
-        cameraAnglesSpreadTv.text = stringZero
-
-        normalTv.text = stringZero
-        limitedTv.text = stringZero
-        notAvailableTv.text = stringZero
-        excessiveMotionTv.text = stringZero
+        translationTv.text = stringZeroTranslation
+        totalTranslationTv.text = stringZeroM
+        remoteConfigTv.text = stringClear
+        eulerAnglesTv.text = stringZeroAngles
+        eulerAnglesSpreadXTv.text = stringZeroAngleSpread
+        eulerAnglesSpreadYTv.text = stringZeroAngleSpread
+        eulerAnglesSpreadZTv.text = stringZeroAngleSpread
+        movementTooFastTv.text = stringZero
+        movementTooLittleTv.text = stringZero
+        pitchTooHighTv.text = stringZero
+        pitchTooLowTv.text = stringZero
         insufficientFeaturesTv.text = stringZero
-        pitchLowTv.text = stringZero
-        pitchHighTv.text = stringZero
-        blurryTv.text = stringZero
-        tooFastTv.text = stringZero
-        tooLittleTv.text = stringZero
-        featuresTv.text = stringZero
-        frameErrorTv.text = stringZero
-
-        imageQualityModelVersion.text = stringClear
-        imageQualityLastResult.text = stringZero
-        imageQualityInsufficient.text = stringZero
     }
 }

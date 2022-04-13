@@ -10,15 +10,14 @@ import org.junit.Test
 class BehaviorRequesterTest {
 
     private val behaviorRequester = BehaviorRequester {
-        fmLocationListener.locationManager(didRequestBehavior = it)
+        fmLocationListener.didRequestBehavior(behavior = it)
     }
 
 
     @Test
     fun testProcessResult() {
-        val reason = FMFrameFilterRejectionReason.PitchTooLow
-        val failure = FMFrameFilterResult.Rejected(reason)
-        behaviorRequester.processResult(failure)
+        val reason = FMFrameFilterRejectionReason.PITCH_TOO_LOW
+        behaviorRequester.processFilterRejection(reason)
 
         val fieldRejectionCounts = behaviorRequester.javaClass.getDeclaredField("rejectionCounts")
         fieldRejectionCounts.isAccessible = true
@@ -37,7 +36,7 @@ class BehaviorRequesterTest {
 
     @Test
     fun testProcessResultWithFailure() {
-        val reason = FMFrameFilterRejectionReason.PitchTooLow
+        val reason = FMFrameFilterRejectionReason.PITCH_TOO_LOW
         val failure = FMFrameFilterResult.Rejected(reason)
 
         val fieldRejectionCounts = behaviorRequester.javaClass.getDeclaredField("rejectionCounts")
@@ -46,7 +45,7 @@ class BehaviorRequesterTest {
 
         result[reason] = 2
 
-        behaviorRequester.processResult(failure)
+        behaviorRequester.processFilterRejection(reason)
 
         assertEquals(
             false,
@@ -61,8 +60,7 @@ class BehaviorRequesterTest {
 
     @Test
     fun testProcessResultStartNewCycle() {
-        val reason = FMFrameFilterRejectionReason.PitchTooLow
-        val failure = FMFrameFilterResult.Rejected(reason)
+        val reason = FMFrameFilterRejectionReason.PITCH_TOO_LOW
 
         val fieldRejectionCounts = behaviorRequester.javaClass.getDeclaredField("rejectionCounts")
         fieldRejectionCounts.isAccessible = true
@@ -74,7 +72,7 @@ class BehaviorRequesterTest {
         fieldLastTriggerTime.isAccessible = true
         fieldLastTriggerTime.set(behaviorRequester,1619184130499)
 
-        behaviorRequester.processResult(failure)
+        behaviorRequester.processFilterRejection(reason)
 
         assertEquals(
             true,
@@ -88,13 +86,13 @@ class BehaviorRequesterTest {
      */
     private val fmLocationListener: FMLocationListener =
         object : FMLocationListener {
-            override fun locationManager(error: ErrorResponse, metadata: Any?) {
+            override fun didFailWithError(error: ErrorResponse, metadata: Any?) {
             }
 
-            override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
+            override fun didRequestBehavior(behavior: FMBehaviorRequest) {
             }
 
-            override fun locationManager(result: FMLocationResult) {
+            override fun didUpdateLocation(result: FMLocationResult) {
             }
         }
 }

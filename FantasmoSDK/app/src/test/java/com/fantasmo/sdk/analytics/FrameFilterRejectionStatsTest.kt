@@ -10,30 +10,30 @@ class FrameFilterRejectionStatsTest {
 
     @Test
     fun testAccumulate(){
-        var result = FMFrameFilterRejectionReason.ImageTooBlurry
+        var result = FMFrameFilterRejectionReason.IMAGE_TOO_BLURRY
         frameFilterStats.accumulate(result)
         assertEquals(1,frameFilterStats.excessiveBlurFrameCount)
 
         frameFilterStats.accumulate(result)
         assertEquals(2,frameFilterStats.excessiveBlurFrameCount)
 
-        result = FMFrameFilterRejectionReason.MovingTooLittle
+        result = FMFrameFilterRejectionReason.MOVING_TOO_LITTLE
         frameFilterStats.accumulate(result)
         assertEquals(1,frameFilterStats.insufficientMotionFrameCount)
 
-        result = FMFrameFilterRejectionReason.MovingTooFast
+        result = FMFrameFilterRejectionReason.MOVING_TOO_FAST
         frameFilterStats.accumulate(result)
         assertEquals(1,frameFilterStats.excessiveMotionFrameCount)
 
-        result = FMFrameFilterRejectionReason.PitchTooHigh
+        result = FMFrameFilterRejectionReason.PITCH_TOO_HIGH
         frameFilterStats.accumulate(result)
         assertEquals(1,frameFilterStats.insufficientTiltFrameCount)
 
-        result = FMFrameFilterRejectionReason.PitchTooLow
+        result = FMFrameFilterRejectionReason.PITCH_TOO_LOW
         frameFilterStats.accumulate(result)
         assertEquals(1,frameFilterStats.excessiveTiltFrameCount)
 
-        result = FMFrameFilterRejectionReason.InsufficientFeatures
+        result = FMFrameFilterRejectionReason.INSUFFICIENT_FEATURES
         frameFilterStats.accumulate(result)
         assertEquals(1,frameFilterStats.insufficientFeatures)
 
