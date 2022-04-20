@@ -80,7 +80,6 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
 
     fun update(activeUploads: List<FMFrame>) {
         activeUploads.forEach { frame ->
-            val uploadText = "Uploading... "
             var infoText = "Score: "
             val score = frame.evaluation?.score
             infoText += if (score != null) {
@@ -157,12 +156,10 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
 
         val elapsedUploading = (System.currentTimeMillis() - uploadingStart) / 1_000.0
         val stringUploadTime = String.format("%.2f", elapsedUploading) + "s"
-        val uploadTimeText = stringUploadTime
         uploadingStart = System.currentTimeMillis()
 
         val elapsedLocalizing = (System.currentTimeMillis() - localizingStart) / 1_000.0
         val stringLocalizeTime = String.format("%.2f", elapsedLocalizing) + "s"
-        val localizeTimeText = stringLocalizeTime
         localizingStart = System.currentTimeMillis()
     }
 
@@ -202,7 +199,6 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         liveScoreTv.text = stringNA
         framesRejectedTv.text = stringZero
         currentRejectionTv.text = stringClear
-        imageQualityModelTv.text = stringClear
         lastResultTv.text = stringClear
         errorsTv.text = stringZero
         deviceLocationTv.text = stringClear

@@ -90,6 +90,7 @@ class FMFrameEvaluationStatistics (val type: FMFrameEvaluationType) {
         // Update current window stats
         window.evaluations += 1
         window.currentScore = evaluation.score
+        window.currentImageQualityUserInfo = evaluation.imageQualityUserInfo
         window.currentFilterRejection = null
     }
 
