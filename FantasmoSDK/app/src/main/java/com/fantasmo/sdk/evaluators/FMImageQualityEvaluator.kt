@@ -6,6 +6,7 @@ import android.renderscript.*
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.models.FMFrame
+import com.fantasmo.sdk.models.analytics.FMImageQualityUserInfo
 import com.fantasmo.sdk.models.tensorflowML.ImageQualityModelUpdater
 import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import org.tensorflow.lite.DataType
@@ -17,28 +18,7 @@ import kotlin.math.exp
 class FMImageQualityEvaluator(val context: Context) {
     val TAG: String = FMImageQualityEvaluator::class.java.simpleName
 
-    enum class Error {
-        NOT_SUPPORTED,
-        FAILED_TO_CREATE_MODEL,
-        FAILED_TO_CREATE_INPUT_ARRAY,
-        FAILED_TO_RESIZE_PIXEL_BUFFER,
-        NO_PREDICTION,
-        INVALID_FEATURE_VALUE
-    }
-
     companion object {
-        private const val VERSION_USER_INFO_KEY = "modelVersion"
-        private const val ERROR_USER_INFO_KEY = "imageQualityError"
-
-        fun makeEvaluation(score: Float, modelVersion: String? = null) : FMFrameEvaluation {
-            return FMFrameEvaluation(FMFrameEvaluationType.IMAGE_QUALITY_ESTIMATION, score,
-                mapOf(VERSION_USER_INFO_KEY to modelVersion))
-        }
-
-        fun makeEvaluation(error: Error, modelVersion: String? = null) : FMFrameEvaluation {
-            // We use a score of 1.0 so the frame is always accepted
-            return FMFrameEvaluation(FMFrameEvaluationType.IMAGE_QUALITY_ESTIMATION, 1.0f, mapOf(VERSION_USER_INFO_KEY to modelVersion, ERROR_USER_INFO_KEY to error.name))
-        }
         // Factory constructor, returns the TFLite evaluator if supported
         fun makeEvaluator(context: Context) : FMFrameEvaluator {
             return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
@@ -56,7 +36,8 @@ class FMImageQualityEvaluatorNotSupported : FMFrameEvaluator {
     override val TAG: String = FMImageQualityEvaluatorNotSupported::class.java.name
 
     override fun evaluate(fmFrame: FMFrame) : FMFrameEvaluation {
-        return FMImageQualityEvaluator.makeEvaluation(FMImageQualityEvaluator.Error.NOT_SUPPORTED)
+        val imageQualityUserInfo = FMImageQualityUserInfo(null, "device not supported")
+        return FMFrameEvaluation(FMFrameEvaluationType.IMAGE_QUALITY_ESTIMATION, 1f, 0f, imageQualityUserInfo)
     }
 }
 
@@ -64,6 +45,16 @@ class FMImageQualityEvaluatorNotSupported : FMFrameEvaluator {
 @RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
 class FMImageQualityEvaluatorTFLite(val context: Context) :
     FMFrameEvaluator {
+
+    enum class Error {
+        NOT_SUPPORTED,
+        FAILED_TO_CREATE_MODEL,
+        FAILED_TO_CREATE_INPUT_ARRAY,
+        FAILED_TO_RESIZE_PIXEL_BUFFER,
+        NO_PREDICTION,
+        INVALID_FEATURE_VALUE
+    }
+
     override val TAG: String = FMImageQualityEvaluatorTFLite::class.java.name
 
     private val mlShape = intArrayOf(1, 3, 320, 240)
@@ -78,13 +69,15 @@ class FMImageQualityEvaluatorTFLite(val context: Context) :
      * ImageQualityEstimatorModel initializer.
      */
     private var imageQualityModelUpdater = ImageQualityModelUpdater(context)
-    private val modelVersion
+    val modelVersion
         get() = imageQualityModelUpdater.modelVersion
     private var imageQualityModel: Interpreter? = null
     private lateinit var colorMatrixIntrinsic: ScriptIntrinsicColorMatrix
     private lateinit var scalingMatrix: Matrix3f
 
     override fun evaluate(fmFrame: FMFrame): FMFrameEvaluation {
+        val evaluationStart = System.currentTimeMillis()
+
         imageQualityModel = imageQualityModelUpdater.getInterpreter()
         if (!::rs.isInitialized) {
             rs = RenderScript.create(context)
@@ -97,14 +90,14 @@ class FMImageQualityEvaluatorTFLite(val context: Context) :
 
         if (imageQualityModel == null) {
             Log.e(TAG, "Failed to get Model")
-            return FMImageQualityEvaluator.makeEvaluation(FMImageQualityEvaluator.Error.FAILED_TO_CREATE_MODEL, modelVersion)
+            return makeEvaluation(Error.FAILED_TO_CREATE_MODEL)
         }
 
         val yuvImage = fmFrame.yuvImage
         if (yuvImage == null) {
             // The frame being null means it's no longer available to send in the request
             Log.e(TAG, "Failed to create Input Array")
-            return FMImageQualityEvaluator.makeEvaluation(FMImageQualityEvaluator.Error.FAILED_TO_CREATE_INPUT_ARRAY, modelVersion)
+            return makeEvaluation(Error.FAILED_TO_CREATE_INPUT_ARRAY)
         } else {
             val rgbByteArray =
                 yuvToRgbConverter.toByteArray(yuvImage, imageWidth, imageHeight)
@@ -112,11 +105,13 @@ class FMImageQualityEvaluatorTFLite(val context: Context) :
             val rgbImage = getRGBValues(rgbByteArray)
             val score = processImage(rgbImage)
 
+            val evaluationTime = ((System.currentTimeMillis() - evaluationStart).toDouble() / 1000).toFloat()
+
             if (score != null) {
                 Log.d(TAG, "IQE score: $score")
-                return FMImageQualityEvaluator.makeEvaluation(score, modelVersion)
+                return makeEvaluation(score, evaluationTime)
             }
-            return FMImageQualityEvaluator.makeEvaluation(FMImageQualityEvaluator.Error.INVALID_FEATURE_VALUE, modelVersion)
+            return makeEvaluation(Error.INVALID_FEATURE_VALUE)
         }
     }
 
@@ -181,5 +176,16 @@ class FMImageQualityEvaluatorTFLite(val context: Context) :
         } else {
             null
         }
+    }
+
+    fun makeEvaluation(score: Float, time: Float) : FMFrameEvaluation {
+        return FMFrameEvaluation(FMFrameEvaluationType.IMAGE_QUALITY_ESTIMATION, score, time,
+            FMImageQualityUserInfo(modelVersion))
+    }
+
+    fun makeEvaluation(error: Error) : FMFrameEvaluation {
+        // We use a score of 1.0 so the frame is always accepted
+        val imageQualityUserInfo = FMImageQualityUserInfo(modelVersion, error.name)
+        return FMFrameEvaluation(FMFrameEvaluationType.IMAGE_QUALITY_ESTIMATION, 1.0f, 0f, imageQualityUserInfo)
     }
 }

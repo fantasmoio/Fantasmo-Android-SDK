@@ -245,6 +245,8 @@ class FMParkingView @JvmOverloads constructor(
                 fmARCoreView.unsetAnchor()
                 fmLocationManager.unsetAnchor()
             }
+
+            fmLocationManager.sendSessionAnalytics()
             fmQRScanningView.hide()
             fmLocalizingView.hide()
         }
@@ -412,7 +414,7 @@ class FMParkingView @JvmOverloads constructor(
         object : FMLocationListener {
             override fun didBeginUpload(frame: FMFrame) {
                 (context as Activity).runOnUiThread {
-                    fmSessionStatisticsView.update(fmLocationManager.activeUploads)
+                    fmSessionStatisticsView.update(fmLocationManager.activeUploads.toList())
                 }
             }
 

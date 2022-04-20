@@ -1,6 +1,12 @@
 package com.fantasmo.sdk
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.*
+import android.os.Build
+import android.provider.Settings
+import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.utilities.math.Vector3
 import com.google.ar.core.Pose
@@ -125,4 +131,24 @@ class FMUtility {
         const val defaultConfigId = "default-android_17.01.22"
         const val fileName = "remote_config.json"
     }
+}
+
+class FMDeviceAndHostInfo(context: Context) {
+    @SuppressLint("HardwareIds")
+    val udid = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+    val manufacturer: String = Build.MANUFACTURER // Samsung
+    val model: String = Build.MODEL  // SM-G780
+    val deviceOs = "android"
+    val deviceModel = "$manufacturer $model" // Samsung SM-G780
+    val deviceOsVersion = Build.VERSION.SDK_INT.toString() // "30" (Android 11)
+    val sdkVersion = BuildConfig.VERSION_NAME // "1.0.5"
+    private val packageInfo = context.packageManager
+        .getPackageInfo(context.packageName, 0)
+    val hostAppMarketingVersion = packageInfo.versionName
+    val hostAppBuild = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        packageInfo?.longVersionCode.toString()
+    }  else {
+        packageInfo?.versionCode.toString()
+    }
+    val hostAppBundleIdentifier = context.packageName
 }

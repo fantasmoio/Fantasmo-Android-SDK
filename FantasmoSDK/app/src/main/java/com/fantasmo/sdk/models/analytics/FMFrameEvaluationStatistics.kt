@@ -1,8 +1,9 @@
 package com.fantasmo.sdk.models.analytics
 
 import com.fantasmo.sdk.evaluators.FMFrameEvaluationType
-import com.fantasmo.sdk.filters.FMFrameFilterRejectionReason
+import com.fantasmo.sdk.filters.FMFrameFilter
 import com.fantasmo.sdk.models.FMFrame
+import com.fantasmo.sdk.models.FMFrameRejectionReason
 
 class FMFrameEvaluationStatistics (val type: FMFrameEvaluationType) {
     /// Model representing a single frame evaluation window
@@ -12,7 +13,9 @@ class FMFrameEvaluationStatistics (val type: FMFrameEvaluationType) {
 
         var currentBestScore: Float? = null
 
-        var currentRejectionReason: FMFrameFilterRejectionReason? = null
+        var currentFilterRejection: FMFrameRejectionReason? = null
+
+        var currentImageQualityUserInfo: FMImageQualityUserInfo? = null
 
         var evaluations: Int = 0
 
@@ -34,16 +37,29 @@ class FMFrameEvaluationStatistics (val type: FMFrameEvaluationType) {
     var sumOfAllScores: Float = 0f
     private set
 
+    /// Total time spent evaluating frames in the session.
+    var totalEvaluationTime: Float = 0f
+    private set
+
     /// Total evaluations in the session.
     var totalEvaluations: Int = 0
     private set
 
+    /// Dictionary of frame rejection reasons and the number of times each occurred in the session.
+    var rejectionReasons = FMFrameRejectionReason.values().associate { reason -> reason to 0 }.toMutableMap()
+    private set
+
     /// Total rejections in the session.
-    val totalRejections: MutableMap<FMFrameFilterRejectionReason,Int> = mutableMapOf(FMFrameFilterRejectionReason.PITCH_TOO_LOW to 0,
-        FMFrameFilterRejectionReason.PITCH_TOO_HIGH to 0,
-        FMFrameFilterRejectionReason.MOVING_TOO_FAST to 0,
-        FMFrameFilterRejectionReason.MOVING_TOO_LITTLE to 0,
-        FMFrameFilterRejectionReason.INSUFFICIENT_FEATURES to 0)
+    val totalRejections: Int
+        get() = rejectionReasons.values.sum()
+
+    /// Average of all evaluation scores in the session.
+    val averageEvaluationScore: Float
+        get() = if(totalEvaluations > 0) sumOfAllScores / totalEvaluations.toFloat() else 0f
+
+    /// Average time it took to evaluate a single frame in the session
+    val averageEvaluationTime: Float
+        get() = if(totalEvaluations > 0)  totalEvaluationTime / totalEvaluations.toFloat() else 0f
 
 
     /// Creates a new window and makes it the current window.
@@ -60,6 +76,7 @@ class FMFrameEvaluationStatistics (val type: FMFrameEvaluationType) {
         val window = windows.last()
         // Update session stats
         totalEvaluations += 1
+        totalEvaluationTime += evaluation.time
         sumOfAllScores += evaluation.score
         val highestScore = this.highestScore
         if (highestScore == null || evaluation.score > highestScore) {
@@ -73,7 +90,7 @@ class FMFrameEvaluationStatistics (val type: FMFrameEvaluationType) {
         // Update current window stats
         window.evaluations += 1
         window.currentScore = evaluation.score
-        window.currentRejectionReason = null
+        window.currentFilterRejection = null
     }
 
     /// Sets the best frame for the current window.
@@ -85,19 +102,20 @@ class FMFrameEvaluationStatistics (val type: FMFrameEvaluationType) {
         }
     }
 
-    /// Increment the count for a specific filter rejection and set as the current rejection.
-    fun addFilterRejection(rejectionReason: FMFrameFilterRejectionReason) {
+    /// Increment the count for a rejection type.
+    fun addRejection(rejectionReason: FMFrameRejectionReason, filter: FMFrameFilter? = null) {
         if(windows.size == 0)
             return
 
         val window = windows.last()
         // Add to session totals
-        val totalRejectionsForReason = totalRejections[rejectionReason] ?: 0
-        totalRejections[rejectionReason] = totalRejectionsForReason + 1
+        val totalRejectionsForReason = rejectionReasons[rejectionReason] ?: 0
+        rejectionReasons[rejectionReason] = totalRejectionsForReason + 1
 
         // Add to current window
         window.rejections += 1
-        window.currentRejectionReason = rejectionReason
+        if(filter != null)
+            window.currentFilterRejection = rejectionReason
     }
 
     /// Reset all statistics, used when starting a new session.
@@ -107,6 +125,6 @@ class FMFrameEvaluationStatistics (val type: FMFrameEvaluationType) {
         lowestScore = null
         sumOfAllScores = 0f
         totalEvaluations = 0
-        totalRejections.keys.forEach{totalRejections[it] = 0}
+        rejectionReasons = FMFrameRejectionReason.values().associate { reason -> reason to 0 }.toMutableMap()
     }
 }

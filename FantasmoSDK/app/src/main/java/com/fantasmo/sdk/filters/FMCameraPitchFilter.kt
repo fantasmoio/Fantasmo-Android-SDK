@@ -7,6 +7,7 @@ import android.view.WindowManager
 import com.fantasmo.sdk.FMUtility.Companion.convertQuaternionToEuler
 import com.fantasmo.sdk.FMUtility.Companion.convertToDegrees
 import com.fantasmo.sdk.models.FMFrame
+import com.fantasmo.sdk.models.FMFrameRejectionReason
 
 /**
  * Class responsible for filtering frames due to critical angles.
@@ -36,7 +37,7 @@ class FMCameraPitchFilter(
         val orientedQuaternion = fmFrame.camera.displayOrientedPose.rotationQuaternion
         // RotationQuaternion from device sensor system
         val sensorQuaternion = fmFrame.androidSensorPose?.rotationQuaternion
-            ?: return FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.FRAME_ERROR)
+            ?: return FMFrameFilterResult.Rejected(FMFrameRejectionReason.FRAME_ERROR)
 
         val rotation: Int = try {
             context.display?.rotation!!
@@ -87,11 +88,11 @@ class FMCameraPitchFilter(
             }
             // If it's looking Up
             rotationQuaternion[0] * orientationSign < 0 -> {
-                FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.PITCH_TOO_HIGH)
+                FMFrameFilterResult.Rejected(FMFrameRejectionReason.PITCH_TOO_HIGH)
             }
             // Else it's looking Down
             else -> {
-                FMFrameFilterResult.Rejected(FMFrameFilterRejectionReason.PITCH_TOO_LOW)
+                FMFrameFilterResult.Rejected(FMFrameRejectionReason.PITCH_TOO_LOW)
             }
         }
     }

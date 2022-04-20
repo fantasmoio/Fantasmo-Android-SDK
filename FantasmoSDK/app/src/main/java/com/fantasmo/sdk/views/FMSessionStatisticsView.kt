@@ -8,8 +8,8 @@ import com.fantasmo.sdk.FMLocationResult
 import com.fantasmo.sdk.config.RemoteConfig.Companion.remoteConfig
 import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.fantasmosdk.R
-import com.fantasmo.sdk.filters.FMFrameFilterRejectionReason
 import com.fantasmo.sdk.models.FMFrame
+import com.fantasmo.sdk.models.FMFrameRejectionReason
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FMFrameEvaluationStatistics
 import com.google.ar.core.TrackingFailureReason
@@ -28,6 +28,7 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     private var liveScoreTv: TextView = arLayout.findViewById(R.id.liveScoreTextView)
     private var framesRejectedTv: TextView = arLayout.findViewById(R.id.framesRejectedTextView)
     private var currentRejectionTv: TextView = arLayout.findViewById(R.id.currentRejectionTextView)
+    private var imageQualityModelTv: TextView = arLayout.findViewById(R.id.imageQualityModelTextView)
     private var lastResultTv: TextView = arLayout.findViewById(R.id.lastResultTextView)
     private var errorsTv: TextView = arLayout.findViewById(R.id.errorsTextView)
     private var deviceLocationTv: TextView = arLayout.findViewById(R.id.deviceLocationTextView)
@@ -69,15 +70,15 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         val stringDistance =
             String.format("%.2f", info.translationAccumulator.totalTranslation) + " m"
         totalTranslationTv.text = stringDistance
-        val stringXSpread = "(${info.rotationAccumulator.pitch[0]}°, ${info.rotationAccumulator.pitch[1]}°), ${info.rotationAccumulator.pitch[2]}°"
-        val stringYSpread = "(${info.rotationAccumulator.roll[0]}°, ${info.rotationAccumulator.roll[1]}°), ${info.rotationAccumulator.roll[2]}°"
-        val stringZSpread = "(${info.rotationAccumulator.yaw[0]}°, ${info.rotationAccumulator.yaw[1]}°), ${info.rotationAccumulator.yaw[2]}°"
+        val stringXSpread = "(${info.rotationAccumulator.pitch.min}°, ${info.rotationAccumulator.pitch.max}°), ${info.rotationAccumulator.pitch.spread}°"
+        val stringYSpread = "(${info.rotationAccumulator.roll.min}°, ${info.rotationAccumulator.roll.max}°), ${info.rotationAccumulator.roll.spread}°"
+        val stringZSpread = "(${info.rotationAccumulator.yaw.min}°, ${info.rotationAccumulator.yaw.max}°), ${info.rotationAccumulator.yaw.spread}°"
         eulerAnglesSpreadXTv.text = stringXSpread
         eulerAnglesSpreadYTv.text = stringYSpread
         eulerAnglesSpreadZTv.text = stringZSpread
     }
 
-    fun update(activeUploads: MutableList<FMFrame>) {
+    fun update(activeUploads: List<FMFrame>) {
         activeUploads.forEach { frame ->
             val uploadText = "Uploading... "
             var infoText = "Score: "
@@ -111,6 +112,8 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         }
         liveScoreTv.text = liveScoreText
 
+        imageQualityModelTv.text = window?.currentImageQualityUserInfo?.modelVersion
+
         // update window best score
         val currentBestScore = window?.currentBestScore
         val bestScoreText = if(currentBestScore != null) {
@@ -122,14 +125,14 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
 
         // update window filter rejections
         framesRejectedTv.text = "${window?.rejections ?: 0}"
-        currentRejectionTv.text = window?.currentRejectionReason?.name ?: ""
+        currentRejectionTv.text = window?.currentFilterRejection?.name ?: ""
 
         // update total filter rejection counts
-        pitchTooHighTv.text = "${frameEvaluationStatistics.totalRejections[FMFrameFilterRejectionReason.PITCH_TOO_HIGH] ?: 0}"
-        pitchTooLowTv.text = "${frameEvaluationStatistics.totalRejections[FMFrameFilterRejectionReason.PITCH_TOO_LOW] ?: 0}"
-        movementTooFastTv.text = "${frameEvaluationStatistics.totalRejections[FMFrameFilterRejectionReason.MOVING_TOO_FAST] ?: 0}"
-        movementTooLittleTv.text = "${frameEvaluationStatistics.totalRejections[FMFrameFilterRejectionReason.MOVING_TOO_LITTLE] ?: 0}"
-        insufficientFeaturesTv.text = "${frameEvaluationStatistics.totalRejections[FMFrameFilterRejectionReason.INSUFFICIENT_FEATURES] ?: 0}"
+        pitchTooHighTv.text = "${frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.PITCH_TOO_HIGH] ?: 0}"
+        pitchTooLowTv.text = "${frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.PITCH_TOO_LOW] ?: 0}"
+        movementTooFastTv.text = "${frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.MOVING_TOO_FAST] ?: 0}"
+        movementTooLittleTv.text = "${frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.MOVING_TOO_LITTLE] ?: 0}"
+        insufficientFeaturesTv.text = "${frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.TRACKING_STATE_INSUFFICIENT_FEATURES] ?: 0}"
     }
 
     fun updateState(didChangeState: FMLocationManager.State) {
@@ -199,6 +202,7 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         liveScoreTv.text = stringNA
         framesRejectedTv.text = stringZero
         currentRejectionTv.text = stringClear
+        imageQualityModelTv.text = stringClear
         lastResultTv.text = stringClear
         errorsTv.text = stringZero
         deviceLocationTv.text = stringClear

@@ -1,6 +1,6 @@
 package com.fantasmo.sdk.evaluators
-
-import com.fantasmo.sdk.filters.FMFrameFilterRejectionReason
+import com.fantasmo.sdk.models.FMFrameRejectionReason
+import com.fantasmo.sdk.models.analytics.FMImageQualityUserInfo
 
 enum class FMFrameEvaluationType {
     IMAGE_QUALITY_ESTIMATION
@@ -8,7 +8,8 @@ enum class FMFrameEvaluationType {
 
 data class FMFrameEvaluation (val type: FMFrameEvaluationType,
                                 val score: Float, // 0.0 - 1.0
-                                val imageQualityUserInfo: Map<String, String?>?  // optional analytics etc.
+                                val time: Float, // time it took to perform the evaluation in seconds
+                                val imageQualityUserInfo: FMImageQualityUserInfo?  // optional analytics etc.
                             )
 
 sealed class FMFrameEvaluationResult {
@@ -29,9 +30,9 @@ sealed class FMFrameEvaluationDiscardReason {
     object BelowCurrentBestScore: FMFrameEvaluationDiscardReason()
     object OtherEvaluationInProgress: FMFrameEvaluationDiscardReason()
     object EvaluatorError: FMFrameEvaluationDiscardReason()
-    class RejectedByFilter(val reason: FMFrameFilterRejectionReason): FMFrameEvaluationDiscardReason()
+    class RejectedByFilter(val reason: FMFrameRejectionReason): FMFrameEvaluationDiscardReason()
 
-    fun getRejectionReason(): FMFrameFilterRejectionReason? {
+    fun getRejectionReason(): FMFrameRejectionReason? {
         return when (this){
             is RejectedByFilter -> reason
             else -> null

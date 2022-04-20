@@ -6,24 +6,24 @@ import android.util.Log
 import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.filters.*
 import com.fantasmo.sdk.models.FMFrame
+import com.fantasmo.sdk.models.FMFrameRejectionReason
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 interface FMFrameEvaluatorChainListener {
     fun didStartWindow(frameEvaluatorChain: FMFrameEvaluatorChain,  startTime: Double)
-    fun didRejectFrameWhileEvaluatingOtherFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, otherFrame: FMFrame)
-    fun didRejectFrameWithFilterReason(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, reason: FMFrameFilterRejectionReason)
+    fun didRejectFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, reason: FMFrameRejectionReason)
+    fun didRejectFrameWithFilter(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, filter:FMFrameFilter, reason: FMFrameRejectionReason)
     fun didEvaluateNewBestFrame(frameEvaluatorChain: FMFrameEvaluatorChain, newBestFrame: FMFrame)
     fun didFinishEvaluatingFrame(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame)
-    fun didEvaluateFrameBelowMinScoreThreshold(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, minScoreThreshold: Float)
-    fun didEvaluateFrameBelowCurrentBestScore(frameEvaluatorChain: FMFrameEvaluatorChain, frame: FMFrame, currentBestScore: Float)
 }
 
 class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context) {
     val TAG: String = FMFrameEvaluatorChain::class.java.simpleName
 
-    private val frameEvaluator: FMFrameEvaluator
+    val frameEvaluator: FMFrameEvaluator
+
     private val filters : MutableList<FMFrameFilter> = mutableListOf()
     private val defaultCoroutineScope = CoroutineScope(Dispatchers.Default)
     private val mainCoroutineScope = CoroutineScope(Dispatchers.Main)
@@ -50,8 +50,6 @@ class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context
     private val n2s = 1_000_000_000.0
 
     init {
-        // TODO - get these from remote config
-
         if (remoteConfig.isTrackingStateFilterEnabled) {
             filters.add(FMTrackingStateFilter())
         }
@@ -91,11 +89,7 @@ class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context
     fun evaluateAsync(fmFrame: FMFrame) {
         if(evaluatingFrame != null) {
             Log.d(TAG, "Already evaluating frame, rejecting frame ${fmFrame.timestamp}")
-            evaluatingFrame?.let {
-                listener?.didRejectFrameWhileEvaluatingOtherFrame(this, fmFrame,
-                    it
-                )
-            }
+            listener?.didRejectFrame(this, fmFrame, FMFrameRejectionReason.OTHER_EVALUATION_IN_PROGRESS)
             return
         }
 
@@ -104,17 +98,10 @@ class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context
         for (filter in filters) {
             filterResult = filter.accepts(fmFrame)
             if (filterResult != FMFrameFilterResult.Accepted) {
-                break
+                filterResult.getRejectedReason()
+                    ?.let { listener?.didRejectFrameWithFilter(this, fmFrame, filter, it) }
+                return
             }
-        }
-
-        // if any filter rejects, throw frame away
-        if (filterResult != FMFrameFilterResult.Accepted) {
-            val reason = filterResult.getRejectedReason()
-            Log.d(TAG, "Frame ${fmFrame.timestamp} rejected for reason $reason")
-            if(reason != null)
-                listener?.didRejectFrameWithFilterReason(this, fmFrame, reason)
-            return
         }
 
         // set a flag so we can only process one frame at a time
@@ -127,7 +114,9 @@ class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context
             }
 
             // evaluate the frame using the configured evaluator
+            val start = System.nanoTime()
             val evaluation = frameEvaluator.evaluate(fmFrame)
+            Log.d(TAG, "Evaluation took ${(System.nanoTime() - start).toDouble() / 1_000_000} ms")
 
             mainCoroutineScope.launch {
                 // finish evaluation on the main thread
@@ -141,18 +130,17 @@ class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context
 
         // store the evaluation on the frame and notify the delegate
         fmFrame.evaluation = evaluation
-        listener?.didFinishEvaluatingFrame(this, fmFrame)
         val currentBestScore = currentBestFrame?.evaluation?.score
         // check if the frame is above the min score threshold, otherwise return
         if (evaluation.score < minScoreThreshold) {
             Log.d(TAG, "Frame ${fmFrame.timestamp} score ${evaluation.score} below threshold")
-            listener?.didEvaluateFrameBelowMinScoreThreshold(this, fmFrame, minScoreThreshold)
+            listener?.didRejectFrame(this, fmFrame, FMFrameRejectionReason.SCORE_BELOW_MIN_THRESHOLD)
         }
         // check if the new frame score is better than our current best frame score, otherwise return
 
         else if(currentBestScore != null && currentBestScore > evaluation.score) {
             Log.d(TAG, "Frame ${fmFrame.timestamp} score ${evaluation.score} below current best score")
-            listener?.didEvaluateFrameBelowCurrentBestScore(this, fmFrame, currentBestScore)
+            listener?.didRejectFrame(this, fmFrame, FMFrameRejectionReason.SCORE_BELOW_CURRENT_BEST)
         }
         else {
             // frame is the new best, update our saved reference and notify the delegate

@@ -1,6 +1,7 @@
 package com.fantasmo.sdk.filters
 
 import com.fantasmo.sdk.FMBehaviorRequest
+import com.fantasmo.sdk.models.FMFrameRejectionReason
 import java.util.*
 
 /**
@@ -26,8 +27,8 @@ class BehaviorRequester(handler: (FMBehaviorRequest) -> Unit) {
     private var requestHandler: ((FMBehaviorRequest) -> Unit) = handler
 
     // Dictionary of failure events with corresponding incidence
-    private var rejectionCounts: MutableMap<FMFrameFilterRejectionReason, Int> = EnumMap(
-        FMFrameFilterRejectionReason::class.java
+    private var rejectionCounts: MutableMap<FMFrameRejectionReason, Int> = EnumMap(
+        FMFrameRejectionReason::class.java
     )
 
     // TODO - Change to processFilterRejection
@@ -36,7 +37,7 @@ class BehaviorRequester(handler: (FMBehaviorRequest) -> Unit) {
      * On new failure, `onNext` is invoked to update `validationErrorToCountDict`.
      * @param frameFilterResult `FMFrameFilterResult
      */
-    fun processFilterRejection(reason: FMFrameFilterRejectionReason) {
+    fun processFilterRejection(reason: FMFrameRejectionReason) {
         var count = rejectionCounts[reason] ?: 0
         count += 1
 

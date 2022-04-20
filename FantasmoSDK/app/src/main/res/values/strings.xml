@@ -48,7 +48,7 @@
     <string name="scan_qr_code">Scan QR Code</string>
     <string name="verify_parking">VERIFY PARKING</string>
     <string name="exit">Exit</string>
-    <string name="image_quality_model_version">IQModel:</string>
+    <string name="image_quality_model_version">Image Quality Model:</string>
     <string name="_1_0">1.0</string>
     <string name="insufficient_quality">; Rejections:</string>
     <string name="image_gamma_correction">Image Gamma Correction:</string>

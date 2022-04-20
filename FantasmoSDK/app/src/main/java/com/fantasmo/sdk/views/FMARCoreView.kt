@@ -16,7 +16,6 @@ import com.google.ar.core.*
 import com.google.ar.core.exceptions.CameraNotAvailableException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.io.IOException
 
