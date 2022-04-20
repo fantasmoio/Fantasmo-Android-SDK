@@ -1,5 +1,7 @@
 package com.fantasmo.sdk.views
 
+import android.app.Activity
+import android.content.Context
 import android.graphics.Color
 import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -8,16 +10,18 @@ import com.fantasmo.sdk.FMLocationResult
 import com.fantasmo.sdk.config.RemoteConfig.Companion.remoteConfig
 import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.fantasmosdk.R
+import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.models.FMFrameRejectionReason
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
 import com.fantasmo.sdk.models.analytics.FMFrameEvaluationStatistics
-import com.google.ar.core.TrackingFailureReason
+import java.util.*
+import kotlin.concurrent.timerTask
 
 /**
  * Debug View responsible for displaying the Statistics generated during the session.
  */
-class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
+class FMSessionStatisticsView(arLayout: CoordinatorLayout, private val context: Context) {
 
     private val TAG = FMSessionStatisticsView::class.java.simpleName
     private var sdkVersion: TextView = arLayout.findViewById(R.id.fantasmoSDKView)
@@ -31,6 +35,7 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     private var imageQualityModelTv: TextView = arLayout.findViewById(R.id.imageQualityModelTextView)
     private var lastResultTv: TextView = arLayout.findViewById(R.id.lastResultTextView)
     private var errorsTv: TextView = arLayout.findViewById(R.id.errorsTextView)
+    private var lastErrorTv: TextView = arLayout.findViewById(R.id.lastErrorTextView)
     private var deviceLocationTv: TextView = arLayout.findViewById(R.id.deviceLocationTextView)
     private var translationTv: TextView = arLayout.findViewById(R.id.translationTextView)
     private var totalTranslationTv: TextView = arLayout.findViewById(R.id.totalTranslationTextView)
@@ -44,9 +49,10 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     private var pitchTooHighTv: TextView = arLayout.findViewById(R.id.pitchTooHighTextView)
     private var pitchTooLowTv: TextView = arLayout.findViewById(R.id.pitchTooLowTextView)
     private var insufficientFeaturesTv: TextView = arLayout.findViewById(R.id.insufficientFeaturesTextView)
-
+    private val n2s = 1_000_000_000.0
 
     private var windowStart: Double? = null
+    private var windowTimer: Timer? = null
 
     fun updateStats(
         fmFrame: FMFrame,
@@ -59,13 +65,6 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         val cameraRotation = fmFrame.sensorAngles
         if(cameraRotation != null)
             eulerAnglesTv.text = createStringDisplay(cameraRotation)
-
-        insufficientFeaturesTv.text =
-            if (info.trackingStateFrameStatistics.framesWithLimitedTrackingStateByReason[TrackingFailureReason.INSUFFICIENT_FEATURES] == null) {
-                "0"
-            } else {
-                info.trackingStateFrameStatistics.framesWithLimitedTrackingStateByReason[TrackingFailureReason.INSUFFICIENT_FEATURES].toString()
-            }
 
         val stringDistance =
             String.format("%.2f", info.translationAccumulator.totalTranslation) + " m"
@@ -111,7 +110,10 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         }
         liveScoreTv.text = liveScoreText
 
-        imageQualityModelTv.text = window?.currentImageQualityUserInfo?.modelVersion
+        val modelVersion = window?.currentImageQualityUserInfo?.modelVersion
+        if (modelVersion != null) {
+            imageQualityModelTv.text = modelVersion
+        }
 
         // update window best score
         val currentBestScore = window?.currentBestScore
@@ -168,6 +170,11 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         deviceLocationTv.text = stringResult
     }
 
+    fun updateErrors(errorCount: Int, lastError: ErrorResponse?) {
+        errorsTv.text = errorCount.toString()
+        lastErrorTv.text = lastError?.message
+    }
+
     /**
      * Method to simplify task of creating a String to be shown in the screen
      * @param cameraAttr `FloatArray` of values and with size that equals 3
@@ -179,6 +186,8 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
     }
 
     fun reset() {
+        windowTimer?.cancel()
+
         val fantasmo = "Fantasmo SDK " + BuildConfig.VERSION_NAME
         sdkVersion.text = fantasmo
         val stringZero = "0"
@@ -190,7 +199,6 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         val stringZeroAngles = "0.00°, 0.00°, 0.00°"
         val stringZeroAngleSpread = "(0.00°, 0.00°), 0.00°"
 
-        remoteConfigTv.text = remoteConfig.remoteConfigId
 
         statusTv.text = stringClear
         currentWindowTv.text = stringZeroS
@@ -204,7 +212,7 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         deviceLocationTv.text = stringClear
         translationTv.text = stringZeroTranslation
         totalTranslationTv.text = stringZeroM
-        remoteConfigTv.text = stringClear
+        remoteConfigTv.text = remoteConfig.remoteConfigId
         eulerAnglesTv.text = stringZeroAngles
         eulerAnglesSpreadXTv.text = stringZeroAngleSpread
         eulerAnglesSpreadYTv.text = stringZeroAngleSpread
@@ -215,4 +223,21 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout) {
         pitchTooLowTv.text = stringZero
         insufficientFeaturesTv.text = stringZero
     }
+
+    fun startWindowTimer() {
+        reset()
+        windowTimer?.cancel()
+        windowTimer = Timer()
+        windowTimer?.scheduleAtFixedRate(timerTask{
+            val windowStart = windowStart
+            if(windowStart != null) {
+                val timeElapsed = System.nanoTime() / n2s - windowStart
+                val timeElapsedString = String.format("%.1f", timeElapsed) + "s"
+                (context as Activity).runOnUiThread {
+                    currentWindowTv.text = timeElapsedString
+                }
+            }
+        }, 0, 100)
+    }
+
 }

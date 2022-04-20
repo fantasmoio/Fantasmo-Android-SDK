@@ -152,7 +152,7 @@ class FMParkingView @JvmOverloads constructor(
         arLayout = getChildAt(0) as CoordinatorLayout
         fmARCoreView = FMARCoreView(arLayout, context)
         fmARCoreView.setupARSession()
-        fmSessionStatisticsView = FMSessionStatisticsView(arLayout)
+        fmSessionStatisticsView = FMSessionStatisticsView(arLayout, context)
         setupFMLocationManager()
     }
 
@@ -208,7 +208,7 @@ class FMParkingView @JvmOverloads constructor(
         val statistics = arLayout.findViewWithTag<ConstraintLayout>("StatisticsView")
         if (showStatistics) {
             statistics.visibility = View.VISIBLE
-            fmSessionStatisticsView.reset()
+            fmSessionStatisticsView.startWindowTimer()
         } else {
             statistics.visibility = View.GONE
         }
@@ -437,6 +437,7 @@ class FMParkingView @JvmOverloads constructor(
                 (context as Activity).runOnUiThread {
                     fmParkingViewController.fmParkingView(error, metadata)
                     fmLocalizingViewController.didReceiveLocalizationError(error, metadata)
+                    fmSessionStatisticsView.updateErrors(fmLocationManager.errors.size, error)
                 }
             }
 

@@ -81,8 +81,9 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
 
     private var startTime = System.currentTimeMillis() // resets on `startUpdatingLocation`
     private var totalFramesUploaded: Int = 0 // total calls to `localize`
-    private var locationResultCount: Int = 0 // total successful results from `localize`
-    private var errorResultCount: Int = 0 // total error results from `localize`
+
+    var errors: MutableList<ErrorResponse> = mutableListOf()
+    private set
 
     /**
      * Connect to the location service.
@@ -162,9 +163,8 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
 
         startTime = System.currentTimeMillis()
         totalFramesUploaded = 0
-        locationResultCount = 0
-        errorResultCount = 0
-    }
+        errors = mutableListOf()
+   }
 
     /**
      * Stops the generation of location updates.
@@ -249,7 +249,6 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
                         result
                     )
                     totalFramesUploaded++
-                    locationResultCount++
                     updateStateAfterLocalization()
                 },
                 { error ->
@@ -257,7 +256,7 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
                     activeUploads.removeAll { it == fmFrame }
                     fmLocationListener?.didFailWithError(error, null)
                     totalFramesUploaded++
-                    errorResultCount++
+                    errors.add(error)
                     updateStateAfterLocalization()
                 })
 
@@ -354,8 +353,8 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
             totalFramesUploaded = totalFramesUploaded,
             frameEvaluations = frameEvaluations,
             frameRejections = frameRejections,
-            locationResultCount = locationResultCount,
-            errorResultCount = errorResultCount,
+            locationResultCount = locationFuser.locationCount,
+            errorResultCount = errors.size,
             totalTranslation = accumulatedARCoreInfo.translationAccumulator.totalTranslation,
             rotationSpread = FMRotationSpread(
                 pitch = accumulatedARCoreInfo.rotationAccumulator.pitch.spread,

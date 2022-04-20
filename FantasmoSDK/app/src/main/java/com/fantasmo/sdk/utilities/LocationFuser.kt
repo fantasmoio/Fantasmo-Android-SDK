@@ -12,7 +12,8 @@ class LocationFuser {
 
     private val TAG = "LocationFuser"
     private var locations = mutableListOf<Location>()
-
+    val locationCount: Int
+    get() = locations.size
     fun reset() {
         locations = mutableListOf()
     }
