@@ -2,7 +2,6 @@ package com.fantasmo.sdk
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.PackageManager
 import android.graphics.*
 import android.os.Build
 import android.provider.Settings
@@ -52,48 +51,48 @@ class FMUtility {
 
         /**
          * Converts Quaternion to Euler Angles.
-         * Source: www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
-         * Conventions are changed to fit with this model, as we need attitude / pitch between -90° and 90°
-         * attitude -> pitch, banking -> roll, heading -> yaw. -90° is added to yaw to fit with iOS model.
+         * Source: https://de.mathworks.com/matlabcentral/fileexchange/20696-function-to-convert-between-dcm-euler-angles-quaternions-and-euler-vectors
+         * Calculating Euler Angles in YXZ order,
          * @param rotationQuaternion: rotation quaternion correspondent to rotation of the device
          * */
         fun convertQuaternionToEuler(rotationQuaternion: FloatArray): FloatArray {
-            val qw = rotationQuaternion[3]
-            val qx = rotationQuaternion[1]
-            val qy = rotationQuaternion[2]
-            val qz = rotationQuaternion[0]
+            var qw = rotationQuaternion[3]
+            var qx = rotationQuaternion[0]
+            var qy = rotationQuaternion[1]
+            var qz = rotationQuaternion[2]
 
-            var yaw: Float
+            val yaw: Float
             val pitch: Float
             val roll: Float
-
             val sqw = qw * qw
             val sqx = qx * qx
             val sqy = qy * qy
             val sqz = qz * qz
 
             val unit = sqx + sqy + sqz + sqw // if normalised is one, otherwise is correction factor
-            val test = qx * qy + qz * qw
+            val norm = sqrt(unit)
+            qw /= norm
+            qx /= norm
+            qy /= norm
+            qz /= norm
+
+            val test: Float = qx * qw - qy * qz
             if (test > 0.499 * unit) { // singularity at north pole
-                yaw = (2 * atan2(qx, qw))
+                roll = (2 * atan2(qx, qw))
                 pitch = (Math.PI / 2).toFloat()
-                roll = 0f
+                yaw = 0f
                 return floatArrayOf(pitch, roll, yaw)
             }
             if (test < -0.499 * unit) { // singularity at south pole
-                yaw = (-2 * atan2(qx, qw))
+                roll = (-2 * atan2(qx, qw))
                 pitch = (-Math.PI / 2).toFloat()
-                roll = 0f
+                yaw = 0f
                 return floatArrayOf(pitch, roll, yaw)
             }
-
-            //Values are in radians
-            yaw = (atan2(2 * qy * qw - 2 * qx * qz, sqx - sqy - sqz + sqw) - (Math.PI/ 2).toFloat())
-            if(yaw < (-Math.PI).toFloat()) {
-                yaw += (2 * Math.PI).toFloat()
-            }
-            pitch = asin(2 * test / unit)
-            roll = atan2(2 * qx * qw - 2 * qy * qz, -sqx + sqy - sqz + sqw)
+            // order yxz, psi=yaw, theta=pitch, phi=roll
+            roll=atan2(2f*(qx*qz+qy*qw),sqw-sqx-sqy+sqz)
+            pitch=asin(2f*(qx*qw-qy*qz))
+            yaw=atan2(2f*(qx*qy+qz*qw),(sqw-sqx+sqy-sqz))
 
             return floatArrayOf(pitch, roll, yaw)
         }

@@ -201,7 +201,7 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout, private val context: 
         val stringZeroAngleSpread = "(0.00°, 0.00°), 0.00°"
 
 
-        statusTv.text = stringClear
+        updateState(FMLocationManager.State.STOPPED)
         currentWindowTv.text = stringZeroS
         bestScoreTv.text = stringNA
         framesEvaluatedTv.text = stringZero
