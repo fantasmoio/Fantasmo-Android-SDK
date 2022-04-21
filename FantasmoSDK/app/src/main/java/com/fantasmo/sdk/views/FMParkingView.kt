@@ -234,6 +234,7 @@ class FMParkingView @JvmOverloads constructor(
             state = State.IDLE
 
             fmARCoreView.connected = false
+            fmLocationManager.sendSessionAnalytics()
             fmLocationManager.stopUpdatingLocation()
             if (usesInternalLocationManager) {
                 if (this::internalLocationManager.isInitialized) {
@@ -246,7 +247,6 @@ class FMParkingView @JvmOverloads constructor(
                 fmLocationManager.unsetAnchor()
             }
 
-            fmLocationManager.sendSessionAnalytics()
             fmQRScanningView.hide()
             fmLocalizingView.hide()
         }
