@@ -187,6 +187,7 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout, private val context: 
 
     fun reset() {
         windowTimer?.cancel()
+        windowStart = null
 
         val fantasmo = "Fantasmo SDK " + BuildConfig.VERSION_NAME
         sdkVersion.text = fantasmo
@@ -209,6 +210,7 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout, private val context: 
         currentRejectionTv.text = stringClear
         lastResultTv.text = stringClear
         errorsTv.text = stringZero
+        lastErrorTv.text = stringClear
         deviceLocationTv.text = stringClear
         translationTv.text = stringZeroTranslation
         totalTranslationTv.text = stringZeroM
@@ -222,6 +224,7 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout, private val context: 
         pitchTooHighTv.text = stringZero
         pitchTooLowTv.text = stringZero
         insufficientFeaturesTv.text = stringZero
+        imageQualityModelTv.text = stringClear
     }
 
     fun startWindowTimer() {
