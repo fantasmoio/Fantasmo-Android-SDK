@@ -126,7 +126,11 @@ class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context
     }
 
     private fun processEvaluation(evaluation: FMFrameEvaluation) {
-        val fmFrame = evaluatingFrame ?: error("evaluating frame is null")
+        val fmFrame = evaluatingFrame
+        if (fmFrame == null) {
+            Log.e(TAG, "null frame when processing evaluation")
+            return
+        }
 
         // store the evaluation on the frame and notify the delegate
         fmFrame.evaluation = evaluation

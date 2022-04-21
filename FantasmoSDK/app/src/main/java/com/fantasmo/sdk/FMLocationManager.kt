@@ -236,11 +236,13 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
             return
         }
         Log.d(TAG, "localize: isSimulation $isSimulation")
+
+        fmLocationListener?.didChangeState(state)
+        val localizeRequest = createLocalizationRequest(fmFrame)
+        fmLocationListener?.didBeginUpload(fmFrame)
+        activeUploads.add(fmFrame)
+
         coroutineScope.launch {
-            fmLocationListener?.didChangeState(state)
-            val localizeRequest = createLocalizationRequest(fmFrame)
-            fmLocationListener?.didBeginUpload(fmFrame)
-            activeUploads.add(fmFrame)
             fmApi?.sendLocalizeRequest(
                 fmFrame,
                 localizeRequest,
@@ -262,7 +264,6 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
                     errors.add(error)
                     updateStateAfterLocalization()
                 })
-
         }
     }
 
