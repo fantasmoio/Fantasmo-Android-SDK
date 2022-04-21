@@ -38,7 +38,7 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
 
     private var locationFuser = LocationFuser()
 
-    lateinit var fmApi: FMApi
+    private var fmApi: FMApi? = null
 
     var state = State.STOPPED
 
@@ -174,7 +174,8 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
         motionManager.stop()
         this.state = State.STOPPED
         fmLocationListener?.didChangeState(state)
-        fmApi.stopOngoingLocalizeRequests()
+        fmApi?.stopOngoingLocalizeRequests()
+        fmApi = null
     }
 
     /**
@@ -200,16 +201,18 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
     }
 
     fun sendSessionAnalytics() {
-        coroutineScope.launch {
-            val sessionAnalytics = createSessionAnalytics()
-            fmApi.sendSessionAnalyticsRequest(
-                sessionAnalytics,
-                { analyticsResponse ->
-                    Log.d(TAG, "analytics: $analyticsResponse")
-                },
-                { error ->
-                    Log.e(TAG, "analytics: $error")
-                })
+        if(fmApi != null) {
+            coroutineScope.launch {
+                val sessionAnalytics = createSessionAnalytics()
+                fmApi?.sendSessionAnalyticsRequest(
+                    sessionAnalytics,
+                    { analyticsResponse ->
+                        Log.d(TAG, "analytics: $analyticsResponse")
+                    },
+                    { error ->
+                        Log.e(TAG, "analytics: $error")
+                    })
+            }
         }
     }
 
@@ -238,7 +241,7 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
             val localizeRequest = createLocalizationRequest(fmFrame)
             fmLocationListener?.didBeginUpload(fmFrame)
             activeUploads.add(fmFrame)
-            fmApi.sendLocalizeRequest(
+            fmApi?.sendLocalizeRequest(
                 fmFrame,
                 localizeRequest,
                 { localizeResponse, fmZones ->
