@@ -11,6 +11,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Log
 import com.android.volley.*
+import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.models.ErrorResponse
@@ -32,8 +33,12 @@ class FMNetworkManager(
     private val requestQueue: RequestQueue by lazy {
         // applicationContext is key, it keeps you from leaking the
         // Activity or BroadcastReceiver if someone passes one in.
-        Volley.newRequestQueue(context.applicationContext)
+        Volley.newRequestQueue(context.applicationContext).apply {
+            start()
+        }
     }
+
+    private val oneOffQueues: MutableList<RequestQueue> = mutableListOf()
 
     lateinit var multipartRequest: MultiPartRequest
 
@@ -93,7 +98,10 @@ class FMNetworkManager(
 
         // Adding request to the queue if there is a connection
         if (isInternetAvailable()) {
-            requestQueue.add(multipartRequest)
+            val queue = Volley.newRequestQueue(context)
+            oneOffQueues.add(queue)
+            multipartRequest.tag = this
+            queue.add(multipartRequest)
         } else {
             Log.w(TAG, "No internet connection available")
         }
@@ -275,5 +283,57 @@ class FMNetworkManager(
             actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
             else -> false
         }
+    }
+
+    fun sendSessionAnalyticsRequest(
+        url: String,
+        sessionAnalyticsParams: String,//java.util.HashMap<String, String>,
+        token: String,
+        onCompletion: (Boolean) -> Unit,
+        onError: (ErrorResponse) -> Unit
+    )   {
+        Log.i(TAG, "$url $sessionAnalyticsParams")
+        val jsonRequest = object : JsonObjectRequest( Method.POST,
+            url,
+            JSONObject(sessionAnalyticsParams),//.toMap()),
+            Response.Listener { response ->
+                val resultResponse = response.toString()
+                Log.d(TAG, "IsLocalizationAvailableRequest RESPONSE: $resultResponse")
+                try {
+                    val isLocalizationAvailableResponse =
+                        Gson().fromJson(resultResponse, IsLocalizationAvailableResponse::class.java)
+                    onCompletion(isLocalizationAvailableResponse.available.toBoolean())
+                } catch (e: JSONException) {
+                    onCompletion(false)
+                    e.printStackTrace()
+                }
+            },
+            Response.ErrorListener { error ->
+                val response = processAndLogError(error)
+                if (response != null) {
+                    onError(response)
+                } else {
+                    onError(ErrorResponse(404, "UnknownError"))
+                }
+            }) {
+            // Overriding getHeaders() to pass our parameters
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Fantasmo-Key"] = token
+                return headers
+            }
+        }
+
+        // Adding request to the queue if there is a connection
+        if (isInternetAvailable()) {
+            requestQueue.add(jsonRequest)
+        } else {
+            Log.w(TAG, "No internet connection available")
+        }
+    }
+
+    fun stopAllLocalizeRequests() {
+        oneOffQueues.forEach{ it -> it.cancelAll(this)}
+        oneOffQueues.clear()
     }
 }

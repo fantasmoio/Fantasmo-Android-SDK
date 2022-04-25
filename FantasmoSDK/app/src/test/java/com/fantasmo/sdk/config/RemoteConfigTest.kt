@@ -6,7 +6,10 @@ import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.io.BufferedReader
 import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
 
 @RunWith(RobolectricTestRunner::class)
 class RemoteConfigTest {
@@ -14,44 +17,30 @@ class RemoteConfigTest {
     companion object {
         val remoteConfig = RemoteConfig.Config(
             remoteConfigId = "default-android_15.02.22",
-            frameAcceptanceThresholdTimeout = 1.0f,
             isBehaviorRequesterEnabled = false,
             isTrackingStateFilterEnabled = true,
             isMovementFilterEnabled = true,
             movementFilterThreshold = 0.001f,
-            isBlurFilterEnabled = false,
-            blurFilterVarianceThreshold = 250.0f,
-            blurFilterSuddenDropThreshold = 0.4f,
-            blurFilterAverageThroughputThreshold = 0.25f,
             isCameraPitchFilterEnabled = true,
             cameraPitchFilterMaxUpwardTilt = 30.0f,
             cameraPitchFilterMaxDownwardTilt = 65.0f,
             isImageEnhancerEnabled = true,
             imageEnhancerTargetBrightness = 0.15f,
-            isImageQualityFilterEnabled = false,
-            imageQualityFilterScoreThreshold = 0.0f,
             imageQualityFilterModelUri = null,
             imageQualityFilterModelVersion = "0.1.0"
         )
 
         val remoteConfigDisabledFilters = RemoteConfig.Config(
             remoteConfigId = "default-android_17.01.22",
-            frameAcceptanceThresholdTimeout = 1.0f,
             isBehaviorRequesterEnabled = false,
             isTrackingStateFilterEnabled = false,
             isMovementFilterEnabled = false,
             movementFilterThreshold = 0.001f,
-            isBlurFilterEnabled = false,
-            blurFilterVarianceThreshold = 250.0f,
-            blurFilterSuddenDropThreshold = 0.4f,
-            blurFilterAverageThroughputThreshold = 0.25f,
             isCameraPitchFilterEnabled = false,
             cameraPitchFilterMaxUpwardTilt = 30.0f,
             cameraPitchFilterMaxDownwardTilt = 65.0f,
             isImageEnhancerEnabled = false,
             imageEnhancerTargetBrightness = 0.15f,
-            isImageQualityFilterEnabled = false,
-            imageQualityFilterScoreThreshold = 0.0f,
             imageQualityFilterModelUri = null,
             imageQualityFilterModelVersion = "0.1.0"
         )
@@ -71,7 +60,17 @@ class RemoteConfigTest {
             }
             defaultConfig = Gson().fromJson(jsonString, RemoteConfig.Config::class.java)
         }
+
+        @Throws(IOException::class)
+        fun readFileFromResources(fileName: String): String {
+            return getInputStreamFromResource(fileName)?.bufferedReader()
+                .use { bufferReader -> bufferReader?.readText() } ?: ""
+        }
+
+        private fun getInputStreamFromResource(fileName: String)
+                = javaClass.classLoader?.getResourceAsStream(fileName)
     }
+
 
     @Test
     fun testUseStoredConfigWhenRemoteConfigIdIsNull() {

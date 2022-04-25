@@ -14,8 +14,8 @@ import com.fantasmo.sdk.views.common.samplerender.SampleRender
 import com.fantasmo.sdk.views.common.samplerender.arcore.BackgroundRenderer
 import com.google.ar.core.*
 import com.google.ar.core.exceptions.CameraNotAvailableException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.io.IOException
 
@@ -46,6 +46,8 @@ class FMARCoreView(
     private lateinit var displayRotationHelper: DisplayRotationHelper
     private lateinit var trackingStateHelper: TrackingStateHelper
     private var lastArFrameTimestamp: Long = 0L
+
+    private var coroutineScope = CoroutineScope(Dispatchers.Default)
 
     // Set anchor after QR code is read
     private var anchorIsChecked = false
@@ -198,8 +200,8 @@ class FMARCoreView(
         val fmFrame = FMFrame(frame, context)
         val newArFrameTimestamp = fmFrame.timestamp
         //Acquire ARCore Frame to set anchor and updates UI setting values in the view
-        GlobalScope.launch(Dispatchers.Default) {
-            // Code here will run in UI thread
+        coroutineScope.launch {
+            // Code here will run in Default thread
             if(connected && newArFrameTimestamp > lastArFrameTimestamp){
                 onUpdate(fmFrame)
                 lastArFrameTimestamp = newArFrameTimestamp
@@ -230,17 +232,7 @@ class FMARCoreView(
      * Also responsible for frame anchoring and qrScanning with arFrames
      */
     private fun onUpdate(fmFrame: FMFrame) {
-        val anchorDelta = arSessionListener.anchorDelta(fmFrame)
 
-        if (anchorDelta != null) {
-            val position =
-                floatArrayOf(
-                    anchorDelta.position.x,
-                    anchorDelta.position.y,
-                    anchorDelta.position.z
-                )
-            //Log.d(TAG,"Anchor Delta: ${createStringDisplay(position)}")
-        }
         arSessionListener.localize(fmFrame)
 
         if (!anchored) {

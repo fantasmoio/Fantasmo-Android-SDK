@@ -1,6 +1,7 @@
 package com.fantasmo.sdk.filters
 
 import com.fantasmo.sdk.FMBehaviorRequest
+import com.fantasmo.sdk.models.FMFrameRejectionReason
 import java.util.*
 
 /**
@@ -8,7 +9,7 @@ import java.util.*
  */
 class BehaviorRequester(handler: (FMBehaviorRequest) -> Unit) {
 
-    private val defaultBehavior = FMBehaviorRequest.POINTATBUILDINGS
+    private val defaultBehavior = FMBehaviorRequest.POINT_AT_BUILDINGS
     private var didRequestInitialDefaultBehavior = false
 
     private val n2s: Double = 1_000_000_000.0
@@ -26,46 +27,39 @@ class BehaviorRequester(handler: (FMBehaviorRequest) -> Unit) {
     private var requestHandler: ((FMBehaviorRequest) -> Unit) = handler
 
     // Dictionary of failure events with corresponding incidence
-    private var rejectionCounts: MutableMap<FMFilterRejectionReason, Int> = EnumMap(
-        FMFilterRejectionReason::class.java
+    private var rejectionCounts: MutableMap<FMFrameRejectionReason, Int> = EnumMap(
+        FMFrameRejectionReason::class.java
     )
+
+    // TODO - Change to processFilterRejection
 
     /**
      * On new failure, `onNext` is invoked to update `validationErrorToCountDict`.
      * @param frameFilterResult `FMFrameFilterResult
      */
-    fun processResult(frameFilterResult: FMFrameFilterResult) {
-        when (frameFilterResult) {
-            FMFrameFilterResult.Accepted -> return
-            else -> {
-                val rejectionReason = frameFilterResult.getRejectedReason()!!
-                var count = 0
-                if (rejectionCounts.containsKey(rejectionReason)) {
-                    count = rejectionCounts[rejectionReason]!!
-                }
-                count += 1
+    fun processFilterRejection(reason: FMFrameRejectionReason) {
+        var count = rejectionCounts[reason] ?: 0
+        count += 1
 
-                if (count > incidenceThreshold) {
-                    val elapsed = (System.nanoTime() - lastTriggerTime) / n2s
-                    if (elapsed > throttleThreshold) {
-                        val newBehavior = rejectionReason.mapToBehaviorRequest()
-                        val behaviorRequest = if(newBehavior != lastTriggerBehavior){
-                            newBehavior
-                        } else defaultBehavior
-                        requestHandler(behaviorRequest)
-                        lastTriggerBehavior = behaviorRequest
-                        lastTriggerTime = System.nanoTime()
-                        rejectionCounts.clear()
-                    }
-                } else {
-                    rejectionCounts[rejectionReason] = count
-                }
-
-                if (!didRequestInitialDefaultBehavior) {
-                    didRequestInitialDefaultBehavior = true
-                    requestHandler(defaultBehavior)
-                }
+        if (count > incidenceThreshold) {
+            val elapsed = (System.nanoTime() - lastTriggerTime) / n2s
+            if (elapsed > throttleThreshold) {
+                val newBehavior = reason.mapToBehaviorRequest()
+                val behaviorRequest = if(newBehavior != lastTriggerBehavior){
+                    newBehavior
+                } else defaultBehavior
+                requestHandler(behaviorRequest)
+                lastTriggerBehavior = behaviorRequest
+                lastTriggerTime = System.nanoTime()
+                rejectionCounts.clear()
             }
+        } else {
+            rejectionCounts[reason] = count
+        }
+
+        if (!didRequestInitialDefaultBehavior) {
+            didRequestInitialDefaultBehavior = true
+            requestHandler(defaultBehavior)
         }
     }
 

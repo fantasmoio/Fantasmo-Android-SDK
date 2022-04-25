@@ -149,13 +149,7 @@ class FMOrientation {
         differenceOrientation: FMOrientation
     ): FMOrientation {
         val differenceQuaternion = differenceOrientation.toQuaternion()
-        val ang = distance * differenceQuaternion.w
-//        var iq: Quaternion = if (abs(ang) > 0.000001) {
-//            val ax = differenceQuaternion.axis
-//            Quaternion(angle = ang, axis = ax)
-//        } else {
         val iq = Quaternion(0.0f, 0.0f, 0.0f, 1.0f)
-//        }
         val resultOrientation = Quaternion.multiply(
             Quaternion.multiply(iq, startOrientation.toQuaternion()),
             this.toQuaternion()

@@ -2,7 +2,6 @@ package com.fantasmo.sdk.filters
 
 import com.fantasmo.sdk.models.FMFrame
 import com.google.ar.core.Camera
-import com.google.ar.core.Frame
 import com.google.ar.core.TrackingFailureReason
 import com.google.ar.core.TrackingState
 import org.junit.Assert
@@ -34,7 +33,7 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.BAD_STATE)
 
         Assert.assertEquals(
-            FMFilterRejectionReason.MOVINGTOOFAST,
+            FMFrameFilterRejectionReason.MOVING_TOO_FAST,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -48,7 +47,7 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.EXCESSIVE_MOTION)
 
         Assert.assertEquals(
-            FMFilterRejectionReason.MOVINGTOOFAST,
+            FMFrameFilterRejectionReason.MOVING_TOO_FAST,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -62,7 +61,7 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.CAMERA_UNAVAILABLE)
 
         Assert.assertEquals(
-            FMFilterRejectionReason.MOVINGTOOLITTLE,
+            FMFrameFilterRejectionReason.MOVING_TOO_LITTLE,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -76,7 +75,7 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.INSUFFICIENT_LIGHT)
 
         Assert.assertEquals(
-            FMFilterRejectionReason.INSUFFICIENTFEATURES,
+            FMFrameFilterRejectionReason.INSUFFICIENT_FEATURES,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -90,7 +89,7 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.INSUFFICIENT_FEATURES)
 
         Assert.assertEquals(
-            FMFilterRejectionReason.INSUFFICIENTFEATURES,
+            FMFrameFilterRejectionReason.INSUFFICIENT_FEATURES,
             filter.accepts(frame).getRejectedReason()
         )
     }
@@ -105,7 +104,7 @@ class FMTrackingStateFilterTest {
         Mockito.`when`(frame.camera.trackingFailureReason).thenReturn(TrackingFailureReason.NONE)
 
         Assert.assertEquals(
-            FMFilterRejectionReason.MOVINGTOOLITTLE,
+            FMFrameFilterRejectionReason.MOVING_TOO_LITTLE,
             filter.accepts(frame).getRejectedReason()
         )
     }

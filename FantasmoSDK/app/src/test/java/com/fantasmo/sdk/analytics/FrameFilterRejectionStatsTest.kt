@@ -1,6 +1,6 @@
 package com.fantasmo.sdk.analytics
 
-import com.fantasmo.sdk.filters.FMFilterRejectionReason
+import com.fantasmo.sdk.filters.FMFrameFilterRejectionReason
 import com.fantasmo.sdk.models.analytics.FrameFilterRejectionStatistics
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -10,30 +10,30 @@ class FrameFilterRejectionStatsTest {
 
     @Test
     fun testAccumulate(){
-        var result = FMFilterRejectionReason.IMAGETOOBLURRY
+        var result = FMFrameFilterRejectionReason.IMAGE_TOO_BLURRY
         frameFilterStats.accumulate(result)
         assertEquals(1,frameFilterStats.excessiveBlurFrameCount)
 
         frameFilterStats.accumulate(result)
         assertEquals(2,frameFilterStats.excessiveBlurFrameCount)
 
-        result = FMFilterRejectionReason.MOVINGTOOLITTLE
+        result = FMFrameFilterRejectionReason.MOVING_TOO_LITTLE
         frameFilterStats.accumulate(result)
         assertEquals(1,frameFilterStats.insufficientMotionFrameCount)
 
-        result = FMFilterRejectionReason.MOVINGTOOFAST
+        result = FMFrameFilterRejectionReason.MOVING_TOO_FAST
         frameFilterStats.accumulate(result)
         assertEquals(1,frameFilterStats.excessiveMotionFrameCount)
 
-        result = FMFilterRejectionReason.PITCHTOOHIGH
+        result = FMFrameFilterRejectionReason.PITCH_TOO_HIGH
         frameFilterStats.accumulate(result)
         assertEquals(1,frameFilterStats.insufficientTiltFrameCount)
 
-        result = FMFilterRejectionReason.PITCHTOOLOW
+        result = FMFrameFilterRejectionReason.PITCH_TOO_LOW
         frameFilterStats.accumulate(result)
         assertEquals(1,frameFilterStats.excessiveTiltFrameCount)
 
-        result = FMFilterRejectionReason.INSUFFICIENTFEATURES
+        result = FMFrameFilterRejectionReason.INSUFFICIENT_FEATURES
         frameFilterStats.accumulate(result)
         assertEquals(1,frameFilterStats.insufficientFeatures)
 

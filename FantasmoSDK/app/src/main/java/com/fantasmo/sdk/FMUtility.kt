@@ -1,6 +1,11 @@
 package com.fantasmo.sdk
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.*
+import android.os.Build
+import android.provider.Settings
+import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.utilities.math.Vector3
 import com.google.ar.core.Pose
@@ -46,45 +51,50 @@ class FMUtility {
 
         /**
          * Converts Quaternion to Euler Angles.
-         * Source: https://github.com/IdeoG/quaternion-vector3-java/blob/master/Quaternion.java
+         * Source: https://de.mathworks.com/matlabcentral/fileexchange/20696-function-to-convert-between-dcm-euler-angles-quaternions-and-euler-vectors
+         * Calculating Euler Angles in YXZ order,
          * @param rotationQuaternion: rotation quaternion correspondent to rotation of the device
          * */
         fun convertQuaternionToEuler(rotationQuaternion: FloatArray): FloatArray {
-            val qw = rotationQuaternion[3]
-            val qx = rotationQuaternion[0]
-            val qy = rotationQuaternion[1]
-            val qz = rotationQuaternion[2]
+            var qw = rotationQuaternion[3]
+            var qx = rotationQuaternion[0]
+            var qy = rotationQuaternion[1]
+            var qz = rotationQuaternion[2]
 
             val yaw: Float
             val pitch: Float
             val roll: Float
-
             val sqw = qw * qw
             val sqx = qx * qx
             val sqy = qy * qy
             val sqz = qz * qz
 
             val unit = sqx + sqy + sqz + sqw // if normalised is one, otherwise is correction factor
-            val test = qx * qy + qz * qw
+            val norm = sqrt(unit)
+            qw /= norm
+            qx /= norm
+            qy /= norm
+            qz /= norm
+
+            val test: Float = qx * qw - qy * qz
             if (test > 0.499 * unit) { // singularity at north pole
-                yaw = (2 * atan2(qx, qw))
+                roll = (2 * atan2(qx, qw))
                 pitch = (Math.PI / 2).toFloat()
-                roll = 0f
-                return floatArrayOf(yaw, pitch, roll)
+                yaw = 0f
+                return floatArrayOf(pitch, roll, yaw)
             }
             if (test < -0.499 * unit) { // singularity at south pole
-                yaw = (-2 * atan2(qx, qw))
+                roll = (-2 * atan2(qx, qw))
                 pitch = (-Math.PI / 2).toFloat()
-                roll = 0f
-                return floatArrayOf(yaw, pitch, roll)
+                yaw = 0f
+                return floatArrayOf(pitch, roll, yaw)
             }
+            // order yxz, psi=yaw, theta=pitch, phi=roll
+            roll=atan2(2f*(qx*qz+qy*qw),sqw-sqx-sqy+sqz)
+            pitch=asin(2f*(qx*qw-qy*qz))
+            yaw=atan2(2f*(qx*qy+qz*qw),(sqw-sqx+sqy-sqz))
 
-            //Values are in radians
-            yaw = atan2(2 * qy * qw - 2 * qx * qz, sqx - sqy - sqz + sqw)
-            pitch = kotlin.math.asin(2 * test / unit)
-            roll = atan2(2 * qx * qw - 2 * qy * qz, -sqx + sqy - sqz + sqw)
-
-            return floatArrayOf(roll, pitch, yaw)
+            return floatArrayOf(pitch, roll, yaw)
         }
 
         fun convertToDegrees(eulerAngles: FloatArray): FloatArray {
@@ -120,4 +130,24 @@ class FMUtility {
         const val defaultConfigId = "default-android_17.01.22"
         const val fileName = "remote_config.json"
     }
+}
+
+class FMDeviceAndHostInfo(context: Context) {
+    @SuppressLint("HardwareIds")
+    val udid = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+    val manufacturer: String = Build.MANUFACTURER // Samsung
+    val model: String = Build.MODEL  // SM-G780
+    val deviceOs = "android"
+    val deviceModel = "$manufacturer $model" // Samsung SM-G780
+    val deviceOsVersion = Build.VERSION.SDK_INT.toString() // "30" (Android 11)
+    val sdkVersion = BuildConfig.VERSION_NAME // "1.0.5"
+    private val packageInfo = context.packageManager
+        .getPackageInfo(context.packageName, 0)
+    val hostAppMarketingVersion = packageInfo.versionName
+    val hostAppBuild = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        packageInfo?.longVersionCode.toString()
+    }  else {
+        packageInfo?.versionCode.toString()
+    }
+    val hostAppBundleIdentifier = context.packageName
 }

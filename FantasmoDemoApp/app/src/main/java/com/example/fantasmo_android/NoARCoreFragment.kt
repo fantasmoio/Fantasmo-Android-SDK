@@ -78,10 +78,10 @@ class NoARCoreFragment : Fragment() {
      */
     private val fmLocationListener: FMLocationListener =
         object : FMLocationListener {
-            override fun locationManager(error: ErrorResponse, metadata: Any?) {
+            override fun didUpdateLocation(result: FMLocationResult) {
             }
 
-            override fun locationManager(result: FMLocationResult) {
+            override fun didFailWithError(error: ErrorResponse, metadata: Any?) {
             }
         }
 

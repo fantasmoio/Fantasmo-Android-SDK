@@ -1,6 +1,6 @@
 package com.fantasmo.sdk
 
-import com.fantasmo.sdk.filters.FMFilterRejectionReason
+import com.fantasmo.sdk.filters.FMFrameFilterRejectionReason
 import com.fantasmo.sdk.filters.BehaviorRequester
 import com.fantasmo.sdk.filters.FMFrameFilterResult
 import com.fantasmo.sdk.models.ErrorResponse
@@ -10,15 +10,14 @@ import org.junit.Test
 class BehaviorRequesterTest {
 
     private val behaviorRequester = BehaviorRequester {
-        fmLocationListener.locationManager(didRequestBehavior = it)
+        fmLocationListener.didRequestBehavior(behavior = it)
     }
 
 
     @Test
     fun testProcessResult() {
-        val reason = FMFilterRejectionReason.PITCHTOOLOW
-        val failure = FMFrameFilterResult.Rejected(reason)
-        behaviorRequester.processResult(failure)
+        val reason = FMFrameFilterRejectionReason.PITCH_TOO_LOW
+        behaviorRequester.processFilterRejection(reason)
 
         val fieldRejectionCounts = behaviorRequester.javaClass.getDeclaredField("rejectionCounts")
         fieldRejectionCounts.isAccessible = true
@@ -37,16 +36,16 @@ class BehaviorRequesterTest {
 
     @Test
     fun testProcessResultWithFailure() {
-        val reason = FMFilterRejectionReason.PITCHTOOLOW
+        val reason = FMFrameFilterRejectionReason.PITCH_TOO_LOW
         val failure = FMFrameFilterResult.Rejected(reason)
 
         val fieldRejectionCounts = behaviorRequester.javaClass.getDeclaredField("rejectionCounts")
         fieldRejectionCounts.isAccessible = true
-        val result : MutableMap<FMFilterRejectionReason, Int> = fieldRejectionCounts.get(behaviorRequester) as MutableMap<FMFilterRejectionReason, Int>
+        val result : MutableMap<FMFrameFilterRejectionReason, Int> = fieldRejectionCounts.get(behaviorRequester) as MutableMap<FMFrameFilterRejectionReason, Int>
 
         result[reason] = 2
 
-        behaviorRequester.processResult(failure)
+        behaviorRequester.processFilterRejection(reason)
 
         assertEquals(
             false,
@@ -61,12 +60,11 @@ class BehaviorRequesterTest {
 
     @Test
     fun testProcessResultStartNewCycle() {
-        val reason = FMFilterRejectionReason.PITCHTOOLOW
-        val failure = FMFrameFilterResult.Rejected(reason)
+        val reason = FMFrameFilterRejectionReason.PITCH_TOO_LOW
 
         val fieldRejectionCounts = behaviorRequester.javaClass.getDeclaredField("rejectionCounts")
         fieldRejectionCounts.isAccessible = true
-        val result : MutableMap<FMFilterRejectionReason, Int> = fieldRejectionCounts.get(behaviorRequester) as MutableMap<FMFilterRejectionReason, Int>
+        val result : MutableMap<FMFrameFilterRejectionReason, Int> = fieldRejectionCounts.get(behaviorRequester) as MutableMap<FMFrameFilterRejectionReason, Int>
 
         result[reason] = 30
 
@@ -74,7 +72,7 @@ class BehaviorRequesterTest {
         fieldLastTriggerTime.isAccessible = true
         fieldLastTriggerTime.set(behaviorRequester,1619184130499)
 
-        behaviorRequester.processResult(failure)
+        behaviorRequester.processFilterRejection(reason)
 
         assertEquals(
             true,
@@ -88,13 +86,13 @@ class BehaviorRequesterTest {
      */
     private val fmLocationListener: FMLocationListener =
         object : FMLocationListener {
-            override fun locationManager(error: ErrorResponse, metadata: Any?) {
+            override fun didFailWithError(error: ErrorResponse, metadata: Any?) {
             }
 
-            override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
+            override fun didRequestBehavior(behavior: FMBehaviorRequest) {
             }
 
-            override fun locationManager(result: FMLocationResult) {
+            override fun didUpdateLocation(result: FMLocationResult) {
             }
         }
 }

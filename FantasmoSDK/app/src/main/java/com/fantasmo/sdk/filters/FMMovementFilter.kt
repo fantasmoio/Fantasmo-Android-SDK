@@ -1,6 +1,7 @@
 package com.fantasmo.sdk.filters
 
 import com.fantasmo.sdk.models.FMFrame
+import com.fantasmo.sdk.models.FMFrameRejectionReason
 import kotlin.math.abs
 
 /**
@@ -32,7 +33,7 @@ class FMMovementFilter(private val movementFilterThreshold: Float) : FMFrameFilt
             lastTransform = newTransform
             FMFrameFilterResult.Accepted
         } else {
-            FMFrameFilterResult.Rejected(FMFilterRejectionReason.MOVINGTOOLITTLE)
+            FMFrameFilterResult.Rejected(FMFrameRejectionReason.MOVING_TOO_LITTLE)
         }
     }
 

@@ -9,6 +9,7 @@ import android.view.Surface
 import androidx.test.platform.app.InstrumentationRegistry
 import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.config.RemoteConfigTest
+import com.fantasmo.sdk.evaluators.FMFrameEvaluatorChain
 import com.fantasmo.sdk.filters.*
 import com.fantasmo.sdk.models.*
 import com.fantasmo.sdk.models.analytics.AccumulatedARCoreInfo
@@ -235,7 +236,7 @@ class FMLocationManagerTest {
 
         fmLocationManager.setLocation(location)
 
-        val filter2 = FMFrameFilterChain(instrumentationContext)
+        val filter2 = FMFrameEvaluatorChain(RemoteConfigTest.remoteConfig, instrumentationContext)
 
         val testFilter = fmLocationManager.javaClass.getDeclaredField("frameFilterChain")
         testFilter.isAccessible = true
@@ -279,27 +280,12 @@ class FMLocationManagerTest {
         fmLocationManager.setLocation(location)
 
         val instrumentationContext = InstrumentationRegistry.getInstrumentation().context
-        val fmBlurFilterRule = FMBlurFilter(
-            RemoteConfigTest.remoteConfig.blurFilterVarianceThreshold,
-            RemoteConfigTest.remoteConfig.blurFilterSuddenDropThreshold,
-            RemoteConfigTest.remoteConfig.blurFilterAverageThroughputThreshold,
-            instrumentationContext
-        )
-        val spyFMBlurFilterRule = spy(fmBlurFilterRule)
 
         val context = mock(Context::class.java)
 
-        val frameFilter = FMFrameFilterChain(instrumentationContext)
-        frameFilter.filters = listOf(
-            FMMovementFilter(RemoteConfigTest.remoteConfig.movementFilterThreshold),
-            FMCameraPitchFilter(
-                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
-                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
-                context
-            )
-        ) as MutableList<FMFrameFilter>
+        val frameFilter = FMFrameEvaluatorChain(RemoteConfigTest.remoteConfig, instrumentationContext)
 
-        val fieldFrameFilter = fmLocationManager.javaClass.getDeclaredField("frameFilterChain")
+        val fieldFrameFilter = fmLocationManager.javaClass.getDeclaredField("frameEvaluatorChain")
         fieldFrameFilter.isAccessible = true
         fieldFrameFilter.set(fmLocationManager, frameFilter)
 
@@ -377,17 +363,9 @@ class FMLocationManagerTest {
         `when`(frame.camera.pose).thenReturn(pose2)
         `when`(frame.camera.pose.translation).thenReturn(cameraPose.translation)
 
-        val frameFilter = FMFrameFilterChain(instrumentationContext)
-        frameFilter.filters = listOf(
-            FMMovementFilter(RemoteConfigTest.remoteConfig.movementFilterThreshold),
-            FMCameraPitchFilter(
-                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxDownwardTilt,
-                RemoteConfigTest.remoteConfig.cameraPitchFilterMaxUpwardTilt,
-                context
-            )
-        ) as MutableList<FMFrameFilter>
+        val frameFilter = FMFrameEvaluatorChain(RemoteConfigTest.remoteConfig, instrumentationContext)
 
-        val fieldFrameFilter = fmLocationManager.javaClass.getDeclaredField("frameFilterChain")
+        val fieldFrameFilter = fmLocationManager.javaClass.getDeclaredField("frameEvaluatorChain")
         fieldFrameFilter.isAccessible = true
         fieldFrameFilter.set(fmLocationManager, frameFilter)
 
@@ -484,32 +462,6 @@ class FMLocationManagerTest {
         fmLocationManager.isSimulation = false
 
         fmLocationManager.setLocation(location)
-
-        val fmBlurFilter = FMBlurFilter(
-            RemoteConfigTest.remoteConfig.blurFilterVarianceThreshold,
-            RemoteConfigTest.remoteConfig.blurFilterSuddenDropThreshold,
-            RemoteConfigTest.remoteConfig.blurFilterAverageThroughputThreshold,
-            instrumentationContext
-        )
-
-        val fieldRenderScriptContext = fmBlurFilter.javaClass.getDeclaredField("rs")
-        fieldRenderScriptContext.isAccessible = true
-        fieldRenderScriptContext.set(fmBlurFilter, null)
-
-        val fieldHistogram = fmBlurFilter.javaClass.getDeclaredField("histogram")
-        fieldHistogram.isAccessible = true
-        fieldHistogram.set(fmBlurFilter, null)
-
-        val fieldConvolve = fmBlurFilter.javaClass.getDeclaredField("convolve")
-        fieldConvolve.isAccessible = true
-        fieldConvolve.set(fmBlurFilter, null)
-
-        val fieldResize = fmBlurFilter.javaClass.getDeclaredField("resize")
-        fieldResize.isAccessible = true
-        fieldResize.set(fmBlurFilter, null)
-
-        val spyFMBlurFilterRule = spy(fmBlurFilter)
-        val context = mock(Context::class.java)
 
         val filter2 = FMFrameFilterChain(instrumentationContext)
         filter2.filters = listOf(
@@ -776,13 +728,13 @@ class FMLocationManagerTest {
      */
     private val fmLocationListener: FMLocationListener =
         object : FMLocationListener {
-            override fun locationManager(error: ErrorResponse, metadata: Any?) {
+            override fun didFailWithError(error: ErrorResponse, metadata: Any?) {
             }
 
-            override fun locationManager(didRequestBehavior: FMBehaviorRequest) {
+            override fun didRequestBehavior(behavior: FMBehaviorRequest) {
             }
 
-            override fun locationManager(result: FMLocationResult) {
+            override fun didUpdateLocation(result: FMLocationResult) {
             }
         }
 }
