@@ -18,8 +18,6 @@ class RemoteConfig {
     data class Config(
         @SerializedName("remote_config_id")
         var remoteConfigId: String,
-        @SerializedName("frame_acceptance_threshold_timeout")
-        var frameAcceptanceThresholdTimeout: Float,
         @SerializedName("is_behavior_requester_enabled")
         var isBehaviorRequesterEnabled: Boolean,
         @SerializedName("is_tracking_state_filter_enabled")
@@ -28,14 +26,6 @@ class RemoteConfig {
         var isMovementFilterEnabled: Boolean,
         @SerializedName("movement_filter_threshold")
         var movementFilterThreshold: Float,
-        @SerializedName("is_blur_filter_enabled")
-        var isBlurFilterEnabled: Boolean,
-        @SerializedName("blur_filter_variance_threshold")
-        var blurFilterVarianceThreshold: Float,
-        @SerializedName("blur_filter_sudden_drop_threshold")
-        var blurFilterSuddenDropThreshold: Float,
-        @SerializedName("blur_filter_average_throughput_threshold")
-        var blurFilterAverageThroughputThreshold: Float,
         @SerializedName("is_camera_pitch_filter_enabled")
         var isCameraPitchFilterEnabled: Boolean,
         @SerializedName("camera_pitch_filter_max_upward_tilt")
@@ -46,14 +36,18 @@ class RemoteConfig {
         var isImageEnhancerEnabled: Boolean,
         @SerializedName("image_enhancer_target_brightness")
         var imageEnhancerTargetBrightness: Float,
-        @SerializedName("is_image_quality_filter_enabled")
-        var isImageQualityFilterEnabled: Boolean,
-        @SerializedName("image_quality_filter_score_threshold")
-        var imageQualityFilterScoreThreshold: Float,
         @SerializedName("image_quality_filter_model_uri")
         var imageQualityFilterModelUri: String?,
         @SerializedName("image_quality_filter_model_version")
-        var imageQualityFilterModelVersion: String?
+        var imageQualityFilterModelVersion: String?,
+        @SerializedName("min_localization_window_time")
+        var minLocalizationWindowTime: Float,
+        @SerializedName("max_localization_window_time")
+        var maxLocalizationWindowTime: Float,
+        @SerializedName("min_frame_evaluation_score")
+        var minFrameEvaluationScore: Float,
+        @SerializedName("min_frame_evaluation_high_quality_score")
+        var minFrameEvaluationHighQualityScore: Float
     )
 
     companion object {
@@ -67,7 +61,7 @@ class RemoteConfig {
          */
         fun updateConfig(context: Context, jsonString: String) {
             val config = getConfigFromJSON(jsonString)
-            remoteConfig = if (config == null) {
+            remoteConfig = if (config == null || !validateConfig(config)) {
                 getConfig(context)!!
             } else {
                 Log.i(TAG, "Received Valid Remote Config.")
@@ -173,6 +167,18 @@ class RemoteConfig {
                 Log.e(TAG, "Error Decoding Remote Json")
                 null
             }
+        }
+
+        private fun validateConfig(config: Config) : Boolean {
+            if(config.minLocalizationWindowTime == 0f)
+                return false
+            if(config.maxLocalizationWindowTime == 0f)
+                return false
+            if(config.minFrameEvaluationScore == 0f)
+                return false
+            if(config.minFrameEvaluationHighQualityScore == 0f)
+                return false
+            return true
         }
     }
 }

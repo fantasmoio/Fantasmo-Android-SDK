@@ -46,5 +46,9 @@ class FMConfiguration {
                 Location("")
             }
         }
+
+        fun getSessionAnalyticsURL(): String {
+            return BuildConfig.FM_API_BASE_URL + "/v2/analytics/session"
+        }
     }
 }

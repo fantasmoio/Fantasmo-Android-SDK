@@ -8,41 +8,41 @@ class FMFrameFilterTest {
 
     @Test
     fun testMapRequestBehavior() {
-        var rejection = FMFilterRejectionReason.PITCHTOOLOW
+        var rejection = FMFrameFilterRejectionReason.PITCH_TOO_LOW
 
         assertEquals(
             rejection.mapToBehaviorRequest(),
-            FMBehaviorRequest.TILTUP
+            FMBehaviorRequest.TILT_UP
         )
 
-        rejection = FMFilterRejectionReason.PITCHTOOHIGH
+        rejection = FMFrameFilterRejectionReason.PITCH_TOO_HIGH
         assertEquals(
             rejection.mapToBehaviorRequest(),
-            FMBehaviorRequest.TILTDOWN
+            FMBehaviorRequest.TILT_DOWN
         )
 
-        rejection = FMFilterRejectionReason.MOVINGTOOLITTLE
+        rejection = FMFrameFilterRejectionReason.MOVING_TOO_LITTLE
         assertEquals(
             rejection.mapToBehaviorRequest(),
-            FMBehaviorRequest.PANAROUND
+            FMBehaviorRequest.PAN_AROUND
         )
 
-        rejection = FMFilterRejectionReason.MOVINGTOOFAST
+        rejection = FMFrameFilterRejectionReason.MOVING_TOO_FAST
         assertEquals(
             rejection.mapToBehaviorRequest(),
-            FMBehaviorRequest.PANSLOWLY
+            FMBehaviorRequest.PAN_SLOWLY
         )
 
-        rejection = FMFilterRejectionReason.INSUFFICIENTFEATURES
+        rejection = FMFrameFilterRejectionReason.INSUFFICIENT_FEATURES
         assertEquals(
             rejection.mapToBehaviorRequest(),
-            FMBehaviorRequest.PANAROUND
+            FMBehaviorRequest.PAN_AROUND
         )
 
-        rejection = FMFilterRejectionReason.IMAGETOOBLURRY
+        rejection = FMFrameFilterRejectionReason.IMAGE_TOO_BLURRY
         assertEquals(
             rejection.mapToBehaviorRequest(),
-            FMBehaviorRequest.PANSLOWLY
+            FMBehaviorRequest.PAN_SLOWLY
         )
     }
 }

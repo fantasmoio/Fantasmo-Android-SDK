@@ -50,7 +50,7 @@ class FMMovementFilterTest {
         `when`(frame.cameraPose).thenReturn(pose)
 
         assertEquals(
-            FMFilterRejectionReason.MOVINGTOOLITTLE,
+            FMFrameFilterRejectionReason.MOVING_TOO_LITTLE,
             filter.accepts(frame).getRejectedReason()
         )
     }

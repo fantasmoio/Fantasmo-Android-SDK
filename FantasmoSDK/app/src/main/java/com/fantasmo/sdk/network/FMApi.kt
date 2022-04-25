@@ -2,17 +2,19 @@ package com.fantasmo.sdk.network
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.os.Build
-import android.provider.Settings.Secure
 import android.util.Log
 import com.fantasmo.sdk.FMConfiguration
+import com.fantasmo.sdk.FMDeviceAndHostInfo
 import com.fantasmo.sdk.FMUtility
-import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.mock.MockData
 import com.fantasmo.sdk.models.*
-import com.fantasmo.sdk.models.analytics.MagneticField
+import com.fantasmo.sdk.models.analytics.FMFrameResolution
+import com.fantasmo.sdk.models.analytics.FMLocalizationAnalytics
+import com.fantasmo.sdk.models.analytics.FMSessionAnalytics
 import com.google.gson.Gson
 import java.util.*
+import kotlin.collections.HashMap
+
 
 /**
  * Class to hold a LocalizationRequest
@@ -23,66 +25,6 @@ class FMLocalizationRequest(
     var location: Location,
     var relativeOpenCVAnchorPose: FMPose?,
     var analytics: FMLocalizationAnalytics
-)
-
-/**
- * Class to hold all the Localization Analytics
- */
-class FMLocalizationAnalytics(
-    var appSessionId: String?,
-    var appSessionTags: List<String>?,
-    var localizationSessionId: String?,
-    var frameEvents: FMFrameEvent,
-    var rotationSpread: FMRotationSpread,
-    var totalDistance: Float,
-    var magneticField: MagneticField,
-    var imageEnhancementInfo: FMImageEnhancementInfo?,
-    var imageQualityFilterInfo: FMImageQualityFilterInfo?,
-    var remoteConfigId: String
-)
-
-/**
- * Class to hold ImageQuality Filter Statistics
- */
-class FMImageQualityFilterInfo(
-    var modelVersion: String,
-    var lastImageQualityScore: Float
-)
-
-/**
- * Class to hold all the frame events during a localization session
- */
-class FMFrameEvent(
-    var excessiveTilt: Int,
-    var excessiveBlur: Int,
-    var excessiveMotion: Int,
-    var insufficientFeatures: Int,
-    var lossOfTracking: Int,
-    var total: Int
-)
-
-/**
- * Class to hold rotation spread during a localization session
- */
-class FMRotationSpread(
-    var pitch: Float,
-    var roll: Float,
-    var yaw: Float
-)
-
-/**
- * Class to hold image resolution
- */
-class FMFrameResolution(
-    var height: Int,
-    var width: Int
-)
-
-/**
- * Class to hold image enhancement info
- */
-class FMImageEnhancementInfo(
-    var gamma: Float
 )
 
 /**
@@ -190,6 +132,34 @@ class FMApi(
         )
     }
 
+
+    /**
+     * Method to send the analytics of a localization session.
+     * @param sessionAnalytics data model containing the session analytics
+     */
+    fun stopOngoingLocalizeRequests(
+    ) {
+        fmNetworkManager.stopAllLocalizeRequests()
+    }
+
+    /**
+     * Method to send the analytics of a localization session.
+     * @param sessionAnalytics data model containing the session analytics
+     */
+    fun sendSessionAnalyticsRequest(
+        sessionAnalytics: FMSessionAnalytics,
+        onCompletion: (Boolean) -> Unit,
+        onError: (ErrorResponse) -> Unit
+    ) {
+        fmNetworkManager.sendSessionAnalyticsRequest(
+            FMConfiguration.getSessionAnalyticsURL(),
+            getSessionAnalyticsParams(sessionAnalytics),
+            token,
+            onCompletion,
+            onError
+        )
+    }
+
     /**
      * Generate the initialize HTTP request parameters.
      * @param location Location to search
@@ -205,6 +175,20 @@ class FMApi(
 
         Log.i(TAG, "getInitializationRequest: $params")
         return params
+    }
+
+    /**
+     * Generate the analytics HTTP request parameters.
+     * @param sessionAnalytics Location to search
+     * @return an HashMap with all the location parameters.
+     */
+    private fun getSessionAnalyticsParams(
+        sessionAnalytics: FMSessionAnalytics
+    ): String{
+        val gson = Gson()
+        val json = gson.toJson(sessionAnalytics)
+        Log.i(TAG, "sessionAnalyticsRequest: $json")
+        return json
     }
 
     /**
@@ -235,7 +219,7 @@ class FMApi(
             principalPoint.component1()
         )
 
-        val events = request.analytics.frameEvents
+        val events = request.analytics.legacyFrameEvents
         val frameEventCounts = hashMapOf<String, String>()
         frameEventCounts["excessiveTilt"] = events.excessiveTilt.toString()
         frameEventCounts["excessiveBlur"] = events.excessiveBlur.toString()
@@ -270,11 +254,10 @@ class FMApi(
         params["rotationSpread"] = gson.toJson(request.analytics.rotationSpread)
         params["magneticData"] = gson.toJson(request.analytics.magneticField)
 
-        if (request.analytics.imageQualityFilterInfo != null) {
-            params["imageQualityModelVersion"] =
-                request.analytics.imageQualityFilterInfo!!.modelVersion
-            params["imageQualityScore"] =
-                String.format("%.5f", request.analytics.imageQualityFilterInfo!!.lastImageQualityScore)
+
+        // add frame evaluation info, if available
+        if (fmFrame.evaluation != null) {
+            params["frameEvaluation"] = gson.toJson(fmFrame.evaluation)
         }
 
         if(request.analytics.imageEnhancementInfo != null) {
@@ -338,21 +321,18 @@ class FMApi(
      */
     @SuppressLint("HardwareIds")
     private fun getDeviceAndHostAppInfo(): HashMap<String, String> {
-        val androidId = Secure.getString(context.contentResolver, Secure.ANDROID_ID)
-        val manufacturer = Build.MANUFACTURER // Samsung
-        val model = Build.MODEL  // SM-G780
-        val deviceModel = "$manufacturer $model" // Samsung SM-G780
-        val deviceOsVersion = Build.VERSION.SDK_INT.toString() // "30" (Android 11)
-        val fantasmoSdkVersion = BuildConfig.VERSION_NAME // "1.0.5"
+        val deviceAndHostInfo = FMDeviceAndHostInfo(context)
 
         val params = hashMapOf<String, String>()
         // device characteristics
-        params["udid"] = androidId
-        params["deviceModel"] = deviceModel
-        params["deviceOs"] = "android"
-        params["deviceOsVersion"] = deviceOsVersion
-        params["sdkVersion"] = fantasmoSdkVersion
-
+        params["udid"] = deviceAndHostInfo.udid
+        params["deviceModel"] = deviceAndHostInfo.deviceModel
+        params["deviceOs"] = deviceAndHostInfo.deviceOs
+        params["deviceOsVersion"] = deviceAndHostInfo.deviceOsVersion
+        params["sdkVersion"] = deviceAndHostInfo.sdkVersion
+        params["hostAppMarketingVersion"] = deviceAndHostInfo.hostAppMarketingVersion
+        params["hostAppBuild"] = deviceAndHostInfo.hostAppBuild
+        params["hostAppBundleIdentifier"] = deviceAndHostInfo.hostAppBundleIdentifier
         return params
     }
 }

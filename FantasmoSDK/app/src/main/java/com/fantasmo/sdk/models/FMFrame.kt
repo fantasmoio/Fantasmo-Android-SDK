@@ -11,6 +11,7 @@ import android.view.Surface
 import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.FMUtility
+import com.fantasmo.sdk.evaluators.FMFrameEvaluation
 import com.fantasmo.sdk.FMUtility.Companion.convertQuaternionToEuler
 import com.fantasmo.sdk.FMUtility.Companion.convertToDegrees
 import com.fantasmo.sdk.utilities.YuvToRgbConverter
@@ -35,6 +36,8 @@ class FMFrame (private val frame: Frame,
     val timestamp = frame.timestamp
     private var _yuvImage: YuvImage? = null
     var enhancedImageGamma: Float? = null
+
+    var evaluation: FMFrameEvaluation? = null // nil if no evaluation has been done, or evaluator error
 
     var yuvImage: YuvImage?
         @RequiresApi(Build.VERSION_CODES.KITKAT)
