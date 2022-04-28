@@ -64,6 +64,8 @@ class DemoFragment : Fragment() {
 
     private var hasRequestedEndRide = false
 
+    private lateinit var sessionId: String
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -88,6 +90,12 @@ class DemoFragment : Fragment() {
         fmParkingView = currentView.findViewById(R.id.fmParkingView)
         // Assign an accessToken
         fmParkingView.accessToken = accessToken
+
+        //initialize `sessionId`. This is typically a UUID string
+        // but it can also follow your own format. It is used for analytics and billing purposes and
+        // should represent a single parking session.
+
+        sessionId = UUID.randomUUID().toString()
 
         // Enable FMParkingView internal Location Manager
         fmParkingView.usesInternalLocationManager = usesInternalLocationManager
@@ -159,12 +167,8 @@ class DemoFragment : Fragment() {
         }
 
     private fun startParkingFlow() {
-        // Display `FMParkingView` and initialize `sessionId` and `sessionTags`. This is typically a UUID string
-        // but it can also follow your own format. It is used for analytics and billing purposes and
-        // should represent a single parking session.
-        val sessionId = UUID.randomUUID().toString()
-
-        // Optional list used mainly to label and group parking sessions that have something in common.
+        // Display `FMParkingView` and initialize `sessionTags`. This is an ptional list used mainly
+        // to label and group parking sessions that have something in common.
         val sessionTags = listOf("android-sdk-test-harness")
 
         // Assign a controller

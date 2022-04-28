@@ -77,6 +77,7 @@ class CustomDemoFragment : Fragment() {
 
     // Control variables for the FMParkingView
     private lateinit var fmParkingView: FMParkingView
+    private lateinit var sessionId: String
     private val usesInternalLocationManager = true
     private val accessToken = SimulationUtils.API_KEY
 
@@ -107,6 +108,11 @@ class CustomDemoFragment : Fragment() {
 
         // Enable FMParkingView internal Location Manager
         fmParkingView.usesInternalLocationManager = usesInternalLocationManager
+
+        // Initialize `sessionId`. This is typically a UUID string
+        // but it can also follow your own format. It is used for analytics and billing purposes and
+        // should represent a single parking session.
+        sessionId = UUID.randomUUID().toString()
 
         handleQRView()
         handleLocalizeView(savedInstanceState)
@@ -202,10 +208,7 @@ class CustomDemoFragment : Fragment() {
     }
 
     private fun startParkingFlow() {
-        // Display `FMParkingView` and initialize `sessionId` and `sessionTags`. This is typically a UUID string
-        // but it can also follow your own format. It is used for analytics and billing purposes and
-        // should represent a single parking session.
-        val sessionId = UUID.randomUUID().toString()
+        // Display `FMParkingView` and initialize `sessionTags`.
 
         // Optional list used mainly to label and group parking sessions that have something in common.
         val sessionTags = listOf("android-sdk-test-harness")
