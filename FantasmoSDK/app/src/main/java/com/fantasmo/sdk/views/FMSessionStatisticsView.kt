@@ -58,7 +58,7 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout, private val context: 
         fmFrame: FMFrame,
         info: AccumulatedARCoreInfo
     ) {
-        val cameraTranslation = fmFrame.cameraPose?.translation
+        val cameraTranslation = fmFrame.camera.pose.translation
         translationTv.text =
             createStringDisplay(cameraTranslation)
 
