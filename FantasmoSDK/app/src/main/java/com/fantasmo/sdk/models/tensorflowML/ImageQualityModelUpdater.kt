@@ -150,6 +150,7 @@ class ImageQualityModelUpdater(val context: Context) {
                     //could be delegate problem, trying again with CPU
                     if (compatList.isDelegateSupportedOnThisDevice) {
                         try {
+                            Log.d(TAG, "Falling back to CPU interpreter after exception loading GPU delegate")
                             interpreter = Interpreter(
                                 file,
                                 Interpreter.Options().apply { this.setNumThreads(4) })
