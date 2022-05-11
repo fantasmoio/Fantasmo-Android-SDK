@@ -160,9 +160,10 @@ class ImageQualityModelUpdater(val context: Context) {
                             Log.e(TAG, ex.localizedMessage)
                             null
                         }
+                    } else {
+                        Log.e(TAG, ex.localizedMessage)
+                        null
                     }
-                    Log.e(TAG, ex.localizedMessage)
-                    null
                 }
             }
         }
