@@ -146,6 +146,23 @@ class ImageQualityModelUpdater(val context: Context) {
                 } catch (e: Error) {
                     Log.e(TAG, e.localizedMessage)
                     null
+                } catch (ex: Exception) {
+                    //could be delegate problem, trying again with CPU
+                    if (compatList.isDelegateSupportedOnThisDevice) {
+                        try {
+                            interpreter = Interpreter(
+                                file,
+                                Interpreter.Options().apply { this.setNumThreads(4) })
+                            modelVersion = RemoteConfig.remoteConfig.imageQualityFilterModelVersion ?: ""
+                            firstRead = false
+                            interpreter
+                        } catch(ex: Exception) {
+                            Log.e(TAG, ex.localizedMessage)
+                            null
+                        }
+                    }
+                    Log.e(TAG, ex.localizedMessage)
+                    null
                 }
             }
         }
