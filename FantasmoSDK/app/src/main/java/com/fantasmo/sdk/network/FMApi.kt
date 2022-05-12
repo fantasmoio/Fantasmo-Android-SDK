@@ -264,7 +264,7 @@ class FMApi(
             params["imageEnhancementInfo"] = gson.toJson(request.analytics.imageEnhancementInfo)
         }
 
-        params["remoteConfigId"] = gson.toJson(request.analytics.remoteConfigId)
+        params["remoteConfigId"] = request.analytics.remoteConfigId
 
         // calculate and send reference frame if anchoring
         val relativeOpenCVAnchorPose = request.relativeOpenCVAnchorPose
