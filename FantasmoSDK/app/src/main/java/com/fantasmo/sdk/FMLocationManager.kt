@@ -202,17 +202,15 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
 
     fun sendSessionAnalytics() {
         if(fmApi != null) {
-            coroutineScope.launch {
-                val sessionAnalytics = createSessionAnalytics()
-                fmApi?.sendSessionAnalyticsRequest(
-                    sessionAnalytics,
-                    { analyticsResponse ->
-                        Log.d(TAG, "analytics: $analyticsResponse")
-                    },
-                    { error ->
-                        Log.e(TAG, "analytics: $error")
-                    })
-            }
+            val sessionAnalytics = createSessionAnalytics()
+            fmApi?.sendSessionAnalyticsRequest(
+                sessionAnalytics,
+                { analyticsResponse ->
+                    Log.d(TAG, "analytics: $analyticsResponse")
+                },
+                { error ->
+                    Log.e(TAG, "analytics: $error")
+                })
         }
     }
 
