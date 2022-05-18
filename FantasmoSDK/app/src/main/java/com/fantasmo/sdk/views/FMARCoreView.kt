@@ -139,7 +139,7 @@ class FMARCoreView(
         config.cloudAnchorMode = Config.CloudAnchorMode.DISABLED
         config.lightEstimationMode = Config.LightEstimationMode.DISABLED
         config.depthMode = Config.DepthMode.DISABLED
-        config.augmentedImageDatabase = null
+        config.augmentedImageDatabase = AugmentedImageDatabase(arSession!!)
 
         var selectedSize = Size(0, 0)
         var selectedCameraConfig = 0

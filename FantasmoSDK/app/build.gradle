@@ -5,8 +5,8 @@ plugins {
 }
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.3"
+    compileSdkVersion 31
+    buildToolsVersion "31.0.0"
 
     testOptions {
         unitTests {
@@ -19,7 +19,7 @@ android {
 
     defaultConfig {
         minSdkVersion 16
-        targetSdkVersion 30
+        targetSdkVersion 31
         versionCode 68
         versionName "3.3.1"
 
@@ -105,36 +105,36 @@ android {
 }
  dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.3.2'
-    implementation 'com.android.volley:volley:1.2.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8'
-    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'androidx.core:core-ktx:1.7.0'
+    implementation 'com.android.volley:volley:1.2.1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1-native-mt'
+    implementation 'com.google.code.gson:gson:2.9.0'
 
     // ARCore
-    implementation 'com.google.ar:core:1.29.0'
+    implementation 'com.google.ar:core:1.31.0'
 
     // Location Manager
-    implementation 'com.google.android.gms:play-services-location:18.0.0'
+    implementation 'com.google.android.gms:play-services-location:19.0.1'
 
     // Barcode model dependencies
-    implementation 'com.google.mlkit:barcode-scanning:17.0.0'
+    implementation 'com.google.mlkit:barcode-scanning:17.0.2'
 
     // TensorFlow Lite
-    implementation 'org.tensorflow:tensorflow-lite-support:0.1.0'
-    implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0'
-    implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
+    implementation 'org.tensorflow:tensorflow-lite-support:0.4.0'
+    implementation 'org.tensorflow:tensorflow-lite-metadata:0.4.0'
+    implementation 'org.tensorflow:tensorflow-lite-gpu:2.8.0'
 
     // Layouts
-    implementation 'androidx.appcompat:appcompat:1.3.1'
-    implementation 'com.google.android.material:material:1.4.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
-    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.1.0'
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'com.google.android.material:material:1.6.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
+    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
 
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.0'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.1-native-mt'
     testImplementation 'junit:junit:4.13.2'
-    testImplementation "org.robolectric:robolectric:4.5.1"
-    testImplementation "org.mockito:mockito-core:3.8.0"
-    testImplementation 'org.mockito:mockito-inline:2.13.0'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    testImplementation 'org.robolectric:robolectric:4.8.1'
+    testImplementation 'org.mockito:mockito-core:4.5.1'
+    testImplementation 'org.mockito:mockito-inline:4.5.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 }

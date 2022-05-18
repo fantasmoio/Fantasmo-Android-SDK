@@ -6,7 +6,7 @@ import android.util.Log
 import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.views.FMParkingViewProtocol
 import com.fantasmo.sdk.views.FMQRScanningViewProtocol
-import com.google.mlkit.vision.barcode.Barcode
+import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
