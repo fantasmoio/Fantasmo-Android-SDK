@@ -25,7 +25,7 @@ import org.json.JSONObject
 /**
  * Manager for network requests.
  */
-class FMNetworkManager(
+internal class FMNetworkManager(
     private val context: Context
 ) {
     private val TAG = FMNetworkManager::class.java.simpleName

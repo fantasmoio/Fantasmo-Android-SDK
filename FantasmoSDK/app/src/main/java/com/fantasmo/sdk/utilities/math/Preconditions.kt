@@ -6,7 +6,7 @@ import java.lang.IndexOutOfBoundsException
 import java.lang.NullPointerException
 import java.lang.StringBuilder
 
-class Preconditions {
+internal class Preconditions {
     companion object{
         /**
          * Ensures that an object reference passed as a parameter to the calling method is not null.

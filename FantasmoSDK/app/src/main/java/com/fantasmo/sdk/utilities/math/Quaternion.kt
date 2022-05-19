@@ -8,7 +8,7 @@ import android.annotation.SuppressLint
  *
  * Quaternion operations are Hamiltonian using the right-hand-rule convention.
  */
-class Quaternion {
+internal class Quaternion {
     var x = 0f
     var y = 0f
     var z = 0f

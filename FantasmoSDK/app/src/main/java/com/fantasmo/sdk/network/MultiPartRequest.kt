@@ -8,7 +8,7 @@ import kotlin.math.min
 /**
  * Class with a custom implementation of a multipart/form-data request.
  */
-open class MultiPartRequest(
+internal open class MultiPartRequest(
     method: Int,
     url: String,
     listener: Response.Listener<NetworkResponse>,

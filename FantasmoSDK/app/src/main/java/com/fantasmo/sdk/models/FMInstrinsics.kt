@@ -12,7 +12,7 @@ import android.view.Surface
  * Represents camera intrinsics. The intrinsics change on a frame-to-frame basis which requires they
  * are parsed for each frame.
  */
-class FMIntrinsics() {
+internal class FMIntrinsics() {
 
     var fx: Float = 0.0f
     var fy: Float = 0.0f

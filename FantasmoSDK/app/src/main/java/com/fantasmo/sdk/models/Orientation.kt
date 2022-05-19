@@ -13,7 +13,7 @@ package com.fantasmo.sdk.models
  * @property y
  * @property z
  */
-data class Orientation(
+internal data class Orientation(
     val w: Double,
     val x: Double,
     val y: Double,

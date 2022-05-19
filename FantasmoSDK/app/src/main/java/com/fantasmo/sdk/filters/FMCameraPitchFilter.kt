@@ -15,7 +15,7 @@ import com.fantasmo.sdk.models.FMFrameRejectionReason
  * to determine location
  * Initializes with maximum values for tilting phone up or down in degrees
  */
-class FMCameraPitchFilter(
+internal class FMCameraPitchFilter(
     lookDownThreshold: Float,
     lookUpThreshold: Float,
     private val context: Context

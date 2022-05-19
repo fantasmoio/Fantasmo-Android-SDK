@@ -12,7 +12,7 @@ import kotlin.math.sqrt
 /**
  * Position of the device at the moment of image capture . Units are meters.
  */
-class FMPosition {
+internal class FMPosition {
 
     var x: Float = 0.0f
     var y: Float = 0.0f

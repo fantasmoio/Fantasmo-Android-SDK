@@ -38,15 +38,15 @@ class TotalDeviceRotationAccumulator {
 
     // Pitch is rotation on X axis
     // Valid range is [−π/2,π/2], Pitch spread ∈ [0,π]
-    val pitch = RotationSpreadAccumulator()
+    internal val pitch = RotationSpreadAccumulator()
 
     // Roll is rotation on Y axis
     // Max and Min valid range is [−π,π], Roll spread ∈ [0,2π]
-    val roll = RotationSpreadAccumulator()
+    internal val roll = RotationSpreadAccumulator()
 
     // Yaw is rotation on Z axis
     // Max and Min valid range is [−π,π], Yaw spread ∈ [0,2π]
-    var yaw = RotationSpreadAccumulator()
+    internal var yaw = RotationSpreadAccumulator()
 
     private var frameCounter: Int = 0
 

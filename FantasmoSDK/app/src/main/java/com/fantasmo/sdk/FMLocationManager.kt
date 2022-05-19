@@ -270,10 +270,10 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
      */
     private fun createLocalizationRequest(fmFrame: FMFrame): FMLocalizationRequest {
         val legacyFrameEvents = FMLegacyFrameEvents(
-            frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.PITCH_TOO_LOW] ?: 0
+            (frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.PITCH_TOO_LOW] ?: 0)
                     + (frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.PITCH_TOO_HIGH] ?: 0),
             0,
-            frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.MOVING_TOO_FAST] ?: 0
+            (frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.MOVING_TOO_FAST] ?: 0)
                     + (frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.TRACKING_STATE_EXCESSIVE_MOTION] ?: 0),
             frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.TRACKING_STATE_INSUFFICIENT_FEATURES] ?: 0,
             (accumulatedARCoreInfo.trackingStateFrameStatistics.framesWithLimitedTrackingState
