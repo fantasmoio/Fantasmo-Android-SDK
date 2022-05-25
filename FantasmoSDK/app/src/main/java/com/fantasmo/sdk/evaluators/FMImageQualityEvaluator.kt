@@ -99,8 +99,13 @@ class FMImageQualityEvaluatorTFLite(val context: Context) :
             Log.e(TAG, "Failed to create Input Array")
             return makeEvaluation(Error.FAILED_TO_CREATE_INPUT_ARRAY)
         } else {
-            val rgbImage =
+            val rgbImage : FloatArray = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 yuvToRgbConverter.toTensor(yuvImage, imageWidth, imageHeight)
+            } else {
+                val rgbByteArray =
+                    yuvToRgbConverter.toByteArray(yuvImage, imageWidth, imageHeight)
+                getRGBValues(rgbByteArray)
+            }
 
             val score = processImage(rgbImage)
 

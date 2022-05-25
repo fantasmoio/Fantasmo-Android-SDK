@@ -7,31 +7,28 @@ import android.renderscript.*
 import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.ScriptC_bicubic_resize
 
-@RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
+@RequiresApi(Build.VERSION_CODES.KITKAT)
 class YuvToRgbConverter(
     val context: Context
 ) {
     private val TAG = YuvToRgbConverter::class.java.simpleName
-    private lateinit var rs : RenderScript
-    private lateinit var yuvToRgbIntrinsic : ScriptIntrinsicYuvToRGB
-    private lateinit var resizeScript : ScriptC_bicubic_resize
+    private val rs = RenderScript.create(context)
+    private val yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs))
+    @RequiresApi(Build.VERSION_CODES.N)
+    private val resizeScript = ScriptC_bicubic_resize(rs)
+    @RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
+    private val resizeIntrinsic = ScriptIntrinsicResize.create(rs)
 
     /**
      * Converts ARFrame to bitmap format.
      * It's also responsible for the YUV to RGB conversion needed to give as input to the model.
      * Uses RenderScript to make the conversion.
-     * @param frame ARFrame from the ARSession
+     * @param yuvImage YUV Image from the ARSession
      * @return Bitmap in RGB format
      */
     fun toBitmap(yuvImage: YuvImage): Bitmap {
         val output = Bitmap.createBitmap(yuvImage.width, yuvImage.height, Bitmap.Config.ARGB_8888)
 
-        // Ensure that the RenderScript inputs and outputs are allocated
-        if (!::rs.isInitialized) {
-            rs = RenderScript.create(context)
-            yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs))
-            resizeScript = ScriptC_bicubic_resize(rs)
-        }
         // Explicitly create an element with type NV21, since that's the pixel format we use
         val builder = Type.Builder(rs, Element.YUV(rs)).setYuvFormat(ImageFormat.NV21)
         builder.setX(yuvImage.width)
@@ -54,17 +51,13 @@ class YuvToRgbConverter(
      * Converts ARFrame to bitmap format.
      * It's also responsible for the YUV to RGB conversion needed to give as input to the model.
      * Uses RenderScript to make the conversion.
-     * @param frame ARFrame from the ARSession
+     * @param yuvImage YUV Image from the ARSession
+     * @param imageWidth output image width
+     * @param imageHeight output image height
      * @return Bitmap in RGB format
      */
     fun toBitmap(yuvImage: YuvImage, imageWidth: Int, imageHeight: Int): Bitmap {
         val output = Bitmap.createBitmap(yuvImage.width, yuvImage.height, Bitmap.Config.ARGB_8888)
-
-        if (!::rs.isInitialized) {
-            rs = RenderScript.create(context)
-            yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs))
-            resizeScript = ScriptC_bicubic_resize(rs)
-        }
 
         // Explicitly create an element with type NV21, since that's the pixel format we use
         val builder = Type.Builder(rs, Element.YUV(rs)).setYuvFormat(ImageFormat.NV21)
@@ -89,16 +82,14 @@ class YuvToRgbConverter(
      * Converts ARFrame to bitmap format.
      * It's also responsible for the YUV to RGB conversion needed to give as input to the model.
      * Uses RenderScript to make the conversion.
-     * @param frame ARFrame from the ARSession
-     * @return Bitmap in RGB format
+     * @param yuvImage YUV ImageFrame from the ARSession
+     * @param imageWidth output image width
+     * @param imageHeight output image height
+     * @return Byte Array with RGB bitmap data
      */
+    @RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
     fun toByteArray(yuvImage: YuvImage, imageWidth: Int, imageHeight: Int): ByteArray {
 
-        if (!::rs.isInitialized) {
-            rs = RenderScript.create(context)
-            yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs))
-            resizeScript = ScriptC_bicubic_resize(rs)
-        }
         val elemType = Type.Builder(rs, Element.YUV(rs)).setYuvFormat(ImageFormat.NV21).create()
         val inputAllocation = Allocation.createSized(rs, elemType.element, yuvImage.yuvData.size)
         yuvToRgbIntrinsic.setInput(inputAllocation)
@@ -110,13 +101,20 @@ class YuvToRgbConverter(
         builder.setX(imageWidth)
         builder.setY(imageHeight)
         val resizedOutputAllocation = Allocation.createTyped(rs, builder.create())
-        resizeScript._inputImage = outputAllocation
+        val outputArray = ByteArray(imageWidth * imageHeight * 4)
 
         // Convert NV21 format YUV to RGB
         inputAllocation.copyFrom(yuvImage.yuvData)
         yuvToRgbIntrinsic.forEach(outputAllocation)
-        resizeScript.invoke_resize(resizedOutputAllocation)
-        val outputArray = ByteArray(imageWidth * imageHeight * 4)
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            resizeScript._inputImage = outputAllocation
+            resizeScript.invoke_resize(resizedOutputAllocation)
+        } else {
+            resizeIntrinsic.setInput(outputAllocation)
+            resizeIntrinsic.forEach_bicubic(resizedOutputAllocation)
+        }
+
         resizedOutputAllocation.copyTo(outputArray)
         inputAllocation.destroy()
         outputAllocation.destroy()
@@ -125,19 +123,17 @@ class YuvToRgbConverter(
     }
 
     /**
-     * Converts ARFrame to bitmap format.
-     * It's also responsible for the YUV to RGB conversion needed to give as input to the model.
+     * Converts ARFrame to a TFLite Tensor.
+     * It's also responsible for the YUV to RGB conversion needed to give as input to the model, and the resizing.
      * Uses RenderScript to make the conversion.
-     * @param frame ARFrame from the ARSession
-     * @return Bitmap in RGB format
+     * @param yuvImage YUV ImageFrame from the ARSession
+     * @param imageWidth output image width
+     * @param imageHeight output image height
+     * @return Tensor to feed TFLite
      */
+    @RequiresApi(Build.VERSION_CODES.N)
     fun toTensor(yuvImage: YuvImage, imageWidth: Int, imageHeight: Int): FloatArray {
 
-        if (!::rs.isInitialized) {
-            rs = RenderScript.create(context)
-            yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs))
-            resizeScript = ScriptC_bicubic_resize(rs)
-        }
         val elemType = Type.Builder(rs, Element.YUV(rs)).setYuvFormat(ImageFormat.NV21).create()
         val inputAllocation = Allocation.createSized(rs, elemType.element, yuvImage.yuvData.size)
         yuvToRgbIntrinsic.setInput(inputAllocation)
@@ -165,19 +161,16 @@ class YuvToRgbConverter(
     }
 
     /**
-     * Converts ARFrame to bitmap format.
+     * Converts Bitmap to a resized ByteArray.
      * It's also responsible for the YUV to RGB conversion needed to give as input to the model.
      * Uses RenderScript to make the conversion.
-     * @param frame ARFrame from the ARSession
+     * @param bitmap input bitmap
+     * @param imageWidth output image width
+     * @param imageHeight output image height
      * @return Bitmap in RGB format
      */
+    @RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
     fun toByteArray(bitmap: Bitmap, imageWidth: Int, imageHeight: Int): ByteArray {
-
-        if (!::rs.isInitialized) {
-            rs = RenderScript.create(context)
-            yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs))
-            resizeScript = ScriptC_bicubic_resize(rs)
-        }
 
         val builder = Type.Builder(rs, Element.RGBA_8888(rs))
         builder.setX(bitmap.width)
@@ -188,11 +181,16 @@ class YuvToRgbConverter(
         builder.setX(imageWidth)
         builder.setY(imageHeight)
         val resizedOutputAllocation = Allocation.createTyped(rs, builder.create())
-        resizeScript._inputImage = inputAllocation
 
-        // Convert NV21 format YUV to RGB
         inputAllocation.copyFrom(bitmap)
-        resizeScript.invoke_resize(resizedOutputAllocation)
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            resizeScript._inputImage = inputAllocation
+            resizeScript.invoke_resize(resizedOutputAllocation)
+        } else {
+            resizeIntrinsic.setInput(inputAllocation)
+            resizeIntrinsic.forEach_bicubic(resizedOutputAllocation)
+        }
 
         val outputArray = ByteArray(imageWidth * imageHeight * 4)
         resizedOutputAllocation.copyTo(outputArray)
