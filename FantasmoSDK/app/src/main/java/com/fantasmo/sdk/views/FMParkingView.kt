@@ -197,8 +197,7 @@ class FMParkingView @JvmOverloads constructor(
         qrCodeReader = QRCodeScanner(
             fmParkingViewController,
             fmQrScanningViewController,
-            qrCodeScannerListener,
-            context
+            qrCodeScannerListener
         )
 
         fmLocationManager.isSimulation = isSimulation
