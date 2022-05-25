@@ -22,7 +22,7 @@ import java.io.IOException
 /**
  * Class responsible by the ARCore management and keeping it on throughout the app lifecycles.
  */
-class FMARCoreView(
+internal class FMARCoreView(
     private val arLayout: CoordinatorLayout,
     val context: Context
 ) :
@@ -271,7 +271,7 @@ class FMARCoreView(
  * Listener designed to keep encapsulation between the ARCoreView
  * and other classes that need values from the AR session.
  */
-interface FMARSessionListener{
+internal interface FMARSessionListener{
     /**
      * When the SDK enters the localization session, this provides the frame
      * to localize and passes to the `FMLocationManager.session()` method.

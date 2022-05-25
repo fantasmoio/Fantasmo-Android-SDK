@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
  * QRCodeReader - class responsible for getting a frame form ARCore and check
  * if there's a QRCode.
  */
-class QRCodeScanner(
+internal class QRCodeScanner(
     var fmParkingViewController: FMParkingViewProtocol,
     private var fmQrScanningViewController: FMQRScanningViewProtocol,
     private var qrCodeScannerListener: QRCodeScannerListener,
@@ -128,7 +128,7 @@ class QRCodeScanner(
     }
 }
 
-interface QRCodeScannerListener {
+internal interface QRCodeScannerListener {
     fun deployQRScanning()
     fun deployLocalizing()
     fun qrCodeScanned()

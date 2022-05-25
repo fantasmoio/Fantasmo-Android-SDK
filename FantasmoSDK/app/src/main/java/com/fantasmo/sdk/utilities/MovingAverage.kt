@@ -1,6 +1,6 @@
 package com.fantasmo.sdk.utilities
 
-class MovingAverage(private var period: Int = 30) {
+internal class MovingAverage(private var period: Int = 30) {
     private var index = 0
     private var samples: ArrayList<Float> = ArrayList()
 

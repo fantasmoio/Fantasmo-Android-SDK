@@ -12,7 +12,7 @@ data class FMFrameEvaluation (val type: FMFrameEvaluationType,
                                 val imageQualityUserInfo: FMImageQualityUserInfo?  // optional analytics etc.
                             )
 
-sealed class FMFrameEvaluationResult {
+internal sealed class FMFrameEvaluationResult {
     object NewCurrentBest: FMFrameEvaluationResult()
     class Discarded(val reason: FMFrameEvaluationDiscardReason): FMFrameEvaluationResult()
 
@@ -25,7 +25,7 @@ sealed class FMFrameEvaluationResult {
 
 }
 
-sealed class FMFrameEvaluationDiscardReason {
+internal sealed class FMFrameEvaluationDiscardReason {
     object BelowMinScoreThreshold: FMFrameEvaluationDiscardReason()
     object BelowCurrentBestScore: FMFrameEvaluationDiscardReason()
     object OtherEvaluationInProgress: FMFrameEvaluationDiscardReason()

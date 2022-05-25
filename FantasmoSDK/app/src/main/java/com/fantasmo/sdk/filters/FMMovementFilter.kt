@@ -9,7 +9,7 @@ import kotlin.math.abs
  * Prevents from sending repeated values to the backend.
  * Initializes with sideways movement Threshold in meters
  */
-class FMMovementFilter(private val movementFilterThreshold: Float) : FMFrameFilter {
+internal class FMMovementFilter(private val movementFilterThreshold: Float) : FMFrameFilter {
     override val TAG = FMMovementFilter::class.java.simpleName
 
     // Previous frame translation

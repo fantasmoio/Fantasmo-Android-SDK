@@ -14,7 +14,7 @@ import kotlin.math.*
 /**
  * Class with utility methods and constants
  */
-class FMUtility {
+internal class FMUtility {
 
     companion object {
 
@@ -132,7 +132,7 @@ class FMUtility {
     }
 }
 
-class FMDeviceAndHostInfo(context: Context) {
+internal class FMDeviceAndHostInfo(context: Context) {
     @SuppressLint("HardwareIds")
     val udid = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
     val manufacturer: String = Build.MANUFACTURER // Samsung

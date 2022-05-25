@@ -14,7 +14,7 @@ import kotlin.math.PI
 /**
  * Orientation of the device at moment of image capture.
  */
-class FMOrientation {
+internal class FMOrientation {
 
     var x: Float
     var y: Float

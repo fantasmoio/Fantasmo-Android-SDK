@@ -10,7 +10,7 @@ import android.renderscript.RenderScript
 
 
 @RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
-class YuvToRgbConverter(
+internal class YuvToRgbConverter(
     val context: Context
 ) {
     private val TAG = YuvToRgbConverter::class.java.simpleName

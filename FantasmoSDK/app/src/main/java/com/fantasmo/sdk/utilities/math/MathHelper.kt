@@ -5,7 +5,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /** Static functions for common math operations.  */
-object MathHelper {
+internal object MathHelper {
     const val FLT_EPSILON = 1.19209290E-07f
     const val MAX_DELTA = 1.0E-10f
 

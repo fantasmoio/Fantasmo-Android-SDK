@@ -13,7 +13,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-class ImageQualityModelUpdater(val context: Context) {
+internal class ImageQualityModelUpdater(val context: Context) {
 
     private val TAG = ImageQualityModelUpdater::class.java.simpleName
     private var fileName: String? = null

@@ -7,7 +7,7 @@ import com.android.volley.Response
 import com.android.volley.toolbox.HttpHeaderParser
 
 
-open class ModelRequest (
+internal open class ModelRequest (
     method: Int,
     mUrl: String?,
     listener: Response.Listener<ByteArray>,

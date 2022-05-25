@@ -15,7 +15,7 @@ import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.util.*
 import kotlin.math.exp
 
-class FMImageQualityEvaluator(val context: Context) {
+internal class FMImageQualityEvaluator(val context: Context) {
     val TAG: String = FMImageQualityEvaluator::class.java.simpleName
 
     companion object {
@@ -32,7 +32,7 @@ class FMImageQualityEvaluator(val context: Context) {
 
 
 /// Evaluator class for iOS versions that don't support CoreML
-class FMImageQualityEvaluatorNotSupported : FMFrameEvaluator {
+internal class FMImageQualityEvaluatorNotSupported : FMFrameEvaluator {
     override val TAG: String = FMImageQualityEvaluatorNotSupported::class.java.name
 
     override fun evaluate(fmFrame: FMFrame) : FMFrameEvaluation {
@@ -43,7 +43,7 @@ class FMImageQualityEvaluatorNotSupported : FMFrameEvaluator {
 
 
 @RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
-class FMImageQualityEvaluatorTFLite(val context: Context) :
+internal class FMImageQualityEvaluatorTFLite(val context: Context) :
     FMFrameEvaluator {
 
     enum class Error {

@@ -9,11 +9,11 @@ class FMImageQualityUserInfo(modelVersion: String?, val error: String? = null) {
     val modelVersion : String = modelVersion ?: ""
 }
 
-data class FMImageEnhancementInfo (val gamma: Float)
+internal data class FMImageEnhancementInfo (val gamma: Float)
 
-data class FMRotationSpread (val pitch: Float, val yaw: Float, val roll: Float)
+internal data class FMRotationSpread (val pitch: Float, val yaw: Float, val roll: Float)
 
-data class FMLegacyFrameEvents (val excessiveTilt: Int,
+internal data class FMLegacyFrameEvents (val excessiveTilt: Int,
                                 val excessiveBlur: Int,
                                 val excessiveMotion: Int,
                                 val insufficientFeatures: Int,
@@ -21,11 +21,11 @@ data class FMLegacyFrameEvents (val excessiveTilt: Int,
                                 val total: Int)
 
 
-data class FMFrameResolution (val height: Int,
+internal data class FMFrameResolution (val height: Int,
                               val width: Int)
 
 
-data class FMLocalizationAnalytics (
+internal data class FMLocalizationAnalytics (
     val appSessionId: String?,
     val appSessionTags: List<String>?,
     val localizationSessionId: String?,
@@ -37,7 +37,7 @@ data class FMLocalizationAnalytics (
     val remoteConfigId: String
 )
 
-data class FMSessionFrameEvaluations (
+internal data class FMSessionFrameEvaluations (
     val count: Int,
     val type: FMFrameEvaluationType,
     val highestScore: Float,
@@ -47,12 +47,12 @@ data class FMSessionFrameEvaluations (
     val imageQualityUserInfo: FMImageQualityUserInfo?
     )
 
-data class FMSessionFrameRejections (
+internal data class FMSessionFrameRejections (
     val count : Int,
     val rejectionReasons : Map<FMFrameRejectionReason, Int>
     )
 
-data class FMSessionAnalytics (
+internal data class FMSessionAnalytics (
     val localizationSessionId: String,
     val appSessionId: String,
     val appSessionTags: List<String>,

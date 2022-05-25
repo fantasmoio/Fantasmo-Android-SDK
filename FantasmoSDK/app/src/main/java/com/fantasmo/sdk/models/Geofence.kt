@@ -11,6 +11,6 @@ package com.fantasmo.sdk.models
  * @property elementID
  * @property elementType
  */
-data class Geofence(
+internal data class Geofence(
     val elementID: Int,
     val elementType: String)

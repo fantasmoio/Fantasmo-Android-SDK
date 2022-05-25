@@ -12,7 +12,7 @@ package com.fantasmo.sdk.models
  * @property y
  * @property z
  */
-data class Position(
+internal data class Position(
     val x: Double,
     val y: Double,
     val z: Double

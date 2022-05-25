@@ -7,7 +7,7 @@ import java.util.*
 /**
  * Throttler for frame validation failure events each of which occurs when a frame turns out to be not acceptable for determining location.
  */
-class BehaviorRequester(handler: (FMBehaviorRequest) -> Unit) {
+internal class BehaviorRequester(handler: (FMBehaviorRequest) -> Unit) {
 
     private val defaultBehavior = FMBehaviorRequest.POINT_AT_BUILDINGS
     private var didRequestInitialDefaultBehavior = false
