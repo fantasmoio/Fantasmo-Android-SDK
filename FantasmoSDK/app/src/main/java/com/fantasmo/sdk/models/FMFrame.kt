@@ -29,7 +29,6 @@ class FMFrame (private val frame: Frame,
 {
     private val TAG = FMFrame::class.java.simpleName
     val camera: Camera = frame.camera
-    val cameraPose: Pose? =  if(camera.trackingState == TrackingState.TRACKING) camera.pose else null
     val androidSensorPose: Pose? = if(camera.trackingState == TrackingState.TRACKING) frame.androidSensorPose else null
     val sensorAngles: FloatArray? = if(androidSensorPose != null) convertToDegrees(convertQuaternionToEuler(androidSensorPose.rotationQuaternion)) else  null
 

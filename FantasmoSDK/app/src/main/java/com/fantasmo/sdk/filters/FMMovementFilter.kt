@@ -27,7 +27,7 @@ class FMMovementFilter(private val movementFilterThreshold: Float) : FMFrameFilt
     override fun accepts(fmFrame: FMFrame): FMFrameFilterResult {
 
          val newTransform = FloatArray(16)
-        fmFrame.cameraPose?.toMatrix(newTransform, 0)
+        fmFrame.camera.pose.toMatrix(newTransform, 0)
         
         return if (exceededThreshold(newTransform)) {
             lastTransform = newTransform

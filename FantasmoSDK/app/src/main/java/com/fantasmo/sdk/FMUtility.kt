@@ -33,7 +33,7 @@ class FMUtility {
             // Pose of frame must be taken for "virtual" device as we send to server orientation of
             // "virtual" device for "localization" frame
             val poseARVirtualFrame = fmFrame.camera.displayOrientedPose
-            val poseAnchor = anchorFrame.cameraPose
+            val poseAnchor = anchorFrame.camera.pose
 
             return if (poseAnchor != null && poseARVirtualFrame != null) {
                 FMPose.diffPose(poseAnchor, poseARVirtualFrame)
