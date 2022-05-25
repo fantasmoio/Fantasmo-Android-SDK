@@ -239,7 +239,8 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
         val localizeRequest = createLocalizationRequest(fmFrame)
         fmLocationListener?.didBeginUpload(fmFrame)
         activeUploads.add(fmFrame)
-
+        totalFramesUploaded++
+        
         coroutineScope.launch {
             fmApi?.sendLocalizeRequest(
                 fmFrame,
@@ -251,14 +252,12 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
                     fmLocationListener?.didUpdateLocation(
                         result
                     )
-                    totalFramesUploaded++
                     updateStateAfterLocalization()
                 },
                 { error ->
                     Log.e(TAG, "localize: $error")
                     activeUploads.removeAll { it == fmFrame }
                     fmLocationListener?.didFailWithError(error, null)
-                    totalFramesUploaded++
                     errors.add(error)
                     updateStateAfterLocalization()
                 })
