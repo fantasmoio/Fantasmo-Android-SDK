@@ -9,6 +9,7 @@ package com.fantasmo.sdk.network
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.os.Build
 import android.util.Log
 import com.android.volley.*
 import com.android.volley.toolbox.JsonObjectRequest
@@ -273,7 +274,8 @@ internal class FMNetworkManager(
     private fun isInternetAvailable(): Boolean {
         val connectivityManager =
             context.applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val networkCapabilities = connectivityManager.activeNetwork ?: return false
+
+        val networkCapabilities = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {connectivityManager.activeNetwork ?: return false} else return false
         val actNw =
             connectivityManager.getNetworkCapabilities(networkCapabilities) ?: return false
 

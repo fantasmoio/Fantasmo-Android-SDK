@@ -1,6 +1,7 @@
 package com.fantasmo.sdk.filters
 
 import android.content.Context
+import android.os.Build
 import android.view.Display
 import android.view.Surface
 import android.view.WindowManager
@@ -39,9 +40,9 @@ internal class FMCameraPitchFilter(
         val sensorQuaternion = fmFrame.androidSensorPose?.rotationQuaternion
             ?: return FMFrameFilterResult.Rejected(FMFrameRejectionReason.FRAME_ERROR)
 
-        val rotation: Int = try {
+        val rotation: Int = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             context.display?.rotation!!
-        } catch (exception: UnsupportedOperationException) {
+        } else {
             val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
             val display: Display = wm.defaultDisplay
             display.rotation

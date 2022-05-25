@@ -37,7 +37,7 @@ internal class FMImageEnhancer(private val targetBrightness : Float, private val
      * @param meanT Target brightness
      * @return Corrected YUV image
      * */
-    fun applyAutoGammaCorrection(fmFrame: FMFrame, meanT: Float) {
+    private fun applyAutoGammaCorrection(fmFrame: FMFrame, meanT: Float) {
         val yuvImage = fmFrame.yuvImage
         if (yuvImage == null) {
             return
