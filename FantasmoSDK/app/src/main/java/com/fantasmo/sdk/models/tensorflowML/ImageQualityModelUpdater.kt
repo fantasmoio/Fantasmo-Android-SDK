@@ -55,11 +55,7 @@ class ImageQualityModelUpdater(val context: Context) {
             { response ->
                 try {
                     Log.d(TAG, "Model Network Response received, writing to file...")
-                    val fileOutputStream = FileOutputStream(fileName?.let {
-                        File(context.filesDir,
-                            it
-                        )
-                    })
+                    val fileOutputStream = FileOutputStream(File(context.filesDir, fileName))
                     fileOutputStream.write(response)
                     fileOutputStream.close()
                     Log.d(TAG, "Model File Successfully Downloaded.")
@@ -119,8 +115,8 @@ class ImageQualityModelUpdater(val context: Context) {
         if(fileName == null) {
             return null
         }
-        val file = fileName?.let { File(context.filesDir, it) }
-        if (file == null || !file.exists()) {
+        val file = File(context.filesDir, fileName)
+        if (!file.exists()) {
             if (!hasRequestedModel) {
                 if (hasRequestedUpdate) {
                     Log.d(TAG, "New Model version: $modelVersion. Downloading it...")
@@ -148,7 +144,7 @@ class ImageQualityModelUpdater(val context: Context) {
                     Log.e(TAG, "Error on reading the model.")
                     null
                 } catch (e: Error) {
-                    e.localizedMessage?.let { Log.e(TAG, it) }
+                    Log.e(TAG, e.localizedMessage)
                     null
                 } catch (ex: Exception) {
                     //could be delegate problem, trying again with CPU
@@ -162,11 +158,11 @@ class ImageQualityModelUpdater(val context: Context) {
                             firstRead = false
                             interpreter
                         } catch(ex: Exception) {
-                            ex.localizedMessage?.let { Log.e(TAG, it) }
+                            Log.e(TAG, ex.localizedMessage)
                             null
                         }
                     } else {
-                        ex.localizedMessage?.let { Log.e(TAG, it) }
+                        Log.e(TAG, ex.localizedMessage)
                         null
                     }
                 }

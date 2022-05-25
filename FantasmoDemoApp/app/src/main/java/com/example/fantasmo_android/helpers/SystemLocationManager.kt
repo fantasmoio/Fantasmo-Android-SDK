@@ -17,9 +17,9 @@ class SystemLocationManager(
 
     private val TAG = SystemLocationManager::class.java.simpleName
     private var locationManager: LocationManager =
-        context!!.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        context?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     private var fusedLocationClient: FusedLocationProviderClient =
-        LocationServices.getFusedLocationProviderClient(context!!)
+        LocationServices.getFusedLocationProviderClient(context)
     private var currentLocation: Location = Location("")
     private val locationInterval = 300L
     private var firstLocation = false

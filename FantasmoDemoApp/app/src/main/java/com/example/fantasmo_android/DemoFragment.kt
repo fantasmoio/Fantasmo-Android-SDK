@@ -21,7 +21,7 @@ import com.fantasmo.sdk.FMResultConfidence
 import com.fantasmo.sdk.models.ErrorResponse
 import com.fantasmo.sdk.views.FMParkingView
 import com.fantasmo.sdk.views.FMParkingViewProtocol
-import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.barcode.Barcode
 import java.util.*
 
 /**

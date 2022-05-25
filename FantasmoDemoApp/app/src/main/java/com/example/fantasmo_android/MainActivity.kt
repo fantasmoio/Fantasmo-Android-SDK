@@ -160,12 +160,12 @@ class MainActivity : AppCompatActivity() {
     private fun setStartDestination() {
         if (arcoreCompatibility) {
             if (SimulationUtils.useDemoFragment) {
-                graph.setStartDestination(R.id.arcore_fragment)
+                graph.startDestination = R.id.arcore_fragment
             } else {
-                graph.setStartDestination(R.id.custom_arcore_fragment)
+                graph.startDestination = R.id.custom_arcore_fragment
             }
         } else {
-            graph.setStartDestination(R.id.noarcore_fragment)
+            graph.startDestination = R.id.noarcore_fragment
         }
         navController.graph = graph
     }

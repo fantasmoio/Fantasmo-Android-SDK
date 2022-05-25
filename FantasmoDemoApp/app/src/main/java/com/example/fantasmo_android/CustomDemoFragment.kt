@@ -30,7 +30,7 @@ import com.fantasmo.sdk.views.FMParkingViewProtocol
 import com.fantasmo.sdk.views.FMQRScanningViewProtocol
 
 import com.google.android.gms.maps.MapView
-import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.barcode.Barcode
 import java.util.*
 
 /**
