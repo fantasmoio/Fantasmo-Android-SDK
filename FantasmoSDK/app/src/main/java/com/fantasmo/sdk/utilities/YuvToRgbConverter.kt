@@ -8,7 +8,7 @@ import androidx.annotation.RequiresApi
 import com.fantasmo.sdk.ScriptC_bicubic_resize
 
 @RequiresApi(Build.VERSION_CODES.KITKAT)
-class YuvToRgbConverter(
+internal class YuvToRgbConverter(
     val context: Context
 ) {
     private val TAG = YuvToRgbConverter::class.java.simpleName

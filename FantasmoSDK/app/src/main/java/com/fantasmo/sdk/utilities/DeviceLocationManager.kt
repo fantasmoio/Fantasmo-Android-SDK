@@ -16,7 +16,7 @@ import com.google.android.gms.location.*
  * When host app doesn't specify whether to use a provided Location manager this,
  * starts to get the location updates.
  */
-class DeviceLocationManager(val context: Context?, val deviceLocationListener: DeviceLocationListener) {
+internal class DeviceLocationManager(val context: Context?, val deviceLocationListener: DeviceLocationListener) {
 
     companion object{
         fun isValidLatLng(latitude: Double, longitude: Double): Boolean {

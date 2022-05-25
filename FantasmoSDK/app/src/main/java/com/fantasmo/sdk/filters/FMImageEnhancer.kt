@@ -12,7 +12,7 @@ import kotlin.math.pow
  * Prevents from sending images that are too dark
  */
 @RequiresApi(Build.VERSION_CODES.KITKAT)
-class FMImageEnhancer(private val targetBrightness : Float, private val context: Context) {
+internal class FMImageEnhancer(private val targetBrightness : Float, private val context: Context) {
     val TAG = FMImageEnhancer::class.java.simpleName
 
     private lateinit var rs : RenderScript

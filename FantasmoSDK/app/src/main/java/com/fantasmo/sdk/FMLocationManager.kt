@@ -239,7 +239,8 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
         val localizeRequest = createLocalizationRequest(fmFrame)
         fmLocationListener?.didBeginUpload(fmFrame)
         activeUploads.add(fmFrame)
-
+        totalFramesUploaded++
+        
         coroutineScope.launch {
             fmApi?.sendLocalizeRequest(
                 fmFrame,
@@ -251,14 +252,12 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
                     fmLocationListener?.didUpdateLocation(
                         result
                     )
-                    totalFramesUploaded++
                     updateStateAfterLocalization()
                 },
                 { error ->
                     Log.e(TAG, "localize: $error")
                     activeUploads.removeAll { it == fmFrame }
                     fmLocationListener?.didFailWithError(error, null)
-                    totalFramesUploaded++
                     errors.add(error)
                     updateStateAfterLocalization()
                 })
@@ -270,10 +269,10 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
      */
     private fun createLocalizationRequest(fmFrame: FMFrame): FMLocalizationRequest {
         val legacyFrameEvents = FMLegacyFrameEvents(
-            frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.PITCH_TOO_LOW] ?: 0
+            (frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.PITCH_TOO_LOW] ?: 0)
                     + (frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.PITCH_TOO_HIGH] ?: 0),
             0,
-            frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.MOVING_TOO_FAST] ?: 0
+            (frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.MOVING_TOO_FAST] ?: 0)
                     + (frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.TRACKING_STATE_EXCESSIVE_MOTION] ?: 0),
             frameEvaluationStatistics.rejectionReasons[FMFrameRejectionReason.TRACKING_STATE_INSUFFICIENT_FEATURES] ?: 0,
             (accumulatedARCoreInfo.trackingStateFrameStatistics.framesWithLimitedTrackingState

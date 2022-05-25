@@ -14,7 +14,7 @@ import kotlin.math.*
 /**
  * Class with utility methods and constants
  */
-class FMUtility {
+internal class FMUtility {
 
     companion object {
 
@@ -33,7 +33,7 @@ class FMUtility {
             // Pose of frame must be taken for "virtual" device as we send to server orientation of
             // "virtual" device for "localization" frame
             val poseARVirtualFrame = fmFrame.camera.displayOrientedPose
-            val poseAnchor = anchorFrame.cameraPose
+            val poseAnchor = anchorFrame.camera.pose
 
             return if (poseAnchor != null && poseARVirtualFrame != null) {
                 FMPose.diffPose(poseAnchor, poseARVirtualFrame)
@@ -132,7 +132,7 @@ class FMUtility {
     }
 }
 
-class FMDeviceAndHostInfo(context: Context) {
+internal class FMDeviceAndHostInfo(context: Context) {
     @SuppressLint("HardwareIds")
     val udid = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
     val manufacturer: String = Build.MANUFACTURER // Samsung

@@ -12,6 +12,6 @@ package com.fantasmo.sdk.models
  * @property available the result of the check with "true" if the zone is in the radius and
  * false otherwise.
  */
-data class IsLocalizationAvailableResponse(
+internal data class IsLocalizationAvailableResponse(
     val available: String?
 )

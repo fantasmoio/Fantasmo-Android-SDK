@@ -6,7 +6,7 @@ import com.fantasmo.sdk.fantasmosdk.BuildConfig
 /**
  * Class to load configuration values like coordinates or server URLs.
  */
-class FMConfiguration {
+internal class FMConfiguration {
 
     companion object {
         /**

@@ -25,6 +25,7 @@ import com.fantasmo.sdk.utilities.DeviceLocationListener
 import com.fantasmo.sdk.utilities.DeviceLocationManager
 import com.fantasmo.sdk.utilities.QRCodeScanner
 import com.fantasmo.sdk.utilities.QRCodeScannerListener
+import com.google.ar.core.TrackingState
 
 /**
  * Manager of the ARCore session. Provides a camera preview with AR capabilities when not connected.
@@ -197,7 +198,8 @@ class FMParkingView @JvmOverloads constructor(
         qrCodeReader = QRCodeScanner(
             fmParkingViewController,
             fmQrScanningViewController,
-            qrCodeScannerListener
+            qrCodeScannerListener,
+            context
         )
 
         fmLocationManager.isSimulation = isSimulation
@@ -501,8 +503,11 @@ class FMParkingView @JvmOverloads constructor(
             }
 
             override fun anchored(fmFrame: FMFrame): Boolean {
-                fmLocationManager.setAnchor(fmFrame)
-                return true
+                if(fmFrame.camera.trackingState == TrackingState.TRACKING) {
+                    fmLocationManager.setAnchor(fmFrame)
+                    return true
+                }
+                return false
             }
 
             override fun qrCodeScan(fmFrame: FMFrame) {

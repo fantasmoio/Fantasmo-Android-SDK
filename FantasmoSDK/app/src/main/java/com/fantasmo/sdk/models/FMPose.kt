@@ -16,7 +16,7 @@ import kotlin.math.PI
  * right-handed, Y down (i.e., OpenCV convention). Y is gravity aligned. Rotation
  * around Y axis is relative to true north.
  */
-class FMPose {
+internal class FMPose {
 
     var source: String = "device"
     var position: FMPosition

@@ -19,7 +19,7 @@ import kotlin.collections.HashMap
 /**
  * Class to hold a LocalizationRequest
  */
-class FMLocalizationRequest(
+internal class FMLocalizationRequest(
     var isSimulation: Boolean,
     var simulationZone: FMZone.ZoneType,
     var location: Location,
@@ -30,7 +30,7 @@ class FMLocalizationRequest(
 /**
  * Class to hold the necessary logic to communicate with Fantasmo API.
  */
-class FMApi(
+internal class FMApi(
     private val context: Context,
     private val token: String,
 ) {

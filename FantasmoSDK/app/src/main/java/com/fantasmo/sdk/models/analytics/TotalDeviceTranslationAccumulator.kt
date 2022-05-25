@@ -15,6 +15,7 @@ class TotalDeviceTranslationAccumulator(private val decimationFactor: Int) {
 
     // Current value of total translation in meters, which is updated as more frames are passed via `update(`
     var totalTranslation = 0f
+    private set
 
     private var frameCounter: Int = 0
     private var nextFrameToTake = 0
