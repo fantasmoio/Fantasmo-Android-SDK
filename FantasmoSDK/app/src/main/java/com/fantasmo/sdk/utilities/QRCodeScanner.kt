@@ -1,6 +1,7 @@
 package com.fantasmo.sdk.utilities
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.ImageFormat
 import android.util.Log
 import com.fantasmo.sdk.models.FMFrame
@@ -11,8 +12,8 @@ import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 /**
@@ -22,7 +23,8 @@ import kotlinx.coroutines.launch
 class QRCodeScanner(
     var fmParkingViewController: FMParkingViewProtocol,
     private var fmQrScanningViewController: FMQRScanningViewProtocol,
-    private var qrCodeScannerListener: QRCodeScannerListener
+    private var qrCodeScannerListener: QRCodeScannerListener,
+    context: Context
 ) {
 
     private val TAG = QRCodeScanner::class.java.simpleName
@@ -37,6 +39,8 @@ class QRCodeScanner(
     private var qrCodeReaderEnabled: Boolean = false
     private var state = State.IDLE
     private var qrFound = false
+
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     /**
      * Gets a frame from ARCore and converts it to bitmap and proceeds with
@@ -65,7 +69,7 @@ class QRCodeScanner(
             val barcodeScanner: BarcodeScanner = BarcodeScanning.getClient(options)
 
             val yuvImage = fmFrame.yuvImage
-            GlobalScope.launch(Dispatchers.Default) {
+            coroutineScope.launch {
                 if (yuvImage == null) {
                     state = State.IDLE
                 } else {
