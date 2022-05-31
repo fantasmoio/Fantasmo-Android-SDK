@@ -12,12 +12,12 @@ internal class YuvToRgbConverter(
     val context: Context
 ) {
     private val TAG = YuvToRgbConverter::class.java.simpleName
-    private val rs = RenderScript.create(context)
-    private val yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs))
+    private lateinit var rs : RenderScript
+    private lateinit var yuvToRgbIntrinsic : ScriptIntrinsicYuvToRGB
     @RequiresApi(Build.VERSION_CODES.N)
-    private val resizeScript = ScriptC_bicubic_resize(rs)
+    private lateinit var resizeScript : ScriptC_bicubic_resize
     @RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
-    private val resizeIntrinsic = ScriptIntrinsicResize.create(rs)
+    private lateinit var resizeIntrinsic : ScriptIntrinsicResize
 
     /**
      * Converts ARFrame to bitmap format.
@@ -27,6 +27,9 @@ internal class YuvToRgbConverter(
      * @return Bitmap in RGB format
      */
     fun toBitmap(yuvImage: YuvImage): Bitmap {
+        if(!::rs.isInitialized)
+            initRenderScript()
+
         val output = Bitmap.createBitmap(yuvImage.width, yuvImage.height, Bitmap.Config.ARGB_8888)
 
         // Explicitly create an element with type NV21, since that's the pixel format we use
@@ -57,6 +60,9 @@ internal class YuvToRgbConverter(
      * @return Bitmap in RGB format
      */
     fun toBitmap(yuvImage: YuvImage, imageWidth: Int, imageHeight: Int): Bitmap {
+        if(!::rs.isInitialized)
+            initRenderScript()
+
         val output = Bitmap.createBitmap(yuvImage.width, yuvImage.height, Bitmap.Config.ARGB_8888)
 
         // Explicitly create an element with type NV21, since that's the pixel format we use
@@ -89,6 +95,8 @@ internal class YuvToRgbConverter(
      */
     @RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
     fun toByteArray(yuvImage: YuvImage, imageWidth: Int, imageHeight: Int): ByteArray {
+        if(!::rs.isInitialized)
+            initRenderScript()
 
         val elemType = Type.Builder(rs, Element.YUV(rs)).setYuvFormat(ImageFormat.NV21).create()
         val inputAllocation = Allocation.createSized(rs, elemType.element, yuvImage.yuvData.size)
@@ -133,6 +141,8 @@ internal class YuvToRgbConverter(
      */
     @RequiresApi(Build.VERSION_CODES.N)
     fun toTensor(yuvImage: YuvImage, imageWidth: Int, imageHeight: Int): FloatArray {
+        if(!::rs.isInitialized)
+            initRenderScript()
 
         val elemType = Type.Builder(rs, Element.YUV(rs)).setYuvFormat(ImageFormat.NV21).create()
         val inputAllocation = Allocation.createSized(rs, elemType.element, yuvImage.yuvData.size)
@@ -171,6 +181,8 @@ internal class YuvToRgbConverter(
      */
     @RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
     fun toByteArray(bitmap: Bitmap, imageWidth: Int, imageHeight: Int): ByteArray {
+        if(!::rs.isInitialized)
+            initRenderScript()
 
         val builder = Type.Builder(rs, Element.RGBA_8888(rs))
         builder.setX(bitmap.width)
@@ -203,4 +215,12 @@ internal class YuvToRgbConverter(
         return outputArray
     }
 
+    private fun initRenderScript() {
+        rs = RenderScript.create(context)
+        yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs))
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH)
+            resizeIntrinsic = ScriptIntrinsicResize.create(rs)
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+            resizeScript = ScriptC_bicubic_resize(rs)
+    }
 }
