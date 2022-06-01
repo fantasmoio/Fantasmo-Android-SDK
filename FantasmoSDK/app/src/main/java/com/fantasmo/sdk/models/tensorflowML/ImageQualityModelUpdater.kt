@@ -70,23 +70,14 @@ internal class ImageQualityModelUpdater(val context: Context) {
                     }
                 }
 
-                if (VersionComparator.compare(remoteConfigModelVersion, latestLocalVersion) == 1) {
+                if (!downloadingModel && VersionComparator.compare(remoteConfigModelVersion, latestLocalVersion) == 1) {
                     Log.d(TAG, "Downloading model $remoteConfigModelVersion")
+
                     downloadModel(
                         modelUri,
                         context.filesDir,
                         "image-quality-estimator-$remoteConfigModelVersion.tflite"
                     )
-                }
-            }
-
-            if(VersionComparator.compare(remoteConfigModelVersion, latestLocalVersion) == 1) {
-                val remoteModelFile = File(context.filesDir, "image-quality-estimator-$remoteConfigModelVersion.tflite")
-                if(remoteModelFile.exists()) {
-                    latestLocalVersion = remoteConfigModelVersion
-                    val oldInterpreter = field
-                    interpreter = loadInterpreter(remoteModelFile, options)
-                    oldInterpreter?.close()
                 }
             }
             return field
