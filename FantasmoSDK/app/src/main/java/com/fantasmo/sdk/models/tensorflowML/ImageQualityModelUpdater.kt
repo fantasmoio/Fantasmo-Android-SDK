@@ -23,8 +23,10 @@ internal class ImageQualityModelUpdater(val context: Context) {
 
     private val TAG = ImageQualityModelUpdater::class.java.simpleName
 
-    var loadedModelVersion = ""
-    private set
+    private var latestLocalVersion = ""
+
+    val version : String
+    get() {return latestLocalVersion}
 
     private val queue = Volley.newRequestQueue(context)
     private var downloadingModel = false
@@ -38,34 +40,50 @@ internal class ImageQualityModelUpdater(val context: Context) {
     var interpreter : Interpreter? = null
         get() {
             val remoteConfig = RemoteConfig.remoteConfig
-            val modelUri = remoteConfig.imageQualityFilterModelUri
-            val remoteConfigVersion = remoteConfig.imageQualityFilterModelVersion ?: ""
+            val modelUri = remoteConfig.imageQualityFilterModelUri ?: ""
+            val remoteConfigModelVersion = remoteConfig.imageQualityFilterModelVersion ?: ""
 
             // If there is no interpreter yet, looking through assets and files dir for a model
             if(field == null) {
-                val remoteConfigVersionIsNewer = compareVersions(remoteConfigVersion, modelAssetVersion) == 1
-                val remoteConfigVersionModelFile = findModelInFiles(remoteConfigVersion)
+                val downloadedModels =
+                    context.filesDir.listFiles { file -> file.extension == "tflite" }
+                val downloadedVersions = downloadedModels?.map { getVersionFromFileName(it.name) }
+                val highestDownloadedVersion =
+                    downloadedVersions?.maxWithOrNull(VersionComparator) ?: ""
 
-                 interpreter = if(remoteConfigVersionIsNewer && remoteConfigVersionModelFile != null) {
-                    Log.d(TAG, "Loading model $remoteConfigVersion from files")
-                    loadedModelVersion = remoteConfigVersion
-                    loadInterpreter(remoteConfigVersionModelFile, options)
+                val bundledModelDirList = context.assets.list("mlmodel/")
+                val bundledModel = if (bundledModelDirList != null && bundledModelDirList.size == 1)
+                    bundledModelDirList[0]
+                else null
+                val bundledModelVersion = bundledModel?.let { getVersionFromFileName(it) } ?: ""
+
+                latestLocalVersion =
+                    maxOf(highestDownloadedVersion, bundledModelVersion, VersionComparator)
+
+                if (latestLocalVersion == bundledModelVersion) {
+                    interpreter = bundledModel?.let { loadBundledModelInterpreter(it) }
                 } else {
-                    Log.d(TAG, "Loading model $modelAssetVersion from assets")
-                    loadedModelVersion = modelAssetVersion
-                    modelAssetInterpreter
+                    if (downloadedVersions != null) {
+                        val downloadedModelFile =
+                            downloadedModels[downloadedVersions.indexOf(highestDownloadedVersion)]
+                        interpreter = loadInterpreter(downloadedModelFile, options)
+                    }
                 }
 
-                if(modelUri != null && !downloadingModel && remoteConfigVersionModelFile == null && remoteConfigVersionIsNewer) {
-                    Log.d(TAG, "Downloading model $remoteConfigVersion")
-                    downloadModel(modelUri, context.filesDir, "image-quality-estimator-$remoteConfigVersion.tflite")
+                if (VersionComparator.compare(remoteConfigModelVersion, latestLocalVersion) == 1) {
+                    Log.d(TAG, "Downloading model $remoteConfigModelVersion")
+                    downloadModel(
+                        modelUri,
+                        context.filesDir,
+                        "image-quality-estimator-$remoteConfigModelVersion.tflite"
+                    )
                 }
             }
 
-            if(compareVersions(remoteConfigVersion, loadedModelVersion) == 1) {
-                val remoteModelFile = findModelInFiles(remoteConfigVersion)
-                if(remoteModelFile != null) {
-                    loadedModelVersion = remoteConfigVersion
+            if(VersionComparator.compare(remoteConfigModelVersion, latestLocalVersion) == 1) {
+                val remoteModelFile = File(context.filesDir, "image-quality-estimator-$remoteConfigModelVersion.tflite")
+                if(remoteModelFile.exists()) {
+                    latestLocalVersion = remoteConfigModelVersion
                     val oldInterpreter = field
                     interpreter = loadInterpreter(remoteModelFile, options)
                     oldInterpreter?.close()
@@ -94,49 +112,28 @@ internal class ImageQualityModelUpdater(val context: Context) {
     }
 
     /**
-     * Getting the model asset's filename
-     */
-    private val modelAssets = context.assets.list("mlmodel/")
-    private val modelAssetFilename : String? =
-        if (modelAssets != null && modelAssets.size == 1)
-            modelAssets[0]
-        else null
-
-
-    /**
-     * Getting version of the bundled model asset by parsing its filename
-     */
-
-    private val modelAssetVersion : String =
-        modelAssetFilename?.split('-')?.last()?.removeSuffix(".tflite") ?: ""
-
-
-    /**
      * Getting the interpreter from the model in the bundled assets
      */
 
-    private var modelAssetInterpreter : Interpreter? = null
-    get() {
-        if(field == null && modelAssetFilename != null) {
-            val modelAsset =
-                try {
-                    val fileDescriptor: AssetFileDescriptor =
-                        context.assets.openFd("mlmodel/$modelAssetFilename")
-                    val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
-                    val fileChannel: FileChannel = inputStream.channel
-                    fileChannel.map(
-                        FileChannel.MapMode.READ_ONLY,
-                        fileDescriptor.startOffset,
-                        fileDescriptor.declaredLength
-                    )
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                    null
-                }
-            if (modelAsset != null)
-                modelAssetInterpreter = loadInterpreter(modelAsset, options)
-        }
-        return field
+    private fun loadBundledModelInterpreter(fileName: String) : Interpreter? {
+        val modelAsset =
+            try {
+                val fileDescriptor: AssetFileDescriptor =
+                    context.assets.openFd("mlmodel/$fileName")
+                val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
+                val fileChannel: FileChannel = inputStream.channel
+                fileChannel.map(
+                    FileChannel.MapMode.READ_ONLY,
+                    fileDescriptor.startOffset,
+                    fileDescriptor.declaredLength
+                )
+            } catch (e: IOException) {
+                e.printStackTrace()
+                null
+            }
+        return if (modelAsset != null)
+            loadInterpreter(modelAsset, options)
+        else null
     }
 
     /**
@@ -171,16 +168,12 @@ internal class ImageQualityModelUpdater(val context: Context) {
     }
 
     /**
-     * Given a model version, finds the corresponding file in files dir
+     * Given a fiile name, get the corresponding model version
      */
 
-    private fun findModelInFiles(modelVersion : String) : File? {
-        val fileName = "image-quality-estimator-$modelVersion.tflite"
-        val file = File(context.filesDir, fileName)
-        return if(file.exists())
-            file
-        else
-            null
+    private fun getVersionFromFileName(fileName : String) : String {
+        val splits = fileName.split('-')
+        return splits.last().removeSuffix(".tflite")
     }
 
     /**
@@ -238,32 +231,33 @@ internal class ImageQualityModelUpdater(val context: Context) {
         }
     }
 
-    /**
-     * Method that compares version strings for model update logic
-     */
 
-    private fun compareVersions(version1: String, version2: String): Int {
-        if(version1 == "" && version2 == "")
-            return 0
-        if(version1 == "")
-            return -1
-        if(version2 == "")
-            return 1
+    class VersionComparator {
+        companion object : Comparator<String> {
+            override fun compare(version1: String, version2: String): Int {
+                if(version1 == "" && version2 == "")
+                    return 0
+                if(version1 == "")
+                    return -1
+                if(version2 == "")
+                    return 1
 
-        var comparisonResult = 0
-        val version1Splits = version1.split('.')
-        val version2Splits = version2.split('.')
-        val maxLengthOfVersionSplits = max(version1Splits.size, version2Splits.size)
+                var comparisonResult = 0
+                val version1Splits = version1.split('.')
+                val version2Splits = version2.split('.')
+                val maxLengthOfVersionSplits = max(version1Splits.size, version2Splits.size)
 
-        for (i in 0 until maxLengthOfVersionSplits) {
-            val v1 = if (i < version1Splits.size) version1Splits[i].toInt() else 0
-            val v2 = if (i < version2Splits.size) version2Splits[i].toInt() else 0
-            val compare = v1.compareTo(v2)
-            if (compare != 0) {
-                comparisonResult = compare
-                break
+                for (i in 0 until maxLengthOfVersionSplits) {
+                    val v1 = if (i < version1Splits.size) version1Splits[i].toInt() else 0
+                    val v2 = if (i < version2Splits.size) version2Splits[i].toInt() else 0
+                    val compare = v1.compareTo(v2)
+                    if (compare != 0) {
+                        comparisonResult = compare
+                        break
+                    }
+                }
+                return comparisonResult
             }
         }
-        return comparisonResult
     }
 }
