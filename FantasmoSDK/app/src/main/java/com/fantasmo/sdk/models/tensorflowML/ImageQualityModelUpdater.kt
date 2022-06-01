@@ -23,14 +23,13 @@ internal class ImageQualityModelUpdater(val context: Context) {
 
     private val TAG = ImageQualityModelUpdater::class.java.simpleName
 
-    var modelVersion = ""
+    var loadedModelVersion = ""
     private set
 
     private val queue = Volley.newRequestQueue(context)
     private var downloadingModel = false
 
     private val compatList = CompatibilityList()
-    private var loadingInterpreter = false
 
     /**
      * TFLite interpreter with the model loaded
@@ -38,44 +37,35 @@ internal class ImageQualityModelUpdater(val context: Context) {
 
     var interpreter : Interpreter? = null
         get() {
-            val modelAssetVersion = modelAssetVersion
             val remoteConfig = RemoteConfig.remoteConfig
             val modelUri = remoteConfig.imageQualityFilterModelUri
-            val remoteModelVersion = remoteConfig.imageQualityFilterModelVersion
+            val remoteConfigVersion = remoteConfig.imageQualityFilterModelVersion ?: ""
 
             // If there is no interpreter yet, looking through assets and files dir for a model
             if(field == null) {
-                val remoteModelFile = remoteModelVersion?.let { findModelInFiles(it) }
-                val remoteVersionIsNewer = modelAssetVersion == null ||
-                        (remoteModelVersion != null &&
-                        compareVersions(remoteModelVersion, modelAssetVersion) == 1)
+                val remoteConfigVersionIsNewer = compareVersions(remoteConfigVersion, modelAssetVersion) == 1
+                val remoteConfigVersionModelFile = findModelInFiles(remoteConfigVersion)
 
-                if(modelAssetVersion != null) {
-                    Log.d(TAG, "Fetching local model $modelAssetVersion")
-                    val loadStart = System.currentTimeMillis()
-                    interpreter = if(remoteVersionIsNewer && remoteModelFile != null) {
-                        Log.d(TAG, "From files dir")
-                        modelVersion = remoteModelVersion
-                        loadInterpreter(remoteModelFile, options)
-                    } else {
-                        Log.d(TAG, "From assets")
-                        modelVersion = modelAssetVersion
-                        modelAssetInterpreter
-                    }
-                    val loadTime = System.currentTimeMillis() - loadStart
-                    Log.d(TAG, "Loading model took $loadTime ms")
+                 interpreter = if(remoteConfigVersionIsNewer && remoteConfigVersionModelFile != null) {
+                    Log.d(TAG, "Loading model $remoteConfigVersion from files")
+                    loadedModelVersion = remoteConfigVersion
+                    loadInterpreter(remoteConfigVersionModelFile, options)
+                } else {
+                    Log.d(TAG, "Loading model $modelAssetVersion from assets")
+                    loadedModelVersion = modelAssetVersion
+                    modelAssetInterpreter
                 }
 
-                if(modelUri != null && !downloadingModel && remoteModelFile == null && remoteVersionIsNewer) {
-                    Log.d(TAG, "Downloading model $remoteModelVersion")
-                    downloadModel(modelUri, context.filesDir, "image-quality-estimator-$remoteModelVersion.tflite")
+                if(modelUri != null && !downloadingModel && remoteConfigVersionModelFile == null && remoteConfigVersionIsNewer) {
+                    Log.d(TAG, "Downloading model $remoteConfigVersion")
+                    downloadModel(modelUri, context.filesDir, "image-quality-estimator-$remoteConfigVersion.tflite")
                 }
             }
 
-            if(remoteModelVersion != null && compareVersions(remoteModelVersion, modelVersion) == 1) {
-                val remoteModelFile = findModelInFiles(remoteModelVersion)
-                if(remoteModelFile != null && !loadingInterpreter) {
-                    modelVersion = remoteModelVersion
+            if(compareVersions(remoteConfigVersion, loadedModelVersion) == 1) {
+                val remoteModelFile = findModelInFiles(remoteConfigVersion)
+                if(remoteModelFile != null) {
+                    loadedModelVersion = remoteConfigVersion
                     val oldInterpreter = field
                     interpreter = loadInterpreter(remoteModelFile, options)
                     oldInterpreter?.close()
@@ -104,29 +94,30 @@ internal class ImageQualityModelUpdater(val context: Context) {
     }
 
     /**
+     * Getting the model asset's filename
+     */
+    private val modelAssets = context.assets.list("mlmodel/")
+    private val modelAssetFilename : String? =
+        if (modelAssets != null && modelAssets.size == 1)
+            modelAssets[0]
+        else null
+
+
+    /**
      * Getting version of the bundled model asset by parsing its filename
      */
 
-    private val modelAssetVersion : String?
-        get() {
-            val models = context.assets.list("mlmodel/")
-            if (models != null && models.size == 1) {
-                val modelAssetFilename = models[0]
-                val splitFilename = modelAssetFilename.split('-')
-                return splitFilename.last().removeSuffix(".tflite")
-            }
-            return null
-        }
+    private val modelAssetVersion : String =
+        modelAssetFilename?.split('-')?.last()?.removeSuffix(".tflite") ?: ""
+
 
     /**
      * Getting the interpreter from the model in the bundled assets
      */
 
-    private val modelAssetInterpreter : Interpreter?
+    private var modelAssetInterpreter : Interpreter? = null
     get() {
-        val models = context.assets.list("mlmodel/")
-        if (models != null && models.size == 1) {
-            val modelAssetFilename = models[0]
+        if(field == null && modelAssetFilename != null) {
             val modelAsset =
                 try {
                     val fileDescriptor: AssetFileDescriptor =
@@ -142,12 +133,10 @@ internal class ImageQualityModelUpdater(val context: Context) {
                     e.printStackTrace()
                     null
                 }
-            return if (modelAsset != null)
-                loadInterpreter(modelAsset, options)
-            else
-                null
+            if (modelAsset != null)
+                modelAssetInterpreter = loadInterpreter(modelAsset, options)
         }
-        return null
+        return field
     }
 
     /**
@@ -201,37 +190,13 @@ internal class ImageQualityModelUpdater(val context: Context) {
      */
 
     private fun loadInterpreter(file : File, options : Interpreter.Options) : Interpreter? {
-        try {
-            Log.d(TAG, "Loading interpreter in file $file")
-            //Initialize interpreter an keep it in memory
-            return Interpreter(file, options)
-        } catch (ex: IOException) {
-            //file does not exist
-            Log.e(TAG, "Error on reading the model.")
-            return null
-        } catch (e: Error) {
-            e.localizedMessage?.let { Log.e(TAG, it) }
-            return null
-        } catch (ex: Exception) {
-            //could be delegate problem, trying again with CPU
-            return if (compatList.isDelegateSupportedOnThisDevice) {
-                try {
-                    Log.d(
-                        TAG,
-                        "Falling back to CPU interpreter after exception loading GPU delegate"
-                    )
-                    Interpreter(
-                        file,
-                        Interpreter.Options().apply { this.numThreads = 4 })
-                } catch (ex: Exception) {
-                    ex.localizedMessage?.let { Log.e(TAG, it) }
-                    null
-                }
-            } else {
-                ex.localizedMessage?.let { Log.e(TAG, it) }
-                null
-            }
-        }
+        val fileInputStream = FileInputStream(file)
+        val fileChannel: FileChannel = fileInputStream.channel
+        return loadInterpreter(fileChannel.map(
+            FileChannel.MapMode.READ_ONLY,
+            0,
+            fileChannel.size()
+        ), options)
     }
 
     /**
@@ -240,11 +205,10 @@ internal class ImageQualityModelUpdater(val context: Context) {
      * @return `Interpreter` with model loaded
      */
 
-    private fun loadInterpreter(asset : MappedByteBuffer, options : Interpreter.Options) : Interpreter? {
+    private fun loadInterpreter(byteBuffer : MappedByteBuffer, options : Interpreter.Options) : Interpreter? {
         try {
-            Log.d(TAG, "Loading interpreter in asset")
             //Initialize interpreter an keep it in memory
-            return Interpreter(asset, options)
+            return Interpreter(byteBuffer, options)
         } catch (ex: IOException) {
             //file does not exist
             Log.e(TAG, "Error on reading the model.")
@@ -261,7 +225,7 @@ internal class ImageQualityModelUpdater(val context: Context) {
                         "Falling back to CPU interpreter after exception loading GPU delegate"
                     )
                     Interpreter(
-                        asset,
+                        byteBuffer,
                         Interpreter.Options().apply { this.numThreads = 4 })
                 } catch (ex: Exception) {
                     ex.localizedMessage?.let { Log.e(TAG, it) }

@@ -12,7 +12,6 @@ import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
-import java.util.*
 import kotlin.math.exp
 
 internal class FMImageQualityEvaluator(val context: Context) {
@@ -70,7 +69,7 @@ internal class FMImageQualityEvaluatorTFLite(val context: Context) :
      */
     private var imageQualityModelUpdater = ImageQualityModelUpdater(context)
     val modelVersion
-        get() = imageQualityModelUpdater.modelVersion
+        get() = imageQualityModelUpdater.loadedModelVersion
     private var imageQualityModel: Interpreter? = null
 
     override fun evaluate(fmFrame: FMFrame): FMFrameEvaluation {
