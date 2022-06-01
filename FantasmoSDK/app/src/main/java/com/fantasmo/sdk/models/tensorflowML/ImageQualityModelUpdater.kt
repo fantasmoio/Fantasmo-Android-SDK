@@ -25,7 +25,7 @@ internal class ImageQualityModelUpdater(val context: Context) {
 
     private var latestLocalVersion = ""
 
-    val version : String
+    val modelVersion : String
     get() {return latestLocalVersion}
 
     private val queue = Volley.newRequestQueue(context)
@@ -61,9 +61,11 @@ internal class ImageQualityModelUpdater(val context: Context) {
                     maxOf(highestDownloadedVersion, bundledModelVersion, VersionComparator)
 
                 if (latestLocalVersion == bundledModelVersion) {
+                    Log.d(TAG, "Loading bundled model version $latestLocalVersion")
                     interpreter = bundledModel?.let { loadBundledModelInterpreter(it) }
                 } else {
                     if (downloadedVersions != null) {
+                        Log.d(TAG, "Loading downloaded model version $latestLocalVersion")
                         val downloadedModelFile =
                             downloadedModels[downloadedVersions.indexOf(highestDownloadedVersion)]
                         interpreter = loadInterpreter(downloadedModelFile, options)
@@ -159,7 +161,7 @@ internal class ImageQualityModelUpdater(val context: Context) {
     }
 
     /**
-     * Given a fiile name, get the corresponding model version
+     * Given a file name, get the corresponding model version
      */
 
     private fun getVersionFromFileName(fileName : String) : String {

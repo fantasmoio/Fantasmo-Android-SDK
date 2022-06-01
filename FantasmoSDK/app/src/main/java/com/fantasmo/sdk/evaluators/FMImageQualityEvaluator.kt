@@ -69,7 +69,7 @@ internal class FMImageQualityEvaluatorTFLite(val context: Context) :
      */
     private var imageQualityModelUpdater = ImageQualityModelUpdater(context)
     val modelVersion
-        get() = imageQualityModelUpdater.loadedModelVersion
+        get() = imageQualityModelUpdater.modelVersion
     private var imageQualityModel: Interpreter? = null
 
     override fun evaluate(fmFrame: FMFrame): FMFrameEvaluation {
