@@ -12,7 +12,7 @@ import com.fantasmo.sdk.fantasmosdk.R
 /**
  * Default View for the Localization session.
  */
-class FMLocalizingView(arLayout: CoordinatorLayout, private val fmParkingView: FMParkingView) {
+internal class FMLocalizingView(arLayout: CoordinatorLayout, private val fmParkingView: FMParkingView) {
 
     private var fmLocalizingView: ConstraintLayout = arLayout.findViewById(R.id.fmLocalizeView)
     private var filterResultView: TextView = arLayout.findViewById(R.id.filterRejectionTextView)

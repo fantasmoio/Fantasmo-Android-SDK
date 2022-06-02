@@ -1,6 +1,7 @@
 package com.fantasmo.sdk.models.tensorflowML
 
 import android.content.Context
+import android.content.res.AssetFileDescriptor
 import android.util.Log
 import com.android.volley.Request
 import com.android.volley.toolbox.Volley
@@ -10,28 +11,86 @@ import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.CompatibilityList
 import org.tensorflow.lite.gpu.GpuDelegate
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.nio.MappedByteBuffer
+import java.nio.channels.FileChannel
+import kotlin.math.max
 
-class ImageQualityModelUpdater(val context: Context) {
+
+internal class ImageQualityModelUpdater(val context: Context) {
 
     private val TAG = ImageQualityModelUpdater::class.java.simpleName
-    private var fileName: String? = null
-    var modelVersion = ""
-    private var modelUrl = ""
+
+    private var latestLocalVersion = ""
+
+    val modelVersion : String
+    get() {return latestLocalVersion}
+
     private val queue = Volley.newRequestQueue(context)
-    private var hasRequestedModel = false
-    private var hasRequestedUpdate = false
+    private var downloadingModel = false
 
     private val compatList = CompatibilityList()
 
     /**
      * TFLite interpreter with the model loaded
      */
-    private lateinit var interpreter: Interpreter
-    private var firstRead = true
 
-    // Optimize model inference performance by delegating to GPU or attributing a number of threads
+    var interpreter : Interpreter? = null
+        get() {
+            val remoteConfig = RemoteConfig.remoteConfig
+            val modelUri = remoteConfig.imageQualityFilterModelUri ?: ""
+            val remoteConfigModelVersion = remoteConfig.imageQualityFilterModelVersion ?: ""
+
+            // If there is no interpreter yet, looking through assets and files dir for a model
+            if(field == null) {
+                val downloadedModels =
+                    context.filesDir.listFiles { file -> file.extension == "tflite" }
+                val downloadedVersions = downloadedModels?.map { getVersionFromFileName(it.name) }
+                val highestDownloadedVersion =
+                    downloadedVersions?.maxWithOrNull(VersionComparator) ?: ""
+
+                val bundledModelDirList = context.assets.list("mlmodel/")
+                val bundledModel = if (bundledModelDirList != null && bundledModelDirList.size == 1)
+                    bundledModelDirList[0]
+                else null
+                val bundledModelVersion = bundledModel?.let { getVersionFromFileName(it) } ?: ""
+
+                latestLocalVersion =
+                    maxOf(highestDownloadedVersion, bundledModelVersion, VersionComparator)
+
+                if (latestLocalVersion == bundledModelVersion) {
+                    Log.d(TAG, "Loading bundled model version $latestLocalVersion")
+                    interpreter = bundledModel?.let { loadBundledModelInterpreter(it) }
+                } else {
+                    if (downloadedVersions != null) {
+                        Log.d(TAG, "Loading downloaded model version $latestLocalVersion")
+                        val downloadedModelFile =
+                            downloadedModels[downloadedVersions.indexOf(highestDownloadedVersion)]
+                        interpreter = loadInterpreter(downloadedModelFile, options)
+                    }
+                }
+
+                if (!downloadingModel && VersionComparator.compare(remoteConfigModelVersion, latestLocalVersion) == 1) {
+                    Log.d(TAG, "Downloading model $remoteConfigModelVersion")
+
+                    downloadModel(
+                        modelUri,
+                        context.filesDir,
+                        "image-quality-estimator-$remoteConfigModelVersion.tflite"
+                    )
+                }
+            }
+            return field
+        }
+    private set
+
+
+    /**
+     * Optimize model inference performance by delegating to GPU or attributing a number of threads
+      */
+
     private val options = Interpreter.Options().apply {
         if (compatList.isDelegateSupportedOnThisDevice) {
             Log.i(TAG, "Device has GPU support. Using GPU for inference.")
@@ -41,131 +100,156 @@ class ImageQualityModelUpdater(val context: Context) {
         } else {
             Log.i(TAG, "Device does not have GPU support. Using CPU for inference.")
             // if the GPU is not supported, run on 4 threads
-            this.setNumThreads(4)
+            this.numThreads = 4
         }
+    }
+
+    /**
+     * Getting the interpreter from the model in the bundled assets
+     */
+
+    private fun loadBundledModelInterpreter(fileName: String) : Interpreter? {
+        val modelAsset =
+            try {
+                val fileDescriptor: AssetFileDescriptor =
+                    context.assets.openFd("mlmodel/$fileName")
+                val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
+                val fileChannel: FileChannel = inputStream.channel
+                fileChannel.map(
+                    FileChannel.MapMode.READ_ONLY,
+                    fileDescriptor.startOffset,
+                    fileDescriptor.declaredLength
+                )
+            } catch (e: IOException) {
+                e.printStackTrace()
+                null
+            }
+        return if (modelAsset != null)
+            loadInterpreter(modelAsset, options)
+        else null
     }
 
     /**
      * Method to send a GET request in order to update the model.
      */
-    private fun downloadModel() {
-        hasRequestedModel = true
+    private fun downloadModel(modelUri : String, dir : File, fileName : String) {
+        downloadingModel = true
         val stringRequest = ModelRequest(
-            Request.Method.GET, modelUrl,
+            Request.Method.GET, modelUri,
             { response ->
                 try {
-                    Log.d(TAG, "Model Network Response received, writing to file...")
-                    val fileOutputStream = FileOutputStream(File(context.filesDir, fileName))
+                    Log.d(TAG, "Model Network Response received, writing to file $fileName...")
+                    val fileOutputStream = FileOutputStream(
+                        File(dir,
+                            fileName
+                        )
+                    )
                     fileOutputStream.write(response)
                     fileOutputStream.close()
                     Log.d(TAG, "Model File Successfully Downloaded.")
                 } catch (e: IOException) {
                     Log.e(TAG, "Model File write failed: $e.")
-                    hasRequestedModel = false
                 }
+                downloadingModel = false
             },
             {
                 Log.e(TAG, "Error Downloading Model.")
-                hasRequestedModel = false
+                downloadingModel = false
             }
         )
-
         queue.add(stringRequest)
     }
 
     /**
+     * Given a file name, get the corresponding model version
+     */
+
+    private fun getVersionFromFileName(fileName : String) : String {
+        val splits = fileName.split('-')
+        return splits.last().removeSuffix(".tflite")
+    }
+
+    /**
      * Method that delivers an `Interpreter` with the model loaded onto it.
-     * Checks if there's a config change. If true, it will request a new
-     * model. Else if there's no config change it will try to load a interpreter
-     * that has been loaded into memory. In negative case, it will check if the
-     * updates are loaded and use those instead.
+     *
      * @return `Interpreter` with model loaded
      */
-    fun getInterpreter(): Interpreter? {
-        val remoteConfig = RemoteConfig.remoteConfig
-        val modelUri = remoteConfig.imageQualityFilterModelUri
-        val remoteModelVersion = remoteConfig.imageQualityFilterModelVersion
-        if (modelUri != null &&
-            remoteModelVersion != null &&
-            remoteModelVersion != modelVersion
-        ) {
-            modelUrl = modelUri
-            modelVersion = remoteModelVersion
-            fileName = "image-quality-estimator-$modelVersion.tflite"
-            hasRequestedUpdate = true
-            Log.d(TAG, "Received model version: $modelVersion")
-            return checkForUpdates()
-        } else {
-            return if (::interpreter.isInitialized) {
-                interpreter
+
+    private fun loadInterpreter(file : File, options : Interpreter.Options) : Interpreter? {
+        val fileInputStream = FileInputStream(file)
+        val fileChannel: FileChannel = fileInputStream.channel
+        return loadInterpreter(fileChannel.map(
+            FileChannel.MapMode.READ_ONLY,
+            0,
+            fileChannel.size()
+        ), options)
+    }
+
+    /**
+     * Method that delivers an `Interpreter` with the model loaded onto it.
+     *
+     * @return `Interpreter` with model loaded
+     */
+
+    private fun loadInterpreter(byteBuffer : MappedByteBuffer, options : Interpreter.Options) : Interpreter? {
+        try {
+            //Initialize interpreter an keep it in memory
+            return Interpreter(byteBuffer, options)
+        } catch (ex: IOException) {
+            //file does not exist
+            Log.e(TAG, "Error on reading the model.")
+            return null
+        } catch (e: Error) {
+            e.localizedMessage?.let { Log.e(TAG, it) }
+            return null
+        } catch (ex: Exception) {
+            //could be delegate problem, trying again with CPU
+            return if (compatList.isDelegateSupportedOnThisDevice) {
+                try {
+                    Log.d(
+                        TAG,
+                        "Falling back to CPU interpreter after exception loading GPU delegate"
+                    )
+                    Interpreter(
+                        byteBuffer,
+                        Interpreter.Options().apply { this.numThreads = 4 })
+                } catch (ex: Exception) {
+                    ex.localizedMessage?.let { Log.e(TAG, it) }
+                    null
+                }
             } else {
-                checkForUpdates()
+                ex.localizedMessage?.let { Log.e(TAG, it) }
+                null
             }
         }
     }
 
-    /**
-     * Loads a model from the `RemoteConfig` model uri field and returns an `Interpreter`.
-     * First checks if it has a model present in the app data folder. If it has a model
-     * it will load that model. If it doesn't have it will get from the `RemoteConfig`
-     * model uri
-     * @return `Interpreter` with the model loaded
-     */
-    private fun checkForUpdates(): Interpreter? {
-        if(fileName == null) {
-            return null
-        }
-        val file = File(context.filesDir, fileName)
-        if (!file.exists()) {
-            if (!hasRequestedModel) {
-                if (hasRequestedUpdate) {
-                    Log.d(TAG, "New Model version: $modelVersion. Downloading it...")
-                    hasRequestedUpdate = false
-                } else {
-                    Log.e(TAG, "Model file doesn't exist. Downloading it...")
-                }
-                downloadModel()
-            }
-            return null
-        } else {
-            // There's no need to read from the file everytime we need to interpret the model
-            return if (!firstRead) {
-                interpreter
-            } else {
-                try {
-                    Log.d(TAG, "Model file present in file ${context.filesDir}/$fileName")
-                    //Initialize interpreter an keep it in memory
-                    interpreter = Interpreter(file, options)
-                    modelVersion = RemoteConfig.remoteConfig.imageQualityFilterModelVersion ?: ""
-                    firstRead = false
-                    interpreter
-                } catch (ex: IOException) {
-                    //file does not exist
-                    Log.e(TAG, "Error on reading the model.")
-                    null
-                } catch (e: Error) {
-                    Log.e(TAG, e.localizedMessage)
-                    null
-                } catch (ex: Exception) {
-                    //could be delegate problem, trying again with CPU
-                    if (compatList.isDelegateSupportedOnThisDevice) {
-                        try {
-                            Log.d(TAG, "Falling back to CPU interpreter after exception loading GPU delegate")
-                            interpreter = Interpreter(
-                                file,
-                                Interpreter.Options().apply { this.setNumThreads(4) })
-                            modelVersion = RemoteConfig.remoteConfig.imageQualityFilterModelVersion ?: ""
-                            firstRead = false
-                            interpreter
-                        } catch(ex: Exception) {
-                            Log.e(TAG, ex.localizedMessage)
-                            null
-                        }
-                    } else {
-                        Log.e(TAG, ex.localizedMessage)
-                        null
+
+    class VersionComparator {
+        companion object : Comparator<String> {
+            override fun compare(version1: String, version2: String): Int {
+                if(version1 == "" && version2 == "")
+                    return 0
+                if(version1 == "")
+                    return -1
+                if(version2 == "")
+                    return 1
+
+                var comparisonResult = 0
+                val version1Splits = version1.split('.')
+                val version2Splits = version2.split('.')
+                val maxLengthOfVersionSplits = max(version1Splits.size, version2Splits.size)
+
+                for (i in 0 until maxLengthOfVersionSplits) {
+                    val v1 = if (i < version1Splits.size) version1Splits[i].toInt() else 0
+                    val v2 = if (i < version2Splits.size) version2Splits[i].toInt() else 0
+                    val compare = v1.compareTo(v2)
+                    if (compare != 0) {
+                        comparisonResult = compare
+                        break
                     }
                 }
+                return comparisonResult
             }
         }
     }

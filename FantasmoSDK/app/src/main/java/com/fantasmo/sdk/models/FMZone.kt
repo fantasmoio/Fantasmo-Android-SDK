@@ -14,6 +14,7 @@ package com.fantasmo.sdk.models
 data class FMZone(private val _zoneType: ZoneType, val id: String?)  {
 
     var zoneType: String = _zoneType.name
+    private set
 
     enum class ZoneType {
         STREET,

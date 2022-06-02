@@ -8,7 +8,7 @@ import com.fantasmo.sdk.models.FMZone
 import com.fantasmo.sdk.models.Location
 import kotlin.math.sqrt
 
-class LocationFuser {
+internal class LocationFuser {
 
     private val TAG = "LocationFuser"
     private var locations = mutableListOf<Location>()

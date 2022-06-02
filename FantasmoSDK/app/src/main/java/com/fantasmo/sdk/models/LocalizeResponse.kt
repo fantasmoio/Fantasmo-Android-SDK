@@ -14,7 +14,7 @@ package com.fantasmo.sdk.models
  * @property pose
  * @property uuid
  */
-data class LocalizeResponse(
+internal data class LocalizeResponse(
     val geofences: List<Geofence>?,
     val location: Location?,
     val pose: Pose?,

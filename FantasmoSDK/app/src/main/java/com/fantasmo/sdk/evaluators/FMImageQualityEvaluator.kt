@@ -12,16 +12,15 @@ import com.fantasmo.sdk.utilities.YuvToRgbConverter
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
-import java.util.*
 import kotlin.math.exp
 
-class FMImageQualityEvaluator(val context: Context) {
+internal class FMImageQualityEvaluator(val context: Context) {
     val TAG: String = FMImageQualityEvaluator::class.java.simpleName
 
     companion object {
         // Factory constructor, returns the TFLite evaluator if supported
         fun makeEvaluator(context: Context) : FMFrameEvaluator {
-            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 FMImageQualityEvaluatorTFLite(context)
             } else {
                 FMImageQualityEvaluatorNotSupported()
@@ -32,7 +31,7 @@ class FMImageQualityEvaluator(val context: Context) {
 
 
 /// Evaluator class for iOS versions that don't support CoreML
-class FMImageQualityEvaluatorNotSupported : FMFrameEvaluator {
+internal class FMImageQualityEvaluatorNotSupported : FMFrameEvaluator {
     override val TAG: String = FMImageQualityEvaluatorNotSupported::class.java.name
 
     override fun evaluate(fmFrame: FMFrame) : FMFrameEvaluation {
@@ -42,8 +41,8 @@ class FMImageQualityEvaluatorNotSupported : FMFrameEvaluator {
 }
 
 
-@RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
-class FMImageQualityEvaluatorTFLite(val context: Context) :
+@RequiresApi(Build.VERSION_CODES.N)
+internal class FMImageQualityEvaluatorTFLite(val context: Context) :
     FMFrameEvaluator {
 
     enum class Error {
@@ -72,20 +71,13 @@ class FMImageQualityEvaluatorTFLite(val context: Context) :
     val modelVersion
         get() = imageQualityModelUpdater.modelVersion
     private var imageQualityModel: Interpreter? = null
-    private lateinit var colorMatrixIntrinsic: ScriptIntrinsicColorMatrix
-    private lateinit var scalingMatrix: Matrix3f
 
     override fun evaluate(fmFrame: FMFrame): FMFrameEvaluation {
         val evaluationStart = System.currentTimeMillis()
 
-        imageQualityModel = imageQualityModelUpdater.getInterpreter()
+        imageQualityModel = imageQualityModelUpdater.interpreter
         if (!::rs.isInitialized) {
             rs = RenderScript.create(context)
-            colorMatrixIntrinsic = ScriptIntrinsicColorMatrix.create(rs)
-            scalingMatrix = Matrix3f()
-            scalingMatrix.scale(1 / 0.229f, 1 / 0.224f, 1 / 0.225f)
-            colorMatrixIntrinsic.setColorMatrix(scalingMatrix)
-            colorMatrixIntrinsic.setAdd(-0.485f / 0.229f, -0.456f / 0.224f, -0.406f / 0.225f, 0f)
         }
 
         if (imageQualityModel == null) {
@@ -99,10 +91,8 @@ class FMImageQualityEvaluatorTFLite(val context: Context) :
             Log.e(TAG, "Failed to create Input Array")
             return makeEvaluation(Error.FAILED_TO_CREATE_INPUT_ARRAY)
         } else {
-            val rgbByteArray =
-                yuvToRgbConverter.toByteArray(yuvImage, imageWidth, imageHeight)
+            val rgbImage : FloatArray = yuvToRgbConverter.toTensor(yuvImage, imageWidth, imageHeight)
 
-            val rgbImage = getRGBValues(rgbByteArray)
             val score = processImage(rgbImage)
 
             val evaluationTime = ((System.currentTimeMillis() - evaluationStart).toDouble() / 1000).toFloat()
@@ -113,40 +103,6 @@ class FMImageQualityEvaluatorTFLite(val context: Context) :
             }
             return makeEvaluation(Error.INVALID_FEATURE_VALUE)
         }
-    }
-
-    /**
-     * Gathers all the RGB values and stores them in an
-     * FloatArray dividing by three main channels
-     * @param bitmap Bitmap image already converted from YUV to RGB
-     * @return FloatArray containing RGB values in float precision
-     */
-    private fun getRGBValues(inArray: ByteArray): FloatArray {
-        val inputAllocation =
-            Allocation.createSized(rs, Element.RGBA_8888(rs), imageHeight * imageWidth)
-        inputAllocation.copyFrom(inArray)
-        val outputAllocation =
-            Allocation.createSized(rs, Element.F32_3(rs), imageHeight * imageWidth)
-        colorMatrixIntrinsic.forEach(inputAllocation, outputAllocation)
-        val rgbMixed = FloatArray(imageHeight * imageWidth * 4)
-        outputAllocation.copyTo(rgbMixed)
-        // Image Height * Image Width * 3 RGB Channels
-        val rgb = FloatArray(imageHeight * imageWidth * 3)
-        for (y in 0 until imageHeight) {
-            for (x in 0 until imageWidth) {
-                // Get and convert rgb values to 0.0 - 1.0
-                val r = rgbMixed[(x + y * imageWidth) * 4]
-                val g = rgbMixed[(x + y * imageWidth) * 4 + 1]
-                val b = rgbMixed[(x + y * imageWidth) * 4 + 2]
-
-                rgb[x + imageWidth * y] = r
-                rgb[imageHeight * imageWidth + imageWidth * y + x] = g
-                rgb[2 * imageHeight * imageWidth + imageWidth * y + x] = b
-            }
-        }
-        inputAllocation.destroy()
-        outputAllocation.destroy()
-        return rgb
     }
 
     /**

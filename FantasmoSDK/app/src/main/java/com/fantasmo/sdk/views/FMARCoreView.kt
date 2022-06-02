@@ -3,6 +3,7 @@ package com.fantasmo.sdk.views
 import android.app.Activity
 import android.content.Context
 import android.opengl.GLSurfaceView
+import android.os.Build
 import android.util.Log
 import android.util.Size
 import androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -22,7 +23,7 @@ import java.io.IOException
 /**
  * Class responsible by the ARCore management and keeping it on throughout the app lifecycles.
  */
-class FMARCoreView(
+internal class FMARCoreView(
     private val arLayout: CoordinatorLayout,
     val context: Context
 ) :
@@ -56,7 +57,8 @@ class FMARCoreView(
 
     fun setupARSession() {
         surfaceView = arLayout.findViewWithTag("SurfaceView")
-        displayRotationHelper = DisplayRotationHelper(context)
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            displayRotationHelper = DisplayRotationHelper(context)
         trackingStateHelper = TrackingStateHelper(context as Activity?)
 
         // Set up renderer.
@@ -94,7 +96,8 @@ class FMARCoreView(
             return
         }
         surfaceView.onResume()
-        displayRotationHelper.onResume()
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            displayRotationHelper.onResume()
     }
 
     /**
@@ -105,7 +108,8 @@ class FMARCoreView(
         // to query the session. If Session is paused before GLSurfaceView, GLSurfaceView may
         // still call session.update() and get a SessionPausedException.
         if (arSession != null) {
-            displayRotationHelper.onPause()
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                displayRotationHelper.onPause()
             surfaceView.onPause()
             arSession!!.pause()
         }
@@ -139,25 +143,28 @@ class FMARCoreView(
         config.cloudAnchorMode = Config.CloudAnchorMode.DISABLED
         config.lightEstimationMode = Config.LightEstimationMode.DISABLED
         config.depthMode = Config.DepthMode.DISABLED
-        config.augmentedImageDatabase = null
-
-        var selectedSize = Size(0, 0)
-        var selectedCameraConfig = 0
+        config.augmentedImageDatabase = AugmentedImageDatabase(arSession!!)
 
         val filter = CameraConfigFilter(arSession)
         val cameraConfigsList: List<CameraConfig> = arSession!!.getSupportedCameraConfigs(filter)
-        for (currentCameraConfig in cameraConfigsList) {
-            val cpuImageSize: Size = currentCameraConfig.imageSize
-            if (cpuImageSize.width > selectedSize.width && cpuImageSize.height <= 1080) {
-                selectedSize = cpuImageSize
-                selectedCameraConfig = cameraConfigsList.indexOf(currentCameraConfig)
+        var selectedCameraConfig = 0
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            var selectedSize = Size(0, 0)
+
+            for (currentCameraConfig in cameraConfigsList) {
+                val cpuImageSize: Size = currentCameraConfig.imageSize
+                if (cpuImageSize.width > selectedSize.width && cpuImageSize.height <= 1080) {
+                    selectedSize = cpuImageSize
+                    selectedCameraConfig = cameraConfigsList.indexOf(currentCameraConfig)
+                }
             }
+            Log.i(
+                TAG,
+                "CurrentCameraConfig CPU image size:$selectedSize"
+            )
+            arSession!!.cameraConfig = cameraConfigsList[selectedCameraConfig]
         }
-        Log.i(
-            TAG,
-            "CurrentCameraConfig CPU image size:$selectedSize"
-        )
-        arSession!!.cameraConfig = cameraConfigsList[selectedCameraConfig]
         arSession!!.configure(config)
     }
 
@@ -169,7 +176,8 @@ class FMARCoreView(
     }
 
     override fun onSurfaceChanged(render: SampleRender?, width: Int, height: Int) {
-        displayRotationHelper.onSurfaceChanged(width, height)
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            displayRotationHelper.onSurfaceChanged(width, height)
     }
 
     override fun onDrawFrame(render: SampleRender?) {
@@ -186,11 +194,12 @@ class FMARCoreView(
 
         // Notify ARCore session that the view size changed so that the perspective matrix and
         // the video background can be properly adjusted.
-        displayRotationHelper.updateSessionIfNeeded(arSession)
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            displayRotationHelper.updateSessionIfNeeded(arSession!!)
 
         // Obtain the current frame from ARSession. When the configuration is set to
         // UpdateMode.BLOCKING (it is by default), this will throttle the rendering to the
-        // camera framerate.
+        // camera frame rate.
         val frame: Frame = try {
             arSession!!.update()
         } catch (e: CameraNotAvailableException) {
@@ -244,15 +253,6 @@ class FMARCoreView(
         arSessionListener.qrCodeScan(fmFrame)
     }
 
-    /**
-     * Method to simplify task of creating a String to be shown in the screen
-     */
-    private fun createStringDisplay(cameraAttr: FloatArray?): String {
-        return String.format("%.2f", cameraAttr?.get(0)) + ", " +
-                String.format("%.2f", cameraAttr?.get(1)) + ", " +
-                String.format("%.2f", cameraAttr?.get(2))
-    }
-
     fun startAnchor() {
         anchorIsChecked = true
         anchored = false
@@ -271,7 +271,7 @@ class FMARCoreView(
  * Listener designed to keep encapsulation between the ARCoreView
  * and other classes that need values from the AR session.
  */
-interface FMARSessionListener{
+internal interface FMARSessionListener{
     /**
      * When the SDK enters the localization session, this provides the frame
      * to localize and passes to the `FMLocationManager.session()` method.

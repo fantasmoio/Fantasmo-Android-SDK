@@ -9,7 +9,7 @@ import com.google.ar.core.TrackingState
  * Class responsible for filtering frames due to ARCore tracking failures.
  * Prevents from sending frames that were broken during ARSession
  */
-class FMTrackingStateFilter : FMFrameFilter {
+internal class FMTrackingStateFilter : FMFrameFilter {
     override val TAG = FMTrackingStateFilter::class.java.simpleName
 
     override fun accepts(fmFrame: FMFrame): FMFrameFilterResult {

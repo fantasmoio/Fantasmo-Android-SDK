@@ -22,7 +22,7 @@ import java.io.ByteArrayOutputStream
 /**
  * Class to hold utilitary methods to create mock data for the request.
  */
-class MockData {
+internal class MockData {
     companion object {
 
         /**

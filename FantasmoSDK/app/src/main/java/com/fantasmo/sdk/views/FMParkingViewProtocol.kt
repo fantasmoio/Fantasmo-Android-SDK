@@ -3,7 +3,7 @@ package com.fantasmo.sdk.views
 import com.fantasmo.sdk.FMBehaviorRequest
 import com.fantasmo.sdk.FMLocationResult
 import com.fantasmo.sdk.models.ErrorResponse
-import com.google.mlkit.vision.barcode.Barcode
+import com.google.mlkit.vision.barcode.common.Barcode
 
 interface FMParkingViewProtocol {
 

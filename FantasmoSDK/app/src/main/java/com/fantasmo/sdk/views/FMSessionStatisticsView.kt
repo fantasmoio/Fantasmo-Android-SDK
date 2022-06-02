@@ -21,7 +21,7 @@ import kotlin.concurrent.timerTask
 /**
  * Debug View responsible for displaying the Statistics generated during the session.
  */
-class FMSessionStatisticsView(arLayout: CoordinatorLayout, private val context: Context) {
+internal class FMSessionStatisticsView(arLayout: CoordinatorLayout, private val context: Context) {
 
     private val TAG = FMSessionStatisticsView::class.java.simpleName
     private var sdkVersion: TextView = arLayout.findViewById(R.id.fantasmoSDKView)
@@ -58,7 +58,7 @@ class FMSessionStatisticsView(arLayout: CoordinatorLayout, private val context: 
         fmFrame: FMFrame,
         info: AccumulatedARCoreInfo
     ) {
-        val cameraTranslation = fmFrame.cameraPose?.translation
+        val cameraTranslation = fmFrame.camera.pose.translation
         translationTv.text =
             createStringDisplay(cameraTranslation)
 

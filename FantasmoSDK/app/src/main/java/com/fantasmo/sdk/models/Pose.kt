@@ -12,7 +12,7 @@ package com.fantasmo.sdk.models
  * @property orientation
  * @property position
  */
-data class Pose(
+internal data class Pose(
     val accuracy: String,
     val orientation: Orientation,
     val position: Position

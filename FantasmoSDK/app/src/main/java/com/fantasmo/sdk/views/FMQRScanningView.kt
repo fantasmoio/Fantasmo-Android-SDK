@@ -19,7 +19,7 @@ import com.fantasmo.sdk.fantasmosdk.R
 /**
  * Default View for the QR Code Scanning session.
  */
-class FMQRScanningView(
+internal class FMQRScanningView(
     private val context: Context,
     arLayout: CoordinatorLayout,
     private val fmParkingView: FMParkingView

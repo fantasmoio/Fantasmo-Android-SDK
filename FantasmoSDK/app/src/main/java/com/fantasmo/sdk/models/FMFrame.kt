@@ -40,16 +40,15 @@ class FMFrame (private val frame: Frame,
     var evaluation: FMFrameEvaluation? = null // nil if no evaluation has been done, or evaluator error
 
     var yuvImage: YuvImage?
-        @RequiresApi(Build.VERSION_CODES.KITKAT)
         get() {
-            if(_yuvImage == null) {
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && _yuvImage == null) {
                 setYuvImageFromFrame()
             }
             return _yuvImage
         }
     set(value) {_yuvImage = value}
 
-    @RequiresApi(Build.VERSION_CODES.KITKAT_WATCH)
+    @RequiresApi(Build.VERSION_CODES.KITKAT)
     private var yuvToRgbConverter = YuvToRgbConverter(context)
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
@@ -88,7 +87,7 @@ class FMFrame (private val frame: Frame,
     }
 
     fun imageData(): ByteArray? {
-        val image = yuvImage ?: return null
+        val image = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {yuvImage ?: return null} else return null
         val imageBitmap = yuvToRgbConverter.toBitmap(image)
         val rotatedBitmap = imageBitmap.rotate(getImageRotationDegrees(context))
         val data = getFileDataFromDrawable(rotatedBitmap)
@@ -104,9 +103,9 @@ class FMFrame (private val frame: Frame,
     }
 
     private fun getImageRotationDegrees(context: Context): Float {
-        val rotation: Int = try {
+        val rotation: Int = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             context.display?.rotation!!
-        } catch (exception: UnsupportedOperationException) {
+        } else {
             val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
             val display: Display = wm.defaultDisplay
             display.rotation
