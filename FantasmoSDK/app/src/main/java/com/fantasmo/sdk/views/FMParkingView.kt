@@ -126,7 +126,7 @@ class FMParkingView @JvmOverloads constructor(
     // App Session Tags supplied by the SDK client
     private var appSessionTags: List<String>? = null
 
-    private lateinit var fmLocationManager: FMLocationManager
+    private val fmLocationManager: FMLocationManager = FMLocationManager(context)
     private var fmSessionStatisticsView: FMSessionStatisticsView
 
     // Default UI for the QR view
@@ -154,11 +154,6 @@ class FMParkingView @JvmOverloads constructor(
         fmARCoreView = FMARCoreView(arLayout, context)
         fmARCoreView.setupARSession()
         fmSessionStatisticsView = FMSessionStatisticsView(arLayout, context)
-        setupFMLocationManager()
-    }
-
-    private fun setupFMLocationManager() {
-        fmLocationManager = FMLocationManager(context)
     }
 
     enum class State {
@@ -203,6 +198,7 @@ class FMParkingView @JvmOverloads constructor(
         )
 
         fmLocationManager.isSimulation = isSimulation
+        fmLocationManager.qrCodeSkipped = !enableQRCodeScanner
 
         fmARCoreView.arSessionListener = arSessionListener
         fmARCoreView.connected = true
@@ -393,19 +389,11 @@ class FMParkingView @JvmOverloads constructor(
      */
     fun updateLocation(location: Location) {
         if (!usesInternalLocationManager) {
-            // Prevents fmLocationManager lateinit property not initialized
-            if (this::fmLocationManager.isInitialized) {
-                //Set SDK Location
-                fmLocationManager.setLocation(
-                    location
-                )
-                fmSessionStatisticsView.updateLocation(location.latitude, location.longitude)
-            } else {
-                Log.e(
-                    TAG,
-                    "FMLocationManager not initialized: Please make sure connect() was invoked before updateLocation"
-                )
-            }
+            //Set SDK Location
+            fmLocationManager.setLocation(
+                location
+            )
+            fmSessionStatisticsView.updateLocation(location.latitude, location.longitude)
         }
     }
 
