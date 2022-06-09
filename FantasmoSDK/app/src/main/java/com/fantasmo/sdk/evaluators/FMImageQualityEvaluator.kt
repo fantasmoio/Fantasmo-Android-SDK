@@ -70,7 +70,7 @@ internal class FMImageQualityEvaluatorTFLite(val context: Context) :
     private var imageQualityModelUpdater = ImageQualityModelUpdater(context)
     val modelVersion
         get() = imageQualityModelUpdater.modelVersion
-    private var imageQualityModel: Interpreter? = null
+    private var imageQualityModel: Interpreter? = imageQualityModelUpdater.interpreter
 
     override fun evaluate(fmFrame: FMFrame): FMFrameEvaluation {
         val evaluationStart = System.currentTimeMillis()

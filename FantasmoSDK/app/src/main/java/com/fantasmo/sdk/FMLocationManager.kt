@@ -57,8 +57,10 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
     var activeUploads: MutableList<FMFrame> = mutableListOf()
     private set
 
+    private val rc: RemoteConfig.Config = RemoteConfig.config(context)
+
     // Used to validate frame for sufficient quality before sending to API.
-    private lateinit var frameEvaluatorChain: FMFrameEvaluatorChain
+    private val frameEvaluatorChain: FMFrameEvaluatorChain = FMFrameEvaluatorChain(rc, context)
 
     // Throttler for invalid frames.
     private lateinit var behaviorRequester: BehaviorRequester
@@ -76,8 +78,6 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
 
     private var frameEvaluationStatistics = FMFrameEvaluationStatistics(FMFrameEvaluationType.IMAGE_QUALITY_ESTIMATION)
     private var accumulatedARCoreInfo = AccumulatedARCoreInfo()
-
-    private lateinit var rc: RemoteConfig.Config
 
     private var startTime = System.currentTimeMillis() // resets on `startUpdatingLocation`
     private var totalFramesUploaded: Int = 0 // total calls to `localize`
@@ -99,8 +99,6 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
         this.token = accessToken
         this.fmLocationListener = callback
         fmApi = FMApi(context, token)
-        rc = RemoteConfig.remoteConfig
-        frameEvaluatorChain = FMFrameEvaluatorChain(rc, context)
         if (rc.isBehaviorRequesterEnabled) {
             behaviorRequester = BehaviorRequester {
                 fmLocationListener?.didRequestBehavior(behavior = it)
@@ -365,7 +363,7 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
             timestamp = timestamp.toFloat(),
             totalDuration = (timestamp - (startTime.toDouble() / 1000.0)).toFloat(),
             location = currentLocation,
-            remoteConfigId = RemoteConfig.remoteConfig.remoteConfigId,
+            remoteConfigId = RemoteConfig.config(context).remoteConfigId,
             deviceAndHostInfo = FMDeviceAndHostInfo(context)
         )
     }

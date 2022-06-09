@@ -3,12 +3,9 @@ package com.fantasmo.sdk.config
 import android.content.Context
 import android.util.Log
 import com.google.gson.Gson
-import com.fantasmo.sdk.FMUtility
 import com.fantasmo.sdk.FMUtility.Constants.fileName
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
-import org.json.JSONException
-import org.json.JSONObject
 import java.io.*
 import java.lang.StringBuilder
 
@@ -52,7 +49,7 @@ class RemoteConfig {
 
     companion object {
         private val TAG = RemoteConfig::class.java.simpleName
-        lateinit var remoteConfig: Config
+        private lateinit var remoteConfig: Config
 
         /**
          * Updates current `Config`
@@ -62,7 +59,7 @@ class RemoteConfig {
         fun updateConfig(context: Context, jsonString: String) {
             val config = getConfigFromJSON(jsonString)
             remoteConfig = if (config == null || !validateConfig(config)) {
-                getConfig(context)!!
+                config(context)
             } else {
                 Log.i(TAG, "Received Valid Remote Config.")
                 try {
@@ -84,13 +81,20 @@ class RemoteConfig {
          * @param context Application context
          * @return `Config` to be used throughout the SDK
          */
-        private fun getConfig(context: Context): Config? {
-            val file = File(context.filesDir, fileName)
-            return if (!file.exists()) {
-                getAssetDefaultConfig(context)
-            } else {
-                getPreviousSavedConfig(file)
+        fun config(context: Context): Config {
+            if(!::remoteConfig.isInitialized) {
+                val file = File(context.filesDir, fileName)
+                val config : Config? = if (!file.exists()) {
+                    getAssetDefaultConfig(context)
+                } else {
+                    getPreviousSavedConfig(file)
+                }
+                if(config != null)
+                    remoteConfig = config
+                else
+                    Log.e(TAG, "Error loading remote config, no valid config found")
             }
+            return remoteConfig
         }
 
         /**

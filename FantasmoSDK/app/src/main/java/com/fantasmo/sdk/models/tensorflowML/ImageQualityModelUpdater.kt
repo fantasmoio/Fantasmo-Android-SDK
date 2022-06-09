@@ -39,7 +39,7 @@ internal class ImageQualityModelUpdater(val context: Context) {
 
     var interpreter : Interpreter? = null
         get() {
-            val remoteConfig = RemoteConfig.remoteConfig
+            val remoteConfig = RemoteConfig.config(context)
             val modelUri = remoteConfig.imageQualityFilterModelUri ?: ""
             val remoteConfigModelVersion = remoteConfig.imageQualityFilterModelVersion ?: ""
 
