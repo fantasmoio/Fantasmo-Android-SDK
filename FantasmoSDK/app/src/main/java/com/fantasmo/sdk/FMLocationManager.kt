@@ -82,6 +82,8 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
     private var startTime = System.currentTimeMillis() // resets on `startUpdatingLocation`
     private var totalFramesUploaded: Int = 0 // total calls to `localize`
 
+    internal var qrCodeSkipped = false
+
     var errors: MutableList<ErrorResponse> = mutableListOf()
     private set
 
@@ -326,7 +328,7 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
     private fun createSessionAnalytics(): FMSessionAnalytics {
         var imageQualityUserInfo: FMImageQualityUserInfo? = null
 
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT_WATCH && frameEvaluatorChain.frameEvaluator is FMImageQualityEvaluatorTFLite){
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N && frameEvaluatorChain.frameEvaluator is FMImageQualityEvaluatorTFLite){
             imageQualityUserInfo = FMImageQualityUserInfo((frameEvaluatorChain.frameEvaluator as FMImageQualityEvaluatorTFLite).modelVersion)
         }
 
@@ -366,6 +368,7 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
             totalDuration = (timestamp - (startTime.toDouble() / 1000.0)).toFloat(),
             location = currentLocation,
             remoteConfigId = RemoteConfig.remoteConfig.remoteConfigId,
+            qrCodeSkipped = qrCodeSkipped,
             deviceAndHostInfo = FMDeviceAndHostInfo(context)
         )
     }
