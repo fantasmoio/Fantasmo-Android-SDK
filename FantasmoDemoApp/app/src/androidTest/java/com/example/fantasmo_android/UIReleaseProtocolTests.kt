@@ -1,10 +1,12 @@
 package com.example.fantasmo_android
 
 import BaseRobot
+import Elements.LocalizeElements
 
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.isChecked
+import androidx.test.espresso.matcher.ViewMatchers.isNotChecked
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -26,9 +28,9 @@ class UIReleaseProtocolTests {
 
     @get:Rule
     val permissionRule: GrantPermissionRule = GrantPermissionRule.grant(
-        android.Manifest.permission.ACCESS_FINE_LOCATION,
         android.Manifest.permission.ACCESS_BACKGROUND_LOCATION,
         android.Manifest.permission.ACCESS_COARSE_LOCATION,
+        android.Manifest.permission.ACCESS_FINE_LOCATION,
         android.Manifest.permission.CAMERA
     )
 
@@ -48,19 +50,23 @@ class UIReleaseProtocolTests {
         alice.doOnView(LocalizeElements.qrCodeToggle(), click())
         alice.doOnView(LocalizeElements.simulationModToggle(), click())
 
-        // need to check toggle state, not that it's displayed
-        alice.assertOnView(LocalizeElements.debugStatsToggle(), matches(isDisplayed()))
-        alice.assertOnView(LocalizeElements.qrCodeToggle(), matches(isDisplayed()))
-        alice.assertOnView(LocalizeElements.simulationModToggle(), matches(isDisplayed()))
+        // assert all toggles are checked/on
+        alice.assertOnView(LocalizeElements.debugStatsToggle(), matches(isChecked()))
+        alice.assertOnView(LocalizeElements.qrCodeToggle(), matches(isChecked()))
+        alice.assertOnView(LocalizeElements.simulationModToggle(), matches(isChecked()))
 
-//        alice.attemptsTo(ToggleLocalizeSwitch(LocalizeSwitch.simulationMode))
-//        alice.attemptsTo(ToggleLocalizeSwitch(LocalizeSwitch.debugStats))
-//        alice.attemptsTo(ToggleLocalizeSwitch(LocalizeSwitch.qrCode))
+        alice.doOnView(LocalizeElements.debugStatsToggle(), click())
+        alice.doOnView(LocalizeElements.qrCodeToggle(), click())
+        alice.doOnView(LocalizeElements.simulationModToggle(), click())
 
-//        alice.sees(Localize.ToggleState(of: LocalizeSwitch.qrCode, is: SwitchState.On))
-//        alice.sees(Localize.ToggleState(of: LocalizeSwitch.debugStats, is: SwitchState.On))
-//        alice.sees(Localize.ToggleState(of: LocalizeSwitch.simulationMode, is: SwitchState.On))
+        // assert all toggles are unchecked/off
+        alice.assertOnView(LocalizeElements.debugStatsToggle(), matches(isNotChecked()))
+        alice.assertOnView(LocalizeElements.qrCodeToggle(), matches(isNotChecked()))
+        alice.assertOnView(LocalizeElements.simulationModToggle(), matches(isNotChecked()))
+    }
 
-
+    @Test
+    fun testLocalizationPasses() {
+        // replay SDK video
     }
 }

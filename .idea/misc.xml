@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="FantasmoDemoApp/app/src/main/res/layout/activity_main.xml" value="0.182518115942029" />
+        <entry key="FantasmoDemoApp/app/src/main/res/layout/custom_demo_fragment.xml" value="0.5" />
+        <entry key="FantasmoDemoApp/app/src/main/res/layout/custom_enterqr_dialog.xml" value="0.182518115942029" />
+        <entry key="FantasmoDemoApp/app/src/main/res/layout/custom_localize_view.xml" value="0.182518115942029" />
+        <entry key="FantasmoDemoApp/app/src/main/res/layout/custom_qr_view.xml" value="0.182518115942029" />
+        <entry key="FantasmoDemoApp/app/src/main/res/layout/map_view.xml" value="0.182518115942029" />
+        <entry key="FantasmoDemoApp/app/src/main/res/layout/noarcore_fragment.xml" value="0.182518115942029" />
+        <entry key="FantasmoSDK/app/src/main/res/layout/fmenterqr_dialog.xml" value="0.182518115942029" />
+        <entry key="FantasmoSDK/app/src/main/res/layout/fmstatisticsview.xml" value="0.182518115942029" />
+      </map>
+    </option>
+  </component>
+</project>

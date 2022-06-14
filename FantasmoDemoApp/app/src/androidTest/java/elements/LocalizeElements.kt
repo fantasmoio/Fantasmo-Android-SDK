@@ -1,12 +1,15 @@
+package Elements
+
 import android.view.View
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import org.hamcrest.Matcher
+import android.R
 
 enum class LocalizeElementIds(val id: Int) {
-    QRCODE(1),
-    DEBUGSTATS(2),
-    SIMULATIONMODE(3),
-    LOCALIZEBUTTON(4),
+    QRCODE(R.id.scanQRCodeSwitch),
+    DEBUGSTATS(R.id.showStatisticsSwitch),
+    SIMULATIONMODE(R.id.simulationModeSwitch),
+    LOCALIZEBUTTON(R.id.endRideButton),
     LOCALIZERESULTS(5)
 }
 
