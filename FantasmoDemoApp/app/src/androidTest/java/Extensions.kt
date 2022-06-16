@@ -11,7 +11,7 @@ class EspressoExtensions {
     companion object {
 
         /**
-         * Perform action of waiting for a certain view within a single root view
+         * Search for a given view within a single root view
          * @param matcher Generic Matcher used to find our view
          */
         fun searchFor(matcher: Matcher<View>): ViewAction {
@@ -23,7 +23,7 @@ class EspressoExtensions {
                 }
 
                 override fun getDescription(): String {
-                    return "searching for view $matcher in the root view"
+                    return "Searching for view $matcher in the root view"
                 }
 
                 override fun perform(uiController: UiController, view: View) {

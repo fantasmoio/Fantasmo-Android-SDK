@@ -1,9 +1,9 @@
-package Elements
+package elements
 
 import android.view.View
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import org.hamcrest.Matcher
-import android.R
+import com.example.fantasmo_android.R
 
 enum class LocalizeElementIds(val id: Int) {
     QRCODE(R.id.scanQRCodeSwitch),

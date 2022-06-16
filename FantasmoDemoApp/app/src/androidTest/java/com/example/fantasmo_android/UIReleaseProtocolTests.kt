@@ -1,7 +1,7 @@
 package com.example.fantasmo_android
 
 import BaseRobot
-import Elements.LocalizeElements
+import elements.LocalizeElements
 
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
