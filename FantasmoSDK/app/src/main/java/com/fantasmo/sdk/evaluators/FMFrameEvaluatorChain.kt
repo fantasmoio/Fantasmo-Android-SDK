@@ -7,9 +7,7 @@ import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.filters.*
 import com.fantasmo.sdk.models.FMFrame
 import com.fantasmo.sdk.models.FMFrameRejectionReason
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 interface FMFrameEvaluatorChainListener {
     fun didStartWindow(frameEvaluatorChain: FMFrameEvaluatorChain,  startTime: Double)
@@ -175,6 +173,11 @@ class FMFrameEvaluatorChain (remoteConfig: RemoteConfig.Config, context: Context
             return returnFrame
         }
         return null
+    }
+
+    fun stopEvaluation() {
+        if(defaultCoroutineScope.isActive)
+            defaultCoroutineScope.cancel()
     }
 
     fun resetWindow() {
