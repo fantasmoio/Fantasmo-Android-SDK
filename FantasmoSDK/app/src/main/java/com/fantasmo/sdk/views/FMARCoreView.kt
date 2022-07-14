@@ -94,6 +94,9 @@ internal class FMARCoreView(
         } catch (e: CameraNotAvailableException) {
             Log.e(TAG,"Camera not available. Try restarting the app.")
             return
+        } catch(e: Exception) {
+            e.localizedMessage?.let { Log.e(TAG, it) }
+            return
         }
         surfaceView.onResume()
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)

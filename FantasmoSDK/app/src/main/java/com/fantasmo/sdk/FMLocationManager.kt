@@ -174,6 +174,8 @@ class FMLocationManager(private val context: Context) : FMFrameEvaluatorChainLis
         motionManager.stop()
         this.state = State.STOPPED
         fmLocationListener?.didChangeState(state)
+        if(::frameEvaluatorChain.isInitialized)
+            frameEvaluatorChain.stopEvaluation()
         fmApi?.stopOngoingLocalizeRequests()
         fmApi = null
     }
