@@ -257,10 +257,13 @@ class FMParkingView @JvmOverloads constructor(
     }
 
     fun onResume() {
+        if(::appSessionId.isInitialized)
+            fmLocationManager.startUpdatingLocation(appSessionId, appSessionTags)
         fmARCoreView.onResume()
     }
 
     fun onPause() {
+        fmLocationManager.stopUpdatingLocation()
         fmARCoreView.onPause()
     }
 

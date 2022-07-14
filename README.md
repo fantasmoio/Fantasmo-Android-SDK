@@ -6,34 +6,38 @@ Supercharge your app with hyper-accurate positioning using just the camera. The 
 
 ## Installation
 
-Add the .aar library file to your app and make sure the folder it's added in the dependencies of the app.
+This SDK is available on GitHub Packages: 
+https://github.com/fantasmoio/Fantasmo-Android-SDK/packages/1282775
+
+Otherwise:
+Add the .aar library file to your app and make sure the folder is added in the dependencies of the app.
   
 ### Dependencies
 ```kotlin
-implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8'
-implementation 'com.android.volley:volley:1.2.0'
-implementation 'com.google.code.gson:gson:2.8.6'
-implementation 'androidx.core:core-ktx:1.3.2'
+implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1-native-mt'
+implementation 'com.android.volley:volley:1.2.1'
+implementation 'com.google.code.gson:gson:2.9.0'
+implementation 'androidx.core:core-ktx:1.7.0'
 
 // ARCore
-implementation 'com.google.ar:core:1.29.0'
+implementation 'com.google.ar:core:1.31.0'
 
 // Location Services
-implementation 'com.google.android.gms:play-services-location:18.0.0'
+implementation 'com.google.android.gms:play-services-location:19.0.1'
 
 // Barcode model dependencies
-implementation 'com.google.mlkit:barcode-scanning:17.0.0'
+implementation 'com.google.mlkit:barcode-scanning:17.0.2'
 
 // Layouts
-implementation 'androidx.appcompat:appcompat:1.3.1'
-implementation 'com.google.android.material:material:1.4.0'
-implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
-implementation 'androidx.coordinatorlayout:coordinatorlayout:1.1.0'
+implementation 'androidx.appcompat:appcompat:1.4.1'
+implementation 'com.google.android.material:material:1.6.0'
+implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
+implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
 
 // TensorFlow Lite
-implementation 'org.tensorflow:tensorflow-lite-support:0.1.0'
-implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0'
-implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
+implementation 'org.tensorflow:tensorflow-lite-support:0.4.0'
+implementation 'org.tensorflow:tensorflow-lite-metadata:0.4.0'
+implementation 'org.tensorflow:tensorflow-lite-gpu:2.8.0'
 ```
 ### Building and Importing
 
@@ -74,7 +78,7 @@ private val fmParkingViewController: FMParkingViewProtocol =
             // Handle QR Code result
         }
         
-        override fun fmParkingView(qrCode: String, shouldContinue: (Boolean) -> Unit) {
+        override fun fmParkingView(qrCodeString: String, continueBlock: (Boolean) -> Unit){}
             // Handle Manual QR Code result
         }
 
