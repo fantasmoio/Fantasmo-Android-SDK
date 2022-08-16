@@ -83,6 +83,8 @@ class FMFrame (private val frame: Frame,
             Log.e(TAG, "DeadlineExceededException in acquireFrameImage")
         } catch (e: ResourceExhaustedException) {
             Log.e(TAG, "ResourceExhaustedException")
+        } catch (e: Exception) {
+            e.localizedMessage?.let { Log.e(TAG, it) }
         }
     }
 
