@@ -20,8 +20,8 @@ android {
     defaultConfig {
         minSdkVersion 16
         targetSdkVersion 31
-        versionCode 69
-        versionName "3.4.1"
+        versionCode 70
+        versionName "3.4.2"
         renderscriptTargetApi 24
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
