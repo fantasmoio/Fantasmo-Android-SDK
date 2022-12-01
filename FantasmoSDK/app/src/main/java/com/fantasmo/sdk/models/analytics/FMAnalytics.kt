@@ -68,6 +68,7 @@ internal data class FMSessionAnalytics (
     val totalDuration: Float,
     val location: Location,
     val remoteConfigId: String,
+    val qrCodeSkipped : Boolean = false,
     @Transient
     private val deviceAndHostInfo: FMDeviceAndHostInfo
 ) {
