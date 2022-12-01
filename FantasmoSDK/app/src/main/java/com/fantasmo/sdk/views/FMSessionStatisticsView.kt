@@ -7,7 +7,7 @@ import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.fantasmo.sdk.FMLocationManager
 import com.fantasmo.sdk.FMLocationResult
-import com.fantasmo.sdk.config.RemoteConfig.Companion.remoteConfig
+import com.fantasmo.sdk.config.RemoteConfig
 import com.fantasmo.sdk.fantasmosdk.BuildConfig
 import com.fantasmo.sdk.fantasmosdk.R
 import com.fantasmo.sdk.models.ErrorResponse
@@ -214,7 +214,7 @@ internal class FMSessionStatisticsView(arLayout: CoordinatorLayout, private val 
         deviceLocationTv.text = stringClear
         translationTv.text = stringZeroTranslation
         totalTranslationTv.text = stringZeroM
-        remoteConfigTv.text = remoteConfig.remoteConfigId
+        remoteConfigTv.text = RemoteConfig.config(context).remoteConfigId
         eulerAnglesTv.text = stringZeroAngles
         eulerAnglesSpreadXTv.text = stringZeroAngleSpread
         eulerAnglesSpreadYTv.text = stringZeroAngleSpread
